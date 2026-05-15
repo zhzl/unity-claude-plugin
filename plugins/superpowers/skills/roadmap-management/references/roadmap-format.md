@@ -83,7 +83,7 @@ None
 **Artifacts:**
 - **Spec:** pending
 - **Plan:** pending
-- **Implementation Summary:** pending
+- **Implementation Summary:** pending | <short summary or commit/PR reference>
 - **Verification Evidence:** pending
 
 **Success Criteria:**
@@ -137,7 +137,7 @@ Before changing `Current State`, `Phase Summary`, or phase `Status`, read linked
 **Artifacts:**
 - **Spec:** pending
 - **Plan:** pending
-- **Implementation Summary:** pending
+- **Implementation Summary:** pending | <short summary or commit/PR reference>
 - **Verification Evidence:** pending
 
 **Success Criteria:**

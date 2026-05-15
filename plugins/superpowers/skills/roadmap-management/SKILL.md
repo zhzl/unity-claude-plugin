@@ -97,6 +97,8 @@ progress → write-spec → write-plan → implement-plan → complete-phase →
 - **Verification Evidence:** pending
 ```
 
+Implementation Summary 是简短文本：记录主要变更、commit/PR 引用或执行摘要；不要写详细实现步骤。
+
 ## 状态规则
 
 Roadmap status：
@@ -122,7 +124,7 @@ Phase status：
 - `Spec: pending` → `needs-spec`
 - `Spec` 路径存在且 `Plan: pending` → `designed`
 - `Spec` 路径存在且 `Plan` 路径存在且验证证据缺失 → 新阶段用 `planned`；如果 roadmap 已明确记录执行已开始，则保持 `in-progress`
-- `Verification Evidence` 存在 → 可以考虑 `completed`
+- `Verification Evidence` 存在且 phase success criteria 已满足 → 可以标记 `completed`
 - 链接 artifact 路径缺失 → 不推进状态，先标记 artifact missing 或提示用户修正
 
 不要从聊天记忆推断完成度。
@@ -237,7 +239,7 @@ Phase status：
 1. 读取 `ROADMAP.md`。
 2. 读取 phase 的 `Spec` 和 `Plan`。
 3. 要求用户提供具体 `Verification Evidence`。
-4. 有证据时才将 phase 标记为 `completed`。
+4. 只有 `Verification Evidence` 具体且 phase success criteria 已满足时，才将 phase 标记为 `completed`。
 5. 将 `Current State` 推进到下一个未完成 phase。
 6. 追加 `Change Log`。
 
