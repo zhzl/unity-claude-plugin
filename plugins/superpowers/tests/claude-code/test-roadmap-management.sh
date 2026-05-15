@@ -8,6 +8,7 @@ PLUGIN_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 SKILL="$PLUGIN_ROOT/skills/roadmap-management/SKILL.md"
 REFERENCE="$PLUGIN_ROOT/skills/roadmap-management/references/roadmap-format.md"
+WRITING_PLANS="$PLUGIN_ROOT/skills/writing-plans/SKILL.md"
 NATURAL_TRIGGER_PROMPT="$PLUGIN_ROOT/tests/skill-triggering/prompts/roadmap-management.txt"
 
 echo "=== Test: roadmap-management skill ==="
@@ -56,6 +57,7 @@ assert_file_contains() {
 
 assert_file_exists "$SKILL" "Skill file exists"
 assert_file_exists "$REFERENCE" "Reference file exists"
+assert_file_exists "$WRITING_PLANS" "writing-plans skill exists"
 assert_file_missing "$NATURAL_TRIGGER_PROMPT" "No natural trigger prompt is added"
 
 echo ""
@@ -90,6 +92,14 @@ assert_file_contains "$SKILL" "superpowers:writing-plans" "Writing-plans handoff
 assert_file_contains "$SKILL" "superpowers:subagent-driven-development" "Subagent-driven handoff documented"
 assert_file_contains "$SKILL" "superpowers:executing-plans" "Executing-plans handoff documented"
 assert_file_contains "$SKILL" "不要自动调用" "Automatic skill invocation is forbidden"
+
+echo ""
+echo "Test 3b: writing-plans roadmap context..."
+assert_file_contains "$WRITING_PLANS" "Roadmap 上下文" "writing-plans has roadmap context section"
+assert_file_contains "$WRITING_PLANS" "显式提供 Roadmap 路径" "writing-plans requires explicit roadmap path"
+assert_file_contains "$WRITING_PLANS" "不要主动寻找 roadmap" "writing-plans does not search for roadmap proactively"
+assert_file_contains "$WRITING_PLANS" "Shared Constraints" "writing-plans reads shared constraints"
+assert_file_contains "$WRITING_PLANS" "Phase:" "writing-plans records phase"
 
 echo ""
 echo "Test 4: Proposal and OpenSpec governance..."

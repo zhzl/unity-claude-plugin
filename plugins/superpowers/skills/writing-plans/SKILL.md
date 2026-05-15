@@ -58,6 +58,17 @@ description: 当你有规格说明或需求用于多步骤任务时使用，在�
 ---
 ```
 
+## Roadmap 上下文
+
+如果用户显式提供 Roadmap 路径和/或 Phase，在计划头部记录可用字段：
+
+```markdown
+**Roadmap:** `docs/superpowers/roadmaps/<slug>/ROADMAP.md`
+**Phase:** P1 / P2 / N/A
+```
+
+如果用户显式提供 Roadmap 路径，在编写计划前读取该 roadmap，并遵守它的 `Shared Constraints`。如果只提供 Phase 而未提供 Roadmap，不要主动寻找 roadmap；只记录用户提供的 Phase。
+
 ## 任务结构
 
 ````markdown
