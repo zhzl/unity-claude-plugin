@@ -4,29 +4,29 @@ Complete guide to using MCP tools effectively in Claude Code plugin commands and
 
 ## Overview
 
-Once an MCP server is configured, its tools become available with the prefix `mcp__plugin_<plugin-name>_<server-name>__<tool-name>`. Use these tools in commands and agents just like built-in Claude Code tools.
+Once an MCP server is configured, its tools become available with the prefix `mcp__<server-name>__<tool-name>`. Use these tools in commands and agents just like built-in Claude Code tools.
 
 ## Tool Naming Convention
 
 ### Format
 
 ```
-mcp__plugin_<plugin-name>_<server-name>__<tool-name>
+mcp__<server-name>__<tool-name>
 ```
 
 ### Examples
 
-**Asana plugin with asana server:**
+**Asana server:**
 
-- `mcp__plugin_asana_asana__asana_create_task`
-- `mcp__plugin_asana_asana__asana_search_tasks`
-- `mcp__plugin_asana_asana__asana_get_project`
+- `mcp__asana__asana_create_task`
+- `mcp__asana__asana_search_tasks`
+- `mcp__asana__asana_get_project`
 
-**Custom plugin with database server:**
+**Database server:**
 
-- `mcp__plugin_myplug_database__query`
-- `mcp__plugin_myplug_database__execute`
-- `mcp__plugin_myplug_database__list_tables`
+- `mcp__database__query`
+- `mcp__database__execute`
+- `mcp__database__list_tables`
 
 ### Discovering Tool Names
 
@@ -52,7 +52,7 @@ Specify MCP tools in command frontmatter:
 ```markdown
 ---
 description: Create a new Asana task
-allowed-tools: ["mcp__plugin_asana_asana__asana_create_task"]
+allowed-tools: ["mcp__asana__asana_create_task"]
 ---
 
 # Create Task Command
@@ -60,7 +60,7 @@ allowed-tools: ["mcp__plugin_asana_asana__asana_create_task"]
 To create a task:
 
 1. Gather task details from user
-2. Use mcp__plugin_asana_asana__asana_create_task with the details
+2. Use mcp__asana__asana_create_task with the details
 3. Confirm creation to user
 ```
 
@@ -68,12 +68,11 @@ To create a task:
 
 ```markdown
 ---
+description: Manage Asana tasks and projects
 allowed-tools:
-  [
-    "mcp__plugin_asana_asana__asana_create_task",
-    "mcp__plugin_asana_asana__asana_search_tasks",
-    "mcp__plugin_asana_asana__asana_get_project",
-  ]
+  - mcp__asana__asana_create_task
+  - mcp__asana__asana_search_tasks
+  - mcp__asana__asana_get_project
 ---
 ```
 
@@ -81,7 +80,9 @@ allowed-tools:
 
 ```markdown
 ---
-allowed-tools: ["mcp__plugin_asana_asana__*"]
+description: Use Asana MCP tools for task management
+allowed-tools:
+  - mcp__asana__*
 ---
 ```
 
@@ -95,10 +96,8 @@ allowed-tools: ["mcp__plugin_asana_asana__*"]
 ---
 description: Search and create Asana tasks
 allowed-tools:
-  [
-    "mcp__plugin_asana_asana__asana_search_tasks",
-    "mcp__plugin_asana_asana__asana_create_task",
-  ]
+  - mcp__asana__asana_search_tasks
+  - mcp__asana__asana_create_task
 ---
 
 # Asana Task Management
@@ -107,7 +106,7 @@ allowed-tools:
 
 To search for tasks:
 
-1. Use mcp__plugin_asana_asana__asana_search_tasks
+1. Use mcp__asana__asana_search_tasks
 2. Provide search filters (assignee, project, etc.)
 3. Display results to user
 
@@ -121,7 +120,7 @@ To create a task:
    - Project
    - Assignee
    - Due date
-2. Use mcp__plugin_asana_asana__asana_create_task
+2. Use mcp__asana__asana_create_task
 3. Show confirmation with task link
 ```
 
@@ -145,10 +144,10 @@ Autonomous agent for generating Asana project status reports.
 
 ## Process
 
-1. **Query tasks**: Use mcp__plugin_asana_asana__asana_search_tasks to get all tasks
+1. **Query tasks**: Use mcp__asana__asana_search_tasks to get all tasks
 2. **Analyze progress**: Calculate completion rates and identify blockers
 3. **Generate report**: Create formatted status update
-4. **Update Asana**: Use mcp__plugin_asana_asana__asana_create_comment to post report
+4. **Update Asana**: Use mcp__asana__asana_create_comment to post report
 
 ## Available Tools
 
@@ -173,7 +172,7 @@ Single tool call with validation:
 Steps:
 
 1. Validate user provided required fields
-2. Call mcp__plugin_api_server__create_item with validated data
+2. Call mcp__api__create_item with validated data
 3. Check for errors
 4. Display confirmation
 ```
@@ -185,9 +184,9 @@ Chain multiple tool calls:
 ```markdown
 Steps:
 
-1. Search for existing items: mcp__plugin_api_server__search
-2. If not found, create new: mcp__plugin_api_server__create
-3. Add metadata: mcp__plugin_api_server__update_metadata
+1. Search for existing items: mcp__api__search
+2. If not found, create new: mcp__api__create
+3. Add metadata: mcp__api__update_metadata
 4. Return final item ID
 ```
 
@@ -200,7 +199,7 @@ Steps:
 
 1. Get list of items to process
 2. For each item:
-   - Call mcp__plugin_api_server__update_item
+   - Call mcp__api__update_item
    - Track success/failure
 3. Report results summary
 ```
@@ -212,7 +211,7 @@ Graceful error handling:
 ```markdown
 Steps:
 
-1. Try to call mcp__plugin_api_server__get_data
+1. Try to call mcp__api__get_data
 2. If error (rate limit, network, etc.):
    - Wait and retry (max 3 attempts)
    - If still failing, inform user
@@ -260,13 +259,13 @@ Claude automatically structures tool calls based on schema:
 ```typescript
 // Claude generates this internally
 {
-  toolName: "mcp__plugin_asana_asana__asana_create_task",
+  toolName: "mcp__asana__asana_create_task",
   input: {
     name: "Review PR #123",
     notes: "Code review for new feature",
     workspace: "12345",
     assignee: "67890",
-    due_on: "2025-01-15"
+    due_on: "2026-05-15"
   }
 }
 ```
@@ -337,7 +336,7 @@ Steps:
 ```markdown
 Steps:
 
-1. Call mcp__plugin_api_server__search with filters:
+1. Call mcp__api__search with filters:
    - project_id: "123"
    - status: "active"
    - limit: 100
@@ -350,7 +349,7 @@ Steps:
 Steps:
 
 1. For each item ID:
-   - Call mcp__plugin_api_server__get_item
+   - Call mcp__api__get_item
    - Process item
 ```
 
@@ -359,7 +358,7 @@ Steps:
 ```markdown
 Steps:
 
-1. Call expensive MCP operation: mcp__plugin_api_server__analyze
+1. Call expensive MCP operation: mcp__api__analyze
 2. Store results in variable for reuse
 3. Use cached results for subsequent operations
 4. Only re-fetch if data changes
@@ -373,9 +372,9 @@ When tools don't depend on each other, call in parallel:
 Steps:
 
 1. Make parallel calls (Claude handles this automatically):
-   - mcp__plugin_api_server__get_project
-   - mcp__plugin_api_server__get_users
-   - mcp__plugin_api_server__get_tags
+   - mcp__api__get_project
+   - mcp__api__get_users
+   - mcp__api__get_tags
 2. Wait for all to complete
 3. Combine results
 ```
@@ -390,7 +389,7 @@ Steps:
 Steps:
 
 1. Inform user: "Searching Asana tasks..."
-2. Call mcp__plugin_asana_asana__asana_search_tasks
+2. Call mcp__asana__asana_search_tasks
 3. Show progress: "Found 15 tasks, analyzing..."
 4. Present results
 ```
@@ -491,10 +490,10 @@ Steps:
 ---
 allowed-tools:
   [
-    "mcp__plugin_api_server__create_item",
-    "mcp__plugin_api_server__read_item",
-    "mcp__plugin_api_server__update_item",
-    "mcp__plugin_api_server__delete_item",
+    "mcp__api__create_item",
+    "mcp__api__read_item",
+    "mcp__api__update_item",
+    "mcp__api__delete_item",
   ]
 ---
 
@@ -522,7 +521,7 @@ Use delete_item with item ID (ask for confirmation first)...
 ```markdown
 Steps:
 
-1. **Search**: mcp__plugin_api_server__search with filters
+1. **Search**: mcp__api__search with filters
 2. **Filter**: Apply additional local filtering if needed
 3. **Transform**: Process each result
 4. **Present**: Format and display to user

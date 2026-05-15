@@ -1,7 +1,7 @@
 ---
 description: Start plugin development - choose your path
-argument-hint: [description]
-allowed-tools: AskUserQuestion, Skill, TaskCreate, TaskGet, TaskUpdate, TaskList
+argument-hint: "[description]"
+allowed-tools: AskUserQuestion, TaskCreate, TaskGet, TaskUpdate, TaskList
 model: sonnet
 disable-model-invocation: true
 ---
@@ -73,14 +73,12 @@ After the user selects an option:
 **If they chose "A plugin"**:
 
 - Acknowledge their choice
-- Use the Skill tool to invoke `/plugin-dev:create-plugin`
-- Pass through any context from $ARGUMENTS if provided
+- Tell the user to run `/plugin-dev:create-plugin` with any context from $ARGUMENTS
 
 **If they chose "A marketplace"**:
 
 - Acknowledge their choice
-- Use the Skill tool to invoke `/plugin-dev:create-marketplace`
-- Pass through any context from $ARGUMENTS if provided
+- Tell the user to run `/plugin-dev:create-marketplace` with any context from $ARGUMENTS
 
 ---
 
@@ -121,8 +119,7 @@ Based on your description "a code review assistant", it sounds like you want to 
 
 User: Yes
 
-Claude: Great! Let me start the plugin creation workflow...
-[Invokes /plugin-dev:create-plugin a code review assistant]
+Claude: Great! Next, run `/plugin-dev:create-plugin a code review assistant` to start the plugin creation workflow.
 ```
 
 ### Example 3: Arguments suggest a marketplace
@@ -138,8 +135,7 @@ Based on your description "organize our team's internal tools", it sounds like y
 
 User: Yes
 
-Claude: Great! Let me start the marketplace creation workflow...
-[Invokes /plugin-dev:create-marketplace organize our team's internal tools]
+Claude: Great! Next, run `/plugin-dev:create-marketplace organize our team's internal tools` to start the marketplace creation workflow.
 ```
 
 ---

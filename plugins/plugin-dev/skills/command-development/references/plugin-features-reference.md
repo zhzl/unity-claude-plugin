@@ -96,21 +96,15 @@ Reference files within your plugin:
 ```markdown
 ---
 description: Analyze using plugin script
-allowed-tools: Bash(node:*), Read
+allowed-tools: Bash(node *), Read
 ---
 
-Run analysis: [BANG]`node ${CLAUDE_PLUGIN_ROOT}/scripts/analyze.js`
+Run `${CLAUDE_PLUGIN_ROOT}/scripts/analyze.js` with the Bash tool during the task.
 
 Read template: @${CLAUDE_PLUGIN_ROOT}/templates/report.md
 ```
 
-**Expands to:**
-
-```markdown
-Run analysis: [actual output from analyze.js]
-
-Read template: @/path/to/plugins/plugin-name/templates/report.md
-```
+**At runtime:** Claude uses the Bash tool for the script and resolves the file reference to the plugin template path.
 
 ### Common Patterns
 
@@ -119,10 +113,10 @@ Read template: @/path/to/plugins/plugin-name/templates/report.md
 ```markdown
 ---
 description: Run custom linter from plugin
-allowed-tools: Bash(node:*)
+allowed-tools: Bash(node *)
 ---
 
-Lint results: [BANG]`node ${CLAUDE_PLUGIN_ROOT}/bin/lint.js $1`
+Run the plugin lint script with the Bash tool during the task.
 
 Review the linting output and suggest fixes.
 ```
@@ -132,7 +126,7 @@ Review the linting output and suggest fixes.
 ```markdown
 ---
 description: Deploy using plugin configuration
-allowed-tools: Read, Bash(*)
+allowed-tools: Read, Bash(npm *), Bash(node *), Bash(kubectl *)
 ---
 
 Configuration: @${CLAUDE_PLUGIN_ROOT}/config/deploy-config.json
@@ -157,12 +151,12 @@ Generate a report for @$1 following the template format.
 ```markdown
 ---
 description: Complete plugin workflow
-allowed-tools: Bash(*), Read
+allowed-tools: Read, Bash(${CLAUDE_PLUGIN_ROOT}/scripts/prepare *), Bash(${CLAUDE_PLUGIN_ROOT}/scripts/execute *)
 ---
 
-Step 1 - Prepare: [BANG]`bash ${CLAUDE_PLUGIN_ROOT}/scripts/prepare.sh $1`
-Step 2 - Config: @${CLAUDE_PLUGIN_ROOT}/config/$1.json
-Step 3 - Execute: [BANG]`${CLAUDE_PLUGIN_ROOT}/bin/execute $1`
+Step 1 - Read config: @${CLAUDE_PLUGIN_ROOT}/config/$1.json
+Step 2 - Run the prepare script with the Bash tool during the task.
+Step 3 - Run the execute script with the Bash tool during the task.
 
 Review results and report status.
 ```
@@ -186,10 +180,10 @@ Review results and report status.
    ```markdown
    ---
    description: Use plugin config if exists
-   allowed-tools: Bash(test:*), Read
+   allowed-tools: Bash(test *), Read
    ---
 
-   [BANG]`test -f ${CLAUDE_PLUGIN_ROOT}/config.json && echo "exists" || echo "missing"`
+   !`test -f ${CLAUDE_PLUGIN_ROOT}/config.json && echo "exists" || echo "missing"`
 
    If config exists, load it: @${CLAUDE_PLUGIN_ROOT}/config.json
    Otherwise, use defaults...
@@ -209,7 +203,7 @@ Review results and report status.
 
 4. **Combine with arguments:**
    ```markdown
-   Run: [BANG]`${CLAUDE_PLUGIN_ROOT}/bin/process.sh $1 $2`
+   Run: !`${CLAUDE_PLUGIN_ROOT}/bin/process.sh "$1" "$2"`
    ```
 
 ### Troubleshooting
@@ -228,9 +222,9 @@ Review results and report status.
 
 **Path with spaces:**
 
-- Bash commands automatically handle spaces
+- Quote shell variables and paths that may contain spaces
 - File references work with spaces in paths
-- No special quoting needed
+- Prefer `"${CLAUDE_PLUGIN_ROOT}/path"` and `"$1"` in Bash examples
 
 ## Plugin Command Patterns
 
@@ -241,7 +235,7 @@ Commands that load plugin-specific configuration:
 ```markdown
 ---
 description: Deploy using plugin settings
-allowed-tools: Read, Bash(*)
+allowed-tools: Read, Bash(git *), Bash(node *), Bash(npm *), Bash(kubectl *)
 ---
 
 Load configuration: @${CLAUDE_PLUGIN_ROOT}/deploy-config.json
@@ -249,8 +243,8 @@ Load configuration: @${CLAUDE_PLUGIN_ROOT}/deploy-config.json
 Deploy to $1 environment using:
 
 1. Configuration settings above
-2. Current git branch: [BANG]`git branch --show-current`
-3. Application version: [BANG]`cat package.json | grep version`
+2. Current git branch: !`git branch --show-current`
+3. Application version: !`node -p "require('./package.json').version"`
 
 Execute deployment and monitor progress.
 ```
@@ -264,7 +258,7 @@ Commands that use plugin templates:
 ```markdown
 ---
 description: Generate documentation from template
-argument-hint: [component-name]
+argument-hint: "[component-name]"
 ---
 
 Template: @${CLAUDE_PLUGIN_ROOT}/templates/component-docs.md
@@ -287,12 +281,10 @@ Commands that orchestrate multiple plugin scripts:
 ```markdown
 ---
 description: Complete build and test workflow
-allowed-tools: Bash(*)
+allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/scripts/build *), Bash(${CLAUDE_PLUGIN_ROOT}/scripts/validate *), Bash(${CLAUDE_PLUGIN_ROOT}/scripts/test *)
 ---
 
-Build: [BANG]`bash ${CLAUDE_PLUGIN_ROOT}/scripts/build.sh`
-Validate: [BANG]`bash ${CLAUDE_PLUGIN_ROOT}/scripts/validate.sh`
-Test: [BANG]`bash ${CLAUDE_PLUGIN_ROOT}/scripts/test.sh`
+Run the build script, validation script, and test script with the Bash tool during the workflow.
 
 Review all outputs and report:
 
@@ -311,12 +303,12 @@ Commands that adapt to environment:
 ```markdown
 ---
 description: Deploy based on environment
-argument-hint: [dev|staging|prod]
+argument-hint: "[dev|staging|prod]"
 ---
 
 Environment config: @${CLAUDE_PLUGIN_ROOT}/config/$1.json
 
-Environment check: [BANG]`echo "Deploying to: $1"`
+Environment check: !`echo "Deploying to: $1"`
 
 Deploy application using $1 environment configuration.
 Verify deployment and run smoke tests.
@@ -331,13 +323,12 @@ Commands that manage plugin-specific data:
 ```markdown
 ---
 description: Save analysis results to plugin cache
-allowed-tools: Bash(*), Read, Write
+allowed-tools: Bash(mkdir *), Read, Write
 ---
 
-Cache directory: ${CLAUDE_PLUGIN_ROOT}/cache/
+Cache directory: .claude/my-plugin/cache/
 
-Analyze @$1 and save results to cache:
-[BANG]`mkdir -p ${CLAUDE_PLUGIN_ROOT}/cache && date > ${CLAUDE_PLUGIN_ROOT}/cache/last-run.txt`
+Analyze @$1 and save results to cache during the task. Create the cache directory and write metadata only after Claude has confirmed the operation is appropriate.
 
 Store analysis for future reference and comparison.
 ```
@@ -348,12 +339,12 @@ Store analysis for future reference and comparison.
 
 ### Invoking Plugin Agents
 
-Commands can trigger plugin agents using the Task tool:
+Commands can trigger plugin agents using the Agent tool:
 
 ```markdown
 ---
 description: Deep analysis using plugin agent
-argument-hint: [file-path]
+argument-hint: "[file-path]"
 ---
 
 Initiate deep code analysis of @$1 using the code-analyzer agent.
@@ -365,13 +356,13 @@ The agent will:
 3. Suggest improvements
 4. Generate detailed report
 
-Note: This uses the Task tool to launch the plugin's code-analyzer agent.
+Note: This uses the Agent tool to launch the plugin's code-analyzer agent.
 ```
 
 **Key points:**
 
 - Agent must be defined in plugin's `agents/` directory
-- Claude will automatically use Task tool to launch agent
+- Claude will automatically use the Agent tool to launch the agent
 - Agent has access to same plugin resources
 
 ### Invoking Plugin Skills
@@ -381,7 +372,7 @@ Commands can reference plugin skills for specialized knowledge:
 ```markdown
 ---
 description: API documentation with best practices
-argument-hint: [api-file]
+argument-hint: "[api-file]"
 ---
 
 Document the API in @$1 following our API documentation standards.
@@ -410,12 +401,10 @@ Commands can be designed to work with plugin hooks:
 ```markdown
 ---
 description: Commit with pre-commit validation
-allowed-tools: Bash(git:*)
+allowed-tools: Bash(git *)
 ---
 
-Stage changes: [BANG]`git add $1`
-
-Commit changes: [BANG]`git commit -m "$2"`
+Stage the requested files and create a commit during the normal workflow after reviewing the changes with the user.
 
 Note: This commit will trigger the plugin's pre-commit hook for validation.
 Review hook output for any issues.
@@ -434,7 +423,7 @@ Commands that coordinate multiple plugin components:
 ```markdown
 ---
 description: Comprehensive code review workflow
-argument-hint: [file-path]
+argument-hint: "[file-path]"
 ---
 
 File to review: @$1
@@ -442,7 +431,7 @@ File to review: @$1
 Execute comprehensive review:
 
 1. **Static Analysis** (via plugin scripts)
-   [BANG]`node ${CLAUDE_PLUGIN_ROOT}/scripts/lint.js $1`
+   Run the plugin lint script with the Bash tool during the task.
 
 2. **Deep Review** (via plugin agent)
    Launch the code-reviewer agent for detailed analysis.
@@ -467,15 +456,12 @@ Commands should validate inputs before processing:
 ```markdown
 ---
 description: Deploy to environment with validation
-argument-hint: [environment]
+argument-hint: "[environment]"
 ---
 
-Validate environment: [BANG]`echo "$1" | grep -E "^(dev|staging|prod)$" || echo "INVALID"`
+Validate environment: !`echo "$1" | grep -E "^(dev|staging|prod)$" || echo "INVALID"`
 
-$IF($1 in [dev, staging, prod],
-Deploy to $1 environment using validated configuration,
-ERROR: Invalid environment '$1'. Must be one of: dev, staging, prod
-)
+If $1 is one of dev, staging, or prod, deploy to $1 using validated configuration. Otherwise, explain that the environment is invalid and must be one of: dev, staging, prod.
 ```
 
 **Validation approaches:**
@@ -491,10 +477,10 @@ Verify required files exist:
 ```markdown
 ---
 description: Process configuration file
-argument-hint: [config-file]
+argument-hint: "[config-file]"
 ---
 
-Check file: [BANG]`test -f $1 && echo "EXISTS" || echo "MISSING"`
+Check file: !`test -f "$1" && echo "EXISTS" || echo "MISSING"`
 
 Process configuration if file exists: @$1
 
@@ -512,15 +498,12 @@ Validate required arguments provided:
 ```markdown
 ---
 description: Create deployment with version
-argument-hint: [environment] [version]
+argument-hint: "[environment] [version]"
 ---
 
-Validate inputs: [BANG]`test -n "$1" -a -n "$2" && echo "OK" || echo "MISSING"`
+Validate inputs: !`test -n "$1" -a -n "$2" && echo "OK" || echo "MISSING"`
 
-$IF($1 AND $2,
-Deploy version $2 to $1 environment,
-ERROR: Both environment and version required. Usage: /deploy [env] [version]
-)
+If both $1 and $2 are provided, deploy version $2 to $1. Otherwise, explain that both environment and version are required and show: /deploy [env] [version].
 ```
 
 ### Plugin Resource Validation
@@ -530,14 +513,14 @@ Verify plugin resources available:
 ```markdown
 ---
 description: Run analysis with plugin tools
-allowed-tools: Bash(test:*)
+allowed-tools: Bash(test *)
 ---
 
 Validate plugin setup:
 
-- Config exists: [BANG]`test -f ${CLAUDE_PLUGIN_ROOT}/config.json && echo "✓" || echo "✗"`
-- Scripts exist: [BANG]`test -d ${CLAUDE_PLUGIN_ROOT}/scripts && echo "✓" || echo "✗"`
-- Tools available: [BANG]`test -x ${CLAUDE_PLUGIN_ROOT}/bin/analyze && echo "✓" || echo "✗"`
+- Config exists: !`test -f ${CLAUDE_PLUGIN_ROOT}/config.json && echo "✓" || echo "✗"`
+- Scripts exist: !`test -d ${CLAUDE_PLUGIN_ROOT}/scripts && echo "✓" || echo "✗"`
+- Tools available: !`test -x ${CLAUDE_PLUGIN_ROOT}/bin/analyze && echo "✓" || echo "✗"`
 
 If all checks pass, proceed with analysis.
 Otherwise, report missing components and installation steps.
@@ -550,16 +533,16 @@ Validate command execution results:
 ```markdown
 ---
 description: Build and validate output
-allowed-tools: Bash(*)
+allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/scripts/build *), Bash(${CLAUDE_PLUGIN_ROOT}/scripts/validate-output *)
 ---
 
-Build: [BANG]`bash ${CLAUDE_PLUGIN_ROOT}/scripts/build.sh`
+Run the build script with the Bash tool during the task.
 
 Validate output:
 
-- Exit code: [BANG]`echo $?`
-- Output exists: [BANG]`test -d dist && echo "✓" || echo "✗"`
-- File count: [BANG]`find dist -type f | wc -l`
+- Review the build command exit code
+- Output exists: !`test -d dist && echo "✓" || echo "✗"`
+- File count: !`find dist -type f | wc -l`
 
 Report build status and any validation failures.
 ```
@@ -571,10 +554,10 @@ Handle errors gracefully with helpful messages:
 ```markdown
 ---
 description: Process file with error handling
-argument-hint: [file-path]
+argument-hint: "[file-path]"
 ---
 
-Try processing: [BANG]`node ${CLAUDE_PLUGIN_ROOT}/scripts/process.js $1 2>&1 || echo "ERROR: $?"`
+Try processing with the Bash tool during the task and report any ERROR exit status.
 
 If processing succeeded:
 

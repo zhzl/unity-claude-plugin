@@ -118,9 +118,10 @@ hooks:
 ```yaml
 hooks:
   Stop:
-    - hooks:
+    - matcher: "*"
+      hooks:
         - type: prompt
-          prompt: 'Verify that all generated code has tests. Return {"decision": "stop"} if satisfied or {"decision": "continue", "reason": "missing tests for..."} if not.'
+          prompt: 'Verify that all generated code has tests. Return {"decision": "block", "reason": "missing tests for..."} only when work should continue; omit decision when satisfied.'
 ```
 
 ## Skill Visibility Budget

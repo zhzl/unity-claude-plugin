@@ -109,7 +109,7 @@ For interactive OAuth setup, use the `/mcp` command within Claude Code to authen
 
 ### Bearer Tokens
 
-Most common for HTTP and WebSocket servers.
+Most common for HTTP MCP servers.
 
 **Configuration:**
 
@@ -253,7 +253,7 @@ DB_USER=myuser
 DB_PASSWORD=mypassword
 \`\`\`
 
-Load with: \`source .env\` or \`export $(cat .env | xargs)\`
+Load with your shell's dotenv support or a parser that handles quoting safely. Avoid \`export $(cat .env | xargs)\` because it breaks on spaces and can execute unintended shell syntax.
 \`\`\`
 ```
 
@@ -314,7 +314,7 @@ EOF
 
 ✅ **Document required variables in README**
 
-✅ **Use HTTPS/WSS always**
+✅ **Use HTTPS for hosted MCP endpoints**
 
 ✅ **Implement token rotation**
 
@@ -329,10 +329,12 @@ EOF
 ```json
 {
   "headers": {
-    "Authorization": "Bearer sk-abc123..." // NEVER!
+    "Authorization": "Bearer ${API_TOKEN}"
   }
 }
 ```
+
+Never replace `${API_TOKEN}` with a literal secret such as `Bearer sk-abc123...`.
 
 ❌ **Commit tokens to git**
 
@@ -413,12 +415,9 @@ export API_TOKEN="your-token"
 
 **Token in wrong format:**
 
-```json
-// Correct
-"Authorization": "Bearer sk-abc123"
-
-// Wrong
-"Authorization": "sk-abc123"
+```text
+Correct: Authorization: Bearer ${API_TOKEN}
+Wrong:   Authorization: ${API_TOKEN}
 ```
 
 ### Debugging Authentication
@@ -577,7 +576,7 @@ EOF
 3. **Document all required variables** in README
 4. **Provide setup instructions** with examples
 5. **Never commit credentials**
-6. **Use HTTPS/WSS only**
+6. **Use HTTPS for hosted MCP endpoints**
 7. **Test authentication thoroughly**
 
 ### For Plugin Users

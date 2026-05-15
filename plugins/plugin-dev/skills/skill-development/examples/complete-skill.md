@@ -58,7 +58,6 @@ tests/
     ├── auth.js
     └── fixtures.js
 ```
-````
 
 ## Core Patterns
 
@@ -114,7 +113,7 @@ See `examples/` for complete test files:
 
 ### references/authentication-guide.md
 
-```markdown
+````markdown
 # Authentication Testing Guide
 
 Detailed patterns for testing authenticated API endpoints.
@@ -144,7 +143,7 @@ function generateExpiredToken(userId) {
 }
 
 module.exports = { generateTestToken, generateExpiredToken };
-````
+```
 
 ### Test Cases
 
@@ -195,7 +194,7 @@ describe("API Key Auth", () => {
 
 ### references/assertion-patterns.md
 
-```markdown
+````markdown
 # Assertion Patterns
 
 Common assertion patterns for API response validation.
@@ -210,7 +209,7 @@ expect(response.body).toEqual({
   name: 'Test',
   active: true
 });
-````
+```
 
 ### Partial Match
 
@@ -290,7 +289,8 @@ response=$(curl -s -w "\n%{http_code}" \
   -d '{"name": "Test User", "email": "test@example.com"}')
 
 status=$(echo "$response" | tail -1)
-body=$(echo "$response" | head -n -1)
+body=$(printf '%s
+' "$response" | sed '$d')
 
 if [ "$status" = "201" ]; then
   echo "PASS: User created"
@@ -316,7 +316,7 @@ else
 fi
 
 echo "All tests passed!"
-````
+```
 
 ### examples/graphql-tests.sh
 
@@ -336,7 +336,8 @@ response=$(curl -s -w "\n%{http_code}" \
   -d '{"query": "{ users { id name email } }"}')
 
 status=$(echo "$response" | tail -1)
-body=$(echo "$response" | head -n -1)
+body=$(printf '%s
+' "$response" | sed '$d')
 
 if [ "$status" = "200" ] && echo "$body" | jq -e '.data.users' > /dev/null; then
   echo "PASS: Users query successful"
@@ -378,6 +379,7 @@ set -e
 RESOURCE="${1:?Resource name required}"
 OPERATION="${2:?Operation name required}"
 METHOD="${3:-GET}"
+METHOD_LOWER=$(printf '%s' "$METHOD" | tr '[:upper:]' '[:lower:]')
 ENDPOINT="${4:-/api/$RESOURCE}"
 
 OUTPUT_DIR="tests/$RESOURCE"
@@ -399,7 +401,7 @@ describe('$METHOD $ENDPOINT', () => {
 
   it('returns expected response', async () => {
     const response = await request(app)
-      .${METHOD,,}('$ENDPOINT')
+      .$METHOD_LOWER('$ENDPOINT')
       .set('Authorization', \`Bearer \${token}\`)
       .expect(200);
 
@@ -409,7 +411,7 @@ describe('$METHOD $ENDPOINT', () => {
 
   it('returns 401 without authentication', async () => {
     await request(app)
-      .${METHOD,,}('$ENDPOINT')
+      .$METHOD_LOWER('$ENDPOINT')
       .expect(401);
   });
 });

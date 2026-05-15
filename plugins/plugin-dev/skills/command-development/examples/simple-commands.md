@@ -11,7 +11,7 @@ Basic slash command patterns for common use cases.
 ```markdown
 ---
 description: Review code for quality and issues
-allowed-tools: Read, Bash(git:*)
+allowed-tools: Read, Bash(git *)
 ---
 
 Review the code in this repository for:
@@ -96,13 +96,13 @@ Prioritize issues by severity.
 ```markdown
 ---
 description: Run tests for specific file
-argument-hint: [test-file]
-allowed-tools: Bash(npm:*), Bash(jest:*)
+argument-hint: "[test-file]"
+allowed-tools: Bash(npm *), Bash(jest *)
 ---
 
 Run tests for $1:
 
-Test execution: `npm test $1`
+Run tests for $1 with the Bash tool.
 
 Analyze results:
 
@@ -129,7 +129,7 @@ If failures found, suggest fixes based on error messages.
 ```markdown
 ---
 description: Generate documentation for file
-argument-hint: [source-file]
+argument-hint: "[source-file]"
 ---
 
 Generate comprehensive documentation for @$1
@@ -179,18 +179,18 @@ Format as Markdown suitable for project documentation.
 ```markdown
 ---
 description: Summarize Git repository status
-allowed-tools: Bash(git:*)
+allowed-tools: Bash(git *)
 ---
 
 Repository Status Summary:
 
-**Current Branch:** `git branch --show-current`
+**Current Branch:** !`git branch --show-current`
 
-**Status:** `git status --short`
+**Status:** !`git status --short`
 
-**Recent Commits:** `git log --oneline -5`
+**Recent Commits:** !`git log --oneline -5`
 
-**Remote Status:** `git fetch && git status -sb`
+**Remote Status:** !`git status -sb`
 
 Provide:
 
@@ -214,8 +214,8 @@ Provide:
 ```markdown
 ---
 description: Deploy to specified environment
-argument-hint: [environment] [version]
-allowed-tools: Bash(kubectl:*), Read
+argument-hint: "[environment] [version]"
+allowed-tools: Bash(kubectl *), Read
 ---
 
 Deploy to $1 environment using version $2
@@ -224,7 +224,7 @@ Deploy to $1 environment using version $2
 
 1. Verify $1 configuration exists
 2. Check version $2 is valid
-3. Verify cluster accessibility: `kubectl cluster-info`
+3. Verify cluster accessibility with the Bash tool.
 
 **Deployment Steps:**
 
@@ -255,7 +255,7 @@ Proceed with deployment? (yes/no)
 ```markdown
 ---
 description: Compare two files
-argument-hint: [file1] [file2]
+argument-hint: "[file1] [file2]"
 ---
 
 Compare @$1 with @$2
@@ -301,7 +301,7 @@ Present as structured comparison report.
 ```markdown
 ---
 description: Quick fix for common issues
-argument-hint: [issue-description]
+argument-hint: "[issue-description]"
 model: haiku
 ---
 
@@ -340,7 +340,7 @@ Provide code changes with file paths and line numbers.
 ```markdown
 ---
 description: Research best practices for topic
-argument-hint: [topic]
+argument-hint: "[topic]"
 model: sonnet
 ---
 
@@ -386,7 +386,7 @@ Provide actionable guidance based on research.
 ```markdown
 ---
 description: Explain how code works
-argument-hint: [file-or-function]
+argument-hint: "[file-or-function]"
 ---
 
 Explain @$1 in detail
@@ -448,10 +448,10 @@ Analyze but don't modify...
 
 ```markdown
 ---
-allowed-tools: Bash(git:*)
+allowed-tools: Bash(git *)
 ---
 
-`git status`
+Repository status: !`git status --short`
 Analyze and suggest...
 ```
 
@@ -461,7 +461,7 @@ Analyze and suggest...
 
 ```markdown
 ---
-argument-hint: [target]
+argument-hint: "[target]"
 ---
 
 Process $1...
@@ -473,7 +473,7 @@ Process $1...
 
 ```markdown
 ---
-argument-hint: [source] [target] [options]
+argument-hint: "[source] [target] [options]"
 ---
 
 Process $1 to $2 with $3...
@@ -505,10 +505,10 @@ Compare @$1 with @$2...
 
 ```markdown
 ---
-allowed-tools: Bash(git:*), Read
+allowed-tools: Bash(git *), Read
 ---
 
-Context: `git status`
+Context: !`git status --short`
 Files: @file1 @file2
 
 Analyze...

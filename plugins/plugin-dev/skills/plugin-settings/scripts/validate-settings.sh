@@ -37,11 +37,10 @@ if [ ! -r "$SETTINGS_FILE" ]; then
 fi
 echo "✅ File is readable"
 
-# Check 3: Has frontmatter markers
-MARKER_COUNT=$(grep -c '^---$' "$SETTINGS_FILE" 2>/dev/null || echo "0")
-
-if [ "$MARKER_COUNT" -lt 2 ]; then
-  echo "❌ Invalid frontmatter: found $MARKER_COUNT '---' markers (need at least 2)"
+# Check 3: Has valid opening frontmatter markers
+FIRST_LINE=$(head -n 1 "$SETTINGS_FILE")
+if [ "$FIRST_LINE" != "---" ]; then
+  echo "❌ Invalid frontmatter: line 1 must be ---"
   echo "   Expected format:"
   echo "   ---"
   echo "   field: value"
@@ -49,10 +48,20 @@ if [ "$MARKER_COUNT" -lt 2 ]; then
   echo "   Content..."
   exit 1
 fi
+
+if ! tail -n +2 "$SETTINGS_FILE" | grep -q '^---$'; then
+  echo "❌ Invalid frontmatter: missing closing --- marker"
+  exit 1
+fi
+
 echo "✅ Frontmatter markers present"
 
 # Check 4: Extract and validate frontmatter
-FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$SETTINGS_FILE")
+FRONTMATTER=$(awk '
+  NR == 1 { next }
+  /^---$/ { exit }
+  { print }
+' "$SETTINGS_FILE")
 
 if [ -z "$FRONTMATTER" ]; then
   echo "❌ Empty frontmatter (nothing between --- markers)"
@@ -61,29 +70,43 @@ fi
 echo "✅ Frontmatter not empty"
 
 # Check 5: Frontmatter has valid YAML-like structure
-if ! echo "$FRONTMATTER" | grep -q ':'; then
+if ! printf '%s\n' "$FRONTMATTER" | grep -q ':'; then
   echo "⚠️  Warning: Frontmatter has no key:value pairs"
 fi
 
 # Check 6: Look for common fields
 echo ""
 echo "Detected fields:"
-echo "$FRONTMATTER" | grep '^[a-z_][a-z0-9_]*:' | while IFS=':' read -r key value; do
+while IFS=':' read -r key value; do
   echo "  - $key: ${value:0:50}"
-done
+done < <(printf '%s\n' "$FRONTMATTER" | grep '^[a-z_][a-z0-9_]*:' || true)
 
-# Check 7: Validate common boolean fields
-for field in enabled strict_mode; do
-  VALUE=$(echo "$FRONTMATTER" | grep "^${field}:" | sed "s/${field}: *//" || true)
-  if [ -n "$VALUE" ]; then
-    if [ "$VALUE" != "true" ] && [ "$VALUE" != "false" ]; then
-      echo "⚠️  Field '$field' should be boolean (true/false), got: $VALUE"
-    fi
-  fi
-done
+# Check 7: Validate common fields
+VALUE=$(printf '%s\n' "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//' || true)
+if [ -n "$VALUE" ] && [ "$VALUE" != "true" ] && [ "$VALUE" != "false" ]; then
+  echo "⚠️  Field 'enabled' should be boolean (true/false), got: $VALUE"
+fi
+
+VALIDATION_MODE=$(printf '%s\n' "$FRONTMATTER" | grep '^validation_mode:' | sed 's/validation_mode: *//' || true)
+if [ -n "$VALIDATION_MODE" ] && [ "$VALIDATION_MODE" != "strict" ] && [ "$VALIDATION_MODE" != "standard" ] && [ "$VALIDATION_MODE" != "lenient" ]; then
+  echo "⚠️  Field 'validation_mode' should be strict, standard, or lenient, got: $VALIDATION_MODE"
+fi
 
 # Check 8: Check body exists
-BODY=$(awk '/^---$/{i++; next} i>=2' "$SETTINGS_FILE")
+BODY=$(awk '
+  NR == 1 {
+    if ($0 == "---") {
+      in_body = 0
+      next
+    }
+    exit
+  }
+  in_body == 0 && /^---$/ {
+    in_body = 1
+    next
+  }
+  in_body == 1 { print }
+' "$SETTINGS_FILE")
 
 echo ""
 if [ -n "$BODY" ]; then
@@ -97,5 +120,5 @@ echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "✅ Settings file structure is valid"
 echo ""
-echo "Reminder: Changes to this file require restarting Claude Code"
+echo "Reminder: Settings content is read on the next hook/command invocation; restart only after hook registration or plugin configuration changes"
 exit 0

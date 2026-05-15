@@ -101,7 +101,7 @@ Get information about code symbols.
 
 Not all servers support all capabilities. Common support levels:
 
-### Full Support (Most Servers)
+### Commonly Supported
 
 - Diagnostics
 - Go to definition
@@ -126,7 +126,7 @@ Not all servers support all capabilities. Common support levels:
 
 ## Checking Server Capabilities
 
-Servers declare supported capabilities during initialization. Claude Code automatically uses available features.
+Servers declare supported capabilities during initialization. Claude Code can use available features that are exposed by the current integration.
 
 To see what a server supports, check the server's documentation or the initialize response:
 
@@ -146,12 +146,12 @@ To see what a server supports, check the server's documentation or the initializ
 
 ## Claude Code Usage
 
-Claude Code primarily uses these capabilities:
+Claude Code may use these capabilities when available:
 
-1. **Diagnostics** - Automatic error detection after edits
+1. **Diagnostics** - Error detection after edits
 2. **Definition** - Understanding code structure
-3. **References** - Finding all usages for safe refactoring
+3. **References** - Finding usages for safe refactoring
 4. **Hover** - Getting type information and documentation
 5. **Document symbols** - Navigating file structure
 
-These provide more precise code understanding than text-based search alone.
+These can provide more precise code understanding than text-based search alone.

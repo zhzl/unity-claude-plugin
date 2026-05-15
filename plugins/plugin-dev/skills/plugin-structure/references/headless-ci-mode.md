@@ -15,14 +15,14 @@ claude -p "Analyze this codebase for security issues" --allowedTools "Read,Grep,
 - **Hooks:** Command hooks execute normally. Prompt hooks work for supported events.
 - **MCP servers:** Start and connect as usual. Tools are available.
 - **CLAUDE.md:** Project and user memory files load normally.
-- **Agents:** Can be spawned via Task tool during execution.
-- **Skills (as context):** Skill content with `user-invocable: false` loads into context and is available for Claude to use.
+- **Agents:** Can be spawned via the Agent tool during execution.
+- **Skills (for discovery):** Skill descriptions remain available for auto-discovery, and Claude can invoke matching skills programmatically when appropriate.
 
 ### What Does NOT Work in Headless Mode
 
 - **Slash commands:** `/skill-name` invocation requires an interactive session. Skills cannot be invoked via slash commands in `-p` mode.
 - **Interactive prompts:** `AskUserQuestion` tool is not available — there's no user to answer.
-- **Skill tool (manual):** Users can't type `/` to invoke skills. Instead, describe the task and let Claude use the skill content if loaded.
+- **Skill tool (manual):** Users can't type `/` to invoke skills. Instead, describe the task and let Claude decide whether to invoke a matching skill.
 
 ### Workaround for Skills
 
@@ -36,7 +36,7 @@ claude -p "/review"
 claude -p "Review the codebase for code quality issues"
 ```
 
-If the skill has `user-invocable: false` and is loaded via plugin, Claude can still use its knowledge automatically.
+If a matching skill is installed, Claude can still discover it from the skill description and invoke it automatically when appropriate. `user-invocable: false` only hides interactive slash invocation; it does not preload the full SKILL.md body in headless mode.
 
 ## Permission Control
 
@@ -55,7 +55,7 @@ claude -p "Fix the bug" --allowedTools "Read,Write,Edit,Bash(git *)"
 | `Read`                 | All Read tool calls                                          |
 | `Bash(git *)`          | Bash commands starting with "git " (prefix match with space) |
 | `mcp__*`               | All MCP tool calls                                           |
-| `mcp__plugin_myplug_*` | Tools from a specific plugin's MCP server                    |
+| `mcp__myserver__*`     | Tools from a specific MCP server                             |
 | `Write,Edit`           | Multiple tools (comma-separated)                             |
 
 **Plugin design tip:** Document recommended `--allowedTools` values in your plugin README for CI usage.
@@ -86,7 +86,7 @@ Returns:
 {
   "result": "Found 5 TODO comments...",
   "session_id": "abc123",
-  "metadata": { ... }
+  "metadata": {}
 }
 ```
 
@@ -168,7 +168,7 @@ This plugin works in headless mode. Example:
 
 \`\`\`bash
 claude -p "Run security audit" \
- --allowedTools "Read,Grep,Glob,Bash(npm:\*)" \
+ --allowedTools "Read,Grep,Glob,Bash(npm \*)" \
  --max-turns 20 \
  --output-format json
 \`\`\`

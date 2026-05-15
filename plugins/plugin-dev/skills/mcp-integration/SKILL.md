@@ -1,6 +1,6 @@
 ---
 name: mcp-integration
-description: This skill should be used when the user asks to "add MCP server", "integrate MCP", "configure MCP in plugin", "use .mcp.json", "set up Model Context Protocol", "connect external service", mentions "${CLAUDE_PLUGIN_ROOT} with MCP", discusses MCP server types (SSE, stdio, HTTP, WebSocket), or asks to "find MCP server", "discover MCP servers", "what MCP servers exist", "recommend MCP server for [service]", "MCP prompts", "MCP prompts as commands", "tool search", "tool search threshold", "claude mcp serve", "allowedMcpServers", "deniedMcpServers", "managed MCP". Provides comprehensive guidance for integrating Model Context Protocol servers into Claude Code plugins for external tool and service integration.
+description: This skill should be used when the user asks to "add MCP server", "integrate MCP", "configure MCP in plugin", "use .mcp.json", "set up Model Context Protocol", "connect external service", mentions "${CLAUDE_PLUGIN_ROOT} with MCP", discusses MCP server types (stdio, SSE, HTTP/streamable HTTP), or asks to "find MCP server", "discover MCP servers", "what MCP servers exist", "recommend MCP server for [service]", "MCP prompts", "MCP prompts as commands", "tool search", "tool search threshold", "claude mcp serve", "allowedMcpServers", "deniedMcpServers", "managed MCP". Provides comprehensive guidance for integrating Model Context Protocol servers into Claude Code plugins for external tool and service integration.
 ---
 
 # MCP Integration for Claude Code Plugins
@@ -26,11 +26,13 @@ Create `.mcp.json` at plugin root:
 
 ```json
 {
-  "database-tools": {
-    "command": "${CLAUDE_PLUGIN_ROOT}/servers/db-server",
-    "args": ["--config", "${CLAUDE_PLUGIN_ROOT}/config.json"],
-    "env": {
-      "DB_URL": "${DB_URL}"
+  "mcpServers": {
+    "database-tools": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/servers/db-server",
+      "args": ["--config", "${CLAUDE_PLUGIN_ROOT}/config.json"],
+      "env": {
+        "DB_URL": "${DB_URL}"
+      }
     }
   }
 }
@@ -78,16 +80,16 @@ Plugin-bundled MCP servers (via `.mcp.json` or inline in `plugin.json`) auto-sta
 
 ## Discovering MCP Servers
 
-Find existing MCP servers for your plugin using PulseMCP, the comprehensive MCP server directory with 6,800+ servers.
+Find existing MCP servers by checking official service documentation, Anthropic/Claude Code MCP guidance, and general web search. PulseMCP can be a useful optional directory when you want broader community discovery.
 
 **Discovery workflow:**
 
-1. Search PulseMCP using Tavily extract on `https://www.pulsemcp.com/servers?q=[keyword]`
-2. Evaluate results by classification (official vs community), popularity, and relevance
-3. Fetch detail pages for GitHub links and configuration examples
+1. Search official docs or the web for "[service] MCP server" using available Claude Code web search/fetch tools
+2. Prefer official or well-maintained servers over community one-offs
+3. Optionally check PulseMCP for broader discovery and alternatives
 4. Generate `.mcp.json` configuration based on server type
 
-**See `references/server-discovery.md`** for detailed search instructions, URL patterns, and curated server recommendations by category.
+**See `references/server-discovery.md`** for detailed discovery guidance and curated server recommendations by category.
 
 ## MCP Server Types
 
@@ -130,12 +132,14 @@ Connect to hosted MCP servers with OAuth support. Best for cloud services.
 
 ```json
 {
-  "asana": {
+  "hosted-service": {
     "type": "sse",
-    "url": "https://mcp.asana.com/sse"
+    "url": "https://mcp.example.com/sse"
   }
 }
 ```
+
+Hosted MCP URLs are provider-specific and can change over time. Treat example URLs in this skill as placeholders unless the provider's current docs give an exact endpoint to use.
 
 **Use cases:**
 
@@ -150,9 +154,9 @@ Connect to hosted MCP servers with OAuth support. Best for cloud services.
 - User prompted on first use
 - Tokens managed by Claude Code
 
-### HTTP (REST API)
+### HTTP (MCP over HTTP)
 
-Connect to RESTful MCP servers with token authentication.
+Connect to MCP servers over HTTP with token authentication. The endpoint must implement MCP over HTTP; arbitrary REST endpoints are not MCP servers.
 
 **Configuration:**
 
@@ -171,35 +175,10 @@ Connect to RESTful MCP servers with token authentication.
 
 **Use cases:**
 
-- REST API-based MCP servers
+- Hosted MCP endpoints
 - Token-based authentication
-- Custom API backends
+- Custom MCP backends
 - Stateless interactions
-
-### WebSocket (Real-time)
-
-Connect to WebSocket MCP servers for real-time bidirectional communication.
-
-**Configuration:**
-
-```json
-{
-  "realtime-service": {
-    "type": "ws",
-    "url": "wss://mcp.example.com/ws",
-    "headers": {
-      "Authorization": "Bearer ${TOKEN}"
-    }
-  }
-}
-```
-
-**Use cases:**
-
-- Real-time data streaming
-- Persistent connections
-- Push notifications from server
-- Low-latency requirements
 
 ## Environment Variable Expansion
 
@@ -230,16 +209,15 @@ Env vars support fallback values: `${VAR:-default_value}`. If `VAR` is unset, `d
 
 ## MCP Tool Naming
 
-When MCP servers provide tools, they're automatically prefixed:
+When MCP servers provide tools, they're automatically named by server and tool:
 
-**Format:** `mcp__plugin_<plugin-name>_<server-name>__<tool-name>`
+**Format:** `mcp__<server-name>__<tool-name>`
 
 **Example:**
 
-- Plugin: `asana`
 - Server: `asana`
-- Tool: `create_task`
-- **Full name:** `mcp__plugin_asana_asana__asana_create_task`
+- Tool: `asana_create_task`
+- **Full name:** `mcp__asana__asana_create_task`
 
 ## MCP Resources
 
@@ -308,15 +286,15 @@ For MCP servers with many tools, use Tool Search to find relevant tools:
 2. Search by natural language or partial names
 3. Get filtered list of matching tools
 
-### Auto-Enable Behavior
+### Default Behavior
 
-Tool Search activates automatically when MCP servers collectively provide more tools than fit efficiently in Claude's context window (default threshold: 10% of context). Instead of loading all tool descriptions upfront, Claude searches for relevant tools on-demand.
+MCP Tool Search is enabled by default. Claude Code can search MCP tool names and descriptions on demand instead of relying only on tools loaded into the immediate context.
 
 **Plugin design implications:**
 
 - **Many-tool servers**: Tools may not be immediately visible; use descriptive tool names and descriptions
 - **Documentation**: Note tool search behavior in README if your server provides 20+ tools
-- **Environment control**: `ENABLE_TOOL_SEARCH=auto:5` (custom 5% threshold) or `ENABLE_TOOL_SEARCH=false` (disable)
+- **Environment control**: use `ENABLE_TOOL_SEARCH=auto` for automatic threshold behavior or `ENABLE_TOOL_SEARCH=auto:N` for a custom threshold
 
 This feature is automatic - just ask Claude about available tools or describe what you want to do.
 
@@ -326,7 +304,10 @@ Pre-allow specific MCP tools in command frontmatter:
 
 ```markdown
 ---
-allowed-tools: mcp__plugin_asana_asana__asana_create_task, mcp__plugin_asana_asana__asana_search_tasks
+description: Create and search Asana tasks
+allowed-tools:
+  - mcp__asana__asana_create_task
+  - mcp__asana__asana_search_tasks
 ---
 ```
 
@@ -334,7 +315,9 @@ allowed-tools: mcp__plugin_asana_asana__asana_create_task, mcp__plugin_asana_asa
 
 ```markdown
 ---
-allowed-tools: mcp__plugin_asana_asana__*
+description: Use Asana MCP tools for task management
+allowed-tools:
+  - mcp__asana__*
 ---
 ```
 
@@ -354,7 +337,7 @@ allowed-tools: mcp__plugin_asana_asana__*
 2. MCP configuration parsed
 3. Server process started (stdio) or connection established (SSE/HTTP/WS)
 4. Tools discovered and registered
-5. Tools available as `mcp__plugin_...__...`
+5. Tools available as `mcp__<server-name>__<tool-name>`
 
 **Viewing servers:**
 Use `/mcp` command to see all servers including plugin-provided ones.
@@ -417,12 +400,12 @@ Commands use MCP tools with user interaction:
 
 ---
 
-allowed-tools: `mcp__plugin_name_server__create_item`
+allowed-tools: `mcp__inventory__create_item`
 
 Steps:
 
 1. Gather item details from user
-2. Use `mcp__plugin_name_server__create_item`
+2. Use `mcp__inventory__create_item`
 3. Confirm creation
 ```
 
@@ -437,7 +420,7 @@ Agents use MCP tools autonomously:
 
 Analysis Process:
 
-1. Query data via `mcp__plugin_db_server__query`
+1. Query data via `mcp__database__query`
 2. Process and analyze results
 3. Generate insights report
 ```
@@ -450,26 +433,28 @@ Integrate multiple MCP servers:
 
 ```json
 {
-  "github": {
+  "source-control": {
     "type": "sse",
-    "url": "https://mcp.github.com/sse"
+    "url": "https://mcp.example.com/sse"
   },
-  "jira": {
+  "issue-tracker": {
     "type": "sse",
-    "url": "https://mcp.jira.com/sse"
+    "url": "https://mcp.example.com/sse"
   }
 }
 ```
+
+Use provider docs to replace these placeholders with current hosted endpoints.
 
 **Use for:** Workflows spanning multiple services.
 
 ## Security Best Practices
 
-### Use HTTPS/WSS
+### Use HTTPS
 
-Always use secure connections:
+Always use secure connections for hosted MCP endpoints:
 
-```json
+```text
 ✅ "url": "https://mcp.example.com/sse"
 ❌ "url": "http://mcp.example.com/sse"
 ```
@@ -493,9 +478,9 @@ Always use secure connections:
 Pre-allow only necessary MCP tools:
 
 ```markdown
-✅ allowed-tools: `mcp__plugin_api_server__read_data`, `mcp__plugin_api_server__create_item`
+✅ allowed-tools: `mcp__api__read_data`, `mcp__api__create_item`
 
-❌ allowed-tools: mcp__plugin_api_server__*
+❌ allowed-tools: mcp__api__*
 ```
 
 ### Managed MCP Controls (Enterprise)
@@ -699,16 +684,15 @@ Look for:
 | ----- | --------- | --------------------------- | -------- |
 | stdio | Process   | Local tools, custom servers | Env vars |
 | SSE   | HTTP      | Hosted services, cloud APIs | OAuth    |
-| HTTP  | REST      | API backends, token auth    | Tokens   |
-| ws    | WebSocket | Real-time, streaming        | Tokens   |
+| HTTP  | MCP over HTTP | Hosted MCP endpoints, token auth | Tokens   |
 
 ### Configuration Checklist
 
-- [ ] Server type specified (stdio/SSE/HTTP/ws)
+- [ ] Server type specified (stdio/SSE/HTTP or streamable-http)
 - [ ] Type-specific fields complete (command or url)
 - [ ] Authentication configured
 - [ ] Environment variables documented
-- [ ] HTTPS/WSS used (not HTTP/WS)
+- [ ] HTTPS used for hosted MCP endpoints
 - [ ] ${CLAUDE_PLUGIN_ROOT} used for paths
 
 ### Best Practices
@@ -717,7 +701,7 @@ Look for:
 
 - ✅ Use ${CLAUDE_PLUGIN_ROOT} for portable paths
 - ✅ Document required environment variables
-- ✅ Use secure connections (HTTPS/WSS)
+- ✅ Use secure connections (HTTPS for HTTP/SSE)
 - ✅ Pre-allow specific MCP tools in commands
 - ✅ Test MCP integration before publishing
 - ✅ Handle connection and tool errors gracefully
@@ -737,7 +721,7 @@ Look for:
 
 For detailed information, consult:
 
-- **`references/server-discovery.md`** - Find MCP servers using PulseMCP directory
+- **`references/server-discovery.md`** - Find MCP servers using official docs, web search, and optional directories
 - **`references/server-types.md`** - Deep dive on each server type
 - **`references/authentication.md`** - Authentication patterns and OAuth
 - **`references/tool-usage.md`** - Using MCP tools in commands and agents
@@ -748,13 +732,14 @@ Working examples in `examples/`:
 
 - **`stdio-server.json`** - Local stdio MCP server
 - **`sse-server.json`** - Hosted SSE server with OAuth
-- **`http-server.json`** - REST API with token auth
-- **`ws-server.json`** - WebSocket server for real-time communication
+- **`http-server.json`** - HTTP MCP endpoint with token auth
+
+`ws-server.json` is retained only as an unsupported-transport note because WebSocket is not a documented Claude Code MCP transport.
 
 ### External Resources
 
 - **Official MCP Docs**: <https://modelcontextprotocol.io/>
-- **Claude Code MCP Docs**: <https://docs.claude.com/en/docs/claude-code/mcp>
+- **Claude Code MCP Docs**: <https://code.claude.com/docs/en/mcp>
 - **MCP SDK**: @modelcontextprotocol/sdk
 - **Testing**: Use `claude --debug` and `/mcp` command
 
@@ -762,7 +747,7 @@ Working examples in `examples/`:
 
 To add MCP integration to a plugin:
 
-1. Choose MCP server type (stdio, SSE, HTTP, ws)
+1. Choose MCP server type (stdio, SSE, HTTP/streamable HTTP)
 2. Create `.mcp.json` at plugin root with configuration
 3. Use ${CLAUDE_PLUGIN_ROOT} for all file references
 4. Document required environment variables in README

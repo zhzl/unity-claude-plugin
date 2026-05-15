@@ -47,7 +47,7 @@ This markdown body can contain:
 ```markdown
 ---
 enabled: true
-strict_mode: false
+validation_mode: standard
 max_retries: 3
 notification_level: info
 coordinator_session: team-leader
@@ -78,11 +78,18 @@ if [[ ! -f "$STATE_FILE" ]]; then
 fi
 
 # Parse YAML frontmatter (between --- markers)
-FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$STATE_FILE")
+FRONTMATTER=$(awk '
+  NR == 1 {
+    if ($0 != "---") exit 1
+    next
+  }
+  /^---$/ { exit }
+  { print }
+' "$STATE_FILE")
 
-# Extract individual fields
-ENABLED=$(echo "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//' | sed 's/^"\(.*\)"$/\1/')
-STRICT_MODE=$(echo "$FRONTMATTER" | grep '^strict_mode:' | sed 's/strict_mode: *//' | sed 's/^"\(.*\)"$/\1/')
+# Extract individual fields. `grep` may return no matches, so keep `set -e` safe.
+ENABLED=$(printf '%s\n' "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//' | sed 's/^"\(.*\)"$/\1/' || true)
+VALIDATION_MODE=$(printf '%s\n' "$FRONTMATTER" | grep '^validation_mode:' | sed 's/validation_mode: *//' | sed 's/^"\(.*\)"$/\1/' || true)
 
 # Check if enabled
 if [[ "$ENABLED" != "true" ]]; then
@@ -90,13 +97,13 @@ if [[ "$ENABLED" != "true" ]]; then
 fi
 
 # Use configuration in hook logic
-if [[ "$STRICT_MODE" == "true" ]]; then
+if [[ "$VALIDATION_MODE" == "strict" ]]; then
   # Apply strict validation
   # ...
 fi
 ```
 
-See `examples/read-settings-hook.sh` for complete working example.
+See `examples/read-settings-hook.sh` for complete working example. That example requires `jq` because it reads hook JSON input and emits JSON output.
 
 ### From Commands
 
@@ -143,7 +150,14 @@ If present, parse YAML frontmatter and adapt behavior according to:
 
 ```bash
 # Extract everything between --- markers
-FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$FILE")
+FRONTMATTER=$(awk '
+  NR == 1 {
+    if ($0 != "---") exit 1
+    next
+  }
+  /^---$/ { exit }
+  { print }
+' "$FILE")
 ```
 
 ### Read Individual Fields
@@ -151,20 +165,20 @@ FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$FILE")
 **String fields:**
 
 ```bash
-VALUE=$(echo "$FRONTMATTER" | grep '^field_name:' | sed 's/field_name: *//' | sed 's/^"\(.*\)"$/\1/')
+VALUE=$(printf '%s\n' "$FRONTMATTER" | grep '^field_name:' | sed 's/field_name: *//' | sed 's/^"\(.*\)"$/\1/' || true)
 ```
 
 **Boolean fields:**
 
 ```bash
-ENABLED=$(echo "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//')
+ENABLED=$(printf '%s\n' "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//' || true)
 # Compare: if [[ "$ENABLED" == "true" ]]; then
 ```
 
 **Numeric fields:**
 
 ```bash
-MAX=$(echo "$FRONTMATTER" | grep '^max_value:' | sed 's/max_value: *//')
+MAX=$(printf '%s\n' "$FRONTMATTER" | grep '^max_value:' | sed 's/max_value: *//' || true)
 # Use: if [[ $MAX -gt 100 ]]; then
 ```
 
@@ -173,8 +187,21 @@ MAX=$(echo "$FRONTMATTER" | grep '^max_value:' | sed 's/max_value: *//')
 Extract content after second `---`:
 
 ```bash
-# Get everything after closing ---
-BODY=$(awk '/^---$/{i++; next} i>=2' "$FILE")
+# Get everything after the closing marker; later body --- lines are preserved
+BODY=$(awk '
+  NR == 1 {
+    if ($0 == "---") {
+      in_body = 0
+      next
+    }
+    exit
+  }
+  in_body == 0 && /^---$/ {
+    in_body = 1
+    next
+  }
+  in_body == 1 { print }
+' "$FILE")
 ```
 
 ## Common Patterns
@@ -193,8 +220,15 @@ if [[ ! -f "$STATE_FILE" ]]; then
 fi
 
 # Read enabled flag
-FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$STATE_FILE")
-ENABLED=$(echo "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//')
+FRONTMATTER=$(awk '
+  NR == 1 {
+    if ($0 != "---") exit 1
+    next
+  }
+  /^---$/ { exit }
+  { print }
+' "$STATE_FILE")
+ENABLED=$(printf '%s\n' "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//' || true)
 
 if [[ "$ENABLED" != "true" ]]; then
   exit 0  # Disabled
@@ -204,7 +238,7 @@ fi
 # ...
 ```
 
-**Use case:** Enable/disable hooks without editing hooks.json (requires restart).
+**Use case:** Enable/disable hook behavior without editing hook registration.
 
 ### Pattern 2: Agent State Management
 
@@ -236,8 +270,8 @@ Implement JWT authentication for the API.
 Read from hooks to coordinate agents:
 
 ```bash
-AGENT_NAME=$(echo "$FRONTMATTER" | grep '^agent_name:' | sed 's/agent_name: *//')
-COORDINATOR=$(echo "$FRONTMATTER" | grep '^coordinator_session:' | sed 's/coordinator_session: *//')
+AGENT_NAME=$(printf '%s\n' "$FRONTMATTER" | grep '^agent_name:' | sed 's/agent_name: *//' || true)
+COORDINATOR=$(printf '%s\n' "$FRONTMATTER" | grep '^coordinator_session:' | sed 's/coordinator_session: *//' || true)
 
 # Send notification to coordinator
 tmux send-keys -t "$COORDINATOR" "Agent $AGENT_NAME completed task" Enter
@@ -264,7 +298,7 @@ All writes validated against security policies.
 Use in hooks or commands:
 
 ```bash
-LEVEL=$(echo "$FRONTMATTER" | grep '^validation_level:' | sed 's/validation_level: *//')
+LEVEL=$(printf '%s\n' "$FRONTMATTER" | grep '^validation_level:' | sed 's/validation_level: *//' || true)
 
 case "$LEVEL" in
   strict)
@@ -294,7 +328,7 @@ Steps:
 2. Create `.claude/my-plugin.local.md` with YAML frontmatter
 3. Set appropriate values based on user input
 4. Inform user that settings are saved
-5. Remind user to restart Claude Code for hooks to recognize changes
+5. Tell the user that settings are read on the next hook/command invocation; restart Claude Code only after changing hook registration or plugin configuration
 ```
 
 ### Template Generation
@@ -306,12 +340,11 @@ Provide template in plugin README:
 
 Create `.claude/my-plugin.local.md` in the project:
 
-## \`\`\`markdown
-
+\`\`\`markdown
+---
 enabled: true
 mode: standard
 max_retries: 3
-
 ---
 
 # Plugin Configuration
@@ -319,7 +352,7 @@ max_retries: 3
 Settings are active.
 \`\`\`
 
-After creating or editing, restart Claude Code for changes to take effect.
+After creating or editing settings content, the next hook or command invocation can read the new values. Restart Claude Code only after changing hook registration or plugin configuration.
 ```
 
 ## Best Practices
@@ -369,7 +402,7 @@ fi
 Validate settings values:
 
 ```bash
-MAX=$(echo "$FRONTMATTER" | grep '^max_value:' | sed 's/max_value: *//')
+MAX=$(printf '%s\n' "$FRONTMATTER" | grep '^max_value:' | sed 's/max_value: *//' || true)
 
 # Validate numeric range
 if ! [[ "$MAX" =~ ^[0-9]+$ ]] || [[ $MAX -lt 1 ]] || [[ $MAX -gt 100 ]]; then
@@ -380,7 +413,7 @@ fi
 
 ### Restart Requirement
 
-**Important:** Settings changes require Claude Code restart.
+**Important:** Settings file content changes do not require a restart if your hook or command reads the file each time. Restart Claude Code only after changing hook registration or plugin configuration.
 
 Document in the plugin README:
 
@@ -390,12 +423,11 @@ Document in the plugin README:
 After editing `.claude/my-plugin.local.md`:
 
 1. Save the file
-2. Exit Claude Code
-3. Restart: `claude`
-4. New settings will be loaded
+2. Run the command again or wait for the next hook invocation
+3. Restart Claude Code only if you changed hook registration or plugin configuration
 ```
 
-Hooks cannot be hot-swapped within a session.
+Hook definitions cannot be hot-swapped within a session, but hook scripts can read updated settings files on each invocation.
 
 ## Security Considerations
 
@@ -404,15 +436,14 @@ Hooks cannot be hot-swapped within a session.
 When writing settings files from user input:
 
 ```bash
-# Escape quotes in user input
-SAFE_VALUE=$(echo "$USER_INPUT" | sed 's/"/\\"/g')
+# Prefer allowlisted values for YAML fields.
+case "$USER_CHOICE" in
+  strict|standard|lenient) MODE="$USER_CHOICE" ;;
+  *) echo "Invalid mode" >&2; exit 2 ;;
+esac
 
-# Write to file
-cat > "$STATE_FILE" <<EOF
----
-user_setting: "$SAFE_VALUE"
----
-EOF
+# For free text, avoid hand-escaping YAML. Put it in the markdown body,
+# or use a YAML-aware writer such as yq/python instead of interpolating raw input.
 ```
 
 ### Validate File Paths
@@ -420,7 +451,7 @@ EOF
 If settings contain file paths:
 
 ```bash
-FILE_PATH=$(echo "$FRONTMATTER" | grep '^data_file:' | sed 's/data_file: *//')
+FILE_PATH=$(printf '%s\n' "$FRONTMATTER" | grep '^data_file:' | sed 's/data_file: *//' || true)
 
 # Check for path traversal
 if [[ "$FILE_PATH" == *".."* ]]; then
@@ -504,10 +535,17 @@ project-root/
 
 ```bash
 # Extract frontmatter
-FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$FILE")
+FRONTMATTER=$(awk '
+  NR == 1 {
+    if ($0 != "---") exit 1
+    next
+  }
+  /^---$/ { exit }
+  { print }
+' "$FILE")
 
-# Read field
-VALUE=$(echo "$FRONTMATTER" | grep '^field:' | sed 's/field: *//' | sed 's/^"\(.*\)"$/\1/')
+# Read field. `grep` may return no matches, so keep `set -e` safe.
+VALUE=$(printf '%s\n' "$FRONTMATTER" | grep '^field:' | sed 's/field: *//' | sed 's/^"\(.*\)"$/\1/' || true)
 ```
 
 ### Body Parsing
@@ -557,6 +595,8 @@ Working examples in `examples/`:
 
 ### Utility Scripts
 
+These scripts assume a shell environment with `bash` 3.2+, `grep`, and `sed`. The `examples/read-settings-hook.sh` example also requires `jq` for parsing hook JSON input and generating JSON output. Check tool availability with `bash --version`, `grep --version`, `sed --version`, and `jq --version` when debugging script failures.
+
 Development tools in `scripts/`:
 
 - **`validate-settings.sh`** - Validate settings file structure
@@ -572,6 +612,6 @@ To add settings to a plugin:
 4. Implement settings parsing in hooks/commands
 5. Use quick-exit pattern (check file exists, check enabled field)
 6. Document settings in plugin README with template
-7. Remind users that changes require Claude Code restart
+7. Explain that settings content is read on the next hook/command invocation, while hook registration or plugin configuration changes require a Claude Code restart
 
 Focus on keeping settings simple and providing good defaults when settings file doesn't exist.

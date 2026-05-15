@@ -22,7 +22,7 @@ Plugin is active in standard mode.
 ```markdown
 ---
 enabled: true
-strict_mode: false
+validation_mode: standard
 max_file_size: 1000000
 allowed_extensions: [".js", ".ts", ".tsx"]
 enable_logging: true
@@ -127,7 +127,7 @@ fi
 
 # Read settings
 FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' ".claude/my-plugin.local.md")
-ENABLED=$(echo "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//')
+ENABLED=$(printf '%s\n' "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//' || true)
 
 # Apply settings
 if [[ "$ENABLED" == "true" ]]; then
@@ -154,9 +154,8 @@ Users can edit settings files manually:
 # Edit settings
 vim .claude/my-plugin.local.md
 
-# Changes take effect after restart
-exit  # Exit Claude Code
-claude  # Restart
+# Run the command again or wait for the next hook invocation.
+# Restart Claude Code only after changing hook registration or plugin configuration.
 ```
 
-Changes require Claude Code restart - hooks can't be hot-swapped.
+Settings content changes can be read by hooks/commands on their next invocation. Restart Claude Code only after changing hook registration or plugin configuration.

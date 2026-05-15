@@ -16,17 +16,19 @@ if [ -z "$command" ]; then
   exit 0
 fi
 
-# SECURITY: Check for command chaining/injection patterns FIRST
+# SECURITY: Check for shell control/injection patterns FIRST
 # These checks must run before the "safe command" allowlist to prevent bypasses
-# like: echo $(rm -rf /), ls; malicious, pwd && evil, whoami | exfil
-# Note: This is not exhaustive - production hooks should consider additional
-# patterns like newlines (\n), null bytes (\x00), and shell-specific syntax
+# like: echo $(rm -rf /), ls; malicious, pwd && evil, whoami | exfil, echo ok > file
+# Note: This is an example, not a full shell parser. Production hooks should
+# consider a real parser or stricter allowlist for complex command policies.
 # shellcheck disable=SC2016 # Single quotes intentional - matching literal $( and ` characters
-if [[ "$command" == *";"* ]] || [[ "$command" == *"|"* ]] ||
-   [[ "$command" == *'$('* ]] || [[ "$command" == *'`'* ]] ||
-   [[ "$command" == *"&&"* ]] || [[ "$command" == *"||"* ]]; then
-  echo '{"hookSpecificOutput": {"permissionDecision": "ask"}, "systemMessage": "Command chaining detected - requires review"}' >&2
-  exit 2
+if [[ "$command" == *$'\n'* ]] || [[ "$command" == *$'\r'* ]] ||
+   [[ "$command" == *";"* ]] || [[ "$command" == *"|"* ]] ||
+   [[ "$command" == *"&"* ]] || [[ "$command" == *">"* ]] ||
+   [[ "$command" == *"<"* ]] || [[ "$command" == *'$('* ]] ||
+   [[ "$command" == *'`'* ]]; then
+  echo '{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "ask"}, "systemMessage": "Shell control syntax detected - requires review"}'
+  exit 0
 fi
 
 # Check for obviously safe commands (quick approval)
@@ -37,20 +39,20 @@ fi
 
 # Check for destructive operations
 if [[ "$command" == *"rm -rf"* ]] || [[ "$command" == *"rm -fr"* ]]; then
-  echo '{"hookSpecificOutput": {"permissionDecision": "deny"}, "systemMessage": "Dangerous command detected: rm -rf"}' >&2
-  exit 2
+  echo '{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny"}, "systemMessage": "Dangerous command detected: rm -rf"}'
+  exit 0
 fi
 
 # Check for other dangerous commands
 if [[ "$command" == *"dd if="* ]] || [[ "$command" == *"mkfs"* ]] || [[ "$command" == *"> /dev/"* ]]; then
-  echo '{"hookSpecificOutput": {"permissionDecision": "deny"}, "systemMessage": "Dangerous system operation detected"}' >&2
-  exit 2
+  echo '{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny"}, "systemMessage": "Dangerous system operation detected"}'
+  exit 0
 fi
 
 # Check for privilege escalation
 if [[ "$command" == sudo* ]] || [[ "$command" == su* ]]; then
-  echo '{"hookSpecificOutput": {"permissionDecision": "ask"}, "systemMessage": "Command requires elevated privileges"}' >&2
-  exit 2
+  echo '{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "ask"}, "systemMessage": "Command requires elevated privileges"}'
+  exit 0
 fi
 
 # Approve the operation

@@ -1,7 +1,7 @@
 ---
 description: Create plugins with guided 8-phase workflow
-argument-hint: [plugin-description]
-allowed-tools: Read, Write, Edit, Grep, Glob, Bash(mkdir:*), Bash(git init:*), TaskCreate, TaskGet, TaskUpdate, TaskList, AskUserQuestion, Skill, Task
+argument-hint: "[plugin-description]"
+allowed-tools: Read, Write, Edit, Grep, Glob, Bash(mkdir *), Bash(git init *), TaskCreate, TaskGet, TaskUpdate, TaskList, AskUserQuestion, Skill, Agent
 model: sonnet
 ---
 
@@ -20,7 +20,7 @@ Guide the user through creating a complete, high-quality Claude Code plugin from
 
 **Initial request:** $ARGUMENTS
 
-**Security note:** This workflow has broad file system access to create plugin structures. It can write files and create directories within your permission scope. Review the target directory before starting, and see [docs/workflow-security.md](../../../docs/workflow-security.md) for details.
+**Security note:** This workflow has broad file system access to create plugin structures. It can write files and create directories within your permission scope. Review the target directory before starting, and see [docs/workflow-security.md](../docs/workflow-security.md) for details.
 
 ---
 
@@ -147,11 +147,12 @@ Guide the user through creating a complete, high-quality Claude Code plugin from
      "version": "0.1.0",
      "description": "[brief description]",
      "author": {
-       "name": "[author from user or default]",
-       "email": "[email or default]"
+       "name": "[author from user or default]"
      }
    }
    ```
+
+   Add `author.email` only if the user provides one; omit the optional field when it is unknown.
 5. Create README.md template
 6. Create .gitignore if needed (for .claude/\*.local.md, etc.)
 7. Initialize git repo if creating new directory (only `git init` is available; additional git operations like staging and committing are left to the user after the workflow completes to respect their commit preferences)
@@ -161,9 +162,12 @@ Guide the user through creating a complete, high-quality Claude Code plugin from
 **Post-workflow git operations** (user can run after completion):
 
 ```bash
-git add .
+git status --short
+git add path/to/plugin/.claude-plugin/plugin.json path/to/plugin/README.md
 git commit -m "feat: initial plugin structure"
 ```
+
+Stage only intended explicit paths from the new plugin; do not use broad staging.
 
 ---
 
@@ -227,7 +231,7 @@ git commit -m "feat: initial plugin structure"
    - Create hooks/hooks.json with hook configuration
    - Prefer prompt-based hooks for complex logic
    - Use ${CLAUDE_PLUGIN_ROOT} for portability
-   - Create hook scripts if needed (in examples/ not scripts/)
+   - Create runnable hook scripts in a plugin-owned scripts or hooks directory; use examples/ only for copy-paste samples
    - Validate using plugin-validator agent (handles hook schema validation)
 
 ### For MCP
@@ -236,7 +240,6 @@ git commit -m "feat: initial plugin structure"
 2. Create .mcp.json configuration with:
    - Server type (stdio for local, SSE for hosted)
    - Command and args (with ${CLAUDE_PLUGIN_ROOT})
-   - extensionToLanguage mapping if LSP
    - Environment variables as needed
 3. Document required env vars in README
 4. Provide setup instructions

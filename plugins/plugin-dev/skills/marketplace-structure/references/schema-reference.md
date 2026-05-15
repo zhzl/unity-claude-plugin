@@ -114,6 +114,9 @@ Paths are relative to:
 1. `metadata.pluginRoot` if specified
 2. Repository root otherwise
 
+For example, with `metadata.pluginRoot: "plugins"`, use `"source": "./my-plugin"`; without `pluginRoot`, use `"source": "./plugins/my-plugin"`.
+
+`../` paths are valid when the schema and repository layout require them, but treat them as a portability tradeoff. They depend more heavily on checkout layout and caller working assumptions than paths kept under `pluginRoot` or another repository-local base, so prefer documenting that expectation clearly when using them.
 ### GitHub Repository (Object)
 
 ```json
@@ -154,22 +157,6 @@ For GitLab, Bitbucket, or self-hosted git repositories:
 | `url`    | string | Yes      | Full git clone URL             |
 | `ref`    | string | No       | Branch or tag reference        |
 | `sha`    | string | No       | Exact commit SHA for integrity |
-
-### Host Pattern (Object)
-
-Match plugins by URL pattern for internal registries:
-
-```json
-{
-  "source": {
-    "hostPattern": "https://git.company.com/*"
-  }
-}
-```
-
-| Field         | Type   | Required | Description                    |
-| ------------- | ------ | -------- | ------------------------------ |
-| `hostPattern` | string | Yes      | URL pattern with `*` wildcards |
 
 ## Complete Plugin Entry Example
 
@@ -286,16 +273,20 @@ Organizations can control marketplace behavior through managed settings:
 
 | Setting                   | Type    | Description                                           |
 | ------------------------- | ------- | ----------------------------------------------------- |
-| `strictKnownMarketplaces` | boolean | Only allow plugins from approved marketplaces         |
-| `enabledPlugins`          | array   | Pre-configured list of enabled plugins                |
-| `extraKnownMarketplaces`  | object  | Additional approved marketplaces beyond built-in ones |
+| `strictKnownMarketplaces` | array  | Managed allowlist of approved marketplace sources     |
+| `enabledPlugins`          | object | Boolean map of pre-configured enabled plugins         |
+| `extraKnownMarketplaces`  | object | Additional approved marketplaces beyond built-in ones |
 
 ### Example Managed Settings
 
 ```json
 {
-  "strictKnownMarketplaces": true,
-  "enabledPlugins": ["security-scanner@company-tools"],
+  "strictKnownMarketplaces": [
+    { "source": "github", "repo": "company/claude-plugins" }
+  ],
+  "enabledPlugins": {
+    "security-scanner@company-tools": true
+  },
   "extraKnownMarketplaces": {
     "company-tools": {
       "source": {
@@ -306,5 +297,7 @@ Organizations can control marketplace behavior through managed settings:
   }
 }
 ```
+
+Managed marketplace restrictions may also use host/path patterns, such as `hostPattern`, to constrain approved marketplace locations. Those patterns belong in managed settings, not in marketplace plugin `source` objects.
 
 These settings are configured by administrators and cannot be overridden by individual users.

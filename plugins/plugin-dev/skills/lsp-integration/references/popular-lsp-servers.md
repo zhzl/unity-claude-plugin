@@ -141,11 +141,11 @@ Curated list of recommended Language Server Protocol servers for common programm
 
 ### C\#
 
-#### OmniSharp
+#### csharp-ls
 
 - .NET/C# language server
-- Command: `OmniSharp --languageserver`
-- Install: `dotnet tool install -g OmniSharp`
+- Command: `csharp-ls`
+- Install: `dotnet tool install -g csharp-ls`
 
 ### Ruby
 
@@ -264,6 +264,7 @@ which <server-command>
 # Check version
 <server-command> --version
 
-# Test stdio mode (should accept LSP messages)
-echo '{"jsonrpc":"2.0","id":1,"method":"initialize"}' | <server-command>
+# Test stdio mode with a real LSP test harness or client.
+# Raw echo is not enough: LSP stdio messages must include Content-Length framing.
+# Example harnesses: a small script that writes framed JSON-RPC, the editor/client you will use, or the plugin's integration test runner.
 ```

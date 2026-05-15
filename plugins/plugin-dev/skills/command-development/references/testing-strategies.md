@@ -52,11 +52,10 @@ if [[ ! "$COMMAND_FILE" =~ \.md$ ]]; then
 fi
 
 # Validate YAML frontmatter if present
-if head -n 1 "$COMMAND_FILE" | grep -q "^---"; then
-  # Count frontmatter markers
-  MARKERS=$(head -n 50 "$COMMAND_FILE" | grep -c "^---")
-  if [ "$MARKERS" -ne 2 ]; then
-    echo "ERROR: Invalid YAML frontmatter (need exactly 2 '---' markers)"
+if head -n 1 "$COMMAND_FILE" | grep -q "^---$"; then
+  CLOSING_LINE=$(awk 'NR > 1 && /^---$/ { print NR; exit }' "$COMMAND_FILE")
+  if [ -z "$CLOSING_LINE" ]; then
+    echo "ERROR: Invalid YAML frontmatter (missing closing '---' marker)"
     exit 1
   fi
   echo "✓ YAML frontmatter syntax valid"
@@ -223,36 +222,39 @@ echo "  Manual test required"
 **Test procedure:**
 
 ```bash
-# Create test files
-echo "Test content" > /tmp/test-file.txt
-echo "Second file" > /tmp/test-file-2.txt
+# Create isolated test files
+tmpdir=$(mktemp -d)
+trap 'rm -rf "$tmpdir"' EXIT
+printf '%s\n' "Test content" > "$tmpdir/test-file.txt"
+printf '%s\n' "Second file" > "$tmpdir/test-file-2.txt"
 
 # Test single file reference
-> /my-command /tmp/test-file.txt
+> /my-command "$tmpdir/test-file.txt"
 # Verify file content is read
 
 # Test non-existent file
-> /my-command /tmp/nonexistent.txt
+> /my-command "$tmpdir/nonexistent.txt"
 # Verify graceful error handling
 
 # Test multiple files
-> /my-command /tmp/test-file.txt /tmp/test-file-2.txt
+> /my-command "$tmpdir/test-file.txt" "$tmpdir/test-file-2.txt"
 # Verify both files processed
 
-# Test large file
-dd if=/dev/zero of=/tmp/large-file.bin bs=1M count=100
-> /my-command /tmp/large-file.bin
+# Test a larger file inside the isolated directory
+python - "$tmpdir/large-file.bin" <<'PY'
+from pathlib import Path
+import sys
+Path(sys.argv[1]).write_bytes(b"0" * 1024 * 1024)
+PY
+> /my-command "$tmpdir/large-file.bin"
 # Verify reasonable behavior (may truncate or warn)
-
-# Cleanup
-rm /tmp/test-file*.txt /tmp/large-file.bin
 ```
 
 ### Level 6: Bash Execution Testing
 
 **What to test:**
 
-- ` commands execute correctly
+- Literal `!` command syntax executes correctly in command files
 - Command output included in prompt
 - Command failures handled
 - Security: only allowed commands run
@@ -264,11 +266,11 @@ rm /tmp/test-file*.txt /tmp/large-file.bin
 cat > .claude/commands/test-bash.md << 'EOF'
 ---
 description: Test bash execution
-allowed-tools: Bash(echo:*), Bash(date:*)
+allowed-tools: Bash(echo *), Bash(date *)
 ---
 
-Current date: `date`
-Test output: `echo "Hello from bash"`
+Current date: !`date`
+Test output: !`echo "Hello from bash"`
 
 Analysis of output above...
 EOF
@@ -284,10 +286,10 @@ EOF
 cat > .claude/commands/test-forbidden.md << 'EOF'
 ---
 description: Test forbidden command
-allowed-tools: Bash(echo:*)
+allowed-tools: Bash(echo *)
 ---
 
-Trying forbidden: `ls -la /`
+Trying forbidden: !`ls -la /`
 EOF
 
 > /test-forbidden
@@ -371,7 +373,7 @@ for cmd_file in "$TEST_DIR"/*.md; do
     echo "  ✓ Structure valid"
   else
     echo "  ✗ Structure invalid"
-    ((FAILED_TESTS++))
+    FAILED_TESTS=$((FAILED_TESTS + 1))
   fi
 
   # Validate frontmatter
@@ -379,7 +381,7 @@ for cmd_file in "$TEST_DIR"/*.md; do
     echo "  ✓ Frontmatter valid"
   else
     echo "  ✗ Frontmatter invalid"
-    ((FAILED_TESTS++))
+    FAILED_TESTS=$((FAILED_TESTS + 1))
   fi
 
   echo

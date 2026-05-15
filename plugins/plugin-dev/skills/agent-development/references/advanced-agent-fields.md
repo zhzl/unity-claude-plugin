@@ -1,6 +1,6 @@
 # Advanced Agent Fields
 
-This reference covers agent frontmatter fields beyond the core fields (name, description, model, color, tools, disallowedTools, skills, permissionMode). These enable turn limits, persistent memory, scoped MCP access, lifecycle hooks, and advanced execution patterns.
+This reference covers advanced agent configuration beyond the core plugin-agent fields (name, description, model, color, tools, disallowedTools, skills, maxTurns, memory). Some sections below also document project/user subagent features for completeness. When a section is labeled project/user subagent-only, it does not apply to plugin-shipped agents.
 
 ## maxTurns
 
@@ -53,6 +53,8 @@ When `memory` is set:
 
 ## mcpServers
 
+Project/user subagent-only field. Claude Code ignores `mcpServers` in plugin-shipped agent frontmatter, so plugin agents should rely on plugin-level MCP configuration instead.
+
 Scope MCP servers to the agent, controlling which external services it can access.
 
 ### Reference by Name
@@ -86,6 +88,8 @@ mcpServers:
 - Provide agent-specific server configuration
 
 ## hooks
+
+Project/user subagent-only field. Claude Code ignores `hooks` in plugin-shipped agent frontmatter, so plugin agents should keep lifecycle automation in plugin `hooks/hooks.json` instead.
 
 Define lifecycle hooks scoped to the agent. These hooks activate when the agent starts and deactivate when it finishes.
 
@@ -128,33 +132,33 @@ All hook events are supported in agent frontmatter. Key behavior difference:
 - **Foreground** (default): Blocks the main conversation until the agent completes. User can interact if the agent requests permission.
 - **Background**: Runs concurrently with the main conversation. All permissions must be pre-approved at spawn time since the user cannot be prompted.
 
-Background agents that encounter an unapproved permission request will fail. Design tool restrictions (`tools`, `permissionMode`) accordingly when agents may run in background.
+Background agents that encounter an unapproved permission request will fail. Design plugin-shipped agents around explicit tool restrictions (`tools`, `disallowedTools`) and the user's configured permission rules when agents may run in background.
 
 ### Resuming Agents
 
-Each Task tool invocation creates a new agent instance with a fresh context. To continue with the full prior context preserved, ask Claude to "resume that agent" or "continue that subagent" — it will restore the previous transcript.
+Each Agent tool invocation creates a new agent instance with a fresh context. To continue with the full prior context preserved, ask Claude to "resume that agent" or "continue that subagent" — it will restore the previous transcript.
 
 Agent transcripts are stored at `~/.claude/projects/{project}/{sessionId}/subagents/agent-{agentId}.jsonl`.
 
 ### Restricting Spawnable Agent Types
 
-Use `Task(agent_type1, agent_type2)` syntax in settings.json allow rules to control which agent types can be spawned:
+Use `Agent(agent_type1, agent_type2)` syntax in settings.json allow rules to control which agent types can be spawned:
 
 ```json
 {
   "permissions": {
-    "allow": ["Task(code-reviewer, test-runner)"]
+    "allow": ["Agent(code-reviewer, test-runner)"]
   }
 }
 ```
 
-- `Task(type1, type2)` — only these agent types can be spawned
-- `Task` (no parentheses) — allow any subagent
-- Omitting `Task` entirely — cannot spawn any subagents
+- `Agent(type1, type2)` — only these agent types can be spawned
+- `Agent` (no parentheses) — allow any subagent
+- Omitting `Agent` entirely — cannot spawn any subagents
 
 ## Built-in Agent Types
 
-Claude Code includes several built-in agent types that can be referenced in the `agent` field of skills or used as targets for `Task()` restrictions:
+Claude Code includes several built-in agent types that can be referenced in the `agent` field of skills or used as targets for `Agent()` restrictions:
 
 | Agent Type          | Model   | Tools     | Purpose                             |
 | ------------------- | ------- | --------- | ----------------------------------- |
@@ -180,14 +184,10 @@ Agent teams enable multi-agent coordination where a team lead spawns and manages
 
 Team leads coordinate work across multiple teammates. Key design considerations:
 
-- **Use `permissionMode: delegate`** to restrict the lead to coordination-only tools (spawn, message, shut down teammates, manage tasks). This prevents the lead from implementing tasks directly.
+- **Constrain by tools and prompt, not a `delegate` permission mode**. Limit implementation tools with `tools`/`disallowedTools`, and explicitly instruct the lead to decompose work, assign tasks, and review results instead of coding directly.
 - **System prompt focus**: Task decomposition, work assignment, progress monitoring, quality review
 - **Tools**: Team leads automatically get access to `TeamCreate`, `TaskCreate`, `TaskUpdate`, `TaskList`, `SendMessage`, and `Task` (for spawning)
-
-```yaml
-# Example team lead agent
-permissionMode: delegate
-```
+- **Plugin note**: `permissionMode` is ignored for plugin-shipped agents, so coordination-only behavior must come from tool restrictions and prompt guidance
 
 ### Permission Inheritance
 

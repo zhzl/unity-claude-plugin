@@ -2,6 +2,8 @@
 
 This guide shows how to migrate from basic command hooks to advanced prompt-based hooks for better maintainability and flexibility.
 
+The JSON snippets below show the contents of the `hooks` object. In `.claude/settings.json` or plugin `hooks/hooks.json`, wrap them as `{ "hooks": { ... } }`.
+
 ## Why Migrate?
 
 Prompt-based hooks offer several advantages:
@@ -67,7 +69,7 @@ fi
       "hooks": [
         {
           "type": "prompt",
-          "prompt": "Command: $TOOL_INPUT.command. Analyze for: 1) Destructive operations (rm -rf, dd, mkfs, etc) 2) Privilege escalation (sudo) 3) Network operations without user consent. Return 'approve' or 'deny' with explanation.",
+          "prompt": "Using the PreToolUse event context, analyze the requested Bash command for: 1) Destructive operations (rm -rf, dd, mkfs, etc) 2) Privilege escalation (sudo) 3) Network operations without user consent. Return JSON with hookSpecificOutput.hookEventName='PreToolUse' and permissionDecision allow, deny, ask, or defer.",
           "timeout": 15
         }
       ]
@@ -123,14 +125,14 @@ file_path=$(echo "$input" | jq -r '.tool_input.file_path')
 #   resolved=$(realpath -m "$file_path" 2>/dev/null || echo "$file_path")
 # and comparing against an allowed directory prefix
 if [[ "$file_path" == *".."* ]]; then
-  echo '{"decision": "deny", "reason": "Path traversal detected"}' >&2
-  exit 2
+  echo '{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "Path traversal detected"}}'
+  exit 0
 fi
 
 # Check for system paths
 if [[ "$file_path" == "/etc/"* ]] || [[ "$file_path" == "/sys/"* ]]; then
-  echo '{"decision": "deny", "reason": "System file"}' >&2
-  exit 2
+  echo '{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "System file"}}'
+  exit 0
 fi
 ```
 
@@ -153,7 +155,7 @@ fi
       "hooks": [
         {
           "type": "prompt",
-          "prompt": "File path: $TOOL_INPUT.file_path. Content preview: $TOOL_INPUT.content (first 200 chars). Verify: 1) Not system directories (/etc, /sys, /usr) 2) Not credentials (.env, tokens, secrets) 3) No path traversal 4) Content doesn't expose secrets. Return 'approve' or 'deny'."
+          "prompt": "Using the PreToolUse event context, verify the requested file path and available content preview: 1) Not system directories (/etc, /sys, /usr) 2) Not credentials (.env, tokens, secrets) 3) No path traversal 4) Content doesn't expose secrets. Return JSON with hookSpecificOutput.hookEventName='PreToolUse' and permissionDecision allow, deny, ask, or defer."
         }
       ]
     }
@@ -182,12 +184,12 @@ file_path=$(echo "$input" | jq -r '.tool_input.file_path')
 size=$(stat -f%z "$file_path" 2>/dev/null || stat -c%s "$file_path" 2>/dev/null)
 
 if [ "$size" -gt 10000000 ]; then
-  echo '{"decision": "deny", "reason": "File too large"}' >&2
-  exit 2
+  echo '{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "File too large"}}'
+  exit 0
 fi
 ```
 
-**Use command hooks when:** Validation is purely mathematical or deterministic.
+**Use command hooks when:** Validation is purely mathematical or deterministic. When returning a structured PreToolUse permission decision, print the JSON to stdout and exit 0.
 
 ### 2. External Tool Integration
 
@@ -236,7 +238,7 @@ Combine both for multi-stage validation:
         },
         {
           "type": "prompt",
-          "prompt": "Deep analysis of bash command: $TOOL_INPUT",
+          "prompt": "Using the PreToolUse event context, perform deep analysis of the requested Bash command.",
           "timeout": 15
         }
       ]

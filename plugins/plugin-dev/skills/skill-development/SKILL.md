@@ -32,7 +32,7 @@ Skills and commands share the same underlying mechanism (Skill tool). The choice
 - **Use commands** (`commands/foo.md`): Simple prompts without bundled resources
 - **Use skills** (`skills/foo/SKILL.md`): Complex workflows needing scripts, references, or examples
 
-Both support `$ARGUMENTS`, `[BANG]` bash execution, and frontmatter fields. Skills add bundled resources and progressive disclosure.
+Both support `$ARGUMENTS`, the `[BANG]` placeholder before backticks for bash execution in documentation, and frontmatter fields. Actual skill and command files use a literal `!`; this repository writes `[BANG]` in docs to avoid accidental execution in examples. Skills add bundled resources and progressive disclosure.
 
 ### What Skills Provide
 
@@ -125,7 +125,7 @@ agent: Explore
 
 - `Explore` - Fast agent for codebase exploration
 - `Plan` - Architect agent for implementation planning
-- `general` - General-purpose agent (default if `context: fork`)
+- `general-purpose` - General-purpose agent (default if `context: fork`)
 
 Requires `context: fork` to be set.
 
@@ -138,7 +138,7 @@ Load other skills into the forked agent's context:
 name: comprehensive-review
 description: Full code review with testing...
 context: fork
-agent: general
+agent: general-purpose
 skills:
   - testing-patterns
   - security-audit
@@ -208,7 +208,7 @@ model: haiku
 ---
 ```
 
-**Values:** `sonnet`, `opus`, `haiku`, `inherit` (default), or a full model ID (e.g., `claude-sonnet-4-5-20250929`)
+**Values:** `sonnet`, `opus`, `haiku`, or `inherit` (default)
 
 Use `haiku` for fast/cheap skills, `opus` for complex reasoning requiring maximum capability. Default behavior (`inherit`) uses the conversation's current model.
 
@@ -308,7 +308,9 @@ Recent commits:
 [BANG]`git log --oneline -5`
 ```
 
-**Syntax:** `` [BANG]`command` ``
+**Syntax in docs:** `` [BANG]`command` ``
+
+Replace `[BANG]` with a literal `!` when writing an actual skill or command file.
 
 **Use cases:**
 
@@ -322,9 +324,9 @@ Recent commits:
 
 Skills use a three-level loading system to manage context efficiently:
 
-1. **Metadata (name + description)** - Always in context (~100 words)
-2. **SKILL.md body** - When skill triggers (<5k words)
-3. **Bundled resources** - As needed by Claude (Unlimited\*)
+1. **Metadata (name + description)** - Available for discovery when the skill fits within the shared visibility budget (~100 words)
+2. **SKILL.md body** - Loaded when Claude actually invokes the skill (<5k words)
+3. **Bundled resources** - Loaded as needed by Claude after skill invocation (Unlimited\*)
 
 \*Unlimited because scripts can be executed without reading into context window.
 
@@ -385,9 +387,9 @@ Claude Code automatically discovers skills:
 
 - Scans `skills/` directory
 - Finds subdirectories containing `SKILL.md`
-- Loads skill metadata (name + description) always
-- Loads SKILL.md body when skill triggers
-- Loads references/examples when needed
+- Loads skill metadata (name + description) for discovery when the skill is included within the shared visibility budget
+- Loads the SKILL.md body when Claude invokes the skill
+- Loads references/examples when needed after invocation
 
 ### No Packaging Needed
 
@@ -412,7 +414,7 @@ Study the skills in this plugin as examples of best practices:
 **hook-development skill:**
 
 - Excellent trigger phrases: "create a hook", "add a PreToolUse hook", etc.
-- Lean SKILL.md (2,125 words)
+- Lean SKILL.md with detailed content moved to references/
 - 3 references/ files for detailed content
 - 3 examples/ of working hooks
 - 3 scripts/ utilities
@@ -420,7 +422,7 @@ Study the skills in this plugin as examples of best practices:
 **agent-development skill:**
 
 - Strong triggers: "create an agent", "agent frontmatter", etc.
-- Focused SKILL.md (1,896 words)
+- Focused SKILL.md with references for deeper details
 - References include the AI generation prompt from Claude Code
 - Complete agent examples
 

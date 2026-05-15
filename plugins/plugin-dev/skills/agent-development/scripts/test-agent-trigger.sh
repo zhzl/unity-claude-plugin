@@ -52,7 +52,7 @@ FRONTMATTER=$(awk '
 ' "$AGENT_FILE")
 
 # Extract description - handles multi-line YAML
-# Description ends when we hit another top-level field (model:, color:, tools:, etc.)
+# Description ends when we hit another top-level YAML field
 DESCRIPTION=$(echo "$FRONTMATTER" | awk '
   /^description:/ {
     in_desc = 1
@@ -60,7 +60,7 @@ DESCRIPTION=$(echo "$FRONTMATTER" | awk '
     if ($0 != "") print
     next
   }
-  in_desc && /^(model|color|tools|name):/ { exit }
+  in_desc && /^[A-Za-z][A-Za-z0-9_-]*:/ { exit }
   in_desc { print }
 ')
 
@@ -70,7 +70,7 @@ if [ -z "$DESCRIPTION" ]; then
 fi
 
 # Count example blocks
-EXAMPLE_COUNT=$(echo "$DESCRIPTION" | grep -c '<example>' 2>/dev/null || echo 0)
+EXAMPLE_COUNT=$(echo "$DESCRIPTION" | grep -c '<example>' 2>/dev/null || true)
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "📊 EXAMPLE ANALYSIS"
@@ -133,7 +133,7 @@ if [ -z "$USER_PHRASES" ]; then
   echo "⚠️  Could not extract user phrases from examples"
   echo ""
   echo "Make sure examples include 'user: \"phrase\"' format"
-  ((warning_count++))
+  warning_count=$((warning_count + 1))
 else
   echo "Use these phrases to test agent triggering:"
   echo ""
@@ -151,7 +151,7 @@ echo ""
 # Check for "Use this agent when" pattern
 if ! echo "$DESCRIPTION" | grep -qi 'use this agent when'; then
   echo "⚠️  Description should start with 'Use this agent when...'"
-  ((warning_count++))
+  warning_count=$((warning_count + 1))
 else
   echo "✅ Has 'Use this agent when' pattern"
 fi
@@ -159,40 +159,40 @@ fi
 # Check example count
 if [ "$EXAMPLE_COUNT" -lt 2 ]; then
   echo "⚠️  Only $EXAMPLE_COUNT example(s) - recommend 2-4 examples"
-  ((warning_count++))
+  warning_count=$((warning_count + 1))
 elif [ "$EXAMPLE_COUNT" -gt 4 ]; then
   echo "⚠️  $EXAMPLE_COUNT examples - consider trimming to 2-4"
-  ((warning_count++))
+  warning_count=$((warning_count + 1))
 else
   echo "✅ Good number of examples ($EXAMPLE_COUNT)"
 fi
 
 # Check for commentary in examples
-COMMENTARY_COUNT=$(echo "$DESCRIPTION" | grep -c '<commentary>' 2>/dev/null || echo 0)
+COMMENTARY_COUNT=$(echo "$DESCRIPTION" | grep -c '<commentary>' 2>/dev/null || true)
 COMMENTARY_COUNT=$(echo "$COMMENTARY_COUNT" | tr -d '[:space:]')
 if [ "$COMMENTARY_COUNT" -lt "$EXAMPLE_COUNT" ]; then
   echo "⚠️  Some examples missing <commentary> blocks"
-  ((warning_count++))
+  warning_count=$((warning_count + 1))
 else
   echo "✅ All examples have commentary"
 fi
 
 # Check for Context in examples
-CONTEXT_COUNT=$(echo "$DESCRIPTION" | grep -ci 'context:' 2>/dev/null || echo 0)
+CONTEXT_COUNT=$(echo "$DESCRIPTION" | grep -ci 'context:' 2>/dev/null || true)
 CONTEXT_COUNT=$(echo "$CONTEXT_COUNT" | tr -d '[:space:]')
 if [ "$CONTEXT_COUNT" -lt "$EXAMPLE_COUNT" ]; then
   echo "⚠️  Some examples missing Context: lines"
-  ((warning_count++))
+  warning_count=$((warning_count + 1))
 else
   echo "✅ All examples have context"
 fi
 
 # Check for assistant responses
-ASSISTANT_COUNT=$(echo "$DESCRIPTION" | grep -c 'assistant:' 2>/dev/null || echo 0)
+ASSISTANT_COUNT=$(echo "$DESCRIPTION" | grep -c 'assistant:' 2>/dev/null || true)
 ASSISTANT_COUNT=$(echo "$ASSISTANT_COUNT" | tr -d '[:space:]')
 if [ "$ASSISTANT_COUNT" -lt "$EXAMPLE_COUNT" ]; then
   echo "⚠️  Some examples missing assistant: responses"
-  ((warning_count++))
+  warning_count=$((warning_count + 1))
 else
   echo "✅ All examples have assistant responses"
 fi

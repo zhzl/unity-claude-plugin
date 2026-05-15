@@ -155,13 +155,13 @@ Reference a server bundled with the plugin:
 
 ## Socket Transport
 
-Use socket instead of stdio:
+Use socket instead of stdio only for advanced setups where the language server explicitly documents socket mode. Current plugin docs do not define separate host/port fields or automatic inference from `args`, so do not treat this as a copy-paste-ready configuration. Prefer `stdio` unless Claude Code or the server's docs specify the exact connection details.
 
 ```json
 {
   "php": {
     "command": "intelephense",
-    "args": ["--socket=6000"],
+    "args": ["...[server-specific socket startup args here]..."],
     "transport": "socket",
     "extensionToLanguage": {
       ".php": "php"

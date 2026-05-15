@@ -74,12 +74,12 @@ The `marketplace.json` manifest defines the marketplace and its available plugin
   "metadata": {
     "description": "Brief marketplace description",
     "version": "1.0.0",
-    "pluginRoot": "./plugins"
+    "pluginRoot": "plugins"
   }
 }
 ```
 
-The `pluginRoot` field sets the base path for relative plugin sources.
+The `pluginRoot` field sets the base path for relative plugin sources. With `pluginRoot: "plugins"`, use sources like `./code-standards`; without `pluginRoot`, use paths like `./plugins/code-standards`.
 
 ## Plugin Entry Format
 
@@ -172,19 +172,6 @@ For GitLab, Bitbucket, or self-hosted git:
 }
 ```
 
-### Host Pattern
-
-Match plugins by URL pattern:
-
-```json
-{
-  "name": "internal-plugin",
-  "source": {
-    "hostPattern": "https://git.company.com/*"
-  }
-}
-```
-
 ## Strict vs. Non-Strict Mode
 
 The `strict` field controls whether plugins must have their own `plugin.json`:
@@ -221,11 +208,21 @@ Organizations can restrict which marketplaces users can install from using manag
 
 ```json
 {
-  "strictKnownMarketplaces": true
+  "strictKnownMarketplaces": []
 }
 ```
 
-When enabled, users can only install plugins from officially approved marketplaces. Additional marketplaces can be added via `extraKnownMarketplaces` in managed settings.
+An empty array creates lockdown mode with no additional approved marketplace sources. To allow specific marketplaces, list their source objects:
+
+```json
+{
+  "strictKnownMarketplaces": [
+    { "source": "github", "repo": "company/claude-plugins" }
+  ]
+}
+```
+
+If `strictKnownMarketplaces` is undefined, Claude Code uses the normal known marketplace behavior. When it is an array, users can only install plugins from approved marketplace sources. Host/path patterns belong in managed marketplace restrictions, not plugin `source` entries.
 
 ### Private Repository Authentication
 
@@ -333,4 +330,4 @@ Use the `plugin-validator` agent with marketplace support for comprehensive vali
 
 ## Working Example
 
-This repository (`plugin-dev`) is itself a marketplace. Examine `.claude-plugin/marketplace.json` at the repository root for a real-world example of marketplace structure and plugin organization.
+Use the examples in this skill as marketplace templates. This repository's `plugins/plugin-dev/.claude-plugin/plugin.json` is a plugin manifest, not a root marketplace manifest.

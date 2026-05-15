@@ -2,6 +2,8 @@
 
 This reference covers advanced hook patterns and techniques for sophisticated automation workflows.
 
+Unless a snippet explicitly shows a full file, JSON hook snippets show the contents of the `hooks` object. In `.claude/settings.json` or plugin `hooks/hooks.json`, wrap them as `{ "hooks": { ... } }`.
+
 ## Multi-Stage Validation
 
 Combine command and prompt hooks for layered validation:
@@ -19,7 +21,7 @@ Combine command and prompt hooks for layered validation:
         },
         {
           "type": "prompt",
-          "prompt": "Deep analysis of bash command: $TOOL_INPUT",
+          "prompt": "Using the PreToolUse event context, perform deep analysis of the requested Bash command.",
           "timeout": 15
         }
       ]
@@ -87,17 +89,20 @@ input=$(cat)
 
 ## Hook Chaining via State
 
-Share state between hooks using temporary files:
+Share state between hooks using a stable project/session state path:
 
 ```bash
 # Hook 1: Analyze and save state
 #!/bin/bash
 input=$(cat)
 command=$(echo "$input" | jq -r '.tool_input.command')
+session_id=$(echo "$input" | jq -r '.session_id // "default"')
+state_dir="${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hook-state/$session_id"
+mkdir -p "$state_dir"
 
 # Analyze command
 risk_level=$(calculate_risk "$command")
-echo "$risk_level" > /tmp/hook-state-$$
+echo "$risk_level" > "$state_dir/risk-level"
 
 exit 0
 ```
@@ -105,7 +110,10 @@ exit 0
 ```bash
 # Hook 2: Use saved state
 #!/bin/bash
-risk_level=$(cat /tmp/hook-state-$$ 2>/dev/null || echo "unknown")
+input=$(cat)
+session_id=$(echo "$input" | jq -r '.session_id // "default"')
+state_dir="${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hook-state/$session_id"
+risk_level=$(cat "$state_dir/risk-level" 2>/dev/null || echo "unknown")
 
 if [ "$risk_level" = "high" ]; then
   echo "High risk operation detected" >&2
@@ -125,9 +133,9 @@ cd "$CLAUDE_PROJECT_DIR" || exit 1
 
 # Read project-specific config
 if [ -f ".claude-hooks-config.json" ]; then
-  strict_mode=$(jq -r '.strict_mode' .claude-hooks-config.json)
+  validation_mode=$(jq -r '.validation_mode // "standard"' .claude-hooks-config.json)
 
-  if [ "$strict_mode" = "true" ]; then
+  if [ "$validation_mode" = "strict" ]; then
     # Apply strict validation
     # ...
   else
@@ -141,7 +149,7 @@ fi
 
 ```json
 {
-  "strict_mode": true,
+  "validation_mode": "strict",
   "allowed_commands": ["ls", "pwd", "grep"],
   "forbidden_paths": ["/etc", "/sys"]
 }
@@ -159,7 +167,7 @@ Use transcript and session context for intelligent decisions:
       "hooks": [
         {
           "type": "prompt",
-          "prompt": "Review the full transcript at $TRANSCRIPT_PATH. Check: 1) Were tests run after code changes? 2) Did the build succeed? 3) Were all user questions answered? 4) Is there any unfinished work? Return 'approve' only if everything is complete."
+          "prompt": "Using the Stop event context and available transcript context, check: 1) Were tests run after code changes? 2) Did the build succeed? 3) Were all user questions answered? 4) Is there any unfinished work? Return {\"decision\": \"block\", \"reason\": \"...\"} only when work should continue; omit decision when complete."
         }
       ]
     }
@@ -167,15 +175,15 @@ Use transcript and session context for intelligent decisions:
 }
 ```
 
-The LLM can read the transcript file and make context-aware decisions.
+The LLM can use the event context provided by Claude Code to make context-aware decisions.
 
-**Response format:** Agent hooks use the same response schema as prompt hooks:
+**Response format:** Agent hooks use the same event-specific JSON output schemas as prompt and command hooks:
 
 ```json
-{ "ok": true, "reason": "Explanation of decision" }
+{ "decision": "block", "reason": "Explanation of decision" }
 ```
 
-Agent hooks can also use tool access for multi-turn verification (up to 50 turns). Default timeout: 60 seconds.
+Omit `decision` to allow by default. Agent hooks can also use tool access for multi-turn verification (up to 50 turns). Default timeout: 60 seconds.
 
 ## Performance Optimization
 
@@ -198,7 +206,7 @@ if [ -f "$cache_file" ]; then
 fi
 
 # Perform validation
-result='{"decision": "approve"}'
+result='{}'
 
 # Cache result
 echo "$result" > "$cache_file"
@@ -209,7 +217,7 @@ echo "$result"
 
 Since hooks run in parallel, design them to be independent:
 
-```json
+```jsonc
 {
   "PreToolUse": [
     {
@@ -247,8 +255,12 @@ Coordinate hooks across different events:
 ```bash
 #!/bin/bash
 # Initialize session tracking
-echo "0" > /tmp/test-count-$$
-echo "0" > /tmp/build-count-$$
+input=$(cat)
+session_id=$(echo "$input" | jq -r '.session_id // "default"')
+state_dir="${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hook-state/$session_id"
+mkdir -p "$state_dir"
+echo "0" > "$state_dir/test-count"
+echo "0" > "$state_dir/build-count"
 ```
 
 **PostToolUse - Track events:**
@@ -256,13 +268,16 @@ echo "0" > /tmp/build-count-$$
 ```bash
 #!/bin/bash
 input=$(cat)
+session_id=$(echo "$input" | jq -r '.session_id // "default"')
+state_dir="${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hook-state/$session_id"
+mkdir -p "$state_dir"
 tool_name=$(echo "$input" | jq -r '.tool_name')
 
 if [ "$tool_name" = "Bash" ]; then
   command=$(echo "$input" | jq -r '.tool_result')
   if [[ "$command" == *"test"* ]]; then
-    count=$(cat /tmp/test-count-$$ 2>/dev/null || echo "0")
-    echo $((count + 1)) > /tmp/test-count-$$
+    count=$(cat "$state_dir/test-count" 2>/dev/null || echo "0")
+    echo $((count + 1)) > "$state_dir/test-count"
   fi
 fi
 ```
@@ -271,11 +286,14 @@ fi
 
 ```bash
 #!/bin/bash
-test_count=$(cat /tmp/test-count-$$ 2>/dev/null || echo "0")
+input=$(cat)
+session_id=$(echo "$input" | jq -r '.session_id // "default"')
+state_dir="${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hook-state/$session_id"
+test_count=$(cat "$state_dir/test-count" 2>/dev/null || echo "0")
 
 if [ "$test_count" -eq 0 ]; then
-  echo '{"decision": "block", "reason": "No tests were run"}' >&2
-  exit 2
+  echo '{"decision": "block", "reason": "No tests were run"}'
+  exit 0
 fi
 ```
 
@@ -295,8 +313,8 @@ curl -X POST "$SLACK_WEBHOOK" \
   -d "{\"text\": \"Hook ${decision} ${tool_name} operation\"}" \
   2>/dev/null
 
-echo '{"decision": "deny"}' >&2
-exit 2
+echo '{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "Operation blocked by hook"}}'
+exit 0
 ```
 
 ### Database Logging
@@ -305,8 +323,11 @@ exit 2
 #!/bin/bash
 input=$(cat)
 
-# Log to database
-psql "$DATABASE_URL" -c "INSERT INTO hook_logs (event, data) VALUES ('PreToolUse', '$input')" \
+# Log to database using psql variables instead of interpolating raw JSON into SQL
+psql "$DATABASE_URL" \
+  -v event='PreToolUse' \
+  -v data="$input" \
+  -c "INSERT INTO hook_logs (event, data) VALUES (:'event', :'data'::jsonb)" \
   2>/dev/null
 
 exit 0
@@ -335,7 +356,10 @@ input=$(cat)
 command=$(echo "$input" | jq -r '.tool_input.command')
 
 # Track command frequency
-rate_file="/tmp/hook-rate-$$"
+session_id=$(echo "$input" | jq -r '.session_id // "default"')
+state_dir="${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hook-state/$session_id"
+mkdir -p "$state_dir"
+rate_file="$state_dir/rate"
 current_minute=$(date +%Y%m%d%H%M)
 
 if [ -f "$rate_file" ]; then
@@ -344,8 +368,8 @@ if [ -f "$rate_file" ]; then
 
   if [ "$current_minute" = "$last_minute" ]; then
     if [ "$count" -gt 10 ]; then
-      echo '{"decision": "deny", "reason": "Rate limit exceeded"}' >&2
-      exit 2
+      echo '{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "Rate limit exceeded"}}'
+      exit 0
     fi
     count=$((count + 1))
   else
@@ -384,8 +408,8 @@ content=$(echo "$input" | jq -r '.tool_input.content')
 
 # Check for common secret patterns
 if echo "$content" | grep -qE "(api[_-]?key|password|secret|token).{0,20}['\"]?[A-Za-z0-9]{20,}"; then
-  echo '{"decision": "deny", "reason": "Potential secret detected in content"}' >&2
-  exit 2
+  echo '{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "Potential secret detected in content"}}'
+  exit 0
 fi
 
 exit 0
@@ -489,17 +513,17 @@ if [ ! -f "$file_path" ]; then
 fi
 ```
 
-## Scoped Hooks in Skill/Agent Frontmatter
+## Scoped Hooks in Skill Frontmatter
 
-Hooks can be defined directly in skill or agent YAML frontmatter, scoping them to activate only when that component is in use.
+Hooks can be defined directly in skill YAML frontmatter when supported by Claude Code, scoping them to activate only when that skill is in use. Plugin-shipped agent frontmatter does not support `hooks`; use plugin `hooks/hooks.json` for plugin-wide hook behavior.
 
 ### Concept
 
-Unlike `hooks.json` (global, always active when plugin enabled) or settings hooks (user-level), scoped hooks are lifecycle-bound to a specific skill or agent. They activate when the component loads and deactivate when it completes.
+Unlike `hooks.json` (global, always active when plugin enabled) or settings hooks (user-level), scoped skill hooks are lifecycle-bound to a specific skill. They activate when the skill loads and deactivate when it completes.
 
 ### Format
 
-The `hooks` field in frontmatter uses the same event/matcher/hook structure as `hooks.json`:
+The `hooks` field in skill frontmatter uses the same event/matcher/hook structure as `hooks.json`:
 
 ```yaml
 ---
@@ -528,7 +552,7 @@ Only a subset of hook events apply in frontmatter scope:
 | ------------- | -------------------------------------------------------------------------------------------------- |
 | `PreToolUse`  | Validate or block tool calls during skill execution                                                |
 | `PostToolUse` | Run checks after tool execution during skill use                                                   |
-| `Stop`        | Verify completion criteria before skill/agent finishes (auto-converted to SubagentStop for agents) |
+| `Stop`        | Verify completion criteria before the skill finishes                                                |
 
 Session-level events (`SessionStart`, `UserPromptSubmit`, `Notification`, etc.) don't apply — they operate at a different lifecycle scope.
 
@@ -538,7 +562,7 @@ Session-level events (`SessionStart`, `UserPromptSubmit`, `Notification`, etc.) 
 | -------------- | ------------------------------------------ | --------------------------------------------------- |
 | Scope          | Global (always active when plugin enabled) | Component-specific (active only during use)         |
 | Events         | All 11+ hook events                        | PreToolUse, PostToolUse, Stop                       |
-| Location       | `hooks/hooks.json` file                    | YAML frontmatter in SKILL.md or agent .md           |
+| Location       | `hooks/hooks.json` file                    | YAML frontmatter in SKILL.md                        |
 | Merge behavior | Merges with user/project hooks             | Merges with global hooks during component lifecycle |
 
 ### Use Cases
@@ -546,7 +570,6 @@ Session-level events (`SessionStart`, `UserPromptSubmit`, `Notification`, etc.) 
 - **Skill-specific validation:** A "database writer" skill that validates SQL before execution
 - **Restricted workflows:** A "deploy" skill that checks branch and test status before allowing Bash commands
 - **Quality gates:** A "code generator" skill that runs linting after every Write operation
-- **Agent safety:** An autonomous agent that validates all Bash commands before execution
 
 ### Both Hook Types Work
 
@@ -566,9 +589,10 @@ hooks:
 ```yaml
 hooks:
   Stop:
-    - hooks:
+    - matcher: "*"
+      hooks:
         - type: prompt
-          prompt: 'Verify all generated code has tests. Return {"decision": "stop"} if satisfied or {"decision": "continue", "reason": "missing tests"} if not.'
+          prompt: 'Verify all generated code has tests. Return {"decision": "block", "reason": "missing tests"} only when work should continue; omit decision when satisfied.'
 ```
 
 ## Agent Hook Type
@@ -618,7 +642,7 @@ Use agent hooks when:
       "hooks": [
         {
           "type": "agent",
-          "prompt": "Before approving task completion, verify: 1) All modified files have corresponding tests, 2) Tests pass (run them), 3) No linting errors exist. Report findings and return approve/block decision.",
+          "prompt": "Before allowing task completion, verify: 1) All modified files have corresponding tests, 2) Tests pass (run them), 3) No linting errors exist. Return {\"decision\": \"block\", \"reason\": \"...\"} only when work should continue; omit decision when complete.",
           "timeout": 120
         }
       ]
@@ -643,7 +667,7 @@ Beyond `type`, `command`/`prompt`, and `timeout`, hook handlers support addition
 }
 ```
 
-When `true`, the hook runs only once per session and is then auto-removed. Useful for one-time initialization hooks in scoped contexts (skills/agents).
+When `true`, the hook runs only once per session and is then auto-removed. Useful for one-time initialization hooks in scoped skill contexts.
 
 ### statusMessage
 
@@ -681,7 +705,7 @@ Different hook events support different output formats for controlling Claude's 
 {
   "hookSpecificOutput": {
     "hookEventName": "PreToolUse",
-    "permissionDecision": "allow|deny|ask",
+    "permissionDecision": "allow|deny|ask|defer",
     "permissionDecisionReason": "Explanation",
     "updatedInput": { "field": "modified_value" },
     "additionalContext": "Extra context for Claude"
@@ -689,7 +713,7 @@ Different hook events support different output formats for controlling Claude's 
 }
 ```
 
-- `permissionDecision`: `allow` (proceed), `deny` (block), `ask` (prompt user)
+- `permissionDecision`: `allow` (proceed), `deny` (block), `ask` (prompt user), `defer` (fall back to normal permission flow)
 - `updatedInput`: Optionally modify tool parameters before execution
 - `additionalContext`: Injected into Claude's context
 
@@ -718,7 +742,7 @@ Different hook events support different output formats for controlling Claude's 
 
 ### PostToolUse / Stop / UserPromptSubmit Decision Control
 
-These events share a simpler top-level schema:
+These events share a simpler top-level schema, but their behavior is event-specific:
 
 ```json
 {
@@ -727,7 +751,7 @@ These events share a simpler top-level schema:
 }
 ```
 
-- `decision`: Set to `"block"` to prevent the action (stopping, prompt processing, etc.)
+- `decision`: Set to `"block"` where the event supports blocking. Stop/SubagentStop can keep Claude working, and UserPromptSubmit can block prompt processing. PostToolUse runs after the tool action has already executed, so it cannot prevent that action; use it for feedback, context, or MCP output replacement.
 - `reason`: Required when blocking; fed back to Claude or shown to user
 
 PostToolUse specifically supports an additional field for replacing MCP tool output:
@@ -845,26 +869,6 @@ Fires when a task is marked complete. Use to verify task quality before acceptin
   ]
 }
 ```
-
-## Async Hooks
-
-Command hooks can run asynchronously in the background without blocking the main flow:
-
-```json
-{
-  "type": "command",
-  "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/log-event.sh",
-  "async": true
-}
-```
-
-**Key constraints:**
-
-- Only available on `type: "command"` hooks (not prompt or agent)
-- Cannot block or control behavior — the action proceeds immediately
-- Response fields (`decision`, `hookSpecificOutput`) have no effect
-- Useful for logging, metrics collection, and fire-and-forget notifications
-- Uses the same `timeout` field (default: 600 seconds)
 
 ## Conclusion
 

@@ -9,12 +9,12 @@ description: This skill should be used when the user asks to "add LSP server", "
 
 Language Server Protocol (LSP) servers provide code intelligence features like go-to-definition, find references, and hover information. Claude Code plugins can bundle or configure LSP servers to enhance Claude's understanding of code.
 
-**Key capabilities:**
+**Supported capabilities vary by server and Claude Code integration:**
 
-- Enable go-to-definition for code navigation
-- Find all references to symbols
-- Get hover information and documentation
-- Support language-specific features (completions, diagnostics)
+- Enable go-to-definition for code navigation when supported
+- Find references to symbols when supported
+- Get hover information and documentation when supported
+- Support language-specific features such as completions and diagnostics when exposed
 
 ## LSP Server Configuration
 
@@ -99,14 +99,14 @@ Reference this file in `plugin.json`:
     "dart": {
       "transport": "socket",
       "command": "dart",
-      "args": ["language-server", "--port", "8123"],
+      "args": ["language-server", "...[server-specific connection args here]..."],
       "extensionToLanguage": { ".dart": "dart" }
     }
   }
 }
 ```
 
-Socket transport connects to the server via TCP port instead of stdin/stdout.
+Socket transport is an advanced setup. Current plugin docs do not define separate host/port fields or automatic inference from `args`, so do not treat the example above as copy-paste-valid. Prefer the default `stdio` transport unless Claude Code or the language server's own docs explicitly document the required socket connection details for that server.
 
 **initializationOptions** (optional): Options passed to the server during LSP initialization
 
@@ -134,26 +134,26 @@ Socket transport connects to the server via TCP port instead of stdin/stdout.
 
 **maxRestarts** (optional): Maximum number of restart attempts before giving up
 
-## What Claude Gains from LSP
+## What Claude Can Gain from LSP
 
-When an LSP plugin is installed and its language server binary is available, Claude gains two key capabilities:
+When an LSP plugin is installed, its language server binary is available, and Claude Code exposes the server's capabilities, Claude can use LSP for diagnostics and navigation.
 
-### Automatic Diagnostics
+### Diagnostics
 
-After every file edit Claude makes, the language server analyzes the changes and reports errors and warnings back automatically. Claude sees type errors, missing imports, and syntax issues without needing to run a compiler or linter. If Claude introduces an error, it notices and fixes the issue in the same turn.
+Supported servers can report errors and warnings such as type errors, missing imports, and syntax issues. Behavior varies by language server and project setup, so keep compiler and test commands available for verification.
 
 ### Code Navigation
 
-Claude can use the language server to:
+Depending on server support, Claude can use the language server to:
 
 - Jump to definitions
-- Find all references to a symbol
+- Find references to a symbol
 - Get type information on hover
 - List symbols in a file
 - Find implementations of interfaces
 - Trace call hierarchies
 
-These operations give Claude more precise navigation than grep-based search.
+These operations can give Claude more precise navigation than grep-based search when available.
 
 ## Pre-built LSP Plugins
 
@@ -178,7 +178,7 @@ Install the language server binary first, then install the plugin:
 ```bash
 # Example: Python
 pip install pyright  # or: npm install -g pyright
-claude /install-plugin pyright-lsp
+claude plugin install pyright-lsp
 ```
 
 **Troubleshooting**: If you see `Executable not found in $PATH` in the `/plugin` Errors tab, install the required binary from the table above.
@@ -446,5 +446,5 @@ For detailed information, consult:
 ### External Resources
 
 - **LSP Specification**: <https://microsoft.github.io/language-server-protocol/>
-- **Claude Code Plugins Reference**: <https://docs.anthropic.com/en/docs/claude-code/plugins-reference>
+- **Claude Code Plugins Reference**: <https://code.claude.com/docs/en/plugins-reference>
 - **Language Server List**: <https://langserver.org/>

@@ -1,18 +1,14 @@
 # MCP Server Discovery
 
-Discover MCP servers for plugin integration using PulseMCP, the comprehensive MCP server directory.
+Discover MCP servers for plugin integration using official documentation, Claude Code/web search tools, and optional directories such as PulseMCP.
 
 ## Discovery Method
 
-Use Tavily extract to search PulseMCP's server directory:
+Start with official and broadly available sources before optional directories.
 
-### Step 1: Search PulseMCP
+### Step 1: Search official docs and the web
 
-```
-Tool: mcp__tavily-mcp__tavily-extract
-URLs: ["https://www.pulsemcp.com/servers?q=[keyword]"]
-Format: markdown
-```
+Use available Claude Code web search or fetch tools to search for `[service] MCP server`, `[service] Claude Code MCP`, and the service's official integration docs. Prefer official servers and documented Claude Code configuration examples when available.
 
 **URL patterns:**
 
@@ -66,12 +62,7 @@ Present top 3-5 matches with key differentiators.
 
 ### Step 4: Fetch Details (Optional)
 
-For servers the user wants to integrate, fetch the detail page:
-
-```
-Tool: mcp__tavily-mcp__tavily-extract
-URLs: ["https://www.pulsemcp.com/servers/[slug]"]
-```
+For servers the user wants to integrate, fetch the official docs, repository README, or optional directory detail page:
 
 Extract from detail page:
 
@@ -137,7 +128,7 @@ Curated recommendations for common use cases. Use live search for comprehensive 
 
 After discovering a server:
 
-1. **Check server type** - stdio (local), SSE (hosted), HTTP, or WebSocket
+1. **Check server type** - stdio (local), SSE (hosted), or HTTP/streamable HTTP
 2. **Get installation info** - Fetch detail page for GitHub README
 3. **Determine auth method** - OAuth (SSE), tokens (HTTP), env vars (stdio)
 4. **Generate configuration** - Create `.mcp.json` entry
@@ -147,21 +138,21 @@ After discovering a server:
 ```
 User: "I need an MCP server for Notion"
 
-1. Search: tavily-extract on pulsemcp.com/servers?q=notion
+1. Search official Notion MCP documentation and optionally cross-check PulseMCP
 2. Find: Notion (official SSE server)
 3. Recommend: Official Notion MCP with OAuth
-4. Configure:
+4. Configure using the current endpoint from Notion's docs (hosted MCP URLs change over time):
    {
      "notion": {
        "type": "sse",
-       "url": "https://mcp.notion.com/sse"
+       "url": "https://mcp.example.com/sse"
      }
    }
 ```
 
-## Alternative Discovery
+## Optional PulseMCP Discovery
 
-If Tavily is unavailable, use WebFetch:
+PulseMCP can be useful for community discovery after checking official sources. Use WebSearch/WebFetch or any available browser/search tool:
 
 ```
 Tool: WebFetch
@@ -169,9 +160,9 @@ URL: https://www.pulsemcp.com/servers?q=[keyword]
 Prompt: List MCP servers matching "[keyword]" with name, description, classification, and slug
 ```
 
-## PulseMCP MCP Server
+## PulseMCP MCP Server (Optional)
 
-For plugins needing programmatic server discovery, recommend the PulseMCP MCP server:
+For plugins needing programmatic community server discovery, the PulseMCP MCP server may be useful:
 
 ```json
 {
@@ -187,4 +178,4 @@ For plugins needing programmatic server discovery, recommend the PulseMCP MCP se
 - `list_servers` - Search/filter servers with pagination
 - `list_integrations` - List all integration categories
 
-Use when building plugins that help users discover and configure MCP servers.
+Use only when building plugins that specifically help users discover and configure MCP servers; do not require it for ordinary MCP integration work.

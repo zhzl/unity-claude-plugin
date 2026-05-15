@@ -19,7 +19,8 @@ my-marketplace/
 
 **Installation:**
 
-```bash
+```text
+# Type in Claude Code
 /plugin marketplace add owner/repo
 ```
 
@@ -35,7 +36,8 @@ my-marketplace/
 
 Any git hosting service works:
 
-```bash
+```text
+# Type in Claude Code
 /plugin marketplace add https://gitlab.com/company/plugins.git
 ```
 
@@ -49,8 +51,8 @@ Any git hosting service works:
 
 Test marketplaces locally before publishing:
 
-```bash
-# Add local directory
+```text
+# Type in Claude Code: add local directory
 /plugin marketplace add ./my-marketplace
 
 # Add direct path to marketplace.json
@@ -74,7 +76,7 @@ Configure team marketplaces in `.claude/settings.json` (project or organization 
     },
     "project-plugins": {
       "source": {
-        "source": "git",
+        "source": "url",
         "url": "https://git.company.com/project-plugins.git"
       }
     }
@@ -98,7 +100,10 @@ Pre-configure required plugins for a project:
       }
     }
   },
-  "enabledPlugins": ["security-scanner@team-tools", "code-formatter@team-tools"]
+  "enabledPlugins": {
+    "security-scanner@team-tools": true,
+    "code-formatter@team-tools": true
+  }
 }
 ```
 
@@ -120,8 +125,12 @@ org-plugins/
 ```json
 {
   "name": "org-plugins",
+  "owner": {
+    "name": "Platform Team",
+    "email": "platform@company.com"
+  },
   "metadata": {
-    "pluginRoot": "./plugins"
+    "pluginRoot": "plugins"
   },
   "plugins": [
     { "name": "security-scanner", "source": "./security-scanner" },
@@ -139,6 +148,10 @@ Marketplace that curates plugins from various sources:
 ```json
 {
   "name": "curated-tools",
+  "owner": {
+    "name": "Marketplace Maintainers",
+    "email": "plugins@example.com"
+  },
   "plugins": [
     {
       "name": "plugin-a",
@@ -190,8 +203,8 @@ Always include version in plugin entries:
 
 ### Update Workflow
 
-```bash
-# Refresh marketplace metadata
+```text
+# Type in Claude Code: refresh marketplace metadata
 /plugin marketplace update marketplace-name
 
 # Check for plugin updates
@@ -218,8 +231,8 @@ plugins-repo/
 
 Use git branches for experimental plugins:
 
-```bash
-# Add marketplace from specific branch
+```text
+# Type in Claude Code: add marketplace from specific branch
 /plugin marketplace add owner/repo#feature-branch
 ```
 
@@ -237,13 +250,15 @@ For marketplaces and plugins hosted in private repositories, Claude Code uses en
 
 Set the appropriate token before adding private marketplaces:
 
-```bash
-# GitHub private repository
+```text
+# In your shell, set the token first:
 export GITHUB_TOKEN="ghp_xxxxxxxxxxxx"
+# Then type in Claude Code:
 /plugin marketplace add company/private-plugins
 
-# GitLab private repository
+# In your shell, set the token first:
 export GITLAB_TOKEN="glpat-xxxxxxxxxxxx"
+# Then type in Claude Code:
 /plugin marketplace add https://gitlab.company.com/team/plugins.git
 ```
 
@@ -288,7 +303,7 @@ Before adding external plugins to your marketplace:
 ### Secure Distribution Checklist
 
 - [ ] Use HTTPS for all git URLs
-- [ ] MCP servers use HTTPS/WSS, not HTTP/WS
+- [ ] Hosted MCP servers use HTTPS, not HTTP
 - [ ] No credentials in marketplace.json
 - [ ] External plugins reviewed before curation
 - [ ] Private repositories for sensitive tools
@@ -297,19 +312,19 @@ Before adding external plugins to your marketplace:
 
 ### List Marketplaces
 
-```bash
+```text
 /plugin marketplace list
 ```
 
 ### Update Marketplace
 
-```bash
+```text
 /plugin marketplace update marketplace-name
 ```
 
 ### Remove Marketplace
 
-```bash
+```text
 /plugin marketplace remove marketplace-name
 ```
 
@@ -317,8 +332,8 @@ Before adding external plugins to your marketplace:
 
 ### Install Plugins
 
-```bash
-# Install from specific marketplace
+```text
+# Type in Claude Code: install from specific marketplace
 /plugin install plugin-name@marketplace-name
 
 # Browse available plugins

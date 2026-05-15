@@ -1,6 +1,6 @@
 ---
-description: Get an overview of plugin development capabilities and skill routing
-argument-hint: [question or task]
+description: Overview of plugin development capabilities
+argument-hint: "[question or task]"
 allowed-tools: Skill, AskUserQuestion
 model: sonnet
 ---

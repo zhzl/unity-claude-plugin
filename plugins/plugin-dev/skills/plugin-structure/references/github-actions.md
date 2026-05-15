@@ -93,7 +93,7 @@ Reference plugin skills in the workflow's `prompt` parameter:
     claude_args: "--max-turns 15"
 ```
 
-Since slash commands don't work in headless mode, describe the task instead. If the skill has `user-invocable: false`, Claude will use it automatically based on context.
+Since slash commands don't work in headless mode, describe the task instead. Claude can discover installed skills from their descriptions and may invoke a matching skill based on context, but the full `SKILL.md` body loads only if Claude actually invokes that skill.
 
 ## Configuration Options
 
@@ -115,7 +115,7 @@ Pass CLI flags through `claude_args`:
 claude_args: >-
   --max-turns 20
   --model claude-sonnet-4-5-20250929
-  --allowedTools "Read,Grep,Glob,Bash(npm:*)"
+  --allowedTools "Read,Grep,Glob,Bash(npm *)"
 ```
 
 ### Custom Trigger Phrases
@@ -208,13 +208,12 @@ Include example workflow snippets in your plugin README:
 Add to `.github/workflows/claude.yml`:
 
 \`\`\`yaml
-
 - uses: anthropics/claude-code-action@v1
   with:
-  anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-  prompt: "Analyze code using [your-plugin] standards"
-  claude_args: "--max-turns 15 --allowedTools 'Read,Grep,Glob'"
-  \`\`\`
+    anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+    prompt: "Analyze code using [your-plugin] standards"
+    claude_args: "--max-turns 15 --allowedTools 'Read,Grep,Glob'"
+\`\`\`
 ```
 
 ### Ensure CI Compatibility

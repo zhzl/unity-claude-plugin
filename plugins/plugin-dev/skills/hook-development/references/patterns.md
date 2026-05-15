@@ -2,6 +2,8 @@
 
 This reference provides common, proven patterns for implementing Claude Code hooks. Use these patterns as starting points for typical hook use cases.
 
+The JSON snippets below show the contents of the `hooks` object. In `.claude/settings.json` or plugin `hooks/hooks.json`, wrap them as `{ "hooks": { ... } }`.
+
 ## Pattern 1: Security Validation
 
 Block dangerous file writes using prompt-based hooks:
@@ -14,7 +16,7 @@ Block dangerous file writes using prompt-based hooks:
       "hooks": [
         {
           "type": "prompt",
-          "prompt": "File path: $TOOL_INPUT.file_path. Verify: 1) Not in /etc or system directories 2) Not .env or credentials 3) Path doesn't contain '..' traversal. Return 'approve' or 'deny'."
+          "prompt": "Using the PreToolUse event context, verify the requested file path: 1) Not in /etc or system directories 2) Not .env or credentials 3) Path doesn't contain '..' traversal. Return JSON with hookSpecificOutput.hookEventName='PreToolUse' and permissionDecision allow, deny, ask, or defer."
         }
       ]
     }
@@ -118,7 +120,7 @@ Monitor and validate MCP tool usage:
       "hooks": [
         {
           "type": "prompt",
-          "prompt": "Deletion operation detected. Verify: Is this deletion intentional? Can it be undone? Are there backups? Return 'approve' only if safe."
+          "prompt": "Deletion operation detected. Verify: Is this deletion intentional? Can it be undone? Are there backups? Return JSON with hookSpecificOutput.hookEventName='PreToolUse' and permissionDecision='deny' only when unsafe; otherwise use permissionDecision='allow'."
         }
       ]
     }
@@ -162,7 +164,7 @@ Ask user before dangerous operations:
       "hooks": [
         {
           "type": "prompt",
-          "prompt": "Command: $TOOL_INPUT.command. If command contains 'rm', 'delete', 'drop', or other destructive operations, return 'ask' to confirm with user. Otherwise 'approve'."
+          "prompt": "Using the PreToolUse event context, inspect the requested Bash command. If it contains 'rm', 'delete', 'drop', or other destructive operations, return JSON with hookSpecificOutput.hookEventName='PreToolUse' and permissionDecision='ask'. Otherwise use permissionDecision='allow'."
         }
       ]
     }
@@ -299,7 +301,7 @@ rm .enable-security-scan
 - Project-specific validation that's opt-in
 - Performance-intensive checks only when needed
 
-**Note:** Must restart Claude Code after creating/removing flag files for hooks to recognize changes.
+**Note:** Flag files are checked when the hook runs, so creating or removing the flag affects the next matching hook invocation.
 
 ## Pattern 10: Configuration-Driven Hooks
 
@@ -311,16 +313,16 @@ CONFIG_FILE="$CLAUDE_PROJECT_DIR/.claude/my-plugin.local.json"
 
 # Read configuration
 if [ -f "$CONFIG_FILE" ]; then
-  strict_mode=$(jq -r '.strictMode // false' "$CONFIG_FILE")
-  max_file_size=$(jq -r '.maxFileSize // 1000000' "$CONFIG_FILE")
+  validation_mode=$(jq -r '.validation_mode // "standard"' "$CONFIG_FILE")
+  max_file_size=$(jq -r '.max_file_size // 1000000' "$CONFIG_FILE")
 else
   # Defaults
-  strict_mode=false
+  validation_mode=standard
   max_file_size=1000000
 fi
 
 # Skip if not in strict mode
-if [ "$strict_mode" != "true" ]; then
+if [ "$validation_mode" != "strict" ]; then
   exit 0
 fi
 
@@ -329,8 +331,8 @@ input=$(cat)
 file_size=$(echo "$input" | jq -r '.tool_input.content | length')
 
 if [ "$file_size" -gt "$max_file_size" ]; then
-  echo '{"decision": "deny", "reason": "File exceeds configured size limit"}' >&2
-  exit 2
+  echo '{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "File exceeds configured size limit"}}'
+  exit 0
 fi
 ```
 
@@ -338,11 +340,13 @@ fi
 
 ```json
 {
-  "strictMode": true,
-  "maxFileSize": 500000,
-  "allowedPaths": ["/tmp", "/home/user/projects"]
+  "validation_mode": "strict",
+  "max_file_size": 500000,
+  "allowed_paths": ["/tmp", "/home/user/projects"]
 }
 ```
+
+This example uses structured PreToolUse output, so the JSON is written to stdout and exits 0.
 
 **Use for:**
 

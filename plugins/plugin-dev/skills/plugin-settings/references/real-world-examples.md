@@ -62,14 +62,21 @@ if [[ ! -f "$SWARM_STATE_FILE" ]]; then
 fi
 
 # Parse frontmatter
-FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$SWARM_STATE_FILE")
+FRONTMATTER=$(awk '
+  NR == 1 {
+    if ($0 != "---") exit 1
+    next
+  }
+  /^---$/ { exit }
+  { print }
+' "$SWARM_STATE_FILE")
 
 # Extract configuration
-COORDINATOR_SESSION=$(echo "$FRONTMATTER" | grep '^coordinator_session:' | sed 's/coordinator_session: *//' | sed 's/^"\(.*\)"$/\1/')
-AGENT_NAME=$(echo "$FRONTMATTER" | grep '^agent_name:' | sed 's/agent_name: *//' | sed 's/^"\(.*\)"$/\1/')
-TASK_NUMBER=$(echo "$FRONTMATTER" | grep '^task_number:' | sed 's/task_number: *//' | sed 's/^"\(.*\)"$/\1/')
-PR_NUMBER=$(echo "$FRONTMATTER" | grep '^pr_number:' | sed 's/pr_number: *//' | sed 's/^"\(.*\)"$/\1/')
-ENABLED=$(echo "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//')
+COORDINATOR_SESSION=$(printf '%s\n' "$FRONTMATTER" | grep '^coordinator_session:' | sed 's/coordinator_session: *//' | sed 's/^"\(.*\)"$/\1/' || true)
+AGENT_NAME=$(printf '%s\n' "$FRONTMATTER" | grep '^agent_name:' | sed 's/agent_name: *//' | sed 's/^"\(.*\)"$/\1/' || true)
+TASK_NUMBER=$(printf '%s\n' "$FRONTMATTER" | grep '^task_number:' | sed 's/task_number: *//' | sed 's/^"\(.*\)"$/\1/' || true)
+PR_NUMBER=$(printf '%s\n' "$FRONTMATTER" | grep '^pr_number:' | sed 's/pr_number: *//' | sed 's/^"\(.*\)"$/\1/' || true)
+ENABLED=$(printf '%s\n' "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//' || true)
 
 # Check if enabled
 if [[ "$ENABLED" != "true" ]]; then
@@ -102,15 +109,16 @@ exit 0
 Settings files are created during swarm launch with:
 
 ```bash
+# Validate or escape variable values before writing YAML frontmatter.
+# Use a YAML-aware writer for arbitrary text containing quotes or newlines.
 cat > "$WORKTREE_PATH/.claude/multi-agent-swarm.local.md" <<EOF
 ---
-agent_name: $AGENT_NAME
-task_number: $TASK_ID
+agent_name: "$AGENT_NAME"
+task_number: "$TASK_ID"
 pr_number: TBD
-coordinator_session: $COORDINATOR_SESSION
+coordinator_session: "$COORDINATOR_SESSION"
 enabled: true
 dependencies: [$DEPENDENCIES]
-additional_instructions: "$EXTRA_INSTRUCTIONS"
 ---
 
 # Task: $TASK_DESCRIPTION
@@ -124,10 +132,11 @@ EOF
 PR number updated after PR creation:
 
 ```bash
-# Update pr_number field
+# Update pr_number field atomically
+tmp=$(mktemp)
 sed "s/^pr_number: .*/pr_number: $PR_NUM/" \
-  ".claude/multi-agent-swarm.local.md" > temp.md
-mv temp.md ".claude/multi-agent-swarm.local.md"
+  ".claude/multi-agent-swarm.local.md" > "$tmp"
+mv "$tmp" ".claude/multi-agent-swarm.local.md"
 ```
 
 ## ralph-wiggum Plugin
@@ -169,12 +178,19 @@ if [[ ! -f "$RALPH_STATE_FILE" ]]; then
 fi
 
 # Parse frontmatter
-FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$RALPH_STATE_FILE")
+FRONTMATTER=$(awk '
+  NR == 1 {
+    if ($0 != "---") exit 1
+    next
+  }
+  /^---$/ { exit }
+  { print }
+' "$RALPH_STATE_FILE")
 
 # Extract configuration
-ITERATION=$(echo "$FRONTMATTER" | grep '^iteration:' | sed 's/iteration: *//')
-MAX_ITERATIONS=$(echo "$FRONTMATTER" | grep '^max_iterations:' | sed 's/max_iterations: *//')
-COMPLETION_PROMISE=$(echo "$FRONTMATTER" | grep '^completion_promise:' | sed 's/completion_promise: *//' | sed 's/^"\(.*\)"$/\1/')
+ITERATION=$(printf '%s\n' "$FRONTMATTER" | grep '^iteration:' | sed 's/iteration: *//' || true)
+MAX_ITERATIONS=$(printf '%s\n' "$FRONTMATTER" | grep '^max_iterations:' | sed 's/max_iterations: *//' || true)
+COMPLETION_PROMISE=$(printf '%s\n' "$FRONTMATTER" | grep '^completion_promise:' | sed 's/completion_promise: *//' | sed 's/^"\(.*\)"$/\1/' || true)
 
 # Check max iterations
 if [[ $MAX_ITERATIONS -gt 0 ]] && [[ $ITERATION -ge $MAX_ITERATIONS ]]; then
@@ -201,8 +217,21 @@ fi
 # Continue loop - increment iteration
 NEXT_ITERATION=$((ITERATION + 1))
 
-# Extract prompt from markdown body
-PROMPT_TEXT=$(awk '/^---$/{i++; next} i>=2' "$RALPH_STATE_FILE")
+# Extract prompt from markdown body after the closing marker
+PROMPT_TEXT=$(awk '
+  NR == 1 {
+    if ($0 == "---") {
+      in_body = 0
+      next
+    }
+    exit
+  }
+  in_body == 0 && /^---$/ {
+    in_body = 1
+    next
+  }
+  in_body == 1 { print }
+' "$RALPH_STATE_FILE")
 
 # Update iteration counter (secure temp file)
 TEMP_FILE=$(mktemp) || exit 1
@@ -381,11 +410,34 @@ MAX=${MAX:-10}
 ### ❌ Ignoring Edge Cases
 
 ```bash
-# BAD: Assumes exactly 2 --- markers
+# BAD: Range can reopen and pull body --- sections into "frontmatter"
 sed -n '/^---$/,/^---$/{ /^---$/d; p; }'
 
-# GOOD: Handles --- in body
-awk '/^---$/{i++; next} i>=2'  # For body
+# GOOD: Require --- on line 1, stop frontmatter at the second marker,
+# and preserve later body --- lines as body content
+FRONTMATTER=$(awk '
+  NR == 1 {
+    if ($0 != "---") exit 1
+    next
+  }
+  /^---$/ { exit }
+  { print }
+' "$FILE")
+
+BODY=$(awk '
+  NR == 1 {
+    if ($0 == "---") {
+      in_body = 0
+      next
+    }
+    exit
+  }
+  in_body == 0 && /^---$/ {
+    in_body = 1
+    next
+  }
+  in_body == 1 { print }
+' "$FILE")
 ```
 
 ## Conclusion

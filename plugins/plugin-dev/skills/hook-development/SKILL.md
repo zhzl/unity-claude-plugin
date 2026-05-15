@@ -1,6 +1,6 @@
 ---
 name: hook-development
-description: This skill should be used when the user asks to "create a hook", "add a PreToolUse/PostToolUse/Stop hook", "validate tool use", "implement prompt-based hooks", "use ${CLAUDE_PLUGIN_ROOT}", "set up event-driven automation", "block dangerous commands", "scoped hooks", "frontmatter hooks", "hook in skill", "hook in agent", "agent hook type", "async hooks", "once handler", "statusMessage", "hook decision control", "TeammateIdle hook", "TaskCompleted hook", or mentions hook events (PreToolUse, PermissionRequest, PostToolUse, PostToolUseFailure, Stop, SubagentStop, SubagentStart, SessionStart, SessionEnd, UserPromptSubmit, PreCompact, Notification, TeammateIdle, TaskCompleted). Provides comprehensive guidance for creating and implementing Claude Code plugin hooks with focus on advanced prompt-based hooks API.
+description: This skill should be used when the user asks to "create a hook", "add a PreToolUse/PostToolUse/Stop hook", "validate tool use", "implement prompt-based hooks", "use ${CLAUDE_PLUGIN_ROOT}", "set up event-driven automation", "block dangerous commands", "scoped hooks", "frontmatter hooks", "hook in skill", "hook in agent", "agent hook type", "once handler", "statusMessage", "hook decision control", "TeammateIdle hook", "TaskCompleted hook", or mentions hook events (PreToolUse, PermissionRequest, PostToolUse, PostToolUseFailure, Stop, SubagentStop, SubagentStart, SessionStart, SessionEnd, UserPromptSubmit, PreCompact, Notification, TeammateIdle, TaskCompleted). Provides comprehensive guidance for creating and implementing Claude Code plugin hooks with focus on advanced prompt-based hooks API.
 ---
 
 # Hook Development for Claude Code Plugins
@@ -26,7 +26,7 @@ Use LLM-driven decision making for context-aware validation:
 ```json
 {
   "type": "prompt",
-  "prompt": "Evaluate if this tool use is appropriate: $TOOL_INPUT",
+  "prompt": "Evaluate whether the current tool use is appropriate based on the PreToolUse event context. Return the documented event-specific JSON response.",
   "timeout": 30
 }
 ```
@@ -35,15 +35,16 @@ Use LLM-driven decision making for context-aware validation:
 
 **Response format:**
 
-Prompt hooks must return:
+Prompt hooks return the same JSON output schema as command hooks for the event. For Stop-like blocking events, use:
 
 ```json
-{ "ok": true, "reason": "Explanation of decision" }
+{ "decision": "block", "reason": "Explanation of decision" }
 ```
 
-- `ok: true` -- approve/allow the action
-- `ok: false` -- block/deny the action
-- `reason` -- required when `ok: false`, fed back to Claude
+For PreToolUse permission decisions, use `hookSpecificOutput.permissionDecision` with `allow`, `deny`, `ask`, or `defer`.
+
+- Omit `decision` to allow Stop-like events by default
+- `reason` is required when blocking and is fed back to Claude
 - Default model: Haiku
 
 **Benefits:**
@@ -94,7 +95,7 @@ Agent hooks spawn a subagent that can use tools (Read, Bash, etc.) for thorough 
 
 **For plugin hooks** in `hooks/hooks.json`, use wrapper format:
 
-```json
+```text
 {
   "description": "Brief explanation of hooks (optional)",
   "hooks": {
@@ -132,25 +133,27 @@ Agent hooks spawn a subagent that can use tools (Read, Bash, etc.) for thorough 
 }
 ```
 
-### Settings Format (Direct)
+### Settings Format
 
-**For user settings** in `.claude/settings.json`, use direct format:
+**For user/project settings** in `.claude/settings.json`, use the same `hooks` wrapper:
 
-```json
+```text
 {
-  "PreToolUse": [...],
-  "Stop": [...],
-  "SessionStart": [...]
+  "hooks": {
+    "PreToolUse": [...],
+    "Stop": [...],
+    "SessionStart": [...]
+  }
 }
 ```
 
 **Key points:**
 
-- No wrapper - events directly at top level
-- No description field
+- `hooks` field is required wrapper containing actual hook events
+- No plugin `description` field in settings
 - This is the **settings format**
 
-**Important:** The examples below show the hook event structure that goes inside either format. For plugin hooks.json, wrap these in `{"hooks": {...}}`.
+**Important:** The examples below show full settings-style hook objects. Plugin `hooks/hooks.json` uses the same `hooks` wrapper and may also include `description`.
 
 ## Hook Events
 
@@ -158,21 +161,23 @@ Agent hooks spawn a subagent that can use tools (Read, Bash, etc.) for thorough 
 
 Execute before any tool runs. Use to approve, deny, or modify tool calls.
 
-**Example (prompt-based):**
+**Settings example (prompt-based):**
 
 ```json
 {
-  "PreToolUse": [
-    {
-      "matcher": "Write|Edit",
-      "hooks": [
-        {
-          "type": "prompt",
-          "prompt": "Validate file write safety. Check: system paths, credentials, path traversal, sensitive content. Return 'approve' or 'deny'."
-        }
-      ]
-    }
-  ]
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Validate file write safety. Return JSON with hookSpecificOutput.hookEventName='PreToolUse' and permissionDecision set to allow, deny, ask, or defer."
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -181,7 +186,9 @@ Execute before any tool runs. Use to approve, deny, or modify tool calls.
 ```json
 {
   "hookSpecificOutput": {
-    "permissionDecision": "allow|deny|ask",
+    "hookEventName": "PreToolUse",
+    "permissionDecision": "allow|deny|ask|defer",
+    "permissionDecisionReason": "Explanation",
     "updatedInput": { "field": "modified_value" }
   },
   "systemMessage": "Explanation for Claude"
@@ -192,21 +199,23 @@ Execute before any tool runs. Use to approve, deny, or modify tool calls.
 
 Execute when user is shown a permission dialog. Use to automatically allow or deny permissions.
 
-**Example:**
+**Settings example:**
 
 ```json
 {
-  "PermissionRequest": [
-    {
-      "matcher": "Bash",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/check-permission.sh"
-        }
-      ]
-    }
-  ]
+  "hooks": {
+    "PermissionRequest": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/check-permission.sh"
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -215,6 +224,7 @@ Execute when user is shown a permission dialog. Use to automatically allow or de
 ```json
 {
   "hookSpecificOutput": {
+    "hookEventName": "PermissionRequest",
     "decision": {
       "behavior": "allow|deny",
       "updatedInput": { "command": "modified command" },
@@ -240,21 +250,23 @@ Execute when user is shown a permission dialog. Use to automatically allow or de
 
 Execute after tool completes. Use to react to results, provide feedback, or log.
 
-**Example:**
+**Settings example:**
 
 ```json
 {
-  "PostToolUse": [
-    {
-      "matcher": "Edit",
-      "hooks": [
-        {
-          "type": "prompt",
-          "prompt": "Analyze edit result for potential issues: syntax errors, security vulnerabilities, breaking changes. Provide feedback."
-        }
-      ]
-    }
-  ]
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Analyze edit result for potential issues: syntax errors, security vulnerabilities, breaking changes. Provide feedback."
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -268,21 +280,23 @@ Execute after tool completes. Use to react to results, provide feedback, or log.
 
 Execute when a tool fails after PostToolUse hooks have run. Use to handle errors or provide fallback actions.
 
-**Example:**
+**Settings example:**
 
 ```json
 {
-  "PostToolUseFailure": [
-    {
-      "matcher": "Edit",
-      "hooks": [
-        {
-          "type": "prompt",
-          "prompt": "Error occurred during edit. Provide fallback action or ask for user input."
-        }
-      ]
-    }
-  ]
+  "hooks": {
+    "PostToolUseFailure": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Error occurred during edit. Provide fallback action or ask for user input."
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -295,21 +309,23 @@ Execute when a tool fails after PostToolUse hooks have run. Use to handle errors
 
 Execute when main agent considers stopping. Use to validate completeness.
 
-**Example:**
+**Settings example:**
 
 ```json
 {
-  "Stop": [
-    {
-      "matcher": "*",
-      "hooks": [
-        {
-          "type": "prompt",
-          "prompt": "Verify task completion: tests run, build succeeded, questions answered. Return 'approve' to stop or 'block' with reason to continue."
-        }
-      ]
-    }
-  ]
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Verify task completion: tests run, build succeeded, questions answered. Return {\"decision\": \"block\", \"reason\": \"...\"} only when work should continue; omit decision to allow stopping."
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -317,11 +333,13 @@ Execute when main agent considers stopping. Use to validate completeness.
 
 ```json
 {
-  "decision": "approve|block",
+  "decision": "block",
   "reason": "Explanation",
   "systemMessage": "Additional context"
 }
 ```
+
+Omit `decision` to allow stopping.
 
 ### SubagentStop
 
@@ -331,23 +349,25 @@ Similar to Stop hook, but for subagents.
 
 ### SubagentStart
 
-Execute when a subagent is started. Use to initialize subagent state or perform setup.
+Execute when a subagent is started. Use to initialize subagent state or perform setup. The matcher targets the agent type or a custom agent name.
 
-**Example:**
+**Settings example:**
 
 ```json
 {
-  "SubagentStart": [
-    {
-      "matcher": "mcp__subagent_name",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/subagent-init.sh"
-        }
-      ]
-    }
-  ]
+  "hooks": {
+    "SubagentStart": [
+      {
+        "matcher": "general-purpose",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/subagent-init.sh"
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -355,21 +375,23 @@ Execute when a subagent is started. Use to initialize subagent state or perform 
 
 Execute when user submits a prompt. Use to add context, validate, or block prompts.
 
-**Example:**
+**Settings example:**
 
 ```json
 {
-  "UserPromptSubmit": [
-    {
-      "matcher": "*",
-      "hooks": [
-        {
-          "type": "prompt",
-          "prompt": "Check if prompt requires security guidance. If discussing auth, permissions, or API security, return relevant warnings."
-        }
-      ]
-    }
-  ]
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Check if prompt requires security guidance. If discussing auth, permissions, or API security, return relevant warnings."
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -379,21 +401,23 @@ Execute when Claude Code session begins. Use to load context and set environment
 
 **Supported matchers:** `startup` (first launch), `resume` (resuming session), `clear` (after /clear), `compact` (after context compaction).
 
-**Example:**
+**Settings example:**
 
 ```json
 {
-  "SessionStart": [
-    {
-      "matcher": "*",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/load-context.sh"
-        }
-      ]
-    }
-  ]
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/load-context.sh"
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -441,14 +465,14 @@ Execute when Claude sends notifications. Use to react to user notifications.
 
 ## Hook Input Format
 
-All hooks receive JSON via stdin with common fields:
+Command hooks receive JSON via stdin with common fields:
 
 ```json
 {
   "session_id": "abc123",
   "transcript_path": "/path/to/transcript.txt",
   "cwd": "/current/working/dir",
-  "permission_mode": "ask|allow",
+  "permission_mode": "default",
   "hook_event_name": "PreToolUse"
 }
 ```
@@ -456,12 +480,12 @@ All hooks receive JSON via stdin with common fields:
 **Event-specific fields:**
 
 - **PreToolUse/PermissionRequest/PostToolUse:** `tool_name`, `tool_input`, `tool_result`
-- **UserPromptSubmit:** `user_prompt`
-- **Stop/SubagentStop:** `reason`
+- **UserPromptSubmit:** `prompt`
+- **Stop/SubagentStop:** `stop_hook_active`
 
-Access fields in prompts using `$TOOL_INPUT`, `$TOOL_RESULT`, `$USER_PROMPT`, etc.
+Prompt hooks receive the documented prompt/event context from Claude Code. Write prompts against that context generically (for example, "the current tool input" or "the submitted user prompt") instead of assuming shell-style variables such as `$TOOL_INPUT`, `$TOOL_RESULT`, or `$USER_PROMPT` exist.
 
-For comprehensive per-tool and per-event input schemas, see [Hook Input Schemas](references/hook-input-schemas.md).
+For comprehensive per-tool and per-event input schemas for command hooks, see [Hook Input Schemas](references/hook-input-schemas.md).
 
 ## Environment Variables
 
@@ -516,11 +540,11 @@ In plugins, define hooks in `hooks/hooks.json` using the **plugin wrapper format
 }
 ```
 
-**Note:** Plugin hooks use the `{"hooks": {...}}` wrapper format, not the direct settings format. Plugin hooks merge with user's hooks and run in parallel.
+**Note:** Plugin hooks use the same `{"hooks": {...}}` wrapper as settings and may include an optional `description`. Plugin hooks merge with user's hooks and run in parallel.
 
-## Scoped Hooks in Skill/Agent Frontmatter
+## Scoped Hooks in Skill Frontmatter
 
-Beyond `hooks.json` (global) and settings (user-level), hooks can be defined directly in skill or agent YAML frontmatter. Scoped hooks activate only when that component is in use:
+Beyond `hooks.json` (global) and settings (user-level), hooks can be defined directly in skill YAML frontmatter when supported by Claude Code. Scoped hooks activate only when that skill is in use. Plugin-shipped agent frontmatter does not support `hooks`; put plugin agent-related hooks in `hooks/hooks.json` instead:
 
 ```yaml
 ---
@@ -537,7 +561,7 @@ hooks:
 
 **Supported events in frontmatter:** `PreToolUse`, `PostToolUse`, `Stop`
 
-Scoped hooks use the same event/matcher/hook structure but are lifecycle-bound — they activate when the skill loads and deactivate when it completes. This is ideal for skill-specific validation without affecting other workflows.
+Scoped skill hooks use the same event/matcher/hook structure but are lifecycle-bound — they activate when the skill loads and deactivate when it completes. This is ideal for skill-specific validation without affecting other workflows.
 
 See `references/advanced.md` for detailed syntax and comparison with `hooks.json`.
 
@@ -547,25 +571,25 @@ See `references/advanced.md` for detailed syntax and comparison with `hooks.json
 
 **Exact match:**
 
-```json
+```text
 "matcher": "Write"
 ```
 
 **Multiple tools:**
 
-```json
+```text
 "matcher": "Read|Write|Edit"
 ```
 
 **Wildcard (all tools):**
 
-```json
+```text
 "matcher": "*"
 ```
 
 **Regex patterns:**
 
-```json
+```jsonc
 "matcher": "mcp__.*__delete.*"  // All MCP delete tools
 ```
 
@@ -573,12 +597,12 @@ See `references/advanced.md` for detailed syntax and comparison with `hooks.json
 
 ### Common Patterns
 
-```json
+```jsonc
 // All MCP tools
 "matcher": "mcp__.*"
 
-// Specific plugin's MCP tools
-"matcher": "mcp__plugin_asana_.*"
+// Specific MCP server tools
+"matcher": "mcp__asana__.*"
 
 // All file operations
 "matcher": "Read|Write|Edit"
@@ -602,8 +626,8 @@ tool_name=$(echo "$input" | jq -r '.tool_name')
 
 # Validate tool name format
 if [[ ! "$tool_name" =~ ^[a-zA-Z0-9_]+$ ]]; then
-  echo '{"decision": "deny", "reason": "Invalid tool name"}' >&2
-  exit 2
+  echo '{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "Invalid tool name"}}'
+  exit 0
 fi
 ```
 
@@ -616,14 +640,14 @@ file_path=$(echo "$input" | jq -r '.tool_input.file_path')
 
 # Deny path traversal
 if [[ "$file_path" == *".."* ]]; then
-  echo '{"decision": "deny", "reason": "Path traversal detected"}' >&2
-  exit 2
+  echo '{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "Path traversal detected"}}'
+  exit 0
 fi
 
 # Deny sensitive files
 if [[ "$file_path" == *".env"* ]]; then
-  echo '{"decision": "deny", "reason": "Sensitive file"}' >&2
-  exit 2
+  echo '{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "Sensitive file"}}'
+  exit 0
 fi
 ```
 
@@ -659,7 +683,7 @@ cd $CLAUDE_PROJECT_DIR
 
 All matching hooks run **in parallel**:
 
-```json
+```jsonc
 {
   "PreToolUse": [
     {
@@ -829,7 +853,7 @@ Working examples in `examples/`:
 
 ### Utility Scripts
 
-> **Prerequisites**: These scripts require `jq` for JSON validation. See the [main README](../../../../README.md#for-utility-scripts) for setup.
+> **Prerequisites**: These scripts assume `bash` 3.2+, `grep`, and `sed`. JSON validation scripts also require `jq` 1.6+; check with `jq --version` and install it with your system package manager if missing.
 
 Development tools in `scripts/`:
 
@@ -839,7 +863,7 @@ Development tools in `scripts/`:
 
 ### External Resources
 
-- **Official Docs**: <https://docs.claude.com/en/docs/claude-code/hooks>
+- **Official Docs**: <https://code.claude.com/docs/en/hooks>
 - **Examples**: See security-guidance plugin in marketplace
 - **Testing**: Use `claude --debug` for detailed logs
 - **Validation**: Use `jq` to validate hook JSON output

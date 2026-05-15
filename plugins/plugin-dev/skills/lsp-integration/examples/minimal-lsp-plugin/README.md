@@ -19,16 +19,16 @@ which gopls
 ## Installation
 
 ```bash
-claude /install-plugin /path/to/go-lsp
+claude --plugin-dir /path/to/go-lsp
 ```
 
 ## Features
 
-Once installed, Claude gains:
+Once installed, Claude can use supported `gopls` capabilities:
 
-- **Automatic diagnostics** - Type errors and issues reported after edits
+- **Diagnostics** - Type errors and issues when reported by the server
 - **Go to definition** - Jump to where functions and types are defined
-- **Find references** - Locate all usages of a symbol
+- **Find references** - Locate usages of a symbol
 - **Hover information** - See type info and documentation
 
 ## Troubleshooting

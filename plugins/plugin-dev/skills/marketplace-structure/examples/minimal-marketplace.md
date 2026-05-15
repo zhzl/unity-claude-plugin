@@ -51,8 +51,8 @@ The plugin must have its own manifest since `strict: true` is the default:
 
 ## Installation
 
-```bash
-# Local testing
+```text
+# Type in Claude Code
 /plugin marketplace add ./my-marketplace
 
 # After publishing to GitHub

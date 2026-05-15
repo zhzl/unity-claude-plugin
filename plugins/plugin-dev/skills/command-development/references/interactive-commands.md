@@ -11,7 +11,7 @@ Some commands need user input that doesn't work well with simple arguments. For 
 - Making decisions that require explanation
 - Gathering preferences or configuration interactively
 
-For these cases, use the **AskUserQuestion tool** within command execution rather than relying on command arguments.
+For these cases, use the **AskUserQuestion tool** within command execution rather than relying on command arguments. Interactive prompts require a live user; in headless or CI workflows, provide command arguments or a config file fallback instead.
 
 ## When to Use AskUserQuestion
 
@@ -721,8 +721,7 @@ Options:
 - 2 agents (Best for simple projects)
 - 3 agents (Good for medium projects)
 - 4 agents (Standard team size)
-- 6 agents (Large projects)
-- 8 agents (Complex multi-component projects)
+- 6 agents (Large or complex projects)
 
 ### Question 2: Task Definition Approach
 
@@ -916,7 +915,7 @@ Options:
 
 ```markdown
 ---
-argument-hint: [project-name]
+argument-hint: "[project-name]"
 allowed-tools: AskUserQuestion, Write
 ---
 

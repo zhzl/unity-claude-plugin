@@ -315,7 +315,7 @@ hooks/
 
 **hooks.json**:
 
-```json
+```text
 {
   "hooks": {
     "PreToolUse": [...],
@@ -352,7 +352,7 @@ hooks/
 
 **hooks.json** (combines):
 
-```json
+```text
 {
   "PreToolUse": ${file:./pre-tool-use.json},
   "PostToolUse": ${file:./post-tool-use.json},

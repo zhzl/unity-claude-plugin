@@ -12,7 +12,7 @@ Claude Code plugins follow a standardized directory structure with automatic com
 **Key concepts:**
 
 - Conventional directory layout for automatic discovery
-- Manifest-driven configuration in `.claude-plugin/plugin.json`
+- Optional manifest-driven configuration in `.claude-plugin/plugin.json` when metadata, custom paths, or configuration are needed
 - Component-based organization (commands, agents, skills, hooks)
 - Portable path references using `${CLAUDE_PLUGIN_ROOT}`
 - Explicit vs. auto-discovered component loading
@@ -24,7 +24,7 @@ Every Claude Code plugin follows this organizational pattern:
 ```
 plugin-name/
 ├── .claude-plugin/
-│   └── plugin.json          # Required: Plugin manifest
+│   └── plugin.json          # Optional: metadata/custom paths/config
 ├── commands/                 # Slash commands (.md files)
 ├── agents/                   # Subagent definitions (.md files)
 ├── skills/                   # Agent skills (subdirectories)
@@ -38,14 +38,14 @@ plugin-name/
 
 **Critical rules:**
 
-1. **Manifest location**: The `plugin.json` manifest MUST be in `.claude-plugin/` directory
+1. **Manifest location**: If present, the `plugin.json` manifest belongs in `.claude-plugin/` and must include `name`
 2. **Component locations**: All component directories (commands, agents, skills, hooks) MUST be at plugin root level, NOT nested inside `.claude-plugin/`
 3. **Optional components**: Only create directories for components the plugin actually uses
 4. **Naming convention**: Use kebab-case for all directory and file names
 
 ## Plugin Manifest (plugin.json)
 
-The manifest defines plugin metadata and configuration. Located at `.claude-plugin/plugin.json`:
+The optional manifest defines plugin metadata and configuration. Use `.claude-plugin/plugin.json` when you need metadata, custom component paths, or configuration; when present, it must include `name`:
 
 ### Required Fields
 
@@ -86,26 +86,26 @@ The manifest defines plugin metadata and configuration. Located at `.claude-plug
 
 ### Component Path Configuration
 
-Specify custom paths for components (supplements default directories):
+Specify custom paths for components:
 
 ```json
 {
   "name": "plugin-name",
-  "commands": "./custom-commands",
+  "commands": ["./commands", "./custom-commands"],
   "agents": ["./agents", "./specialized-agents"],
   "hooks": "./config/hooks.json",
   "mcpServers": "./.mcp.json"
 }
 ```
 
-**Important**: Custom paths supplement defaults—they don't replace them. Components in both default directories and custom paths will load.
+**Important**: Path behavior is field-specific. Custom `skills` paths supplement the default `./skills` directory. Custom `commands`, `agents`, and `outputStyles` paths replace defaults unless the default path is explicitly listed, as shown above. Hooks, MCP, and LSP have their own file/merge behavior.
 
 **Path rules:**
 
 - Must be relative to plugin root
 - Must start with `./`
 - Cannot use absolute paths
-- Support arrays for multiple locations
+- Support arrays for fields that accept multiple locations
 
 ## Component Organization
 
@@ -158,10 +158,11 @@ agents/
 
 ```markdown
 ---
-description: Agent role and expertise
-capabilities:
-  - Specific task 1
-  - Specific task 2
+name: example-agent
+description: |
+  Use this agent when a task needs specialized analysis or a focused role with domain-specific instructions.
+model: sonnet
+color: blue
 ---
 
 Detailed agent instructions and knowledge...
@@ -308,7 +309,7 @@ hooks/
 }
 ```
 
-**Usage**: LSP servers provide code intelligence (go-to-definition, find references, hover)
+**Usage**: LSP servers can provide supported code intelligence capabilities such as go-to-definition, references, and hover
 
 For detailed LSP configuration, see the `lsp-integration` skill.
 
@@ -374,7 +375,9 @@ Use `${CLAUDE_PLUGIN_ROOT}` environment variable for all intra-plugin path refer
 **In manifest JSON fields** (hooks, MCP servers):
 
 ```json
-"command": "${CLAUDE_PLUGIN_ROOT}/scripts/tool.sh"
+{
+  "command": "${CLAUDE_PLUGIN_ROOT}/scripts/tool.sh"
+}
 ```
 
 **In component files** (commands, agents, skills):
@@ -437,7 +440,7 @@ source "${CLAUDE_PLUGIN_ROOT}/lib/common.sh"
 
 Claude Code automatically discovers and loads components:
 
-1. **Plugin manifest**: Reads `.claude-plugin/plugin.json` when plugin enables
+1. **Plugin manifest**: Reads `.claude-plugin/plugin.json` when present
 2. **Commands**: Scans `commands/` directory for `.md` files
 3. **Agents**: Scans `agents/` directory for `.md` files
 4. **Skills**: Scans `skills/` for subdirectories containing `SKILL.md`
@@ -450,7 +453,7 @@ Claude Code automatically discovers and loads components:
 - Plugin enable: Components become available for use
 - No restart required: Changes take effect on next Claude Code session
 
-**Override behavior**: Custom paths in `plugin.json` supplement (not replace) default directories
+**Override behavior**: Custom `skills` paths supplement the default directory; custom `commands`, `agents`, and `outputStyles` paths replace defaults unless the default path is explicitly listed.
 
 ## Best Practices
 
@@ -613,12 +616,9 @@ Use validation early and often during development.
 
 ### Additional Source Types
 
-Beyond relative paths and git sources, plugins can also be installed from:
+Marketplace entries can point at package-based plugin sources when supported by the marketplace schema. For npm packages, put the npm package information in the marketplace plugin `source` object rather than documenting direct package-manager installs in the plugin itself.
 
-- **npm**: `claude plugin install npm-package-name`
-- **pip**: `claude plugin install pip-package-name`
-
-These package managers handle versioning and dependency resolution automatically.
+Use `claude plugin install <plugin-name>@<marketplace-name>` for marketplace installs once the marketplace entry is configured.
 
 ## Troubleshooting
 

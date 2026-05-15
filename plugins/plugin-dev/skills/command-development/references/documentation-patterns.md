@@ -13,8 +13,8 @@ Well-documented commands are easier to use, maintain, and distribute. Documentat
 ```markdown
 ---
 description: Clear, actionable description under 60 chars
-argument-hint: [arg1] [arg2] [optional-arg]
-allowed-tools: Read, Bash(git:*)
+argument-hint: "[arg1] [arg2] [optional-arg]"
+allowed-tools: Read, Bash(git *)
 model: sonnet
 ---
 
@@ -135,7 +135,7 @@ description: Complex multi-step command
 
 Checking prerequisites...
 
-- Git repository: `git rev-parse --git-dir 2>/dev/null`
+- Git repository: !`git rev-parse --git-dir 2>/dev/null`
 - Branch exists: [validation logic]
 
 <!-- SECTION 2: ANALYSIS -->
@@ -166,7 +166,7 @@ description: Deployment command with inline docs
 
 <!-- We check branch status to prevent deploying from wrong branch -->
 
-Current branch: `git branch --show-current`
+Current branch: !`git branch --show-current`
 
 <!-- Production deploys must come from main/master -->
 
@@ -177,7 +177,7 @@ fi
 
 <!-- Test status ensures we don't deploy broken code -->
 
-Running tests: `npm test`
+Run tests with the Bash tool.
 
 ✓ All checks passed
 
@@ -217,7 +217,7 @@ description: Interactive deployment command
 ## Configuration Review
 
 Target: $1
-Current version: `cat version.txt`
+Current version: !`cat version.txt`
 New version: $2
 
 <!-- DECISION POINT: User confirms configuration -->
@@ -249,7 +249,7 @@ Create a help subcommand for complex commands:
 ```markdown
 ---
 description: Main command with help
-argument-hint: [subcommand] [args]
+argument-hint: "[subcommand] [args]"
 ---
 
 # Command Processor
@@ -289,7 +289,7 @@ Provide help based on context:
 ```markdown
 ---
 description: Context-aware command
-argument-hint: [operation] [target]
+argument-hint: "[operation] [target]"
 ---
 
 # Context-Aware Operation
@@ -703,11 +703,11 @@ enable_feature: true
 
 ## Contributing
 
-Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
+Contributions welcome! See `CONTRIBUTING.md` if your plugin provides one.
 
 ## License
 
-MIT License - See [LICENSE](LICENSE).
+MIT License - see `LICENSE` if your plugin provides one.
 
 ## Support
 

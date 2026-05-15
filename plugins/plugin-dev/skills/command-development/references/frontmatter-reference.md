@@ -11,7 +11,7 @@ YAML frontmatter is optional metadata at the start of command files:
 description: Brief description
 allowed-tools: Read, Write
 model: sonnet
-argument-hint: [arg1] [arg2]
+argument-hint: "[arg1] [arg2]"
 ---
 
 Command prompt content here...
@@ -86,7 +86,7 @@ allowed-tools: Read, Write, Edit
 ```
 
 ```yaml
-allowed-tools: Read, Write, Bash(git:*)
+allowed-tools: Read, Write, Bash(git *)
 ```
 
 **Tool Patterns:**
@@ -100,9 +100,9 @@ allowed-tools: Read, Grep, Edit
 **Bash with command filter:**
 
 ```yaml
-allowed-tools: Bash(git:*)           # Only git commands
-allowed-tools: Bash(npm:*)           # Only npm commands
-allowed-tools: Bash(docker:*)        # Only docker commands
+allowed-tools: Bash(git *)           # Only git commands
+allowed-tools: Bash(npm *)           # Only npm commands
+allowed-tools: Bash(docker *)        # Only docker commands
 ```
 
 **All tools (not recommended):**
@@ -122,18 +122,18 @@ allowed-tools: "*"
 2. **Clarity:** Document required tools
 
    ```yaml
-   allowed-tools: Bash(git:*), Read
+   allowed-tools: Bash(git *), Read
    ```
 
 3. **Bash execution:** Enable bash command output
    ```yaml
-   allowed-tools: Bash(git status:*), Bash(git diff:*)
+   allowed-tools: Bash(git status *), Bash(git diff *)
    ```
 
 **Best practices:**
 
 - Be as restrictive as possible
-- Use command filters for Bash (e.g., `git:*` not `*`)
+- Use command filters for Bash (e.g., `git *` not `*`)
 - Only specify when different from conversation permissions
 - Document why specific tools are needed
 
@@ -142,14 +142,9 @@ allowed-tools: "*"
 **Type:** String
 **Required:** No
 **Default:** Inherits from conversation
-**Values:**
+**Values:** `sonnet`, `opus`, `haiku`, or `inherit`
 
-- Shorthand: `sonnet`, `opus`, `haiku`
-- Full model ID: Format is `claude-<family>-<version>-<date>` (e.g., `claude-sonnet-4-5-20250929`)
-
-Both formats are accepted. Shorthand names use the current default version of each model family.
-
-> **Note:** Anthropic releases new model versions periodically. For current model IDs, consult [Claude Models Overview](https://docs.anthropic.com/en/docs/about-claude/models). Prefer shorthand names unless you need a specific version.
+These values use the current default version of each model family. `inherit` uses the conversation's current model.
 
 **Purpose:** Specify which Claude model executes the command
 
@@ -228,7 +223,7 @@ model: opus
 **Format:**
 
 ```yaml
-argument-hint: [arg1] [arg2] [optional-arg]
+argument-hint: "[arg1] [arg2] [optional-arg]"
 ```
 
 **Examples:**
@@ -236,25 +231,25 @@ argument-hint: [arg1] [arg2] [optional-arg]
 **Single argument:**
 
 ```yaml
-argument-hint: [pr-number]
+argument-hint: "[pr-number]"
 ```
 
 **Multiple required arguments:**
 
 ```yaml
-argument-hint: [environment] [version]
+argument-hint: "[environment] [version]"
 ```
 
 **Optional arguments:**
 
 ```yaml
-argument-hint: [file-path] [options]
+argument-hint: "[file-path] [options]"
 ```
 
 **Descriptive names:**
 
 ```yaml
-argument-hint: [source-branch] [target-branch] [commit-message]
+argument-hint: "[source-branch] [target-branch] [commit-message]"
 ```
 
 **Best practices:**
@@ -272,7 +267,7 @@ argument-hint: [source-branch] [target-branch] [commit-message]
 ```yaml
 ---
 description: Fix issue by number
-argument-hint: [issue-number]
+argument-hint: "[issue-number]"
 ---
 Fix issue #$1...
 ```
@@ -282,7 +277,7 @@ Fix issue #$1...
 ```yaml
 ---
 description: Deploy to environment
-argument-hint: [app-name] [environment] [version]
+argument-hint: "[app-name] [environment] [version]"
 ---
 
 Deploy $1 to $2 using version $3...
@@ -293,7 +288,7 @@ Deploy $1 to $2 using version $3...
 ```yaml
 ---
 description: Run tests with options
-argument-hint: [test-pattern] [options]
+argument-hint: "[test-pattern] [options]"
 ---
 
 Run tests matching $1 with options: $2
@@ -388,10 +383,10 @@ Description and tools:
 ```markdown
 ---
 description: Review Git changes
-allowed-tools: Bash(git:*), Read
+allowed-tools: Bash(git *), Read
 ---
 
-Current changes: `git diff --name-only`
+Current changes: !`git diff --name-only`
 
 Review each changed file for:
 
@@ -407,8 +402,8 @@ All common fields:
 ```markdown
 ---
 description: Deploy application to environment
-argument-hint: [app-name] [environment] [version]
-allowed-tools: Bash(kubectl:*), Bash(helm:*), Read
+argument-hint: "[app-name] [environment] [version]"
+allowed-tools: Bash(kubectl *), Bash(helm *), Read
 model: sonnet
 ---
 
@@ -417,7 +412,7 @@ Deploy $1 to $2 environment using version $3
 Pre-deployment checks:
 
 - Verify $2 configuration
-- Check cluster status: `kubectl cluster-info`
+- Check cluster status with the Bash tool
 - Validate version $3 exists
 
 Proceed with deployment following deployment runbook.
@@ -430,9 +425,9 @@ Restricted invocation:
 ```markdown
 ---
 description: Approve production deployment
-argument-hint: [deployment-id]
+argument-hint: "[deployment-id]"
 disable-model-invocation: true
-allowed-tools: Bash(gh:*)
+allowed-tools: Bash(gh *)
 ---
 
 <!--
@@ -470,13 +465,13 @@ model: sonnet
 
 **Fix:** Validate YAML syntax
 
-**Incorrect tool specification:**
+**Overly broad tool specification:**
 
 ```yaml
-allowed-tools: Bash # ❌ Missing command filter
+allowed-tools: Bash # Valid, but broad
 ```
 
-**Fix:** Use `Bash(git:*)` format
+**Safer:** Use a narrower pattern such as `Bash(git *)` when the command only needs git access
 
 **Invalid model name:**
 
@@ -484,7 +479,7 @@ allowed-tools: Bash # ❌ Missing command filter
 model: gpt4 # ❌ Not a valid Claude model
 ```
 
-**Fix:** Use shorthand (`sonnet`, `opus`, `haiku`) or full model ID (see [Claude Models Overview](https://docs.anthropic.com/en/docs/about-claude/models))
+**Fix:** Use `sonnet`, `opus`, `haiku`, or `inherit`
 
 ### Validation Checklist
 

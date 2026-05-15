@@ -49,7 +49,7 @@ Use when the user needs to:
 - Configure command frontmatter (description, allowed-tools, model)
 - Use dynamic arguments ($ARGUMENTS, $1, $2)
 - Reference files with @ syntax
-- Execute bash inline with `[BANG]` backticks
+- Execute bash inline with literal `!` before backticks
 
 ### Creating Autonomous Agents
 
@@ -94,7 +94,7 @@ Use when the user needs to:
 Use when the user needs to:
 
 - Add MCP servers to plugins
-- Configure stdio, SSE, HTTP, or WebSocket servers
+- Configure stdio, SSE, or HTTP MCP servers
 - Set up authentication (OAuth, tokens)
 - Use MCP tools in commands and agents
 - Discover existing MCP servers on PulseMCP
@@ -106,7 +106,7 @@ Use when the user needs to:
 Use when the user needs to:
 
 - Add Language Server Protocol servers to plugins
-- Enable go-to-definition and find-references
+- Enable supported code navigation capabilities such as go-to-definition and find-references
 - Configure language-specific servers (pyright, gopls, rust-analyzer)
 - Set up extensionToLanguage mappings
 - Enhance Claude's code understanding

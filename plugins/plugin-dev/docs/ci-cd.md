@@ -1,6 +1,6 @@
 # CI/CD Workflows
 
-Documentation for GitHub Actions workflows, labels, and templates.
+Documentation for GitHub Actions workflows, labels, and templates when those repository files are present.
 
 ## PR Workflows
 
@@ -25,7 +25,7 @@ Documentation for GitHub Actions workflows, labels, and templates.
 
 ## Labels
 
-Issues and PRs use a structured labeling system defined in `.github/labels.yml`:
+Issues and PRs can use a structured labeling system defined in `.github/labels.yml` when present:
 
 | Category  | Format        | Examples                                                                                      |
 | --------- | ------------- | --------------------------------------------------------------------------------------------- |
@@ -38,7 +38,7 @@ The `semantic-labeler.yml` workflow auto-labels PRs based on file paths changed.
 
 ## Issue & PR Templates
 
-The repository includes templates in `.github/`:
+Repositories can include templates in `.github/`:
 
 **Issue Templates** (4 types):
 
@@ -47,4 +47,4 @@ The repository includes templates in `.github/`:
 - `documentation.yml` - Documentation improvements
 - `question.yml` - Questions and discussions
 
-**Pull Request Template**: Component-specific checklists with validation requirements. See [CONTRIBUTING.md](../CONTRIBUTING.md) for PR guidelines.
+**Pull Request Template**: Component-specific checklists with validation requirements. If a `CONTRIBUTING.md` file is present, use it for PR guidelines.

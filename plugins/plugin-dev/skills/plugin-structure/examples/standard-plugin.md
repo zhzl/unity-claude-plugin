@@ -141,13 +141,11 @@ After test completion, offer to:
 
 ```markdown
 ---
-description: Expert code reviewer specializing in identifying bugs, security issues, and improvement opportunities
-capabilities:
-  - Analyze code for potential bugs and logic errors
-  - Identify security vulnerabilities
-  - Suggest performance improvements
-  - Ensure code follows project standards
-  - Review test coverage adequacy
+name: code-reviewer
+description: |
+  Use this agent when reviewing code for bugs, security issues, performance problems, standards compliance, or test coverage gaps.
+model: sonnet
+color: red
 ---
 
 # Code Reviewer Agent
@@ -189,13 +187,11 @@ For each file reviewed:
 
 ```markdown
 ---
-description: Generates comprehensive test suites from code analysis
-capabilities:
-  - Analyze code structure and logic flow
-  - Generate unit tests for functions and methods
-  - Create integration tests for modules
-  - Design edge case and error condition tests
-  - Suggest test fixtures and mocks
+name: test-generator
+description: |
+  Use this agent when generating unit tests, integration tests, edge-case coverage, fixtures, or mocks from code analysis.
+model: sonnet
+color: green
 ---
 
 # Test Generator Agent

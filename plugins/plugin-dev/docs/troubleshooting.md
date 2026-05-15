@@ -9,8 +9,8 @@ Extended debugging guide for plugin development.
 | Plugin not loading        | Wrong directory path        | Use `plugins/plugin-dev`, not root                                   |
 | Skill not triggering      | Weak trigger phrases        | Add specific user queries to description                             |
 | Hook not firing           | Incorrect matcher pattern   | Check regex syntax, test with `test-hook.sh`                         |
-| Validation script fails   | Missing dependencies (`jq`) | Install required tools (see [README.md](../README.md#prerequisites)) |
-| Shell execution in skills | Using `!` backtick pattern  | Replace with `[BANG]` placeholder                                    |
+| Validation script fails   | Missing dependencies (`jq`) | Install required tools such as `jq` and shellcheck if your workflow uses them |
+| Shell execution in skills | Using `[BANG]` in actual skill or command files | Use literal `!` before backticks; `[BANG]` is only a documentation placeholder |
 
 ## Debug Mode
 
@@ -39,19 +39,19 @@ Paths relative to `plugins/plugin-dev/`:
 ./skills/agent-development/scripts/test-agent-trigger.sh agents/agent-name.md
 
 # Command development
-./skills/command-development/scripts/validate-command.sh .claude/commands/my-command.md
-./skills/command-development/scripts/check-frontmatter.sh .claude/commands/my-command.md
+./skills/command-development/scripts/validate-command.sh commands/my-command.md
+./skills/command-development/scripts/check-frontmatter.sh commands/my-command.md
 
 # Hook development
 ./skills/hook-development/scripts/validate-hook-schema.sh hooks/hooks.json
 ./skills/hook-development/scripts/test-hook.sh hooks/my-hook.sh input.json
 
 # Plugin settings
-./skills/plugin-settings/scripts/validate-settings.sh .claude/plugin.local.md
+./skills/plugin-settings/scripts/validate-settings.sh .claude/my-plugin.local.md
 ```
 
 ## Getting More Help
 
-- Check [README.md FAQ](../README.md#faq) for common questions
-- Review [CONTRIBUTING.md](../CONTRIBUTING.md#common-mistakes-to-avoid) for common mistakes
+- Check the plugin docs and any README/FAQ files present in your repository
+- Review any CONTRIBUTING guide present in your repository for project-specific conventions
 - Open an [issue](https://github.com/sjnims/plugin-dev/issues) if you're stuck

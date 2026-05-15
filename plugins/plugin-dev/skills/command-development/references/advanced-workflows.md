@@ -15,8 +15,8 @@ Commands that guide users through multi-step processes:
 ```markdown
 ---
 description: Complete PR review workflow
-argument-hint: [pr-number]
-allowed-tools: Bash(gh:*), Read, Grep
+argument-hint: "[pr-number]"
+allowed-tools: Bash(gh *), Read, Grep
 ---
 
 # PR Review Workflow for #$1
@@ -76,15 +76,15 @@ Commands that maintain state between invocations:
 ```markdown
 ---
 description: Initialize deployment workflow
-allowed-tools: Write, Bash(git:*)
+allowed-tools: Write, Bash(git *)
 ---
 
 # Initialize Deployment
 
 Creating deployment tracking file...
 
-Current branch: `git branch --show-current`
-Latest commit: `git log -1 --format=%H`
+Current branch: !`git branch --show-current`
+Latest commit: !`git log -1 --format=%H`
 
 Deployment state saved to `.claude/deployment-state.local.md`:
 
@@ -118,12 +118,12 @@ State saved. Run `/deploy-test` to continue.
 ```markdown
 ---
 description: Run deployment tests
-allowed-tools: Read, Bash(npm:*)
+allowed-tools: Read, Bash(npm *)
 ---
 
 Reading deployment state from `.claude/deployment-state.local.md`...
 
-Running tests: `npm test`
+Run tests with the Bash tool.
 
 Updating state to 'tested'...
 
@@ -144,16 +144,16 @@ Commands that adapt based on conditions:
 ```markdown
 ---
 description: Smart deployment workflow
-argument-hint: [environment]
-allowed-tools: Bash(git:*), Bash(npm:*), Read
+argument-hint: "[environment]"
+allowed-tools: Bash(git *), Bash(npm *), Read
 ---
 
 # Deploy to $1
 
 ## Pre-flight Checks
 
-Branch: `git branch --show-current`
-Status: `git status --short`
+Branch: !`git branch --show-current`
+Status: !`git status --short`
 
 **Checking conditions:**
 
@@ -163,7 +163,7 @@ Status: `git status --short`
    - If hotfix: Fast-track process
 
 2. Tests:
-   `npm test`
+   Run tests with the Bash tool.
    - If tests fail: STOP - fix tests first
    - If tests pass: Continue
 
@@ -268,7 +268,7 @@ Commands that coordinate multiple simultaneous operations:
 ```markdown
 ---
 description: Run comprehensive validation
-allowed-tools: Bash(*), Read
+allowed-tools: Read, Bash(${CLAUDE_PLUGIN_ROOT}/scripts/lint *), Bash(${CLAUDE_PLUGIN_ROOT}/scripts/test *), Bash(${CLAUDE_PLUGIN_ROOT}/scripts/validate *)
 ---
 
 # Comprehensive Validation
@@ -418,14 +418,12 @@ Feature marked complete.
 ```markdown
 ---
 description: Generate release notes
-allowed-tools: Read, Bash(git:*)
+allowed-tools: Read, Bash(git *)
 ---
 
-Checking for completed features...
+Use the Bash tool to check whether `.claude/feature-complete.flag` exists.
 
-if [ -f .claude/feature-complete.flag ]; then
-Feature ready for release notes
-fi
+If the flag exists, include the completed feature in the release notes.
 
 [Include in release notes]
 ```
@@ -442,19 +440,16 @@ allowed-tools: Read, Write, Bash
 
 # Start Deployment
 
-Checking for active deployments...
+Use the Bash tool to check whether `.claude/deployment.lock` exists.
 
-if [ -f .claude/deployment.lock ]; then
+If the lock exists, report the timestamp from the lock file and stop with:
+
 ERROR: Deployment already in progress
-Started: [timestamp from lock file]
 
 Cannot start concurrent deployment.
 Wait for completion or run /deployment-abort
 
-Exit.
-fi
-
-Creating deployment lock...
+If no lock exists, use the Write tool to create `.claude/deployment.lock`.
 
 Deployment started. Lock created.
 [Proceed with deployment]
@@ -483,7 +478,7 @@ Ready for next deployment.
 ```markdown
 ---
 description: Deploy with optional version
-argument-hint: [environment] [version]
+argument-hint: "[environment] [version]"
 ---
 
 Environment: ${1:-staging}
@@ -502,7 +497,7 @@ Note: Using defaults for missing arguments:
 ```markdown
 ---
 description: Deploy to validated environment
-argument-hint: [environment]
+argument-hint: "[environment]"
 ---
 
 Environment: $1
@@ -524,7 +519,7 @@ Environment validated. Proceeding...
 ```markdown
 ---
 description: Deploy with shorthand
-argument-hint: [env-shorthand]
+argument-hint: "[env-shorthand]"
 ---
 
 Input: $1
@@ -560,9 +555,9 @@ Running steps with error handling...
 
 ## Step 1: Tests
 
-`npm test`
+Run tests with the Bash tool.
 
-if [ $? -ne 0 ]; then
+If tests fail:
 ERROR: Tests failed
 
 Options:
@@ -574,7 +569,6 @@ Options:
 What would you like to do?
 
 [Wait for user input before continuing]
-fi
 
 ## Step 2: Build
 
@@ -591,21 +585,16 @@ description: Deployment with rollback
 # Deploy with Rollback
 
 Saving current state for rollback...
-Previous version: `current-version.sh`
+Previous version: !`./current-version.sh`
 
-Deploying new version...
+Deploy the new version with the Bash tool.
 
-`deploy.sh`
-
-if [ $? -ne 0 ]; then
+If deployment fails:
 DEPLOYMENT FAILED
 
-Initiating automatic rollback...
-`rollback.sh`
+Initiate rollback with the Bash tool.
 
-Rolled back to previous version.
-Check logs for failure details.
-fi
+Report rollback status and check logs for failure details.
 
 Deployment complete.
 ```
@@ -621,18 +610,15 @@ description: Workflow with checkpoints
 
 ## Checkpoint 1: Validation
 
-`validate.sh`
-echo "checkpoint:validation" >> .claude/deployment-checkpoints.log
+Run validation with the Bash tool, then record checkpoint:validation.
 
 ## Checkpoint 2: Build
 
-`build.sh`
-echo "checkpoint:build" >> .claude/deployment-checkpoints.log
+Run build with the Bash tool, then record checkpoint:build.
 
 ## Checkpoint 3: Deploy
 
-`deploy.sh`
-echo "checkpoint:deploy" >> .claude/deployment-checkpoints.log
+Run deployment with the Bash tool, then record checkpoint:deploy.
 
 If any step fails, resume with:
 /deployment-resume [last-successful-checkpoint]
@@ -678,8 +664,8 @@ If any step fails, resume with:
 ```markdown
 ---
 description: Initialize deployment
-argument-hint: [environment]
-allowed-tools: Write, Bash(git:*)
+argument-hint: "[environment]"
+allowed-tools: Write, Bash(git *)
 ---
 
 # Initialize Deployment to $1
@@ -690,10 +676,10 @@ Creating workflow state...
 
 workflow: deployment
 environment: $1
-branch: `git branch --show-current`
-commit: `git rev-parse HEAD`
+branch: !`git branch --show-current`
+commit: !`git rev-parse HEAD`
 stage: initialized
-timestamp: `date -u +%Y-%m-%dT%H:%M:%SZ`
+timestamp: !`date -u +%Y-%m-%dT%H:%M:%SZ`
 
 ---
 

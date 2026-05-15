@@ -111,10 +111,10 @@ A curated collection of high-quality Claude Code plugins.
 
 ## Installation
 
-```bash
+```text
+# Type in Claude Code
 /plugin marketplace add awesome-claude-plugins/awesome-claude-plugins
 ```
-````
 
 ## Available Plugins
 
@@ -137,7 +137,7 @@ MIT
 
 ## CONTRIBUTING.md Template
 
-```markdown
+````markdown
 # Contributing
 
 ## Submitting a Plugin
@@ -205,8 +205,8 @@ jobs:
 
 ## Installation
 
-```bash
-# Add marketplace
+```text
+# Type in Claude Code: add marketplace
 /plugin marketplace add awesome-claude-plugins/awesome-claude-plugins
 
 # Browse available plugins

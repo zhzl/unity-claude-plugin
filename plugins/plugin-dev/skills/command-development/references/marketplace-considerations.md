@@ -15,37 +15,17 @@ Commands distributed through marketplaces need additional consideration beyond p
 ```markdown
 ---
 description: Cross-platform command
-allowed-tools: Bash(*)
+allowed-tools: Bash(uname *)
 ---
 
 # Platform-Aware Command
 
-Detecting platform...
+Use the Bash tool to detect the platform with `uname`.
 
-case "$(uname)" in
-Darwin*) PLATFORM="macOS" ;;
-Linux*) PLATFORM="Linux" ;;
-MINGW*|MSYS*|CYGWIN*) PLATFORM="Windows" ;;
-*) PLATFORM="Unknown" ;;
-esac
+Set platform-specific values based on the result:
 
-Platform: $PLATFORM
-
-<!-- Adjust behavior based on platform -->
-
-if [ "$PLATFORM" = "Windows" ]; then
-
-# Windows-specific handling
-
-PATH_SEP="\\"
-NULL_DEVICE="NUL"
-else
-
-# Unix-like handling
-
-PATH_SEP="/"
-NULL_DEVICE="/dev/null"
-fi
+- Windows (`MINGW*`, `MSYS*`, `CYGWIN*`): path separator `\\`, null device `NUL`
+- macOS/Linux: path separator `/`, null device `/dev/null`
 
 [Platform-appropriate implementation...]
 ```
@@ -57,17 +37,7 @@ fi
 
 `pbcopy < file.txt`
 
-<!-- GOOD: Platform detection -->
-
-if command -v pbcopy > /dev/null; then
-pbcopy < file.txt
-elif command -v xclip > /dev/null; then
-xclip -selection clipboard < file.txt
-elif command -v clip.exe > /dev/null; then
-cat file.txt | clip.exe
-else
-echo "Clipboard not available on this platform"
-fi
+<!-- GOOD: Ask Claude to use the Bash tool to detect pbcopy, xclip, or clip.exe before choosing a clipboard command. -->
 ```
 
 ### Minimal Dependencies
@@ -77,7 +47,7 @@ fi
 ```markdown
 ---
 description: Dependency-aware command
-allowed-tools: Bash(*)
+allowed-tools: Bash(command *), Bash(git --version), Bash(jq --version), Bash(node --version)
 ---
 
 # Check Dependencies
@@ -88,18 +58,11 @@ Required tools:
 - jq
 - node
 
-Checking availability...
+Use the Bash tool to check whether `git`, `jq`, and `node` are available.
 
-MISSING_DEPS=""
+If any dependency is missing, report:
 
-for tool in git jq node; do
-if ! command -v $tool > /dev/null; then
-    MISSING_DEPS="$MISSING_DEPS $tool"
-fi
-done
-
-if [ -n "$MISSING_DEPS" ]; then
-❌ ERROR: Missing required dependencies:$MISSING_DEPS
+ERROR: Missing required dependencies: [list]
 
 INSTALLATION:
 
@@ -109,10 +72,7 @@ INSTALLATION:
 
 Install missing tools and try again.
 
-Exit.
-fi
-
-✓ All dependencies available
+If all dependencies are available, continue.
 
 [Continue with command...]
 ```
@@ -379,21 +339,9 @@ Default configuration:
 - color: true
 - max_results: 10
 
-Checking for user config: .claude/plugin-name.local.md
+Check for user config at `.claude/plugin-name.local.md` with the Read tool.
 
-if [ -f ".claude/plugin-name.local.md" ]; then
-
-# Parse YAML frontmatter for settings
-
-VERBOSE=$(grep "^verbose:" .claude/plugin-name.local.md | cut -d: -f2 | tr -d ' ')
-  COLOR=$(grep "^color:" .claude/plugin-name.local.md | cut -d: -f2 | tr -d ' ')
-MAX_RESULTS=$(grep "^max_results:" .claude/plugin-name.local.md | cut -d: -f2 | tr -d ' ')
-
-echo "✓ Using user configuration"
-else
-echo "Using default configuration"
-echo "Create .claude/plugin-name.local.md to customize"
-fi
+If it exists, parse YAML frontmatter for `verbose`, `color`, and `max_results`; otherwise use the defaults above and tell the user they can create `.claude/plugin-name.local.md` to customize.
 
 [Use configuration in command...]
 ```
@@ -738,24 +686,15 @@ This operation is atomic - either fully succeeds or fully fails.
 Creating temporary workspace...
 TEMP_DIR=$(mktemp -d)
 
-Performing changes in isolated environment...
-[Make changes in $TEMP_DIR]
+Perform changes in the isolated workspace at "$TEMP_DIR".
 
-if [ $? -eq 0 ]; then
-✓ Changes validated
+If validation succeeds:
+- Move validated output from "$TEMP_DIR" into ./target/ using quoted paths.
+- Report that the operation completed.
 
-Applying changes atomically...
-mv $TEMP_DIR/\* ./target/
-
-✓ Operation complete
-else
-❌ Changes failed validation
-
-Rolling back...
-rm -rf $TEMP_DIR
-
-No changes applied. Safe to retry.
-fi
+If validation fails:
+- Remove "$TEMP_DIR" with quoted paths.
+- Explain that no changes were applied and the operation is safe to retry.
 ```
 
 ## Testing for Distribution

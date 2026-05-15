@@ -1,10 +1,12 @@
 # Permission Modes & Rules Reference
 
-This reference covers the complete permission system for Claude Code agents, including all permission modes and the permission rule syntax for fine-grained access control.
+This reference covers the Claude Code permission system for project/user subagents, including current permission modes and the permission rule syntax for fine-grained access control.
+
+Plugin-shipped agents should not set `permissionMode` in frontmatter. Claude Code ignores that field for plugin agents, so use `tools`/`disallowedTools` plus documented user/project permission rules instead.
 
 ## Permission Modes
 
-Agents can specify a `permissionMode` in frontmatter to control how permission requests are handled:
+Project/user subagents can specify a `permissionMode` in frontmatter to control how permission requests are handled. Plugin-shipped agents cannot rely on this field because Claude Code ignores it for plugin agents:
 
 ```yaml
 permissionMode: acceptEdits
@@ -12,14 +14,14 @@ permissionMode: acceptEdits
 
 ### All Permission Modes
 
-| Mode                | Behavior                                                     | Use Case                                            |
-| ------------------- | ------------------------------------------------------------ | --------------------------------------------------- |
-| `default`           | Standard permission model — prompts user for each action     | General-purpose agents, untrusted contexts          |
-| `acceptEdits`       | Auto-accept file edit operations (Write, Edit, NotebookEdit) | Code generation agents that need to write files     |
-| `dontAsk`           | Skip all permission dialogs                                  | Trusted automation agents, CI/CD agents             |
-| `bypassPermissions` | Full bypass of all permission checks                         | Fully trusted agents only                           |
-| `plan`              | Planning mode — propose changes without executing            | Architecture/design agents, review agents           |
-| `delegate`          | Coordination-only — restricted to team management tools      | Team lead agents that should not implement directly |
+| Mode                | Behavior                                                     | Use Case                                        |
+| ------------------- | ------------------------------------------------------------ | ----------------------------------------------- |
+| `default`           | Standard permission model — prompts user for each action     | General-purpose agents, untrusted contexts      |
+| `acceptEdits`       | Auto-accept file edit operations (Write, Edit, NotebookEdit) | Code generation agents that need to write files |
+| `auto`              | Lets Claude choose an appropriate permission strategy        | Trusted workflows where adaptive behavior helps |
+| `dontAsk`           | Skip all permission dialogs                                  | Trusted automation agents, CI/CD agents         |
+| `bypassPermissions` | Full bypass of all permission checks                         | Fully trusted agents only                       |
+| `plan`              | Planning mode — propose changes without executing            | Architecture/design agents, review agents       |
 
 ### Mode Details
 
@@ -53,16 +55,19 @@ Planning mode restricts the agent to read-only operations. The agent can explore
 
 **When to use:** Architecture planning, design review, impact analysis agents.
 
-#### delegate
+#### auto
 
-Restricts the agent to team coordination tools only: spawning teammates, sending messages, managing tasks, and shutting down teammates. The agent cannot use implementation tools (Edit, Write, Bash, etc.) directly.
+Lets Claude choose an appropriate permission strategy for the workflow instead of pinning a single fixed mode up front.
 
-**When to use:** Team lead agents that should coordinate work across teammates without implementing tasks themselves.
+**When to use:** Trusted workflows where adaptive behavior is useful, but you still want Claude Code's permission system to choose the right level.
 
-```yaml
-# Team lead agent that only coordinates
-permissionMode: delegate
-```
+### Team Lead Guidance
+
+For coordination-focused team leads, do not rely on a `delegate` permission mode. Instead:
+
+- Restrict tools so the lead lacks implementation capabilities it should not use
+- State clearly in the system prompt that the lead decomposes work, assigns tasks, and reviews teammate output rather than coding directly
+- Use permission rules in settings when you need tighter spawn restrictions, such as `Agent(code-reviewer, test-runner)`
 
 ## Permission Specifier Syntax
 
@@ -108,14 +113,14 @@ WebFetch(domain:example.com)
 | `mcp__server__*`    | All tools from server     |
 | `mcp__server__tool` | Specific tool from server |
 
-### Task (Agent) Patterns
+### Agent Patterns
 
-| Pattern              | Matches                      |
-| -------------------- | ---------------------------- |
-| `Task(agent-name)`   | Only the named agent type    |
-| `Task(name1, name2)` | Only listed agent types      |
-| `Task`               | All subagent types           |
-| _(omit entirely)_    | No subagent spawning allowed |
+| Pattern               | Matches                      |
+| --------------------- | ---------------------------- |
+| `Agent(agent-name)`   | Only the named agent type    |
+| `Agent(name1, name2)` | Only listed agent types      |
+| `Agent`               | All subagent types           |
+| _(omit entirely)_     | No subagent spawning allowed |
 
 ### Skill Patterns
 
@@ -183,21 +188,21 @@ Rules are specified in `settings.json` under `permissions`:
 - `mcp__server__*` — all tools from a server
 - `mcp__*` — all MCP tools (use sparingly)
 
-### Task (Agent) Patterns
+### Agent Patterns
 
 Control which agent types can be spawned:
 
 ```json
 {
   "permissions": {
-    "allow": ["Task(code-reviewer, test-runner)"]
+    "allow": ["Agent(code-reviewer, test-runner)"]
   }
 }
 ```
 
-- `Task(type1, type2)` — only listed agent types
-- `Task` — allow any subagent
-- Omitting `Task` — no subagent spawning
+- `Agent(type1, type2)` — only listed agent types
+- `Agent` — allow any subagent
+- Omitting `Agent` — no subagent spawning
 
 ### Rule Precedence
 
@@ -218,9 +223,9 @@ This plugin's agents need:
 
 - `Edit(src/**)` — to modify source files
 - `Bash(npm test)` — to run tests
-- `mcp__plugin_myserver__*` — for MCP tool access
+- `mcp__myserver__*` — for MCP tool access
 ```
 
-**Configure agent permissions:** Use `permissionMode` in agent frontmatter for broad access control. For fine-grained restrictions, document the settings users should configure.
+**Configure agent permissions:** For plugin-shipped agents, do not put `permissionMode` in agent frontmatter. Claude Code ignores it there. Instead, constrain plugin agents with `tools`/`disallowedTools` and document any user/project permission rules that must be configured.
 
-**Principle of least privilege:** Request only the permissions your agent actually needs. Use `acceptEdits` over `dontAsk` when only file writes are needed.
+**Principle of least privilege:** Request only the permissions your agent actually needs. For project/user subagents, prefer narrower modes such as `acceptEdits` over broader modes like `dontAsk` when only file writes are needed.

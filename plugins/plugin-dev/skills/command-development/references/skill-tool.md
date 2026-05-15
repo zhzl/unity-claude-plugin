@@ -34,23 +34,23 @@ The Skill tool enables Claude to programmatically execute both slash commands an
 
 ### What It Does
 
-When Claude determines a slash command or skill would help accomplish a task, it uses the Skill tool to invoke that capability. The tool:
+When Claude determines a skill would help accomplish a task, it uses the Skill tool to load that capability. The tool:
 
-1. Identifies available commands and skills based on permission rules
-2. Selects appropriate item for the task
-3. Executes the command or loads the skill with any arguments
-4. Processes the output
+1. Identifies available skills based on permission rules
+2. Selects the appropriate skill for the task
+3. Loads the skill with any arguments
+4. Processes the loaded guidance
 
 ### When Claude Uses It
 
 Claude uses the Skill tool when:
 
-- A command or skill directly addresses the user's request
-- Multiple steps require chaining capabilities
-- Automated workflows need command/skill execution
-- User asks Claude to "run /command" or similar
+- A skill directly addresses the user's request
+- Multiple steps require loading specialized guidance
+- Automated workflows need skill-provided context
+- User asks for a plugin skill by name
 
-**Example:** If a user says "review my code changes," Claude might use the Skill tool to invoke `/review` if such a command exists and is available.
+**Example:** If a user says "help me design a Claude Code command," Claude might use the Skill tool to load the command-development skill if it is available.
 
 ## Visibility Requirements
 
@@ -159,12 +159,12 @@ Skill(commit)      # Only commit with no arguments
 Skill(deploy)      # Only deploy with no arguments
 ```
 
-**Prefix match (with arguments):**
+**Match with arguments:**
 
 ```
-Skill(review-pr:*)     # review-pr with any arguments
-Skill(git:*)           # All items starting with git
-Skill(plugin-name:*)   # All items from specific plugin
+Skill(review-pr *)                # review-pr with any arguments
+Skill(plugin-name:git-status *)   # Plugin skill with any arguments
+Skill(plugin-name:review-pr *)    # Plugin command/skill with any arguments
 ```
 
 **Deny all:**
@@ -177,7 +177,7 @@ Add `Skill` to deny rules to prevent all programmatic invocation.
 
 ```json
 {
-  "allow": ["Skill(review:*)", "Skill(test:*)"]
+  "allow": ["Skill(review *)", "Skill(test *)"]
 }
 ```
 
@@ -185,7 +185,7 @@ Add `Skill` to deny rules to prevent all programmatic invocation.
 
 ```json
 {
-  "deny": ["Skill(deploy-prod:*)", "Skill(delete:*)"]
+  "deny": ["Skill(deploy-prod *)", "Skill(delete *)"]
 }
 ```
 
@@ -310,14 +310,14 @@ Some commands work well when invoked by Claude:
 ```yaml
 ---
 description: Get current git status summary
-allowed-tools: Bash(git:*)
+allowed-tools: Bash(git *)
 ---
 
 # Git Status
 
-Branch: `git branch --show-current`
-Status: `git status --short`
-Recent: `git log -3 --oneline`
+Branch: !`git branch --show-current`
+Status: !`git status --short`
+Recent: !`git log -3 --oneline`
 ```
 
 This command:
@@ -335,7 +335,7 @@ Some commands should remain manual:
 ---
 description: Force push to protected branch (DANGEROUS)
 disable-model-invocation: true
-allowed-tools: Bash(git:*)
+allowed-tools: Bash(git *)
 ---
 # Force Push
 

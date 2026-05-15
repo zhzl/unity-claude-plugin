@@ -4,9 +4,9 @@ Complete reference for `plugin.json` configuration.
 
 ## File Location
 
-**Required path**: `.claude-plugin/plugin.json`
+**Optional path**: `.claude-plugin/plugin.json`
 
-The manifest MUST be in the `.claude-plugin/` directory at the plugin root. Claude Code will not recognize plugins without this file in the correct location.
+The manifest is optional for convention-only plugins. When metadata, custom component paths, or configuration are needed, place `plugin.json` in the `.claude-plugin/` directory at the plugin root. If the file is present, `name` is required.
 
 ## Complete Field Reference
 
@@ -234,7 +234,7 @@ Tags for plugin discovery and categorization.
 **Default**: `["./commands"]`
 **Example**: `"./cli-commands"`
 
-Additional directories or files containing command definitions.
+Directories or files containing command definitions. Custom paths replace the default `./commands` directory unless you include `./commands` explicitly.
 
 **Single path**:
 
@@ -252,7 +252,7 @@ Additional directories or files containing command definitions.
 }
 ```
 
-**Behavior**: Supplements default `commands/` directory (does not replace)
+**Behavior**: Replaces default `commands/` directory unless `./commands` is explicitly included
 
 **Use cases**:
 
@@ -266,7 +266,7 @@ Additional directories or files containing command definitions.
 **Default**: `["./agents"]`
 **Example**: `"./specialized-agents"`
 
-Additional directories or files containing agent definitions.
+Directories or files containing agent definitions. Custom paths replace the default `./agents` directory unless you include `./agents` explicitly.
 
 **Format**: Same as `commands` field
 
@@ -361,7 +361,7 @@ MCP server configuration location or inline definition.
 **Default**: `["./output-styles"]`
 **Example**: `"./styles"`
 
-Path(s) to output style definition files or directories.
+Path(s) to output style definition files or directories. Custom paths replace the default `./output-styles` directory unless you include `./output-styles` explicitly.
 
 **Single path**:
 
@@ -379,7 +379,7 @@ Path(s) to output style definition files or directories.
 }
 ```
 
-**Behavior**: Supplements default `output-styles/` directory (does not replace)
+**Behavior**: Replaces default `output-styles/` directory unless `./output-styles` is explicitly included
 
 Output style files are markdown with YAML frontmatter (`name`, `description`, `keep-coding-instructions`). See the plugin-structure skill's `references/output-styles.md` for the complete frontmatter schema.
 
@@ -410,26 +410,23 @@ All paths in component fields must follow these rules:
 - ❌ `"../shared/commands"`
 - ❌ `".\\commands"` (backslash)
 
-### Resolution Order
+### Path Behavior
 
 When Claude Code loads components:
 
-1. **Default directories**: Scans standard locations first
+1. **Default paths**: Standard locations are used when no custom path is configured.
    - `./commands/`
    - `./agents/`
    - `./skills/`
    - `./hooks/hooks.json`
    - `./.mcp.json`
 
-2. **Custom paths**: Scans paths specified in manifest
-   - Paths from `commands` field
-   - Paths from `agents` field
-   - Files from `hooks` and `mcpServers` fields
+2. **Custom paths**: Behavior depends on the field.
+   - `skills` supplements `./skills`
+   - `commands`, `agents`, and `outputStyles` replace defaults unless the default path is explicitly listed
+   - `hooks`, `mcpServers`, and LSP settings have their own file/merge behavior
 
-3. **Merge behavior**: Components from all locations load
-   - No overwriting
-   - All discovered components register
-   - Name conflicts cause errors
+3. **Conflicts**: Name conflicts between loaded components cause errors
 
 ## Validation
 
@@ -460,73 +457,73 @@ Claude Code validates the manifest on plugin load:
 
 **Invalid name format**:
 
-```json
+```jsonc
 {
-  "name": "My Plugin" // ❌ Contains spaces
+  "name": "My Plugin" // Contains spaces
 }
 ```
 
 Fix: Use kebab-case
 
-```json
+```jsonc
 {
-  "name": "my-plugin" // ✅
+  "name": "my-plugin" // Valid
 }
 ```
 
 **Absolute path**:
 
-```json
+```jsonc
 {
-  "commands": "/Users/name/commands" // ❌ Absolute path
+  "commands": "/Users/name/commands" // Absolute path
 }
 ```
 
 Fix: Use relative path
 
-```json
+```jsonc
 {
-  "commands": "./commands" // ✅
+  "commands": "./commands" // Valid
 }
 ```
 
 **Missing ./ prefix**:
 
-```json
+```jsonc
 {
-  "hooks": "hooks/hooks.json" // ❌ No ./
+  "hooks": "hooks/hooks.json" // No ./
 }
 ```
 
 Fix: Add ./ prefix
 
-```json
+```jsonc
 {
-  "hooks": "./hooks/hooks.json" // ✅
+  "hooks": "./hooks/hooks.json" // Valid
 }
 ```
 
 **Invalid version**:
 
-```json
+```jsonc
 {
-  "version": "1.0" // ❌ Not semantic versioning
+  "version": "1.0" // Not semantic versioning
 }
 ```
 
 Fix: Use MAJOR.MINOR.PATCH
 
-```json
+```jsonc
 {
-  "version": "1.0.0" // ✅
+  "version": "1.0.0" // Valid
 }
 ```
 
 ## Minimal vs. Complete Examples
 
-### Minimal Plugin
+### Minimal Manifest
 
-Bare minimum for a working plugin:
+Bare minimum when a manifest is needed:
 
 ```json
 {

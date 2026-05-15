@@ -7,14 +7,14 @@ Security considerations for the plugin creation workflows.
 The workflow commands (`/plugin-dev:create-plugin` and `/plugin-dev:create-marketplace`) require broad file system access to perform their scaffolding functions:
 
 ```yaml
-allowed-tools: Read, Write, Edit, Grep, Glob, Bash(mkdir:*), Bash(git init:*), ...
+allowed-tools: Read, Write, Edit, Grep, Glob, Bash(mkdir *), Bash(git init *), ...
 ```
 
 **Why this access is needed:**
 
-- Creating plugin directory structures requires `Write` and `Bash(mkdir:*)`
+- Creating plugin directory structures requires `Write` and `Bash(mkdir *)`
 - Generating manifest files and component templates requires `Write` and `Edit`
-- Initializing git repositories requires `Bash(git init:*)`
+- Initializing git repositories requires `Bash(git init *)`
 - Exploring existing code for patterns requires `Read`, `Grep`, `Glob`
 
 ## Security Considerations
@@ -26,7 +26,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash(mkdir:*), Bash(git init:*), .
 
 ## Design Contrast with `/plugin-dev:start`
 
-The entry point command uses `disable-model-invocation: true` and restricts tools to `AskUserQuestion, Skill, TaskCreate, TaskGet, TaskUpdate, TaskList` since it only routes to other commands. The workflow commands need broader access because they perform the actual file creation work.
+The entry point command uses `disable-model-invocation: true` and restricts tools to `AskUserQuestion, TaskCreate, TaskGet, TaskUpdate, TaskList` since it only routes to other commands. The workflow commands need broader access because they perform the actual file creation work.
 
 ## For Security-Sensitive Environments
 

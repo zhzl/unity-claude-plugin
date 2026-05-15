@@ -136,10 +136,12 @@ command=$(echo "$input" | jq -r '.tool_input.command // empty')
 
 # Example: block writes to sensitive paths
 if [[ "$tool_name" == "Write" && "$file_path" == *".env"* ]]; then
-  echo '{"decision": "deny", "reason": "Cannot write to .env files"}' >&2
-  exit 2
+  echo '{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "Cannot write to .env files"}}'
+  exit 0
 fi
 
 # Allow by default
 exit 0
 ```
+
+For structured PreToolUse decisions, emit the JSON on stdout and exit 0. Reserve stderr plus exit 2 for plain blocking feedback that is not using `hookSpecificOutput.permissionDecision`.

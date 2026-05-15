@@ -187,13 +187,10 @@ Trigger CI/CD build pipeline and monitor progress in real-time.
    - Check for uncommitted changes
    - Validate configuration files
 
-2. **Trigger**: Start build via MCP server
-   \`\`\`javascript
-   // Uses github-actions MCP server
-   const build = await tools.github_actions_trigger_workflow({
-   workflow: 'build.yml',
-   ref: currentBranch
-   })
+2. **Trigger**: Start build via the plugin's GitHub Actions MCP server or a wrapper script. Example pseudocode:
+   \`\`\`text
+   invoke github-actions MCP tool to trigger build.yml for the current branch
+   capture the returned workflow run ID for monitoring
    \`\`\`
 
 3. **Monitor**: Track build progress
@@ -220,13 +217,11 @@ After successful build:
 
 ```markdown
 ---
-description: Orchestrates complex multi-environment deployments with rollback capabilities and health monitoring
-capabilities:
-  - Plan and execute multi-stage deployments
-  - Coordinate service dependencies
-  - Monitor deployment health
-  - Execute automated rollbacks
-  - Manage deployment approvals
+name: deployment-orchestrator
+description: |
+  Use this agent when planning or executing multi-environment deployments, coordinating service dependencies, monitoring health, handling rollbacks, or managing approvals.
+model: opus
+color: purple
 ---
 
 # Deployment Orchestrator Agent
@@ -283,23 +278,11 @@ Uses multiple MCP servers:
 
 ## Monitoring Integration
 
-Integrates with monitoring tools via lib:
-\`\`\`javascript
-const { DatadogClient } = require('${CLAUDE_PLUGIN_ROOT}/lib/integrations/datadog')
-const metrics = await DatadogClient.getMetrics(service, timeRange)
-\`\`\`
+Integrates with monitoring tools via plugin-owned libraries or MCP tools. For example, a local helper script or MCP server can fetch Datadog metrics for a service and time range before summarizing the results.
 
 ## Notification Integration
 
-Sends updates via Slack and PagerDuty:
-\`\`\`javascript
-const { SlackClient } = require('${CLAUDE_PLUGIN_ROOT}/lib/integrations/slack')
-await SlackClient.notify({
-channel: '#deployments',
-message: 'Deployment started',
-metadata: deploymentPlan
-})
-\`\`\`
+Sends updates via Slack and PagerDuty. In practice, implement this with plugin-owned scripts, MCP tools, or library wrappers that post deployment status updates and attach relevant metadata.
 ```
 
 ### skills/kubernetes-ops/SKILL.md
@@ -521,11 +504,12 @@ kubectl top pods
 Example:
 \`\`\`yaml
 securityContext:
-runAsNonRoot: true
-runAsUser: 1000
-readOnlyRootFilesystem: true
-capabilities:
-drop: - ALL
+  runAsNonRoot: true
+  runAsUser: 1000
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
 \`\`\`
 
 ### Network Policies
@@ -535,14 +519,16 @@ Restrict pod communication:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-name: api-allow
+  name: api-allow
 spec:
-podSelector:
-matchLabels:
-app: api
-ingress: - from: - podSelector:
-matchLabels:
-app: frontend
+  podSelector:
+    matchLabels:
+      app: api
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
 \`\`\`
 
 ### Secrets Management
@@ -569,40 +555,32 @@ Automatically scale based on metrics:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-name: api-hpa
+  name: api-hpa
 spec:
-scaleTargetRef:
-apiVersion: apps/v1
-kind: Deployment
-name: api
-minReplicas: 2
-maxReplicas: 10
-metrics: - type: Resource
-resource:
-name: cpu
-target:
-type: Utilization
-averageUtilization: 70
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
 \`\`\`
 
 ## MCP Server Integration
 
-This skill works with the kubernetes MCP server for operations:
+This skill works with the kubernetes MCP server for operations such as:
 
-**List pods**:
-\`\`\`javascript
-const pods = await tools.k8s_list_pods({ namespace: 'default' })
-\`\`\`
+- Listing pods in a namespace
+- Fetching pod logs for a service or container
+- Applying deployment manifests after validation
 
-**Get pod logs**:
-\`\`\`javascript
-const logs = await tools.k8s_get_logs({ pod: 'api-xyz', container: 'app' })
-\`\`\`
-
-**Apply manifests**:
-\`\`\`javascript
-const result = await tools.k8s_apply_manifest({ file: 'deployment.yaml' })
-\`\`\`
+Describe the desired Kubernetes action in the skill or command instructions, then call the appropriate MCP tool at runtime rather than embedding JavaScript-style tool calls in the markdown.
 
 ## Detailed References
 

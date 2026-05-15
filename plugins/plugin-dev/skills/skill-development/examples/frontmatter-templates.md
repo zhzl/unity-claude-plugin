@@ -44,7 +44,7 @@ Restrict to read-only tools for safe exploration:
 ---
 name: codebase-analyzer
 description: This skill should be used when the user asks to "analyze codebase", "find patterns", "code quality report", "architecture overview", "dependency analysis", or needs guidance on understanding existing code structure.
-allowed-tools: Read, Grep, Glob, Task
+allowed-tools: Read, Grep, Glob
 ---
 ```
 

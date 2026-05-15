@@ -96,26 +96,27 @@ echo ""
 cat > "$OUTPUT_FILE" << EOF
 ---
 name: $AGENT_NAME
-description: Use this agent when [describe triggering conditions]. Examples:
+description: |
+  Use this agent when [describe triggering conditions]. Examples:
 
-<example>
-Context: [Describe the situation]
-user: "[What the user says]"
-assistant: "[How Claude responds before triggering]"
-<commentary>
-[Why this agent should trigger]
-</commentary>
-assistant: "I'll use the $AGENT_NAME agent to [action]."
-</example>
+  <example>
+  Context: [Describe the situation]
+  user: "[What the user says]"
+  assistant: "[How Claude responds before triggering]"
+  <commentary>
+  [Why this agent should trigger]
+  </commentary>
+  assistant: "I'll use the $AGENT_NAME agent to [action]."
+  </example>
 
-<example>
-Context: [Second example situation]
-user: "[Another user request]"
-assistant: "[Claude's response]"
-<commentary>
-[Explanation of why this triggers the agent]
-</commentary>
-</example>
+  <example>
+  Context: [Second example situation]
+  user: "[Another user request]"
+  assistant: "[Claude's response]"
+  <commentary>
+  [Explanation of why this triggers the agent]
+  </commentary>
+  </example>
 
 model: inherit
 color: blue
@@ -164,7 +165,7 @@ echo ""
 echo "2. Choose appropriate settings:"
 echo "   - model: inherit (default), sonnet, opus, or haiku"
 echo "   - color: blue (default), cyan, green, yellow, magenta, or red"
-echo "   - tools: Add array if restricting tools (optional)"
+echo "   - tools: Add comma-separated tool list if restricting tools (optional)"
 echo ""
 echo "3. Validate the agent:"
 echo "   ./scripts/validate-agent.sh $OUTPUT_FILE"

@@ -19,7 +19,6 @@ show_usage() {
   echo ""
   echo "Creates sample test input with:"
   echo "  $0 --create-sample <event-type>"
-  exit 0
 }
 
 # Create sample input
@@ -33,7 +32,7 @@ create_sample() {
   "session_id": "test-session",
   "transcript_path": "/tmp/transcript.txt",
   "cwd": "/tmp/test-project",
-  "permission_mode": "ask",
+  "permission_mode": "default",
   "hook_event_name": "PreToolUse",
   "tool_name": "Write",
   "tool_input": {
@@ -49,22 +48,52 @@ EOF
   "session_id": "test-session",
   "transcript_path": "/tmp/transcript.txt",
   "cwd": "/tmp/test-project",
-  "permission_mode": "ask",
+  "permission_mode": "default",
   "hook_event_name": "PostToolUse",
   "tool_name": "Bash",
+  "tool_input": { "command": "echo test" },
   "tool_result": "Command executed successfully"
 }
 EOF
       ;;
-    Stop|SubagentStop)
+    PermissionRequest)
       cat <<'EOF'
 {
   "session_id": "test-session",
   "transcript_path": "/tmp/transcript.txt",
   "cwd": "/tmp/test-project",
-  "permission_mode": "ask",
-  "hook_event_name": "Stop",
-  "reason": "Task appears complete"
+  "permission_mode": "default",
+  "hook_event_name": "PermissionRequest",
+  "tool_name": "Bash",
+  "tool_input": { "command": "echo test" },
+  "permission_suggestions": []
+}
+EOF
+      ;;
+    PostToolUseFailure)
+      cat <<'EOF'
+{
+  "session_id": "test-session",
+  "transcript_path": "/tmp/transcript.txt",
+  "cwd": "/tmp/test-project",
+  "permission_mode": "default",
+  "hook_event_name": "PostToolUseFailure",
+  "tool_name": "Bash",
+  "tool_input": { "command": "false" },
+  "error": "Command failed",
+  "is_interrupt": false
+}
+EOF
+      ;;
+    Stop|SubagentStop)
+      cat <<EOF
+{
+  "session_id": "test-session",
+  "transcript_path": "/tmp/transcript.txt",
+  "cwd": "/tmp/test-project",
+  "permission_mode": "default",
+  "hook_event_name": "$event_type",
+  "stop_hook_active": false
 }
 EOF
       ;;
@@ -74,26 +103,107 @@ EOF
   "session_id": "test-session",
   "transcript_path": "/tmp/transcript.txt",
   "cwd": "/tmp/test-project",
-  "permission_mode": "ask",
+  "permission_mode": "default",
   "hook_event_name": "UserPromptSubmit",
-  "user_prompt": "Test user prompt"
+  "prompt": "Test user prompt"
 }
 EOF
       ;;
-    SessionStart|SessionEnd)
+    SessionStart)
       cat <<'EOF'
 {
   "session_id": "test-session",
   "transcript_path": "/tmp/transcript.txt",
   "cwd": "/tmp/test-project",
-  "permission_mode": "ask",
-  "hook_event_name": "SessionStart"
+  "permission_mode": "default",
+  "hook_event_name": "SessionStart",
+  "source": "startup"
+}
+EOF
+      ;;
+    SessionEnd)
+      cat <<'EOF'
+{
+  "session_id": "test-session",
+  "transcript_path": "/tmp/transcript.txt",
+  "cwd": "/tmp/test-project",
+  "permission_mode": "default",
+  "hook_event_name": "SessionEnd",
+  "source": "clear"
+}
+EOF
+      ;;
+    SubagentStart)
+      cat <<'EOF'
+{
+  "session_id": "test-session",
+  "transcript_path": "/tmp/transcript.txt",
+  "cwd": "/tmp/test-project",
+  "permission_mode": "default",
+  "hook_event_name": "SubagentStart",
+  "agent_id": "agent-123",
+  "agent_type": "general-purpose"
+}
+EOF
+      ;;
+    PreCompact)
+      cat <<'EOF'
+{
+  "session_id": "test-session",
+  "transcript_path": "/tmp/transcript.txt",
+  "cwd": "/tmp/test-project",
+  "permission_mode": "default",
+  "hook_event_name": "PreCompact",
+  "trigger": "manual",
+  "custom_instructions": "Preserve key decisions"
+}
+EOF
+      ;;
+    Notification)
+      cat <<'EOF'
+{
+  "session_id": "test-session",
+  "transcript_path": "/tmp/transcript.txt",
+  "cwd": "/tmp/test-project",
+  "permission_mode": "default",
+  "hook_event_name": "Notification",
+  "message": "Permission required",
+  "notification_type": "permission_prompt"
+}
+EOF
+      ;;
+    TeammateIdle)
+      cat <<'EOF'
+{
+  "session_id": "test-session",
+  "transcript_path": "/tmp/transcript.txt",
+  "cwd": "/tmp/test-project",
+  "permission_mode": "default",
+  "hook_event_name": "TeammateIdle",
+  "teammate_name": "researcher",
+  "team_name": "test-team"
+}
+EOF
+      ;;
+    TaskCompleted)
+      cat <<'EOF'
+{
+  "session_id": "test-session",
+  "transcript_path": "/tmp/transcript.txt",
+  "cwd": "/tmp/test-project",
+  "permission_mode": "default",
+  "hook_event_name": "TaskCompleted",
+  "task_id": "123",
+  "task_subject": "Implement feature",
+  "task_description": "Test task",
+  "teammate_name": "implementer",
+  "team_name": "test-team"
 }
 EOF
       ;;
     *)
       echo "Unknown event type: $event_type"
-      echo "Valid types: PreToolUse, PostToolUse, Stop, SubagentStop, UserPromptSubmit, SessionStart, SessionEnd"
+      echo "Valid types: PreToolUse, PermissionRequest, PostToolUse, PostToolUseFailure, Stop, SubagentStart, SubagentStop, UserPromptSubmit, SessionStart, SessionEnd, PreCompact, Notification, TeammateIdle, TaskCompleted"
       exit 1
       ;;
   esac
@@ -107,16 +217,30 @@ while [ $# -gt 0 ]; do
   case "$1" in
     -h|--help)
       show_usage
+      exit 0
       ;;
     -v|--verbose)
       VERBOSE=true
       shift
       ;;
     -t|--timeout)
+      if [ $# -lt 2 ]; then
+        echo "Error: --timeout requires a numeric value" >&2
+        show_usage
+        exit 1
+      fi
+      if ! [[ "$2" =~ ^[0-9]+$ ]]; then
+        echo "Error: --timeout requires a numeric value" >&2
+        exit 1
+      fi
       TIMEOUT="$2"
       shift 2
       ;;
     --create-sample)
+      if [ $# -lt 2 ]; then
+        echo "Error: --create-sample requires an event type" >&2
+        exit 1
+      fi
       create_sample "$2"
       exit 0
       ;;
@@ -127,9 +251,10 @@ while [ $# -gt 0 ]; do
 done
 
 if [ $# -ne 2 ]; then
-  echo "Error: Missing required arguments"
-  echo ""
-  show_usage
+  echo "Error: Missing required arguments" >&2
+  echo "" >&2
+  show_usage >&2
+  exit 1
 fi
 
 HOOK_SCRIPT="$1"

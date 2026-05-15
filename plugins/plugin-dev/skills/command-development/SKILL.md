@@ -129,7 +129,7 @@ Add configuration using YAML frontmatter:
 ```markdown
 ---
 description: Review code for security issues
-allowed-tools: Read, Grep, Bash(git:*)
+allowed-tools: Read, Grep, Bash(git *)
 model: sonnet
 ---
 
@@ -155,19 +155,19 @@ description: Review pull request for code quality
 ### allowed-tools
 
 **Purpose:** Specify which tools command can use
-**Type:** String or Array
+**Type:** Comma-separated string
 **Default:** Inherits from conversation
 
 ```yaml
 ---
-allowed-tools: Read, Write, Edit, Bash(git:*)
+allowed-tools: Read, Write, Edit, Bash(git *)
 ---
 ```
 
 **Patterns:**
 
 - `Read, Write, Edit` - Specific tools
-- `Bash(git:*)` - Bash with git commands only
+- `Bash(git *)` - Bash with git commands only
 - `*` - All tools (rarely needed)
 
 **Use when:** Command requires specific tool access
@@ -176,7 +176,7 @@ allowed-tools: Read, Write, Edit, Bash(git:*)
 
 **Purpose:** Specify model for command execution
 **Type:** String
-**Values:** Shorthand (`sonnet`, `opus`, `haiku`) or full model ID (e.g., `claude-sonnet-4-5-20250929`)
+**Values:** `sonnet`, `opus`, `haiku`, or `inherit`
 **Default:** Inherits from conversation
 
 ```yaml
@@ -201,7 +201,7 @@ Shorthand names use the current default version of each model family.
 
 ```yaml
 ---
-argument-hint: [pr-number] [priority] [assignee]
+argument-hint: "[pr-number] [priority] [assignee]"
 ---
 ```
 
@@ -234,7 +234,7 @@ Capture all arguments as single string:
 ```markdown
 ---
 description: Fix issue by number
-argument-hint: [issue-number]
+argument-hint: "[issue-number]"
 ---
 
 Fix issue #$ARGUMENTS following our coding standards and best practices.
@@ -261,7 +261,7 @@ Capture individual arguments with `$1`, `$2`, `$3`, etc.:
 ```markdown
 ---
 description: Review PR with priority and assignee
-argument-hint: [pr-number] [priority] [assignee]
+argument-hint: "[pr-number] [priority] [assignee]"
 ---
 
 Review pull request #$1 with priority level $2.
@@ -310,7 +310,7 @@ Include file contents in command:
 ```markdown
 ---
 description: Review specific file
-argument-hint: [file-path]
+argument-hint: "[file-path]"
 ---
 
 Review @$1 for:
@@ -360,9 +360,9 @@ Ensure:
 
 Commands can execute bash commands inline to dynamically gather context before Claude processes the command. This is useful for including repository state, environment information, or project-specific context.
 
-### Syntax: The `[BANG]` Prefix
+### Syntax: The `!` Prefix
 
-In actual command files, use `[BANG]` (exclamation mark) before backticks for pre-execution:
+In actual command files, use a literal `!` before backticks for pre-execution. In this skill documentation, `[BANG]` is used as a placeholder for that literal `!` so examples do not execute while the skill loads:
 
 ```markdown
 Current branch: [BANG]`git branch --show-current`
@@ -372,8 +372,8 @@ Environment: [BANG]`echo $NODE_ENV`
 
 **How it works:**
 
-1. Before Claude sees the command, Claude Code executes `[BANG]`command`` blocks
-2. The bash output replaces the entire `[BANG]`command`` expression
+1. Before Claude sees the command, Claude Code executes literal `!`command`` blocks
+2. The bash output replaces the entire `!`command`` expression
 3. Claude receives the expanded prompt with actual values
 
 **Example expansion:**
@@ -390,15 +390,9 @@ Claude receives (after pre-execution):
 Review the 3 changed files on branch feature/add-auth.
 ```
 
-### Why Skill Examples Omit `[BANG]`
+### Documentation Placeholder Convention
 
-Examples in skill documentation use plain backticks without `[BANG]`:
-
-```markdown
-Files changed: `git diff --name-only`
-```
-
-This is intentional. When skill content loads into Claude's context, `[BANG]` followed by `[command name]` would actually execute. Skill examples show the conceptual pattern; add the `[BANG]` prefix when writing actual command files.
+Skill documentation uses `[BANG]` as a placeholder for the command-file pre-execution prefix. Keep examples read-only and avoid using the actual prefix in skill docs, because skill content is loaded into Claude's context.
 
 **When to use:**
 
@@ -408,7 +402,7 @@ This is intentional. When skill content loads into Claude's context, `[BANG]` fo
 
 ### Load-Time Injection vs Runtime Execution
 
-The `[BANG]` syntax performs **load-time context injection**: commands execute when the skill or command is loaded, and their output becomes static text in the prompt Claude receives. This is different from Claude choosing to run commands at runtime via the Bash tool. Use `[BANG]` for gathering context (git status, environment variables, config files) that informs Claude's starting state, not for actions Claude should perform during the task.
+Literal `!` pre-execution performs **load-time context injection**: commands execute when the command is loaded, and their output becomes static text in the prompt Claude receives. This is different from Claude choosing to run commands at runtime via the Bash tool. Use pre-execution for gathering context (git status, environment variables, config files) that informs Claude's starting state, not for actions Claude should perform during the task.
 
 **Implementation details:**
 For advanced patterns, environment-specific configurations, and plugin integration, see `references/plugin-features-reference.md`
@@ -475,13 +469,10 @@ Organize commands in subdirectories:
 
 ```markdown
 ---
-argument-hint: [pr-number]
+argument-hint: "[pr-number]"
 ---
 
-$IF($1,
-Review PR #$1,
-Please provide a PR number. Usage: /review-pr [number]
-)
+If $1 is provided, review PR #$1. Otherwise, ask the user to provide a PR number and show: /review-pr [number]
 ```
 
 ### File References
@@ -493,7 +484,7 @@ Please provide a PR number. Usage: /review-pr [number]
 
 ### Bash Commands
 
-1. **Limit scope:** Use `Bash(git:*)` not `Bash(*)`
+1. **Limit scope:** Use `Bash(git *)` not `Bash(*)`
 2. **Safe commands:** Avoid destructive operations
 3. **Handle errors:** Consider command failures
 4. **Keep fast:** Long-running commands slow invocation
@@ -512,10 +503,10 @@ Please provide a PR number. Usage: /review-pr [number]
 ```markdown
 ---
 description: Review code changes
-allowed-tools: Read, Bash(git:*)
+allowed-tools: Read, Bash(git *)
 ---
 
-Files changed: `git diff --name-only`
+Files changed: [BANG]`git diff --name-only`
 
 Review each file for code quality, bugs, test coverage, documentation needs.
 ```
@@ -525,11 +516,11 @@ Review each file for code quality, bugs, test coverage, documentation needs.
 ```markdown
 ---
 description: Run tests for specific file
-argument-hint: [test-file]
-allowed-tools: Bash(npm:*)
+argument-hint: "[test-file]"
+allowed-tools: Bash(npm *)
 ---
 
-Run tests: `npm test $1`
+Run tests for $1 with the Bash tool.
 Analyze results and suggest fixes for failures.
 ```
 
@@ -538,13 +529,13 @@ Analyze results and suggest fixes for failures.
 ```markdown
 ---
 description: Complete PR workflow
-argument-hint: [pr-number]
-allowed-tools: Bash(gh:*), Read
+argument-hint: "[pr-number]"
+allowed-tools: Bash(gh *), Read
 ---
 
 PR #$1 Workflow:
 
-1. Fetch PR: `gh pr view $1`
+1. Fetch PR details with the Bash tool.
 2. Review changes
 3. Run checks
 4. Approve or request changes
@@ -597,10 +588,10 @@ Plugin commands have access to `${CLAUDE_PLUGIN_ROOT}`, an environment variable 
 ```markdown
 ---
 description: Analyze using plugin script
-allowed-tools: Bash(node:*)
+allowed-tools: Bash(node *)
 ---
 
-Run analysis: `node ${CLAUDE_PLUGIN_ROOT}/scripts/analyze.js $1`
+Run the plugin analysis script with the Bash tool.
 
 Review results and report findings.
 ```
@@ -608,9 +599,9 @@ Review results and report findings.
 **Common patterns:**
 
 ```markdown
-# Execute plugin script
+# Execute plugin script during the task with the Bash tool
 
-`bash ${CLAUDE_PLUGIN_ROOT}/scripts/script.sh`
+Run ${CLAUDE_PLUGIN_ROOT}/scripts/script.sh when needed.
 
 # Load plugin configuration
 
@@ -667,8 +658,8 @@ plugin-name/
 ```markdown
 ---
 description: Deploy using plugin configuration
-argument-hint: [environment]
-allowed-tools: Read, Bash(*)
+argument-hint: "[environment]"
+allowed-tools: Read, Bash(git *), Bash(npm *), Bash(node *)
 ---
 
 Load configuration: @${CLAUDE_PLUGIN_ROOT}/config/$1-deploy.json
@@ -682,7 +673,7 @@ Monitor deployment and report status.
 ```markdown
 ---
 description: Generate docs from template
-argument-hint: [component]
+argument-hint: "[component]"
 ---
 
 Template: @${CLAUDE_PLUGIN_ROOT}/templates/docs.md
@@ -695,12 +686,10 @@ Generate documentation for $1 following template structure.
 ```markdown
 ---
 description: Complete build workflow
-allowed-tools: Bash(*)
+allowed-tools: Bash(npm *), Bash(node *)
 ---
 
-Build: `bash ${CLAUDE_PLUGIN_ROOT}/scripts/build.sh`
-Test: `bash ${CLAUDE_PLUGIN_ROOT}/scripts/test.sh`
-Package: `bash ${CLAUDE_PLUGIN_ROOT}/scripts/package.sh`
+Run the build, test, and package scripts with the Bash tool during the workflow.
 
 Review outputs and report workflow status.
 ```
@@ -748,7 +737,7 @@ For command pattern examples, see `examples/` directory.
 
 ## Validation Scripts
 
-Utility scripts for validating commands (execute without loading into context):
+Utility scripts for validating commands (execute without loading into context). They assume a shell environment with `bash` 3.2+ and standard POSIX userland utilities (`grep`, `sed`, `awk`, `cut`, `tr`, `head`, `tail`, `basename`, `mktemp`):
 
 ```bash
 # Validate command file structure

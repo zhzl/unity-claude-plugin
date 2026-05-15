@@ -40,7 +40,7 @@ company-plugins/
   "metadata": {
     "description": "Official plugins for Company engineering teams",
     "version": "2.0.0",
-    "pluginRoot": "./plugins"
+    "pluginRoot": "plugins"
   },
   "plugins": [
     {
@@ -84,10 +84,10 @@ Add to project's `.claude/settings.json`:
       }
     }
   },
-  "enabledPlugins": [
-    "code-standards@company-plugins",
-    "security-scanner@company-plugins"
-  ]
+  "enabledPlugins": {
+    "code-standards@company-plugins": true,
+    "security-scanner@company-plugins": true
+  }
 }
 ```
 
@@ -105,7 +105,9 @@ For projects requiring specific plugins, commit `.claude/settings.json`:
       }
     }
   },
-  "enabledPlugins": ["code-standards@company-plugins"]
+  "enabledPlugins": {
+    "code-standards@company-plugins": true
+  }
 }
 ```
 
@@ -121,8 +123,8 @@ When developers trust the project folder, these plugins install automatically.
 
 ## Installation for New Team Members
 
-```bash
-# One-time marketplace setup
+```text
+# Type in Claude Code: one-time marketplace setup
 /plugin marketplace add company/claude-plugins
 
 # Install all required plugins

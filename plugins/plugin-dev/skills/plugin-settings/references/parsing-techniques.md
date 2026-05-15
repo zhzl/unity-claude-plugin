@@ -30,14 +30,22 @@ It's useful for prompts, documentation, or additional context.
 FILE=".claude/my-plugin.local.md"
 
 # Extract everything between --- markers (excluding the markers themselves)
-FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$FILE")
+FRONTMATTER=$(awk '
+  NR == 1 {
+    if ($0 != "---") exit 1
+    next
+  }
+  /^---$/ { exit }
+  { print }
+' "$FILE")
 ```
 
 **How it works:**
 
-- `sed -n` - Suppress automatic printing
-- `/^---$/,/^---$/` - Range from first `---` to second `---`
-- `{ /^---$/d; p; }` - Delete the `---` lines, print everything else
+- `NR == 1` - Require the opening `---` to be on line 1
+- `next` - Skip the opening marker
+- `/^---$/ { exit }` - Stop at the closing marker
+- `{ print }` - Print only the frontmatter lines between the first two markers
 
 ### Extract Individual Fields
 
@@ -45,16 +53,16 @@ FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$FILE")
 
 ```bash
 # Simple value
-VALUE=$(echo "$FRONTMATTER" | grep '^field_name:' | sed 's/field_name: *//')
+VALUE=$(printf '%s\n' "$FRONTMATTER" | grep '^field_name:' | sed 's/field_name: *//' || true)
 
 # Quoted value (removes surrounding quotes)
-VALUE=$(echo "$FRONTMATTER" | grep '^field_name:' | sed 's/field_name: *//' | sed 's/^"\(.*\)"$/\1/')
+VALUE=$(printf '%s\n' "$FRONTMATTER" | grep '^field_name:' | sed 's/field_name: *//' | sed 's/^"\(.*\)"$/\1/' || true)
 ```
 
 **Boolean fields:**
 
 ```bash
-ENABLED=$(echo "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//')
+ENABLED=$(printf '%s\n' "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//' || true)
 
 # Use in condition
 if [[ "$ENABLED" == "true" ]]; then
@@ -65,7 +73,7 @@ fi
 **Numeric fields:**
 
 ```bash
-MAX=$(echo "$FRONTMATTER" | grep '^max_value:' | sed 's/max_value: *//')
+MAX=$(printf '%s\n' "$FRONTMATTER" | grep '^max_value:' | sed 's/max_value: *//' || true)
 
 # Validate it's a number
 if [[ "$MAX" =~ ^[0-9]+$ ]]; then
@@ -80,7 +88,7 @@ fi
 
 ```bash
 # YAML: list: ["item1", "item2", "item3"]
-LIST=$(echo "$FRONTMATTER" | grep '^list:' | sed 's/list: *//')
+LIST=$(printf '%s\n' "$FRONTMATTER" | grep '^list:' | sed 's/list: *//' || true)
 # Result: ["item1", "item2", "item3"]
 
 # For simple checks:
@@ -112,24 +120,50 @@ done
 #!/bin/bash
 FILE=".claude/my-plugin.local.md"
 
-# Extract everything after the closing ---
-# Counts --- markers: first is opening, second is closing, everything after is body
-BODY=$(awk '/^---$/{i++; next} i>=2' "$FILE")
+# Extract everything after the closing --- from the first frontmatter block
+# Later body --- lines are preserved as body content
+BODY=$(awk '
+  NR == 1 {
+    if ($0 == "---") {
+      in_body = 0
+      next
+    }
+    exit
+  }
+  in_body == 0 && /^---$/ {
+    in_body = 1
+    next
+  }
+  in_body == 1 { print }
+' "$FILE")
 ```
 
 **How it works:**
 
-- `/^---$/` - Match `---` lines
-- `{i++; next}` - Increment counter and skip the `---` line
-- `i>=2` - Print all lines after second `---`
+- `NR == 1` - Require the file to start with `---`
+- First `in_body == 0 && /^---$/` - Treat only the second marker as the body delimiter
+- `in_body == 1 { print }` - Print everything after that, including later body `---` lines
 
-**Handles edge case:** If `---` appears in the markdown body, it still works because we only count the first two `---` at the start.
+**Handles edge case:** Later markdown separators are preserved because only the first two `---` markers are treated as delimiters.
 
 ### Use Body as Prompt
 
 ```bash
 # Extract body
-PROMPT=$(awk '/^---$/{i++; next} i>=2' "$RALPH_STATE_FILE")
+PROMPT=$(awk '
+  NR == 1 {
+    if ($0 == "---") {
+      in_body = 0
+      next
+    }
+    exit
+  }
+  in_body == 0 && /^---$/ {
+    in_body = 1
+    next
+  }
+  in_body == 1 { print }
+' "$RALPH_STATE_FILE")
 
 # Feed back to Claude
 echo '{"decision": "block", "reason": "'"$PROMPT"'"}' | jq .
@@ -138,7 +172,20 @@ echo '{"decision": "block", "reason": "'"$PROMPT"'"}' | jq .
 **Important:** Use `jq -n --arg` for safer JSON construction with user content:
 
 ```bash
-PROMPT=$(awk '/^---$/{i++; next} i>=2' "$FILE")
+PROMPT=$(awk '
+  NR == 1 {
+    if ($0 == "---") {
+      in_body = 0
+      next
+    }
+    exit
+  }
+  in_body == 0 && /^---$/ {
+    in_body = 1
+    next
+  }
+  in_body == 1 { print }
+' "$FILE")
 
 # Safe JSON construction
 jq -n --arg prompt "$PROMPT" '{
@@ -152,7 +199,7 @@ jq -n --arg prompt "$PROMPT" '{
 ### Pattern: Field with Default
 
 ```bash
-VALUE=$(echo "$FRONTMATTER" | grep '^field:' | sed 's/field: *//' | sed 's/^"\(.*\)"$/\1/')
+VALUE=$(printf '%s\n' "$FRONTMATTER" | grep '^field:' | sed 's/field: *//' | sed 's/^"\(.*\)"$/\1/' || true)
 
 # Use default if empty
 if [[ -z "$VALUE" ]]; then
@@ -163,7 +210,7 @@ fi
 ### Pattern: Optional Field
 
 ```bash
-OPTIONAL=$(echo "$FRONTMATTER" | grep '^optional_field:' | sed 's/optional_field: *//' | sed 's/^"\(.*\)"$/\1/')
+OPTIONAL=$(printf '%s\n' "$FRONTMATTER" | grep '^optional_field:' | sed 's/optional_field: *//' | sed 's/^"\(.*\)"$/\1/' || true)
 
 # Only use if present
 if [[ -n "$OPTIONAL" ]] && [[ "$OPTIONAL" != "null" ]]; then
@@ -220,7 +267,7 @@ mv "$TEMP_FILE" "$FILE"
 
 ```bash
 # Increment iteration counter
-CURRENT=$(echo "$FRONTMATTER" | grep '^iteration:' | sed 's/iteration: *//')
+CURRENT=$(printf '%s\n' "$FRONTMATTER" | grep '^iteration:' | sed 's/iteration: *//' || true)
 NEXT=$((CURRENT + 1))
 
 # Update file (secure temp file)
@@ -265,7 +312,8 @@ fi
 
 ```bash
 # Count --- markers (should be exactly 2 at start)
-MARKER_COUNT=$(grep -c '^---$' "$FILE" 2>/dev/null || echo "0")
+MARKER_COUNT=$(grep -c '^---$' "$FILE" 2>/dev/null || true)
+MARKER_COUNT=${MARKER_COUNT:-0}
 
 if [[ $MARKER_COUNT -lt 2 ]]; then
   echo "Invalid settings file: missing frontmatter markers" >&2
@@ -276,7 +324,7 @@ fi
 ### Validate Field Values
 
 ```bash
-MODE=$(echo "$FRONTMATTER" | grep '^mode:' | sed 's/mode: *//')
+MODE=$(printf '%s\n' "$FRONTMATTER" | grep '^mode:' | sed 's/mode: *//' || true)
 
 case "$MODE" in
   strict|standard|lenient)
@@ -292,7 +340,7 @@ esac
 ### Validate Numeric Ranges
 
 ```bash
-MAX_SIZE=$(echo "$FRONTMATTER" | grep '^max_size:' | sed 's/max_size: *//')
+MAX_SIZE=$(printf '%s\n' "$FRONTMATTER" | grep '^max_size:' | sed 's/max_size: *//' || true)
 
 if ! [[ "$MAX_SIZE" =~ ^[0-9]+$ ]]; then
   echo "max_size must be a number" >&2
@@ -322,7 +370,7 @@ field3: "value"
 
 ```bash
 # Remove surrounding quotes if present
-VALUE=$(echo "$FRONTMATTER" | grep '^field:' | sed 's/field: *//' | sed 's/^"\(.*\)"$/\1/' | sed "s/^'\\(.*\\)'$/\\1/")
+VALUE=$(printf '%s\n' "$FRONTMATTER" | grep '^field:' | sed 's/field: *//' | sed 's/^"\(.*\)"$/\1/' | sed "s/^'\\(.*\\)'$/\\1/" || true)
 ```
 
 ### --- in Markdown Body
@@ -356,7 +404,7 @@ field3: null
 **Parsing:**
 
 ```bash
-VALUE=$(echo "$FRONTMATTER" | grep '^field1:' | sed 's/field1: *//')
+VALUE=$(printf '%s\n' "$FRONTMATTER" | grep '^field1:' | sed 's/field1: *//' || true)
 # VALUE will be empty string
 
 # Check for empty/null
@@ -379,7 +427,7 @@ regex: "^[a-zA-Z0-9_]+$"
 
 ```bash
 # Always quote variables when using
-MESSAGE=$(echo "$FRONTMATTER" | grep '^message:' | sed 's/message: *//' | sed 's/^"\(.*\)"$/\1/')
+MESSAGE=$(printf '%s\n' "$FRONTMATTER" | grep '^message:' | sed 's/message: *//' | sed 's/^"\(.*\)"$/\1/' || true)
 
 echo "Message: $MESSAGE"  # Quoted!
 ```
@@ -392,12 +440,19 @@ If reading settings multiple times:
 
 ```bash
 # Parse once
-FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$FILE")
+FRONTMATTER=$(awk '
+  NR == 1 {
+    if ($0 != "---") exit 1
+    next
+  }
+  /^---$/ { exit }
+  { print }
+' "$FILE")
 
 # Extract multiple fields from cached frontmatter
-FIELD1=$(echo "$FRONTMATTER" | grep '^field1:' | sed 's/field1: *//')
-FIELD2=$(echo "$FRONTMATTER" | grep '^field2:' | sed 's/field2: *//')
-FIELD3=$(echo "$FRONTMATTER" | grep '^field3:' | sed 's/field3: *//')
+FIELD1=$(printf '%s\n' "$FRONTMATTER" | grep '^field1:' | sed 's/field1: *//' || true)
+FIELD2=$(printf '%s\n' "$FRONTMATTER" | grep '^field2:' | sed 's/field2: *//' || true)
+FIELD3=$(printf '%s\n' "$FRONTMATTER" | grep '^field3:' | sed 's/field3: *//' || true)
 ```
 
 **Don't:** Re-parse file for each field.
@@ -436,11 +491,18 @@ FILE=".claude/my-plugin.local.md"
 if [[ -f "$FILE" ]]; then
   echo "Settings file found" >&2
 
-  FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$FILE")
+  FRONTMATTER=$(awk '
+  NR == 1 {
+    if ($0 != "---") exit 1
+    next
+  }
+  /^---$/ { exit }
+  { print }
+' "$FILE")
   echo "Frontmatter:" >&2
   echo "$FRONTMATTER" >&2
 
-  ENABLED=$(echo "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//')
+  ENABLED=$(printf '%s\n' "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//' || true)
   echo "Enabled: $ENABLED" >&2
 fi
 ```
@@ -468,7 +530,14 @@ For complex YAML, consider using `yq`:
 # Install: brew install yq
 
 # Parse YAML properly
-FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$FILE")
+FRONTMATTER=$(awk '
+  NR == 1 {
+    if ($0 != "---") exit 1
+    next
+  }
+  /^---$/ { exit }
+  { print }
+' "$FILE")
 
 # Extract fields with yq
 ENABLED=$(echo "$FRONTMATTER" | yq '.enabled')
@@ -515,13 +584,13 @@ else
   FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$SETTINGS_FILE")
 
   # Extract fields with defaults
-  ENABLED=$(echo "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//')
+  ENABLED=$(printf '%s\n' "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//' || true)
   ENABLED=${ENABLED:-true}
 
-  MODE=$(echo "$FRONTMATTER" | grep '^mode:' | sed 's/mode: *//' | sed 's/^"\(.*\)"$/\1/')
+  MODE=$(printf '%s\n' "$FRONTMATTER" | grep '^mode:' | sed 's/mode: *//' | sed 's/^"\(.*\)"$/\1/' || true)
   MODE=${MODE:-standard}
 
-  MAX_SIZE=$(echo "$FRONTMATTER" | grep '^max_size:' | sed 's/max_size: *//')
+  MAX_SIZE=$(printf '%s\n' "$FRONTMATTER" | grep '^max_size:' | sed 's/max_size: *//' || true)
   MAX_SIZE=${MAX_SIZE:-1000000}
 
   # Validate values

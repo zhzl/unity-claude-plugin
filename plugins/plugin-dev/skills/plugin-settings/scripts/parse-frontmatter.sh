@@ -3,8 +3,8 @@
 # Extracts YAML frontmatter from .local.md files
 #
 # Note: This script assumes the settings file is stable (not being written to).
-# Settings changes require a Claude Code restart to take effect, so there's no
-# need for file locking in normal usage.
+# Settings values are read at hook/command execution time; restart Claude Code only
+# after changing hook registration or plugin configuration.
 
 set -euo pipefail
 
@@ -37,8 +37,22 @@ if [ ! -f "$FILE" ]; then
   exit 1
 fi
 
-# Extract frontmatter
-FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$FILE")
+# Extract frontmatter from the first YAML block only
+if [ "$(head -n 1 "$FILE")" != "---" ]; then
+  echo "Error: File must start with frontmatter marker ---" >&2
+  exit 1
+fi
+
+if ! tail -n +2 "$FILE" | grep -q '^---$'; then
+  echo "Error: Frontmatter not closed in $FILE" >&2
+  exit 1
+fi
+
+FRONTMATTER=$(awk '
+  NR == 1 { next }
+  /^---$/ { exit }
+  { print }
+' "$FILE")
 
 if [ -z "$FRONTMATTER" ]; then
   echo "Error: No frontmatter found in $FILE" >&2
@@ -52,12 +66,19 @@ if [ -z "$FIELD" ]; then
 fi
 
 # Extract specific field
-VALUE=$(echo "$FRONTMATTER" | grep "^${FIELD}:" | sed "s/${FIELD}: *//" | sed 's/^"\(.*\)"$/\1/' | sed "s/^'\\(.*\\)'$/\\1/")
+if [[ ! "$FIELD" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+  echo "Error: Invalid field name '$FIELD'" >&2
+  exit 1
+fi
 
-if [ -z "$VALUE" ]; then
+FIELD_LINE=$(printf '%s\n' "$FRONTMATTER" | grep -m 1 "^${FIELD}:" || true)
+
+if [ -z "$FIELD_LINE" ]; then
   echo "Error: Field '$FIELD' not found in frontmatter" >&2
   exit 1
 fi
+
+VALUE=$(printf '%s\n' "$FIELD_LINE" | sed "s/${FIELD}: *//" | sed 's/^"\(.*\)"$/\1/' | sed "s/^'\\(.*\\)'$/\\1/")
 
 echo "$VALUE"
 exit 0

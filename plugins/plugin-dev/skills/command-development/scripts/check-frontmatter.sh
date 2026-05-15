@@ -9,7 +9,7 @@ if [ $# -eq 0 ]; then
   echo "Usage: $0 <path/to/command.md> [command2.md ...]"
   echo ""
   echo "Validates frontmatter fields for:"
-  echo "  - 'model' field (sonnet, opus, haiku, or full model ID)"
+  echo "  - 'model' field (inherit, sonnet, opus, or haiku)"
   echo "  - 'description' length (warns if > 60 chars)"
   echo "  - 'allowed-tools' format"
   echo "  - 'argument-hint' format"
@@ -52,7 +52,17 @@ check_frontmatter() {
   fi
 
   # Extract frontmatter - only the first block between lines 1 and the second ---
-  # Use awk to get content between first and second --- markers only
+  # Body horizontal rules after the frontmatter block are valid markdown.
+  local closing_line
+  closing_line=$(awk 'NR > 1 && /^---$/ { print NR; exit }' "$COMMAND_FILE")
+  if [ -z "$closing_line" ]; then
+    echo "❌ Error: Invalid frontmatter (missing closing '---' marker)"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    total_errors=$((total_errors + 1))
+    echo ""
+    return 1
+  fi
+
   local frontmatter
   frontmatter=$(awk '
     /^---$/ { count++; if (count == 2) exit; next }
@@ -61,7 +71,7 @@ check_frontmatter() {
 
   if [ -z "$frontmatter" ]; then
     echo "⚠️  Warning: Empty frontmatter block"
-    ((warning_count++))
+    warning_count=$((warning_count + 1))
     total_warnings=$((total_warnings + warning_count))
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "⚠️  $COMMAND_FILE: Passed with $warning_count warning(s)"
@@ -77,15 +87,13 @@ check_frontmatter() {
     local model
     model=$(echo "$frontmatter" | grep "^model:" | cut -d: -f2 | tr -d ' ')
 
-    # Valid values: sonnet, opus, haiku, or full model ID (claude-*)
-    if [[ "$model" =~ ^(sonnet|opus|haiku)$ ]]; then
-      echo "✅ model: $model (shorthand)"
-    elif [[ "$model" =~ ^claude- ]]; then
-      echo "✅ model: $model (full model ID)"
+    # Valid values: inherit, sonnet, opus, haiku
+    if [[ "$model" =~ ^(inherit|sonnet|opus|haiku)$ ]]; then
+      echo "✅ model: $model"
     else
       echo "❌ Error: Invalid model '$model'"
-      echo "   Valid: sonnet, opus, haiku, or full model ID (e.g., claude-sonnet-4-5-20250929)"
-      ((error_count++))
+      echo "   Valid: inherit, sonnet, opus, haiku"
+      error_count=$((error_count + 1))
     fi
   fi
 
@@ -97,13 +105,13 @@ check_frontmatter() {
 
     if [ "$length" -eq 0 ]; then
       echo "⚠️  Warning: Empty description"
-      ((warning_count++))
+      warning_count=$((warning_count + 1))
     elif [ "$length" -gt 80 ]; then
       echo "⚠️  Warning: Description too long ($length chars, recommend < 60)"
-      ((warning_count++))
+      warning_count=$((warning_count + 1))
     elif [ "$length" -gt 60 ]; then
       echo "⚠️  Warning: Description length $length (recommend < 60 chars)"
-      ((warning_count++))
+      warning_count=$((warning_count + 1))
     else
       echo "✅ description: $length chars"
     fi
@@ -116,15 +124,15 @@ check_frontmatter() {
 
     if [ -z "$tools" ]; then
       echo "⚠️  Warning: Empty allowed-tools field"
-      ((warning_count++))
+      warning_count=$((warning_count + 1))
     else
       # Check for common patterns
       if [[ "$tools" == "*" ]]; then
         echo "⚠️  Warning: allowed-tools: * grants all tools (consider restricting)"
-        ((warning_count++))
+        warning_count=$((warning_count + 1))
       elif [[ "$tools" =~ Bash\(\*\) ]]; then
-        echo "⚠️  Warning: Bash(*) is very permissive (consider Bash(git:*) or similar)"
-        ((warning_count++))
+        echo "⚠️  Warning: Bash(*) is very permissive (consider Bash(git *) or similar)"
+        warning_count=$((warning_count + 1))
       else
         echo "✅ allowed-tools: $tools"
       fi
@@ -138,12 +146,12 @@ check_frontmatter() {
 
     if [ -z "$hint" ]; then
       echo "⚠️  Warning: Empty argument-hint field"
-      ((warning_count++))
+      warning_count=$((warning_count + 1))
     else
       # Check for bracket convention
       if [[ ! "$hint" =~ \[.*\] ]]; then
         echo "⚠️  Warning: argument-hint missing bracket convention (e.g., [arg-name])"
-        ((warning_count++))
+        warning_count=$((warning_count + 1))
       else
         echo "✅ argument-hint: $hint"
       fi
@@ -159,7 +167,7 @@ check_frontmatter() {
       echo "✅ disable-model-invocation: $value"
     else
       echo "❌ Error: disable-model-invocation must be true or false (got '$value')"
-      ((error_count++))
+      error_count=$((error_count + 1))
     fi
   fi
 
@@ -187,7 +195,7 @@ check_frontmatter() {
 
       if [ "$known" = false ]; then
         echo "⚠️  Warning: Unknown field '$field'"
-        ((warning_count++))
+        warning_count=$((warning_count + 1))
         unknown_found=true
       fi
     fi

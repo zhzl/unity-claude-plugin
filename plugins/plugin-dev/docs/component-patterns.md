@@ -6,18 +6,25 @@ Reference for plugin component frontmatter and structure.
 
 Agents require YAML frontmatter with:
 
-- `name`: kebab-case identifier (3-50 chars)
-- `description`: Starts with "Use this agent when...", includes `<example>` blocks
-- `model`: inherit/sonnet/opus/haiku
-- `color`: blue/cyan/green/yellow/magenta/red
+- `name`: kebab-case identifier (3-50 chars) (required)
+- `description`: Starts with "Use this agent when...", includes `<example>` blocks (required)
+- `model`: inherit/sonnet/opus/haiku (optional; defaults to inherit)
+- `color`: blue/cyan/green/yellow/magenta/red (optional)
 - `tools`: Comma-separated list of allowed tools (optional, allowlist)
 - `disallowedTools`: Comma-separated list of blocked tools (optional, denylist — use one or the other)
-- `skills`: Comma-separated list of skills the agent can load (optional)
-- `permissionMode`: default/acceptEdits/delegate/dontAsk/bypassPermissions/plan (optional)
+- `skills`: YAML list of skills the agent can load (optional)
 - `maxTurns`: Number limiting agentic turns (optional)
 - `memory`: user/project/local for persistent memory (optional)
-- `mcpServers`: Scoped MCP server access (optional)
-- `hooks`: Lifecycle hooks scoped to agent (optional)
+
+For plugin-shipped agents, `permissionMode`, `mcpServers`, and `hooks` are not supported and should not be used in agent frontmatter.
+
+Example `skills` shape:
+
+```yaml
+skills:
+  - skill-name
+  - another-skill
+```
 
 ## Skills
 
@@ -80,8 +87,8 @@ Plugin hooks use wrapper format with `hooks` field:
 ```json
 {
   "hooks": {
-    "PreToolUse": [...],
-    "Stop": [...]
+    "PreToolUse": [],
+    "Stop": []
   }
 }
 ```

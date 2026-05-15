@@ -9,7 +9,7 @@ Launch plugin agents for complex tasks:
 ```markdown
 ---
 description: Deep code review
-argument-hint: [file-path]
+argument-hint: "[file-path]"
 ---
 
 Initiate comprehensive review of @$1 using the code-reviewer agent.
@@ -30,7 +30,7 @@ Agent uses plugin resources:
 **Key points:**
 
 - Agent must exist in `plugin/agents/` directory
-- Claude uses Task tool to launch agent
+- Claude uses the Agent tool to launch the agent
 - Document agent capabilities
 - Reference plugin resources agent uses
 
@@ -41,7 +41,7 @@ Leverage plugin skills for specialized knowledge:
 ```markdown
 ---
 description: Document API with standards
-argument-hint: [api-file]
+argument-hint: "[api-file]"
 ---
 
 Document API in @$1 following plugin standards.
@@ -81,14 +81,14 @@ Combine agents, skills, and scripts:
 ```markdown
 ---
 description: Comprehensive review workflow
-argument-hint: [file]
-allowed-tools: Bash(node:*), Read
+argument-hint: "[file]"
+allowed-tools: Bash(node *), Read
 ---
 
 Target: @$1
 
 Phase 1 - Static Analysis:
-`node ${CLAUDE_PLUGIN_ROOT}/scripts/lint.js $1`
+Run the plugin lint script with the Bash tool.
 
 Phase 2 - Deep Review:
 Launch code-reviewer agent for detailed analysis.
@@ -118,10 +118,10 @@ Commands should validate inputs and resources before processing.
 ```markdown
 ---
 description: Deploy with validation
-argument-hint: [environment]
+argument-hint: "[environment]"
 ---
 
-Validate environment: `echo "$1" | grep -E "^(dev|staging|prod)$" || echo "INVALID"`
+Validate environment: !`echo "$1" | grep -E "^(dev|staging|prod)$" || echo "INVALID"`
 
 If $1 is valid environment:
 Deploy to $1
@@ -135,10 +135,10 @@ Show usage: /deploy [environment]
 ```markdown
 ---
 description: Process configuration
-argument-hint: [config-file]
+argument-hint: "[config-file]"
 ---
 
-Check file exists: `test -f $1 && echo "EXISTS" || echo "MISSING"`
+Check file exists: !`test -f "$1" && echo "EXISTS" || echo "MISSING"`
 
 If file exists:
 Process configuration: @$1
@@ -153,13 +153,13 @@ Provide example configuration
 ```markdown
 ---
 description: Run plugin analyzer
-allowed-tools: Bash(test:*)
+allowed-tools: Bash(test *)
 ---
 
 Validate plugin setup:
 
-- Script: `test -x ${CLAUDE_PLUGIN_ROOT}/bin/analyze && echo "✓" || echo "✗"`
-- Config: `test -f ${CLAUDE_PLUGIN_ROOT}/config.json && echo "✓" || echo "✗"`
+- Script: !`test -x ${CLAUDE_PLUGIN_ROOT}/bin/analyze && echo "✓" || echo "✗"`
+- Config: !`test -f ${CLAUDE_PLUGIN_ROOT}/config.json && echo "✓" || echo "✗"`
 
 If all checks pass, run analysis.
 Otherwise, report missing components.
@@ -170,10 +170,10 @@ Otherwise, report missing components.
 ```markdown
 ---
 description: Build with error handling
-allowed-tools: Bash(*)
+allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/scripts/build *)
 ---
 
-Execute build: `bash ${CLAUDE_PLUGIN_ROOT}/scripts/build.sh 2>&1 || echo "BUILD_FAILED"`
+Run the build script with the Bash tool during the task and treat nonzero exit as BUILD_FAILED.
 
 If build succeeded:
 Report success and output location

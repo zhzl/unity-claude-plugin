@@ -1,10 +1,12 @@
 ---
 name: skill-creator
 description: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Claude's capabilities with specialized knowledge, workflows, or tool integrations.
-license: Complete terms in LICENSE.txt
+archival: true
 ---
 
-# Skill Creator
+# Skill Creator (Archival Reference)
+
+This file is retained as archival reference material from the original generic skill creator. Do not follow its executable guidance for this plugin unless the referenced scripts are present in your checkout; the plugin-specific workflow in `skill-creation-workflow.md` is the current source of truth.
 
 This skill provides guidance for creating effective skills.
 
@@ -135,11 +137,12 @@ At this point, it is time to actually create the skill.
 
 Skip this step only if the skill being developed already exists, and iteration or packaging is needed. In this case, continue to the next step.
 
-When creating a new skill from scratch, always run the `init_skill.py` script. The script conveniently generates a new template skill directory that automatically includes everything a skill requires, making the skill creation process much more efficient and reliable.
+In the original generic workflow, `init_skill.py` generated a template skill directory. For this plugin, do not assume that script exists; create plugin skills directly as described in `skill-creation-workflow.md`.
 
 Usage:
 
-```bash
+```text
+# Archival example only; use skill-creation-workflow.md for current plugin skills.
 scripts/init_skill.py <skill-name> --path <output-directory>
 ```
 
@@ -176,13 +179,15 @@ To complete SKILL.md, answer the following questions:
 
 Once the skill is ready, it should be packaged into a distributable zip file that gets shared with the user. The packaging process automatically validates the skill first to ensure it meets all requirements:
 
-```bash
+```text
+# Archival example only; script may not exist in this plugin.
 scripts/package_skill.py <path/to/skill-folder>
 ```
 
 Optional output directory specification:
 
-```bash
+```text
+# Archival example only; script may not exist in this plugin.
 scripts/package_skill.py <path/to/skill-folder> ./dist
 ```
 

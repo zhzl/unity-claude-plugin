@@ -1,7 +1,7 @@
 ---
 description: Create plugin marketplaces with guided workflow
-argument-hint: [marketplace-description]
-allowed-tools: Read, Write, Edit, Grep, Glob, Bash(mkdir:*), Bash(git init:*), TaskCreate, TaskGet, TaskUpdate, TaskList, AskUserQuestion, Skill, Task
+argument-hint: "[marketplace-description]"
+allowed-tools: Read, Write, Edit, Grep, Glob, Bash(mkdir *), Bash(git init *), TaskCreate, TaskGet, TaskUpdate, TaskList, AskUserQuestion, Skill, Agent
 model: sonnet
 ---
 
@@ -19,7 +19,7 @@ Guide the user through creating a complete plugin marketplace from initial conce
 
 **Initial request:** $ARGUMENTS
 
-**Security note:** This workflow has broad file system access to create marketplace structures. It can write files and create directories within your permission scope. Review the target directory before starting, and see [docs/workflow-security.md](../../../docs/workflow-security.md) for details.
+**Security note:** This workflow has broad file system access to create marketplace structures. It can write files and create directories within your permission scope. Review the target directory before starting, and see [docs/workflow-security.md](../docs/workflow-security.md) for details.
 
 ---
 
@@ -138,7 +138,7 @@ Guide the user through creating a complete plugin marketplace from initial conce
    mkdir -p marketplace-name/plugins  # if local plugins
    ```
 
-3. Create marketplace.json manifest using Write tool:
+3. Create `.claude-plugin/marketplace.json` manifest using Write tool:
 
    ```json
    {
@@ -154,6 +154,8 @@ Guide the user through creating a complete plugin marketplace from initial conce
    }
    ```
 
+   This empty `plugins` array is a temporary scaffold only; add plugin entries in Phase 5 before treating the marketplace as complete.
+
 4. Create README.md template with:
    - Marketplace description
    - Installation instructions
@@ -167,9 +169,12 @@ Guide the user through creating a complete plugin marketplace from initial conce
 **Post-workflow git operations** (user can run after completion):
 
 ```bash
-git add .
+git status --short
+git add path/to/marketplace/.claude-plugin/marketplace.json path/to/marketplace/README.md
 git commit -m "feat: initial marketplace structure"
 ```
+
+Stage only intended explicit paths from the new marketplace; do not use broad staging.
 
 ---
 
@@ -187,7 +192,7 @@ git commit -m "feat: initial marketplace structure"
      - Create entry with relative source path
    - If plugin doesn't exist:
      - Ask: "Plugin 'X' doesn't exist. Create it now or add placeholder?"
-     - If create: Use Task tool to run /plugin-dev:create-plugin
+     - If create: Ask the user to run `/plugin-dev:create-plugin` for that plugin first
      - If placeholder: Create entry with TODO comment in README
 
    **For GitHub plugins**:
@@ -255,13 +260,13 @@ git commit -m "feat: initial marketplace structure"
 3. **For all marketplaces**:
    - Document installation command in README:
 
-     ```bash
+     ```text
      /plugin marketplace add owner/repo
      ```
 
    - List individual plugin installation:
 
-     ```bash
+     ```text
      /plugin install plugin-name@marketplace-name
      ```
 
@@ -313,19 +318,19 @@ git commit -m "feat: initial marketplace structure"
 1. **Test locally**:
    - Show user how to test:
 
-     ```bash
+     ```text
      /plugin marketplace add ./path/to/marketplace
      ```
 
    - List marketplace:
 
-     ```bash
+     ```text
      /plugin marketplace list
      ```
 
    - Install test plugin:
 
-     ```bash
+     ```text
      /plugin install plugin-name@marketplace-name
      ```
 
@@ -370,7 +375,7 @@ git commit -m "feat: initial marketplace structure"
   - Complete owner information
   - Version all entries
   - Document all plugins in README
-  - ${CLAUDE_PLUGIN_ROOT} for local plugin paths
+  - Relative source paths and `metadata.pluginRoot` for local marketplace plugins
 
 ### Key Decision Points (Wait for User)
 

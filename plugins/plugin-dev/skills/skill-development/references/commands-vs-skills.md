@@ -5,7 +5,7 @@
 Both commands and skills:
 
 - Are invoked via the Skill tool
-- Support $ARGUMENTS and `[BANG]` bash execution
+- Support $ARGUMENTS and literal `!` before backticks for bash execution
 - Support frontmatter (description, allowed-tools, model)
 - Can control invocability (disable-model-invocation)
 
