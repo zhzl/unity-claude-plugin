@@ -58,6 +58,17 @@ else
 fi
 echo ""
 
+# Test: use roadmap-management
+echo ">>> Test 5: use-roadmap-management"
+if "$SCRIPT_DIR/run-test.sh" "roadmap-management" "$PROMPTS_DIR/use-roadmap-management.txt"; then
+    PASSED=$((PASSED + 1))
+    RESULTS="$RESULTS\nPASS: use-roadmap-management"
+else
+    FAILED=$((FAILED + 1))
+    RESULTS="$RESULTS\nFAIL: use-roadmap-management"
+fi
+echo ""
+
 echo "=== Summary ==="
 echo -e "$RESULTS"
 echo ""
