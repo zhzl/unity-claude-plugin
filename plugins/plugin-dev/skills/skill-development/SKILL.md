@@ -1,0 +1,564 @@
+---
+name: skill-development
+description: This skill should be used when the user asks to "create a skill", "add a skill to plugin", "write a new skill", "improve skill description", "organize skill content", "SKILL.md format", "skill frontmatter", "skill triggers", "trigger phrases for skills", "progressive disclosure", "skill references folder", "skill examples folder", "validate skill", "skill model field", "skill hooks", "scoped hooks in skill", "visibility budget", "context budget", "SLASH_COMMAND_TOOL_CHAR_BUDGET", "skill permissions", "Skill() syntax", "visual output", or needs guidance on skill structure, file organization, writing style, or skill development best practices for Claude Code plugins.
+---
+
+# Skill Development for Claude Code Plugins
+
+This skill provides guidance for creating effective skills for Claude Code plugins.
+
+## About Skills
+
+Skills are modular, self-contained packages that extend Claude's capabilities by providing
+specialized knowledge, workflows, and tools. Think of them as "onboarding guides" for specific
+domains or tasks—they transform Claude from a general-purpose agent into a specialized agent
+equipped with procedural knowledge that no model can fully possess.
+
+### Skill Precedence
+
+When multiple skills share the same name, precedence determines which loads:
+
+1. Enterprise (managed settings) — highest priority
+2. Personal (`~/.claude/skills/`)
+3. Project (`.claude/skills/`)
+4. Plugin skills — lowest priority
+
+Plugin developers should use distinctive, ideally namespaced names (the plugin system auto-namespaces as `plugin-name:skill-name`) to avoid collisions with user or project skills.
+
+### Skills and Commands: Unified Mechanism
+
+Skills and commands share the same underlying mechanism (Skill tool). The choice depends on complexity needs:
+
+- **Use commands** (`commands/foo.md`): Simple prompts without bundled resources
+- **Use skills** (`skills/foo/SKILL.md`): Complex workflows needing scripts, references, or examples
+
+Both support `$ARGUMENTS`, `[BANG]` bash execution, and frontmatter fields. Skills add bundled resources and progressive disclosure.
+
+### What Skills Provide
+
+1. Specialized workflows - Multi-step procedures for specific domains
+2. Tool integrations - Instructions for working with specific file formats or APIs
+3. Domain expertise - Company-specific knowledge, schemas, business logic
+4. Bundled resources - Scripts, references, and assets for complex and repetitive tasks
+5. Visual output generation - Scripts that produce HTML/interactive visualizations
+
+### Anatomy of a Skill
+
+Every skill consists of a required SKILL.md file and optional bundled resources:
+
+```
+skill-name/
+├── SKILL.md (required)
+│   ├── YAML frontmatter metadata (required)
+│   │   ├── name: (required)
+│   │   └── description: (required)
+│   └── Markdown instructions (required)
+└── Bundled Resources (optional)
+    ├── scripts/          - Executable code (Python/Bash/etc.)
+    ├── references/       - Documentation intended to be loaded into context as needed
+    └── assets/           - Files used in output (templates, icons, fonts, etc.)
+```
+
+#### SKILL.md (required)
+
+**Metadata Quality:** The `name` and `description` in YAML frontmatter determine when Claude will use the skill. Be specific about what the skill does and when to use it. Use the third-person (e.g. "This skill should be used when..." instead of "Use this skill when...").
+
+#### Optional Frontmatter Fields
+
+##### allowed-tools
+
+Optionally restrict which tools Claude can use when the skill is active:
+
+```yaml
+---
+name: code-reviewer
+description: Review code for best practices...
+allowed-tools: Read, Grep, Glob
+---
+```
+
+Use `allowed-tools` for:
+
+- Read-only skills that shouldn't modify files
+- Security-sensitive workflows
+- Skills with limited scope
+
+When specified, Claude can only use the listed tools without needing permission. If omitted, Claude follows the standard permission model.
+
+##### context
+
+Control how the skill's context is loaded:
+
+```yaml
+---
+name: analysis-skill
+description: Perform deep code analysis...
+context: fork
+---
+```
+
+**Values:**
+
+- `fork` - Run skill in a subagent (separate context), preserving main agent's context
+- Not specified - Run in main agent's context (default)
+
+Use `context: fork` for:
+
+- Skills that load large reference files
+- Skills that might pollute the main context
+- Expensive operations you want isolated
+
+##### agent
+
+Specify which agent type handles the skill when `context: fork` is set:
+
+```yaml
+---
+name: exploration-skill
+description: Explore codebase patterns...
+context: fork
+agent: Explore
+---
+```
+
+**Values:**
+
+- `Explore` - Fast agent for codebase exploration
+- `Plan` - Architect agent for implementation planning
+- `general` - General-purpose agent (default if `context: fork`)
+
+Requires `context: fork` to be set.
+
+##### skills
+
+Load other skills into the forked agent's context:
+
+```yaml
+---
+name: comprehensive-review
+description: Full code review with testing...
+context: fork
+agent: general
+skills:
+  - testing-patterns
+  - security-audit
+---
+```
+
+Requires `context: fork` to be set. Only skills from the same plugin can be loaded.
+
+##### user-invocable
+
+Control whether the skill appears in the slash command menu:
+
+```yaml
+---
+name: internal-review-standards
+description: Apply internal code review standards...
+user-invocable: false
+---
+```
+
+**Default:** `true` (skills are visible in the `/` menu)
+
+**Important:** This field only controls slash menu visibility. It does NOT affect:
+
+- **Skill tool access** - Claude can still invoke the skill programmatically
+- **Auto-discovery** - Claude still discovers and uses the skill based on context
+
+Use `user-invocable: false` for skills that Claude should use automatically but users shouldn't invoke directly.
+
+##### disable-model-invocation
+
+Prevent Claude from programmatically invoking the skill via the Skill tool:
+
+```yaml
+---
+name: dangerous-operation
+description: Perform dangerous operation...
+disable-model-invocation: true
+---
+```
+
+**Default:** `false` (programmatic invocation allowed)
+
+Use for skills that should only be manually invoked by users, such as:
+
+- Destructive operations requiring human judgment
+- Interactive workflows needing user input
+- Approval processes
+
+**Visibility comparison:**
+
+| Setting                          | Slash Menu | Skill Tool | Auto-Discovery |
+| -------------------------------- | ---------- | ---------- | -------------- |
+| `user-invocable: true` (default) | Visible    | Allowed    | Yes            |
+| `user-invocable: false`          | Hidden     | Allowed    | Yes            |
+| `disable-model-invocation: true` | Visible    | Blocked    | Yes            |
+
+##### model
+
+Override which model handles the skill:
+
+```yaml
+---
+name: quick-lint
+description: Fast code linting checks...
+model: haiku
+---
+```
+
+**Values:** `sonnet`, `opus`, `haiku`, `inherit` (default), or a full model ID (e.g., `claude-sonnet-4-5-20250929`)
+
+Use `haiku` for fast/cheap skills, `opus` for complex reasoning requiring maximum capability. Default behavior (`inherit`) uses the conversation's current model.
+
+See `references/advanced-frontmatter.md` for detailed guidance on model selection.
+
+##### hooks
+
+Define scoped hooks that activate only when this skill is in use:
+
+```yaml
+---
+name: secure-writer
+description: Write files with validation...
+hooks:
+  PreToolUse:
+    - matcher: Write
+      hooks:
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/scripts/validate-write.sh"
+---
+```
+
+Scoped hooks follow the same event/matcher/hook structure as `hooks.json` but are lifecycle-bound to the skill. Supported events: `PreToolUse`, `PostToolUse`, `Stop`.
+
+See `references/advanced-frontmatter.md` for full syntax and comparison with `hooks.json`.
+
+##### argument-hint
+
+Provides autocomplete hint text shown in the `/` menu for the skill's expected arguments:
+
+```yaml
+---
+argument-hint: "<file-path> [--verbose]"
+---
+```
+
+Purely cosmetic — helps users understand what arguments the skill expects. Does not affect argument parsing.
+
+#### Bundled Resources (optional)
+
+##### Scripts (`scripts/`)
+
+Executable code (Python/Bash/etc.) for tasks that require deterministic reliability or are repeatedly rewritten.
+
+- **When to include**: When the same code is being rewritten repeatedly or deterministic reliability is needed
+- **Example**: `scripts/rotate_pdf.py` for PDF rotation tasks
+- **Benefits**: Token efficient, deterministic, may be executed without loading into context
+
+##### References (`references/`)
+
+Documentation and reference material intended to be loaded as needed into context.
+
+- **When to include**: For documentation that Claude should reference while working
+- **Examples**: `references/schema.md` for database schemas, `references/api_docs.md` for API specifications
+- **Best practice**: If files are large (>10k words), include grep search patterns in SKILL.md
+- **Avoid duplication**: Information should live in either SKILL.md or references files, not both
+
+##### Assets (`assets/`)
+
+Files not intended to be loaded into context, but rather used within the output Claude produces.
+
+- **When to include**: When the skill needs files that will be used in the final output
+- **Examples**: `assets/logo.png` for brand assets, `assets/slides.pptx` for templates
+
+### Dynamic Content in Skills
+
+Skills support dynamic content injection and variable substitution for context-aware behavior.
+
+#### String Substitutions
+
+Use variables in skill content that get replaced at runtime:
+
+```markdown
+The session ID is: ${CLAUDE_SESSION_ID}
+Arguments passed: $ARGUMENTS
+```
+
+**Available substitutions:**
+
+- `$ARGUMENTS` - Arguments passed when skill is invoked (e.g., `/skill-name arg1 arg2`)
+- `$ARGUMENTS[0]`, `$ARGUMENTS[1]`, etc. - Individual positional arguments (zero-indexed). `$ARGUMENTS[0]` is the first argument after the skill name.
+- `$1`, `$2`, `$3`, etc. - 1-indexed shorthand for positional arguments. `$1` is equivalent to `$ARGUMENTS[0]`, `$2` to `$ARGUMENTS[1]`, etc.
+- `${CLAUDE_SESSION_ID}` - Current session identifier
+- `${CLAUDE_PLUGIN_ROOT}` - Plugin directory path
+
+#### Dynamic Context Injection
+
+Execute commands to inject their output into skill context using backtick syntax:
+
+```markdown
+## Current Project Status
+
+The git status is:
+[BANG]`git status --short`
+
+Recent commits:
+[BANG]`git log --oneline -5`
+```
+
+**Syntax:** `` [BANG]`command` ``
+
+**Use cases:**
+
+- Load current project state (git status, package.json)
+- Include dynamic configuration
+- Fetch environment-specific information
+
+**Security note:** Commands execute in the user's environment. Only use trusted commands.
+
+### Progressive Disclosure Design Principle
+
+Skills use a three-level loading system to manage context efficiently:
+
+1. **Metadata (name + description)** - Always in context (~100 words)
+2. **SKILL.md body** - When skill triggers (<5k words)
+3. **Bundled resources** - As needed by Claude (Unlimited\*)
+
+\*Unlimited because scripts can be executed without reading into context window.
+
+**Visibility budget:** Claude Code allocates approximately 2% of the context window (or ~16KB fallback) for skill descriptions via `SLASH_COMMAND_TOOL_CHAR_BUDGET`. When total description text across all installed skills exceeds this budget, some skills may be excluded from auto-discovery. Keep descriptions concise and move detail into the SKILL.md body and references. See `references/advanced-frontmatter.md` for optimization guidance.
+
+### Context Management for Plugins
+
+Skills should be designed for re-discoverability after auto-compaction. When Claude's context approaches its limit, older messages are automatically compressed. After compaction:
+
+- **Descriptions survive**: Skill descriptions remain available (they're tool definitions, not conversation content)
+- **Skill body is lost**: The full SKILL.md content from a previous invocation may be compacted away
+- **Re-triggering works**: Users can invoke the skill again to reload its content
+
+**`PreCompact` hook**: Plugins can use a `PreCompact` hook to preserve critical information before compaction occurs. Use this to save state that would otherwise be lost.
+
+**Cross-plugin budget**: Skill descriptions from ALL installed plugins compete for the same visibility budget. Write concise, keyword-rich descriptions to maximize discoverability without consuming excessive space.
+
+## Skill Creation Process
+
+To create a skill, follow these six steps. For detailed instructions on each step, see `references/skill-creation-workflow.md`.
+
+1. **Understand the Skill**: Gather concrete examples of how the skill will be used through user questions and feedback
+2. **Plan Reusable Contents**: Analyze examples to identify what scripts, references, and assets would be helpful
+3. **Create Structure**: Set up the skill directory with `mkdir -p skills/skill-name/{references,examples,scripts}`
+4. **Edit the Skill**: Write SKILL.md with proper frontmatter and imperative-form body; create bundled resources
+5. **Validate and Test**: Check structure, trigger phrases, writing style, and progressive disclosure
+6. **Iterate**: Improve based on real-world usage and feedback
+
+### Key Writing Guidelines
+
+- **Description**: Use third-person ("This skill should be used when...") with specific trigger phrases
+- **Body**: Use imperative/infinitive form ("To create X, do Y"), not second person ("You should...")
+- **Size**: Target 1,500-2,000 words; move detailed content to references/
+
+## Plugin-Specific Considerations
+
+### Skill Location in Plugins
+
+Plugin skills live in the plugin's `skills/` directory:
+
+```
+my-plugin/
+├── .claude-plugin/
+│   └── plugin.json
+├── commands/
+├── agents/
+└── skills/
+    └── my-skill/
+        ├── SKILL.md
+        ├── references/
+        ├── examples/
+        └── scripts/
+```
+
+### Auto-Discovery
+
+Claude Code automatically discovers skills:
+
+- Scans `skills/` directory
+- Finds subdirectories containing `SKILL.md`
+- Loads skill metadata (name + description) always
+- Loads SKILL.md body when skill triggers
+- Loads references/examples when needed
+
+### No Packaging Needed
+
+Plugin skills are distributed as part of the plugin, not as separate ZIP files. Users get skills when they install the plugin.
+
+### Testing in Plugins
+
+Test skills by installing plugin locally:
+
+```bash
+# Test with --plugin-dir
+claude --plugin-dir /path/to/plugin
+
+# Ask questions that should trigger the skill
+# Verify skill loads correctly
+```
+
+## Examples from Plugin-Dev
+
+Study the skills in this plugin as examples of best practices:
+
+**hook-development skill:**
+
+- Excellent trigger phrases: "create a hook", "add a PreToolUse hook", etc.
+- Lean SKILL.md (2,125 words)
+- 3 references/ files for detailed content
+- 3 examples/ of working hooks
+- 3 scripts/ utilities
+
+**agent-development skill:**
+
+- Strong triggers: "create an agent", "agent frontmatter", etc.
+- Focused SKILL.md (1,896 words)
+- References include the AI generation prompt from Claude Code
+- Complete agent examples
+
+**plugin-settings skill:**
+
+- Specific triggers: "plugin settings", ".local.md files", "YAML frontmatter"
+- References show real implementations (multi-agent-swarm, ralph-wiggum)
+- Working parsing scripts
+
+Each demonstrates progressive disclosure and strong triggering.
+
+## Validation Checklist
+
+Before finalizing a skill:
+
+**Structure:**
+
+- [ ] SKILL.md file exists with valid YAML frontmatter
+- [ ] Frontmatter has `name` and `description` fields
+- [ ] Name uses only lowercase letters, numbers, and hyphens (max 64 chars)
+- [ ] Description is under 1024 characters
+- [ ] (Optional) `allowed-tools` field if restricting tool access
+- [ ] (Optional) `context: fork` if running in subagent
+- [ ] (Optional) `agent` field if specifying agent type (requires `context: fork`)
+- [ ] (Optional) `skills` array if loading other skills (requires `context: fork`)
+- [ ] (Optional) `user-invocable` field if hiding from slash menu
+- [ ] (Optional) `disable-model-invocation` field if blocking programmatic use
+- [ ] (Optional) `model` field if overriding model (`sonnet`/`opus`/`haiku`/`inherit`)
+- [ ] (Optional) `hooks` field for scoped hooks (same format as `hooks.json`)
+- [ ] (Optional) `argument-hint` field for autocomplete hints
+- [ ] Markdown body is present and substantial
+- [ ] Referenced files actually exist
+
+**Description Quality:**
+
+- [ ] Uses third person ("This skill should be used when...")
+- [ ] Includes specific trigger phrases users would say
+- [ ] Lists concrete scenarios ("create X", "configure Y")
+
+**Content Quality:**
+
+- [ ] SKILL.md body uses imperative/infinitive form
+- [ ] Body is focused and lean (1,500-2,000 words ideal, <3k max)
+- [ ] Detailed content moved to references/
+- [ ] Examples are complete and working
+
+**Testing:**
+
+- [ ] Skill triggers on expected user queries
+- [ ] Content is helpful for intended tasks
+- [ ] No duplicated information across files
+
+## Quick Reference
+
+### Minimal Skill
+
+```
+skill-name/
+└── SKILL.md
+```
+
+Good for: Simple knowledge, no complex resources needed
+
+### Standard Skill (Recommended)
+
+```
+skill-name/
+├── SKILL.md
+├── references/
+│   └── detailed-guide.md
+└── examples/
+    └── working-example.sh
+```
+
+Good for: Most plugin skills with detailed documentation
+
+### Complete Skill
+
+```
+skill-name/
+├── SKILL.md
+├── references/
+│   ├── patterns.md
+│   └── advanced.md
+├── examples/
+│   ├── example1.sh
+│   └── example2.json
+└── scripts/
+    └── validate.sh
+```
+
+Good for: Complex domains with validation utilities
+
+## Best Practices Summary
+
+**DO:**
+
+- Use third-person in description ("This skill should be used when...")
+- Include specific trigger phrases ("create X", "configure Y")
+- Keep SKILL.md lean (1,500-2,000 words)
+- Use progressive disclosure (move details to references/)
+- Write in imperative/infinitive form
+- Reference supporting files clearly
+- Provide working examples
+- Create utility scripts for common operations
+
+**DON'T:**
+
+- Use second person ("You should...")
+- Have vague trigger conditions
+- Put everything in SKILL.md (>3,000 words without references/)
+- Leave resources unreferenced
+- Include broken or incomplete examples
+
+## Additional Resources
+
+### Example Skills
+
+Copy-paste ready skill templates in `examples/`:
+
+- **`examples/minimal-skill.md`** - Bare-bones skill with just SKILL.md (git conventions example)
+- **`examples/complete-skill.md`** - Full skill with references/, examples/, and scripts/ (API testing example)
+- **`examples/frontmatter-templates.md`** - Quick-reference frontmatter patterns for common use cases
+
+### Reference Files
+
+For detailed guidance, consult:
+
+- **`references/skill-creation-workflow.md`** - Plugin-specific skill creation workflow (recommended for plugin skills)
+- **`references/skill-creator-original.md`** - Original generic skill-creator methodology (includes init/packaging scripts for standalone skills)
+
+### Study These Skills
+
+Plugin-dev's skills demonstrate best practices:
+
+- `../hook-development/` - Progressive disclosure, utilities
+- `../agent-development/` - AI-assisted creation, references
+- `../mcp-integration/` - Comprehensive references
+- `../plugin-settings/` - Real-world examples
+- `../command-development/` - Clear critical concepts
+- `../plugin-structure/` - Good organization
