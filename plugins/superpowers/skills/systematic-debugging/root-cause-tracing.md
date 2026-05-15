@@ -44,7 +44,7 @@ await execFileAsync('git', ['init'], { cwd: projectDir });
 
 ### 3. 问：谁调用了它？
 ```typescript
-WorktreeManager.createSessionWorktree(projectDir, sessionId)
+WorkspaceManager.createSessionWorkspace(projectDir, sessionId)
   → 被 Session.initializeWorkspace() 调用
   → 被 Session.create() 调用
   → 被测试中的 Project.create() 调用
@@ -112,7 +112,7 @@ npm test 2>&1 | grep 'DEBUG git init'
 
 **追踪链：**
 1. `git init` 在 `process.cwd()` 中执行 ← cwd 参数为空
-2. WorktreeManager 被传入空的 projectDir
+2. WorkspaceManager 被传入空的 projectDir
 3. Session.create() 传递了空字符串
 4. 测试在 beforeEach 之前访问了 `context.tempDir`
 5. setupCoreTest() 初始返回 `{ tempDir: '' }`

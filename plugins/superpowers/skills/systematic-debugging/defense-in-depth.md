@@ -106,7 +106,7 @@ Bug：空的 `projectDir` 导致 `git init` 在源代码目录执行
 **添加的四层防御：**
 - 第 1 层：`Project.create()` 校验非空/存在/可写
 - 第 2 层：`WorkspaceManager` 校验 projectDir 非空
-- 第 3 层：`WorktreeManager` 在测试中拒绝在 tmpdir 之外执行 git init
+- 第 3 层：`WorkspaceManager` 在测试中拒绝在 tmpdir 之外执行 git init
 - 第 4 层：git init 前记录堆栈跟踪
 
 **结果：** 全部 1847 个测试通过，bug 不可能再复现

@@ -265,7 +265,6 @@ digraph process {
 ## 集成
 
 **必需的工作流技能：**
-- **superpowers:using-git-worktrees** - 必需：在开始前建立隔离工作区
 - **superpowers:writing-plans** - 创建本技能执行的计划
 - **superpowers:requesting-code-review** - 审查子智能体的代码审查模板
 - **superpowers:finishing-a-development-branch** - 所有任务完成后收尾

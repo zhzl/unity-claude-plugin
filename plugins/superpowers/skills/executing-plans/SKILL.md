@@ -170,6 +170,5 @@ $ git commit -m "feat: 添加用户输入验证（任务 2/5）"
 ## 集成
 
 **必需的工作流技能：**
-- **superpowers:using-git-worktrees** - 必需：开始前建立隔离的工作空间
 - **superpowers:writing-plans** - 创建此技能要执行的计划
 - **superpowers:finishing-a-development-branch** - 所有任务完成后收尾开发
