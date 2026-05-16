@@ -1,0 +1,1484 @@
+# Unity Agent Kit Roadmap
+
+## Metadata
+
+- **Title:** Unity Agent Kit
+- **Slug:** `unity-agent-kit`
+- **Roadmap Path:** `docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md`
+- **Status:** `active`
+- **Created:** 2026-05-16
+- **Last Sync:** 2026-05-16
+- **Reference Inputs:**
+  - `references/unity-mcp-v2`
+  - `references/Unity-Skills`
+
+## Goal
+
+设计并逐步实现 **Unity Agent Kit**：一套面向 AI Agent 的 Unity Editor 操作体系，而不是单纯的 MCP server。
+
+Unity Agent Kit 包含：
+
+```text
+Skills 调用指导层
++ Public MCP tools
++ Internal operations
++ Unity Editor host runtime
++ Project Editor Command Registry
++ Artifact / report resources
++ 验证闭环
+```
+
+核心目标：
+
+- 以 `unity-mcp-v2` 的可靠运行时架构为基线继续演进。
+- 吸收 `Unity-Skills` 的 Unity 操作领域经验，但不照搬其 skill 结构或 JSON 文件队列模型。
+- 重新设计 Claude-facing public MCP tools，避免“一 Unity 操作一个 MCP tool”导致工具膨胀。
+- 重新设计 public tool 参数、action、异步语义和验证规则，而不是直接照搬 v2 schema。
+- 将 skills 设计成调用指导层，负责意图路由、调用顺序、安全规则和验证闭环。
+- 保留并强化 v2 的项目级 Editor Command Registry，用于承载项目自定义 Unity 编辑器自动化。
+- 明确 TS 与 Unity C# 的职责边界：TS 负责编排、轮询、超时、host rebind 和最终判定；Unity C# 负责短主线程动作、状态读取、job/report 记录。
+- 首版只为 artifacts/reports 引入 MCP Resources，不系统性 resource 化所有只读状态。
+- 先覆盖高频日常闭环，再逐步扩展创作和项目能力。
+
+## Non-goals
+
+- 不从零重写 `unity-mcp-v2` 的底层架构，除非后续证据证明其核心方向错误。
+- 不把所有 internal operations 一比一暴露为 public MCP tools。
+- 不把 public tool 退化为万能 `unity_execute_command`。
+- 不照搬 `Unity-Skills` 的 skill 分类、命令格式或文件队列模型。
+- 不让 Unity C# host 承担长时间阻塞等待、轮询或复杂 workflow 编排。
+- 不一次性实现所有 Unity 操作域。
+- 不系统性把 editor status、scene hierarchy、asset index 等只读状态全部改为 MCP Resources。
+- 不在首版实现完整 artifact store、retention 或 cleanup 子系统。
+- 不在 roadmap 中写详细实现步骤；实现步骤进入后续 spec 和 plan。
+- 不在没有验证证据的情况下标记 phase completed。
+
+## Shared Constraints
+
+### 1. 名称与定位
+
+新体系命名为 **Unity Agent Kit**。
+
+它不是单纯 MCP 工具，而是：
+
+```text
+AI Agent 使用 Unity Editor 的完整操作体系
+```
+
+MCP runtime 是其中一层，而不是全部。
+
+### 2. 基于 v2 演进
+
+`unity-mcp-v2` 的以下设计作为基线保留：
+
+- Contract Kernel
+- operation envelope
+- action/workflow 分层
+- Unity host runtime
+- loopback HTTP host
+- registry/probe
+- host rebirth / rebind
+- 稳定错误语义
+- TS + Unity 双侧测试策略
+
+如果要放弃 v2 架构，必须通过结构性 `change-roadmap`。
+
+### 3. Public MCP tools 与 internal operations 分离
+
+Internal operations 可以继续细粒度：
+
+```text
+compile.request
+compile.state.get
+component.add
+component.set
+screenshot.capture
+```
+
+但 public MCP tools 面向 Claude，应按使用意图和领域聚合：
+
+```text
+unity_compile
+unity_console
+unity_test
+unity_scene
+unity_object
+unity_component
+```
+
+原则：
+
+- internal operations 服务 host routing、测试、workflow 编排；
+- public tools 服务 Claude 选择和用户任务；
+- workflow tools 只暴露高价值任务级能力；
+- read-only state 可以继续使用 read actions，只有 artifacts/reports 首版进入 MCP Resources。
+
+### 4. Public tool 命名
+
+Public MCP tool 命名采用：
+
+```text
+snake_case + unity_ 前缀
+```
+
+示例：
+
+```text
+unity_editor
+unity_compile
+unity_console
+unity_test
+unity_playmode
+unity_screenshot
+unity_scene
+unity_object
+unity_component
+unity_material
+unity_asset
+unity_prefab
+unity_ui
+unity_validation
+unity_project_command
+unity_animation
+```
+
+Tool 内部 action 也使用 `snake_case`，但不重复 `unity_` 前缀。
+
+示例：
+
+```text
+unity_compile:
+  get_state
+  request
+  wait_for_idle
+  compile_and_check
+
+unity_test:
+  list
+  start
+  get_status
+  get_result
+  run_and_collect
+  run_and_verify
+```
+
+### 5. Public 参数模型重新设计
+
+v2 schema 只能作为 internal schema 参考，不能直接成为 public tool schema。
+
+Public tool 参数应重新设计：
+
+- 使用 typed discriminated union；
+- 使用统一 target model；
+- 使用明确 action enum；
+- 使用安全字段；
+- 输出必须包含验证线索；
+- 禁止自由形态 `{ action: string, params: object }` 作为主接口。
+
+### 6. Action 完成语义以用户期望为准
+
+Public action 的完成语义不能以底层 Unity API 是否返回为准，而应以用户期望的最终结果为准。
+
+例如：
+
+- 截图 action 返回时，截图文件必须真实存在、非空、尺寸有效。
+- 编译 action 必须区分“状态空闲”和“编译无错误”。
+- 测试 action 必须区分“测试报告已收集”和“测试通过”。
+- PlayMode action 必须区分“请求进入”和“已稳定进入”。
+- 写操作必须返回已验证的最终效果，而不是“命令已发送”。
+
+### 7. Action 命名语义
+
+Public action 命名应表达语义：
+
+```text
+get_* / snapshot / count       只读观察
+request / start / begin        请求已接受，不代表完成
+wait_for_*                     等待状态稳定，不代表业务成功
+*_and_check / *_and_verify     等待并判断成功
+capture / create / assign      返回时必须验证最终效果
+```
+
+避免模糊名称。如果只表示状态收敛，应使用：
+
+```text
+wait_for_idle
+```
+
+如果表示最终成功判断，应使用：
+
+```text
+compile_and_check
+run_and_verify
+enter_and_verify
+```
+
+### 8. Tool/action 描述质量
+
+每个 public tool 和 action 必须有最小但不可缺失的语义描述。
+
+描述必须说明：
+
+- 用途；
+- action 完成语义；
+- 是否等待；
+- 是否代表业务成功；
+- sideEffectLevel；
+- 返回内容；
+- 主要失败条件。
+
+详细调用顺序和多工具 recipe 放在 skills 中，不塞进 tool description。
+
+### 9. 异步与 Job 边界
+
+TS 层负责：
+
+- workflow 编排；
+- 等待；
+- 轮询；
+- timeout；
+- host rebind；
+- diagnostics；
+- result convergence；
+- 最终 success/failure 判定。
+
+Unity C# 层负责：
+
+- Unity API 主线程执行；
+- 短动作；
+- 状态 snapshot；
+- job record；
+- test report / operation report；
+- artifact 落盘与基础校验。
+
+禁止：
+
+- Unity host 中长时间 `Thread.Sleep`；
+- HTTP handler 内忙等；
+- `Task.Wait` 阻塞 Unity 主线程；
+- 后台线程直接调用 Unity API；
+- Unity C# host 独占复杂 workflow 编排。
+
+### 10. 编译诊断与 Console 诊断分工
+
+`unity_compile.compile_and_check` 的编译成功判定以 Unity CompilationPipeline 的 compiler messages 为主。
+
+规则：
+
+- C# 编译成功/失败的主依据是 `CompilationPipeline.assemblyCompilationFinished` 收集到的 `CompilerMessage[]`。
+- `CompilationPipeline.compilationFinished`、Editor idle 或相关状态用于判断本轮编译生命周期结束。
+- Console diagnostic cursor 只作为补充诊断，用于捕获非编译器错误。
+- Console 当前错误列表不得替代 compiler messages 作为 `compile_and_check` 的主要成功判定。
+- 如果编译诊断无法可靠归属于本轮编译，必须返回 `uncertain` 或明确 diagnostics，禁止假成功。
+
+### 11. Console diagnostic cursor
+
+Console diagnostic cursor 用于归因操作期间新增的非编译器日志。
+
+适用场景：
+
+- PlayMode verification；
+- test verification；
+- project command verification；
+- UI workflow diagnostics；
+- screenshot workflow diagnostics；
+- assembly reload 后 Editor callback 报错。
+
+若 cursor 实现不可靠，必须定义保守 fallback，并在结果中返回 `uncertain` 或 diagnostics。
+
+### 12. Safety model
+
+首版每个 public action 必须标注核心 safety 字段：
+
+```text
+sideEffectLevel: read | write | destructive
+confirmationPolicy: never | when_destructive | always
+dryRunMode: unsupported | supported | required_first
+```
+
+后续涉及明确目标、覆盖、删除、移动、重命名等能力时，对应能力域 spec 必须补充：
+
+```text
+targetStrictness
+overwritePolicy
+```
+
+必须重点设计安全策略的 actions：
+
+```text
+unity_object.delete
+unity_component.remove
+unity_asset.move
+unity_asset.rename
+unity_asset.delete
+unity_prefab.apply_overrides
+unity_prefab.revert_overrides
+unity_prefab.unpack
+unity_validation.cleanup_empty_folders
+unity_project_command.invoke when destructive
+```
+
+### 13. MCP Resources 范围
+
+首版 MCP Resources 只用于工具生成的 artifacts/reports，不系统性 resource 化所有只读状态。
+
+Public read tools 仍负责高频状态读取，例如：
+
+```text
+editor status
+scene hierarchy
+console query
+asset search
+object snapshot
+```
+
+首版 Resource 范围：
+
+```text
+unity://screenshots/{artifactId}
+unity://test-reports/{reportId}
+unity://console-snapshots/{snapshotId}
+unity://validation-reports/{reportId}
+```
+
+### 14. Artifact model
+
+工具产生的可复读结果必须使用统一 artifact model。
+
+基础字段：
+
+```text
+artifactId
+type
+uri
+path?
+relativePath?
+createdAt
+sizeBytes?
+validationStatus
+diagnostics
+metadata
+```
+
+`validationStatus` 取值：
+
+```text
+valid
+invalid
+uncertain
+```
+
+首版核心类型：
+
+```text
+screenshot
+test_report
+console_snapshot
+validation_report
+```
+
+预留类型：
+
+```text
+compile_report
+project_command_report
+```
+
+首版不实现完整 artifact store、retention 或 cleanup 子系统。
+
+### 15. Skill-guided 调用体系
+
+Skills 是调用指导层。
+
+职责：
+
+- intent routing；
+- tool recipe；
+- risk handling；
+- verification loop；
+- fallback to project commands。
+
+不照搬 Unity-Skills，而是以 **用户任务优先，Unity API 领域辅助** 设计。
+
+### 16. Editor Command Registry 是项目扩展层
+
+保留并强化：
+
+```text
+editor.command.list
+editor.command.invoke
+```
+
+作为项目自定义能力入口。
+
+项目注册命令必须声明：
+
+```text
+name
+description
+category
+inputSchema
+sideEffectLevel
+executionKind
+requiresConfirmation
+supportsDryRun
+verificationHint
+```
+
+标准 tools 能表达的任务，优先标准 tools；只有项目特定能力才走 registry。
+
+### 17. Skill/schema 防漂移
+
+Skills、public MCP schema、tool descriptions 和 docs 必须保持一致。
+
+Skill recipe 中引用 public tool/action 时应使用可机器检查的格式：
+
+```text
+tool: unity_compile
+action: compile_and_check
+```
+
+参数示例必须能通过对应 public schema。
+
+Phase 9 至少实现半自动一致性检查，覆盖：
+
+- skill 引用的 tool/action 存在；
+- skill 中 JSON 参数示例通过 schema；
+- sideEffectLevel 一致；
+- verification path 存在；
+- public tool 文档与实际注册一致；
+- action 完成语义在 tool description 与 skill 中不冲突。
+
+### 18. 验证闭环
+
+写操作不能只返回 `ok=true`。
+
+必须有至少一种验证路径：
+
+- object snapshot；
+- scene hierarchy；
+- component get；
+- console snapshot；
+- test result；
+- screenshot artifact；
+- validation report；
+- project command verificationHint。
+
+## Success Criteria
+
+整体 roadmap 完成时，应满足：
+
+- Unity Agent Kit 有清晰的四层结构：
+  - Skills 调用指导层
+  - Public MCP tools
+  - Internal operations
+  - Unity Host Runtime
+- Public MCP tools 数量可控，不再一 operation 一 tool。
+- Public MCP tool 命名采用 `unity_compile` 风格。
+- 高频能力一等暴露：
+  - `unity_editor`
+  - `unity_compile`
+  - `unity_console`
+  - `unity_test`
+  - `unity_playmode`
+  - `unity_screenshot`
+- Public action 有明确完成语义、异步语义、safety metadata 和验证规则。
+- `compile_and_check` 基于 compiler messages 判断编译成功/失败。
+- Console diagnostic cursor 用于非编译器诊断归因。
+- 首版 Resources 用于 screenshots、test reports、console snapshots、validation reports。
+- Artifacts 使用统一 artifact model。
+- Skills 能指导 Claude 选择工具、组合调用、处理风险并验证结果。
+- Editor Command Registry 能承载项目自定义能力，且有 metadata、安全和验证约束。
+- TS 与 Unity C# 异步边界清楚，不通过 Unity 主线程长阻塞实现 workflow。
+- 至少完成两个 vertical slice：
+  - 高频日常闭环；
+  - 简单创作闭环。
+- Phase 8 作为扩展能力池，不一次性实现所有扩展域。
+- 文档、skills、public schema、internal mapping 和测试保持一致。
+
+## Decisions
+
+- 2026-05-16：新体系命名为 **Unity Agent Kit**。
+- 2026-05-16：整体不是单纯 MCP 工具，而是 skills + MCP tools + host + project commands + resources 的 Agent 操作体系。
+- 2026-05-16：基于 `unity-mcp-v2` 架构演进，不全新重写。
+- 2026-05-16：Public MCP tool 命名采用 `snake_case` + `unity_` 前缀，例如 `unity_compile`；tool 内 action 也使用 `snake_case`。
+- 2026-05-16：不再把每个 internal operation 直接暴露为 MCP tool。
+- 2026-05-16：Public tool 参数和 action 按新架构重新设计，不照搬 v2。
+- 2026-05-16：Skills 不照搬 Unity-Skills，而采用“任务型 skill 优先，能力型 skill 辅助”。
+- 2026-05-16：保留并强化 Editor Command Registry。
+- 2026-05-16：TS 层负责长流程编排和最终判定，Unity C# 层负责短动作和状态/产物记录。
+- 2026-05-16：截图必须等待最终文件产物可验证后才算成功。
+- 2026-05-16：编译必须区分 `idle` 与 `success`，不能只等 compile 状态结束。
+- 2026-05-16：`compile_and_check` 的编译成功判定以 Unity CompilationPipeline 的 compiler messages 为主；Console diagnostic cursor 作为补充诊断。
+- 2026-05-16：测试必须区分 `collected` 与 `passed`。
+- 2026-05-16：首版 MCP Resources 仅用于工具生成的 artifacts/reports，不系统性 resource 化所有只读状态。
+- 2026-05-16：定义统一 artifact model；首版只实现核心 artifact 类型，不实现完整 artifact store、retention 或 cleanup。
+- 2026-05-16：Safety model 首版采用核心字段 `sideEffectLevel`、`confirmationPolicy`、`dryRunMode`；`targetStrictness` 和 `overwritePolicy` 在高风险能力域中按 phase 补充。
+- 2026-05-16：Phase 8 定义为扩展能力池，不是一口气实现所有候选能力域。
+- 2026-05-16：采用半自动 skill/schema 防漂移检查。
+- 2026-05-16：先实现高频日常闭环，再实现创作闭环和扩展域。
+
+## Current State
+
+- Discovery 已完成。
+- 已对比 `unity-mcp-v2` 与 `Unity-Skills`。
+- 已确认：
+  - v2 架构保留；
+  - public tool surface 重设；
+  - public tool 命名；
+  - skill-guided 调用；
+  - project command registry；
+  - TS/Unity 异步边界；
+  - action 完成语义以用户期望结果为准；
+  - compiler messages 与 console diagnostics 分工；
+  - Resources 和 artifact model 范围；
+  - safety model；
+  - skill/schema 防漂移机制。
+- 当前阶段：Phase 1 已完成 spec 和 plan，等待执行 plan。
+- **Next Manual Action:** `/superpowers:roadmap-management implement-plan docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md Phase 1`
+- 当前不实现代码。
+
+## Blockers
+
+| Blocker | Affects | Status | Resolution |
+|---------|---------|--------|------------|
+| None | None | clear | No active blockers |
+
+## Phase Summary
+
+| Phase | Status | Goal | Spec | Plan | Verification | Next |
+|-------|--------|------|------|------|--------------|------|
+| Phase 1 — 架构与边界蓝图 | planned | 定义 Unity Agent Kit 总体结构和硬约束 | `docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md` | `docs/superpowers/plans/2026-05-16-unity-agent-kit-phase-1-architecture-boundary.md` | pending | implement-plan |
+| Phase 2 — Unity Agent Skill 体系设计 | not-started | 设计任务型/能力型 skills，不照搬 Unity-Skills | pending | pending | pending | after Phase 1 |
+| Phase 3 — Public MCP Tool Action Design | not-started | 逐个设计 public tool、action、参数、异步语义、safety、验证路径 | pending | pending | pending | after Phase 2 |
+| Phase 4 — Async / Job / Workflow / Artifact Semantics | not-started | 明确 TS 与 Unity C# 的异步职责、job 协议、diagnostics 和 artifact model | pending | pending | pending | after Phase 3 |
+| Phase 5 — 高频日常闭环基础设施 | not-started | 实现 editor/compile/console/test/playmode/screenshot 的核心闭环 | pending | pending | pending | after Phase 4 |
+| Phase 6 — Project Editor Command Registry 增强 | not-started | 强化项目自定义命令发现、schema、安全和验证 | pending | pending | pending | after Phase 5 |
+| Phase 7 — 简单创作 vertical slice | not-started | object/component/material/screenshot/validation 创作闭环 | pending | pending | pending | after Phase 6 |
+| Phase 8 — 扩展能力池 | not-started | 将 asset、prefab、ui、animation、validation 等作为可独立推进的扩展池 | pending | pending | pending | after Phase 7 |
+| Phase 9 — 验证、文档与迁移收口 | not-started | 收口测试、文档、skills、命名、resource 和迁移策略 | pending | pending | pending | after Phase 8 |
+
+## Phase Details
+
+### Phase 1：架构与边界蓝图
+
+**Status:** `planned`
+
+**Goal:**
+定义 Unity Agent Kit 的总体结构、继承自 v2 的部分、需要重设的部分，以及后续 phase 的硬约束。
+
+**Scope:**
+
+- 确认 Unity Agent Kit 是完整 Agent 操作体系，不只是 MCP server。
+- 定义四层结构：
+  - Skills 调用指导层
+  - Public MCP tools
+  - Internal operations
+  - Unity Host Runtime
+- 明确 v2 架构保留范围。
+- 明确 public tools 与 internal operations 分离。
+- 明确 public action 完成语义规则。
+- 明确 TS 与 Unity C# 异步边界。
+- 明确验证闭环原则。
+- 明确 Project Editor Command Registry 的系统位置。
+- 明确首批能力不追求全覆盖。
+- 明确 Resources 首版只用于 artifacts/reports。
+
+**Out of Scope:**
+
+- 不设计所有 tool action 的完整 schema。
+- 不实现代码。
+- 不写 skill 文件。
+- 不做命名迁移。
+
+**Reference Input Mapping:**
+
+- `unity-mcp-v2`：架构基线、runtime、registry/probe、host rebirth、workflow/action 分层。
+- `Unity-Skills`：领域词表和调用场景参考。
+
+**Success Criteria:**
+
+- 明确 Unity Agent Kit 不是单纯 MCP 工具。
+- 明确不采用“一 operation 一 MCP tool”。
+- 明确哪些职责在 TS，哪些在 Unity C#。
+- 明确 Resources、artifacts、skills、public tools 和 internal operations 的边界。
+- 明确后续 phase 的设计输入。
+
+**Artifacts:**
+- **Spec:** `docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md`
+- **Plan:** `docs/superpowers/plans/2026-05-16-unity-agent-kit-phase-1-architecture-boundary.md`
+- **Implementation Summary:** pending
+- **Verification Evidence:** pending
+
+**Next Manual Action:**
+`/superpowers:roadmap-management implement-plan docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md Phase 1`
+
+---
+
+### Phase 2：Unity Agent Skill 体系设计
+
+**Status:** `not-started`
+
+**Goal:**
+设计新的 skill 调用指导体系，借鉴但不照搬 Unity-Skills。
+
+**Scope:**
+
+设计三类 skill。
+
+入口/路由 skill：
+
+```text
+/unity
+```
+
+职责：
+
+- 判断用户意图；
+- 路由到任务型 skill、能力型 skill 或 project command；
+- 避免 Claude 直接面对过多 tools。
+
+首批任务型 skills：
+
+```text
+/unity-prototype
+/unity-ui
+/unity-diagnose
+/unity-project-command
+/unity-test
+```
+
+职责：
+
+- 面向用户任务；
+- 组织跨 tool recipe；
+- 包含安全规则和验证闭环。
+
+后续能力型 skills：
+
+```text
+/unity-scene
+/unity-object
+/unity-component
+/unity-material
+/unity-prefab
+/unity-assets
+/unity-animation
+/unity-validate
+```
+
+职责：
+
+- 为某个能力域提供调用细节；
+- 辅助任务型 skill，不作为唯一入口。
+
+定义 skill recipe 的可检查引用格式：
+
+```text
+tool: unity_compile
+action: compile_and_check
+```
+
+定义参数示例格式，使其可被 schema 校验。
+
+**Out of Scope:**
+
+- 不照搬 Unity-Skills 原目录。
+- 不写文件队列 JSON。
+- 不一次性创建所有 skills。
+- 不把所有 skill recipe 做成 MCP workflow。
+
+**Reference Input Mapping:**
+
+- `Unity-Skills`：领域分类、命令示例、自然语言任务拆解。
+- `unity-mcp-v2`：实际执行能力和 envelope 参考。
+
+**Success Criteria:**
+
+- 首批 skills 能覆盖高频日常与基础创作任务。
+- Skills 明确：
+  - 何时用标准 public tools；
+  - 何时用 project command registry；
+  - 何时需要确认；
+  - 如何验证结果。
+- Skill 结构以任务为主、领域为辅。
+- Skill recipe 引用格式可被 Phase 9 半自动检查。
+
+**Artifacts:**
+- **Spec:** pending
+- **Plan:** pending
+- **Implementation Summary:** pending
+- **Verification Evidence:** pending
+
+---
+
+### Phase 3：Public MCP Tool Action Design
+
+**Status:** `not-started`
+
+**Goal:**
+逐个设计 public MCP tools 的 action、参数、完成语义、异步语义、safety metadata 和验证路径。
+
+**Scope:**
+
+Core daily loop tools：
+
+```text
+unity_editor
+unity_compile
+unity_console
+unity_test
+unity_playmode
+unity_screenshot
+```
+
+Authoring/editing tools：
+
+```text
+unity_scene
+unity_object
+unity_component
+unity_material
+unity_asset
+unity_prefab
+unity_ui
+```
+
+Extension/quality tools：
+
+```text
+unity_validation
+unity_project_command
+unity_animation
+```
+
+每个 tool 需要设计：
+
+- action enum；
+- 每个 action 的参数模型；
+- 每个 action 的完成语义；
+- 每个 action 的异步类型；
+- `sideEffectLevel`；
+- `confirmationPolicy`；
+- `dryRunMode`；
+- 是否需要 `targetStrictness` / `overwritePolicy`；
+- public action 到 internal operation 的 mapping；
+- 验证路径；
+- 最小 tool/action description。
+
+需要导出的 action metadata：
+
+```text
+toolName
+actionName
+inputSchema
+sideEffectLevel
+completionSemantics
+verificationMeaning
+```
+
+MCP Resources 设计范围：
+
+- 定义 artifact resource URI 规则；
+- 定义 public tool 返回 `artifactId` / `reportId` 的规则；
+- 明确哪些 read action 保持 tool，不迁移为 Resource。
+
+**关键 action 语义要求：**
+
+`unity_compile`：
+
+| Action | 语义 |
+|---|---|
+| `get_state` | 只读当前 compile/update 状态 |
+| `request` | 请求编译，不等待完成 |
+| `wait_for_idle` | 等 Unity 不再 compiling/updating，不代表成功 |
+| `compile_and_check` | 请求编译，等待 lifecycle 完成，并基于 compiler messages 判断是否成功 |
+
+`unity_screenshot`：
+
+| Action | 语义 |
+|---|---|
+| `capture_game_view` | 返回时 PNG 必须存在、非空、尺寸有效、路径安全，并返回 screenshot artifact |
+
+`unity_test`：
+
+| Action | 语义 |
+|---|---|
+| `list` | 列出测试 |
+| `start` | 启动测试 job，不代表通过 |
+| `get_status` | 查询测试状态 |
+| `get_result` | 获取测试 report |
+| `run_and_collect` | 测试结束并拿到 report，不代表通过 |
+| `run_and_verify` | 测试结束且通过成功规则 |
+
+`unity_playmode`：
+
+| Action | 语义 |
+|---|---|
+| `get_state` | 获取当前状态 |
+| `enter` | 请求进入，不代表完成 |
+| `exit` | 请求退出，不代表完成 |
+| `wait_for_state` | 等待目标稳定状态 |
+| `enter_and_verify` | 稳定进入 PlayMode |
+| `exit_and_verify` | 稳定退出到 EditMode |
+
+`unity_console`：
+
+| Action | 语义 |
+|---|---|
+| `snapshot` | 获取日志快照，可返回 console snapshot artifact |
+| `count` | 获取日志计数 |
+| `clear` | 清空后验证计数符合预期 |
+
+**Out of Scope:**
+
+- 不实现所有 action。
+- 不直接照搬 v2 `operations.ts`。
+- 不允许万能自由 JSON 参数。
+- 不在本 phase 决定所有扩展域最终字段。
+
+**Reference Input Mapping:**
+
+- `unity-mcp-v2`：internal operation 和现有 schema 参考。
+- `Unity-Skills`：能力词表参考。
+- MCP 设计原则：tool 数量可控、schema 明确、描述可指导模型选择。
+
+**Success Criteria:**
+
+- 高频 tools 的 action 语义清晰。
+- 截图、编译、测试、PlayMode 等异步/验证语义不再模糊。
+- 每个 public action 有 safety metadata。
+- 每个写 action 有验证路径。
+- Public schema 与 internal schema 的边界明确。
+- Resources 首版范围与 artifact model 对齐。
+- Action metadata 可供 skill/schema consistency audit 使用。
+
+**Artifacts:**
+- **Spec:** pending
+- **Plan:** pending
+- **Implementation Summary:** pending
+- **Verification Evidence:** pending
+
+---
+
+### Phase 4：Async / Job / Workflow / Artifact Semantics
+
+**Status:** `not-started`
+
+**Goal:**
+定义异步操作、job-backed operation、workflow 编排、diagnostics、artifact model 和最终判定规则。
+
+**Scope:**
+
+定义 action 语义类别：
+
+```text
+R  read snapshot
+C  command/request accepted
+S  state settled
+E  effect complete
+A  artifact complete
+V  verified
+J  job-backed
+D  destructive
+```
+
+明确：
+
+- `compile.wait_for_idle` 是 `S`；
+- `compile.compile_and_check` 是 `S + V`；
+- `screenshot.capture_game_view` 是 `A + V`；
+- `test.start` 是 `C + J`；
+- `test.run_and_collect` 是 `S + J`；
+- `test.run_and_verify` 是 `S + J + V`；
+- `playmode.enter_and_verify` 是 `S + V`；
+- `console.clear` 是 `E + V`；
+- project command 根据 metadata 决定 immediate/job/destructive。
+
+定义 compilation diagnostics：
+
+- `CompilationPipeline.assemblyCompilationFinished` 如何收集 `CompilerMessage[]`；
+- `compilationFinished` / editor idle 如何表示本轮生命周期完成；
+- compile report/job record 如何持久化；
+- `compile_and_check` 如何读取本轮 compiler diagnostics；
+- 如何处理 diagnostics 归属不确定场景。
+
+定义 Console diagnostic cursor：
+
+- cursor 数据结构；
+- `console.snapshot` 如何返回 cursor；
+- `sinceCursor` 如何工作；
+- cursor 不可靠时的 fallback；
+- `uncertain` 语义；
+- PlayMode/test/project command/screenshot/UI workflow 如何使用 cursor。
+
+定义 artifact model：
+
+```text
+artifactId
+type
+uri
+path?
+relativePath?
+createdAt
+sizeBytes?
+validationStatus
+diagnostics
+metadata
+```
+
+定义：
+
+- artifact ID 生成；
+- resource URI 规则；
+- validationStatus 语义；
+- diagnostics 结构；
+- 文件型 artifact 与报告型 artifact 的区别；
+- tool result 如何引用 artifact；
+- resource 如何读取 artifact。
+
+**Out of Scope:**
+
+- 不实现复杂持久化请求队列。
+- 不把所有异步任务都做成 Unity job。
+- 不在 Unity 主线程内长等待。
+- 不实现完整 artifact store、retention 或 cleanup 子系统。
+
+**Reference Input Mapping:**
+
+- `unity-mcp-v2`：compile/playmode/test 可靠性设计。
+- Unity 官方约束：Unity API 主线程访问、Editor tick、CompilationPipeline callback、Awaitable main/background thread 切换。
+
+**Success Criteria:**
+
+- 每个异步 public action 都有明确 owner。
+- 不再出现“请求已发送但伪装成成功”的 action。
+- Host rebirth 后的状态恢复或失败语义清晰。
+- Unity C# host 不承担长阻塞 workflow。
+- 编译诊断与 Console 诊断分工明确。
+- Artifact model 与 Resources 设计一致。
+
+**Artifacts:**
+- **Spec:** pending
+- **Plan:** pending
+- **Implementation Summary:** pending
+- **Verification Evidence:** pending
+
+---
+
+### Phase 5：高频日常闭环基础设施
+
+**Status:** `not-started`
+
+**Goal:**
+优先实现 Unity Agent 最常用的日常闭环，而不是先做所有创作工具。
+
+**Scope:**
+
+首批 P0 tools/actions：
+
+```text
+unity_editor.get_status
+unity_editor.wait_ready
+
+unity_compile.get_state
+unity_compile.request
+unity_compile.wait_for_idle
+unity_compile.compile_and_check
+
+unity_console.snapshot
+unity_console.count
+unity_console.clear
+
+unity_test.list
+unity_test.start
+unity_test.get_status
+unity_test.get_result
+unity_test.run_and_collect
+unity_test.run_and_verify
+
+unity_playmode.get_state
+unity_playmode.enter_and_verify
+unity_playmode.exit_and_verify
+
+unity_screenshot.capture_game_view
+```
+
+目标闭环：
+
+```text
+Editor status
+→ compile and check
+→ console snapshot
+→ run tests and verify
+→ enter/exit playmode
+→ capture screenshot
+```
+
+优先实现 artifact 类型：
+
+```text
+screenshot
+test_report
+console_snapshot
+```
+
+**Out of Scope:**
+
+- 不实现 object/component/material 创作工具。
+- 不实现所有 test runner 高级参数。
+- 不实现 Scene View 或 EditorWindow 截图。
+- 不实现全量 workflow 大杂烩。
+- 不实现完整 artifact store、retention 或 cleanup。
+
+**Reference Input Mapping:**
+
+- `unity-mcp-v2`：已有 compile、console、test、playmode、screenshot 能力。
+- Phase 3/4：重新定义后的 public action 语义、artifact model 和 diagnostics 规则。
+
+**Success Criteria:**
+
+- 高频日常闭环可通过 public tools 完成。
+- 编译能区分 idle 与 checked success。
+- 编译成功/失败基于 compiler messages。
+- 截图返回真实有效 artifact。
+- 测试能区分 report collected 与 verified pass。
+- Console snapshot 可作为 artifact/resource 读取。
+- TS/MCP tests 与至少一轮 E2E 验证通过。
+
+**Artifacts:**
+- **Spec:** pending
+- **Plan:** pending
+- **Implementation Summary:** pending
+- **Verification Evidence:** pending
+
+---
+
+### Phase 6：Project Editor Command Registry 增强
+
+**Status:** `not-started`
+
+**Goal:**
+强化项目级 Editor Command Registry，使其成为项目自定义能力的安全扩展层。
+
+**Scope:**
+
+Public tools/actions：
+
+```text
+unity_project_command.list
+unity_project_command.invoke
+unity_project_command.get_status
+unity_project_command.get_result
+```
+
+注册 metadata：
+
+```text
+name
+description
+category
+inputSchema
+sideEffectLevel
+executionKind: immediate | job
+requiresConfirmation
+supportsDryRun
+verificationHint
+```
+
+Skill 调用规则：
+
+- 标准 tool 可完成时，优先标准 tool。
+- 只有项目特定能力才使用 project command。
+- destructive command 必须确认或 dryRun。
+- schema/description 不清楚时不得猜测调用。
+- invoke 后必须按 verificationHint 验证。
+
+Artifact 预留：
+
+```text
+project_command_report
+```
+
+**Out of Scope:**
+
+- 不把所有标准 Unity 操作迁移成项目命令。
+- 不允许项目命令绕过 public tool 安全规则。
+- 不一次性实现大量示例 command。
+
+**Reference Input Mapping:**
+
+- `unity-mcp-v2`：现有 `editor.command.list/invoke`。
+- Unity 项目现实：自定义生成器、菜单、Addressables、资源管线、校验器。
+
+**Success Criteria:**
+
+- 项目命令可发现、可理解、可验证。
+- Claude 可以根据 metadata 判断风险。
+- Project command 不导致 public tool surface 膨胀。
+- Project command metadata 可参与 skill/schema consistency audit。
+
+**Artifacts:**
+- **Spec:** pending
+- **Plan:** pending
+- **Implementation Summary:** pending
+- **Verification Evidence:** pending
+
+---
+
+### Phase 7：简单创作 vertical slice
+
+**Status:** `not-started`
+
+**Goal:**
+在高频日常闭环之后，实现一个最小但完整的 Unity 创作闭环。
+
+**Scope:**
+
+P1 创作闭环：
+
+```text
+创建对象
+→ 添加组件
+→ 创建材质
+→ 应用材质
+→ 截图
+→ 验证对象状态
+```
+
+涉及 tools/actions：
+
+```text
+unity_scene.get_info
+unity_scene.get_hierarchy
+unity_scene.create
+unity_scene.save
+
+unity_object.find
+unity_object.snapshot
+unity_object.create
+unity_object.set_transform
+unity_object.delete
+
+unity_component.list
+unity_component.get
+unity_component.add
+unity_component.set_property
+
+unity_material.create
+unity_material.assign
+unity_material.get_properties
+unity_material.set_property
+unity_material.find_shader
+
+unity_validation.check_scene
+```
+
+写 action 的成功语义：
+
+- `object.create`：对象存在，路径匹配，snapshot 可读。
+- `component.add`：目标存在，组件存在，类型解析明确。
+- `material.create`：材质 asset 存在，可读取属性。
+- `material.assign`：Renderer slot 确认已更新。
+- `object.delete`：目标明确，支持 confirm/dryRun，删除后 find 不存在。
+
+Artifact 按需实现：
+
+```text
+validation_report
+compile_report
+```
+
+**Out of Scope:**
+
+- 不实现所有材质/shader 高级能力。
+- 不实现 light、animation、asset、prefab 全量能力。
+- 不实现复杂场景生成器。
+
+**Reference Input Mapping:**
+
+- `Unity-Skills`：
+  - CreateGameObject
+  - AddComponent
+  - CreateMaterial
+  - SetMaterial
+- `unity-mcp-v2`：
+  - hierarchy/component/screenshot/snapshot 相关能力。
+
+**Success Criteria:**
+
+- Claude 可以通过 skill recipe 完成“创建一个带组件和材质的对象”。
+- 每个写操作均可验证。
+- 截图或 snapshot 能证明 Unity 状态变化。
+- 失败场景不会假成功。
+- Safety model 中的 `targetStrictness` / `overwritePolicy` 已按本 phase 需要补充。
+
+**Artifacts:**
+- **Spec:** pending
+- **Plan:** pending
+- **Implementation Summary:** pending
+- **Verification Evidence:** pending
+
+---
+
+### Phase 8：扩展能力池
+
+**Status:** `not-started`
+
+**Goal:**
+在核心闭环和简单创作闭环稳定后，维护候选扩展域池，并按用户确认逐个推进。
+
+**Scope:**
+
+Phase 8 不是一次性实现所有候选工具域。每个候选域进入实现前必须有独立 spec、plan 和验证策略。
+
+候选域：
+
+```text
+unity_asset
+unity_prefab
+unity_ui
+unity_animation
+unity_validation 增强
+```
+
+候选 actions：
+
+`unity_asset`：
+
+```text
+find
+get_info
+refresh
+import
+create_folder
+move
+rename
+delete
+```
+
+`unity_prefab`：
+
+```text
+get_info
+instantiate
+save_from_object
+apply_overrides
+revert_overrides
+unpack
+```
+
+`unity_ui`：
+
+```text
+query
+snapshot
+create_element
+set_text
+set_layout
+set_style
+simulate_interaction
+wait_for_condition
+```
+
+`unity_animation`：
+
+```text
+create_controller
+get_controller
+add_parameter
+set_parameter
+play_state
+create_clip
+```
+
+`unity_validation`：
+
+```text
+check_scene
+check_assets
+find_missing_scripts
+find_missing_references
+cleanup_empty_folders
+```
+
+每个能力域需决定归属：
+
+- 标准 public tool；
+- project command；
+- skill recipe；
+- workflow；
+- 暂缓；
+- rejected。
+
+**Out of Scope:**
+
+- 不保证一个 phase 完成所有扩展域。
+- 不支持任意 Unity API 调用。
+- 不跳过验证闭环。
+- 不把 `invoke_method` 类能力作为绕过 schema 的万能口。
+
+**Reference Input Mapping:**
+
+- `Unity-Skills`：Asset、Prefab、UI、Animator、Validation 等领域词表。
+- `unity-mcp-v2`：已有 prefab、asset、ui、validation 基础能力。
+
+**Success Criteria:**
+
+Phase 8 的完成条件不是完成所有候选能力域，而是：
+
+1. 根据用户确认选择至少一个扩展域 vertical slice；
+2. 为该扩展域完成独立 spec、plan、implementation 和 verification；
+3. 为剩余候选域记录去向：pending、deferred、project command、standard public tool 或 rejected。
+
+**Artifacts:**
+- **Spec:** pending
+- **Plan:** pending
+- **Implementation Summary:** pending
+- **Verification Evidence:** pending
+
+---
+
+### Phase 9：验证、文档与迁移收口
+
+**Status:** `not-started`
+
+**Goal:**
+收口 Unity Agent Kit 的测试、文档、skills、public schema、Resources 和命名迁移策略。
+
+**Scope:**
+
+测试：
+
+- public tool schema tests；
+- action semantics tests；
+- async/job behavior tests；
+- internal operation mapping tests；
+- artifact resource tests；
+- Editor Command Registry metadata tests；
+- Unity EditMode host service tests；
+- E2E MCP verification；
+- skill recipe verification。
+
+文档：
+
+- Unity Agent Kit overview；
+- public tools reference；
+- action semantics guide；
+- skill authoring guide；
+- project command registration guide；
+- async/job behavior guide；
+- artifact/resource guide；
+- migration guide。
+
+Skill/schema consistency audit：
+
+- skill 引用的 tool/action 存在；
+- skill 中 JSON 参数示例通过 schema；
+- skill 描述的 sideEffectLevel 与 schema metadata 一致；
+- skill 中的 verification path 存在；
+- public tool 文档与实际注册一致；
+- action 完成语义在 tool description 与 skill 中不冲突。
+
+迁移：
+
+- 是否从 `unity-mcp-v2` 收敛为 `unity-agent-kit`；
+- 是否保留 legacy direct-operation tools；
+- 是否提供兼容期；
+- 是否保留 `unity-mcp-v2` 作为内部 runtime 名称。
+
+**Out of Scope:**
+
+- 不新增大型能力域。
+- 不做无关重构。
+- 不在验证证据不足时标记 roadmap completed。
+
+**Reference Input Mapping:**
+
+- `unity-mcp-v2`：plugin packaging、doctor/install、测试体系。
+- `Unity-Skills`：skill 文档和领域导航参考。
+
+**Success Criteria:**
+
+- 每个 public action 有测试或明确验证策略。
+- 高频 action 语义有文档。
+- 每个 skill recipe 至少有一个验证路径。
+- Project command metadata 有校验。
+- Artifact/resource 语义有测试和文档。
+- schema、skills、文档不漂移。
+- 命名和迁移策略明确。
+
+**Artifacts:**
+- **Spec:** pending
+- **Plan:** pending
+- **Implementation Summary:** pending
+- **Verification Evidence:** pending
+
+## Pending Proposals
+
+- 无。
+
+## Proposal Rules
+
+以下变更需要先生成 Proposal Brief 并经用户批准：
+
+- 修改 Goal。
+- 修改 Non-goals。
+- 修改 Shared Constraints。
+- 将实现基线从 v2 改为全新实现。
+- 将 public tool 策略改回“一 operation 一 MCP tool”。
+- 将长流程 workflow 编排移入 Unity C# host。
+- 移除 skill-guided 调用体系。
+- 移除 Editor Command Registry。
+- 移除 artifact/report Resources。
+- 新增、删除、合并、拆分或重排 phase。
+- 将高频日常闭环从首批实现中移除。
+- 将 Phase 8 从扩展能力池改为一次性实现所有候选域。
+
+以下事实更新不需要 Proposal Brief：
+
+- 回填 artifact 路径。
+- 标记 artifact missing。
+- 更新 Last Sync。
+- 添加 blocker。
+- 记录 Verification Evidence。
+- 追加 Change Log。
+- 最终验收通过后的事实性 roadmap 同步，仅限验收同步规则允许的字段。
+
+## Sync Rules
+
+- `ROADMAP.md` 是长期 current truth。
+- spec 保存阶段设计。
+- plan 保存阶段实现计划。
+- implementation summary 只记录阶段结果，不写详细实现步骤。
+- verification evidence 必须具体，包括测试命令、MCP 调用、Unity 测试或可验证输出。
+- 不从聊天记忆推断完成度。
+- 链接 artifact 路径缺失时，不推进 phase 状态。
+- 验收同步不得修改 Goal、Non-goals、Shared Constraints、整体 Success Criteria、phase scope、phase success criteria 或 phase 顺序。
+
+## Handoff Rules
+
+- `write-spec`：为当前 phase 生成 Spec Discussion Brief，并建议手动调用 `/superpowers:brainstorming`。
+- `write-plan`：已有 spec 后生成 plan handoff，并建议手动调用 `/superpowers:writing-plans`。
+- `implement-plan`：已有 plan 后生成 execution handoff，并建议手动调用 `/superpowers:subagent-driven-development` 或 `/superpowers:executing-plans`。
+- `complete-phase`：只有在 Verification Evidence 具体且 phase success criteria 满足时，才能标记 phase completed。
+- 不自动实现代码。
+- 不自动调用其他技能。
+
+## Change Log
+
+- 2026-05-16：创建 Unity Agent Kit roadmap。
+- 2026-05-16：确认基于 `unity-mcp-v2` 演进，不全新重写。
+- 2026-05-16：确认 public MCP tools 与 internal operations 分离。
+- 2026-05-16：确认 public tool 命名采用 `unity_compile` 风格。
+- 2026-05-16：确认 skills 采用任务型优先、能力型辅助，不照搬 Unity-Skills。
+- 2026-05-16：确认高频日常闭环优先于全量创作能力。
+- 2026-05-16：确认 public action 完成语义以用户期望结果为准。
+- 2026-05-16：确认 TS 层负责 workflow 编排和最终判定，Unity C# 层负责短动作、状态与产物记录。
+- 2026-05-16：确认 compiler messages 是编译成功判定主依据，Console cursor 是补充诊断机制。
+- 2026-05-16：确认 Resources 首版只用于 artifacts/reports。
+- 2026-05-16：确认统一 artifact model。
+- 2026-05-16：确认 safety model 首版采用核心字段并延后扩展 target/overwrite 规则。
+- 2026-05-16：确认 Phase 8 是扩展能力池。
+- 2026-05-16：确认采用半自动 skill/schema 防漂移检查。
+- 2026-05-16：按最新 roadmap-management 规范同步 Phase Summary 和 Phase 1 spec/plan artifact 映射。
