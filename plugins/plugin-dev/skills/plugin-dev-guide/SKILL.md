@@ -1,59 +1,59 @@
 ---
 name: plugin-dev-guide
-description: 当用户询问 "Claude Code plugins"、"plugin development"、"how to build a plugin"、"what plugin components exist"、"plugin architecture"、"extending Claude Code"，或需要了解 plugin-dev skills 与插件开发能力总览时使用。它作为 9 个专业 plugin-dev skills 的导览，说明何时应激活各个技能。当用户刚接触插件开发，或不确定自己需要哪个具体技能时，应先加载此技能。
+description: 当用户询问 "Claude Code plugins"、"plugin development"、"how to build a plugin"、"what plugin components exist"、"plugin architecture"、"extending Claude Code"，或需要了解 plugin-dev skills 与 plugin development 能力总览时使用。它作为 9 个专业 plugin-dev skills 的导览，说明何时应激活各个 skill。当用户刚接触 plugin development，或不确定自己需要哪个具体 skill 时，应先加载此 skill。
 ---
 
-# 插件开发指南
+# plugin development 指南
 
-这个元技能提供 Claude Code 插件开发的总览，并根据当前任务将你路由到相应的专业技能。
+这个 meta skill 提供 Claude Code plugin development 的总览，并根据当前任务将你路由到相应的专业 skill。
 
-## 插件开发技能总览
+## plugin-dev skills 总览
 
-plugin-dev 工具包提供 9 个用于构建 Claude Code 插件的专业技能，以及当前这个指南。每个技能都负责插件开发中的一个特定领域。
+plugin-dev 工具包提供 9 个用于构建 Claude Code plugins 的专业 skills，以及当前这个指南。每个 skill 都负责 plugin development 中的一个特定领域。
 
-### 技能快速参考
+### Skills 快速参考
 
-| 技能 | 用途 |
+| Skill | 用途 |
 | ---- | ---- |
 | **plugin-structure**      | 目录布局、manifest 与组件组织        |
 | **command-development**   | 简单 prompt（commands/ 中的单个 .md 文件） |
-| **agent-development**     | 自主子 agent                         |
+| **agent-development**     | 自主 subagents                         |
 | **skill-development**     | 带打包资源的复杂 prompt（skills/）   |
 | **hook-development**      | 事件驱动自动化                       |
 | **mcp-integration**       | Model Context Protocol 服务器        |
 | **lsp-integration**       | 用于代码智能的 Language Server Protocol |
 | **plugin-settings**       | 通过 .local.md 进行用户配置          |
-| **marketplace-structure** | 插件市场创建                         |
+| **marketplace-structure** | plugin marketplace 创建              |
 
-## 何时使用各个技能
+## 何时使用各个 skill
 
-### 开始一个新插件
+### 开始一个新 plugin
 
-**技能：`plugin-structure`**
+**Skill：`plugin-structure`**
 
 当用户需要以下内容时使用：
 
-- 从零创建一个新插件
-- 了解插件目录布局
+- 从零创建一个新 plugin
+- 了解 plugin 目录布局
 - 配置 plugin.json manifest
 - 学习组件自动发现机制
 - 使用 ${CLAUDE_PLUGIN_ROOT} 实现可移植路径
 
-### 添加面向用户的命令
+### 添加面向用户的 command
 
-**技能：`command-development`**
+**Skill：`command-development`**
 
 当用户需要以下内容时使用：
 
 - 创建 slash commands（/command-name）
-- 配置命令 frontmatter（description、allowed-tools、model）
+- 配置 command frontmatter（description、allowed-tools、model）
 - 使用动态参数（$ARGUMENTS、$1、$2）
 - 使用 @ 语法引用文件
 - 在反引号前使用字面量 `!` 内联执行 bash
 
-### 创建自主代理
+### 创建自主 agent
 
-**技能：`agent-development`**
+**Skill：`agent-development`**
 
 当用户需要以下内容时使用：
 
@@ -63,37 +63,37 @@ plugin-dev 工具包提供 9 个用于构建 Claude Code 插件的专业技能�
 - 选择 agent 模型和颜色
 - 限制 agent 可访问的工具
 
-### 构建技能
+### 构建 skill
 
-**技能：`skill-development`**
+**Skill：`skill-development`**
 
 当用户需要以下内容时使用：
 
 - 创建扩展 Claude 能力的 skills
 - 编写带正确 frontmatter 的 SKILL.md
-- 使用渐进式披露组织技能内容
+- 使用渐进式披露组织 skill 内容
 - 创建 references/、examples/、scripts/ 目录
 - 编写有效的触发短语
 
-### 实现事件 Hooks
+### 实现事件 hooks
 
-**技能：`hook-development`**
+**Skill：`hook-development`**
 
 当用户需要以下内容时使用：
 
 - 响应 Claude Code 事件（PreToolUse、Stop、SessionStart 等）
-- 创建基于 prompt 或基于命令的 hooks
+- 创建基于 prompt 或基于 command 的 hooks
 - 在执行前校验工具输入
 - 强制执行完成标准
 - 阻止危险操作
 
 ### 通过 MCP 集成外部服务
 
-**技能：`mcp-integration`**
+**Skill：`mcp-integration`**
 
 当用户需要以下内容时使用：
 
-- 向插件添加 MCP servers
+- 向 plugin 添加 MCP servers
 - 配置 stdio、SSE 或 HTTP MCP servers
 - 设置认证（OAuth、tokens）
 - 在 commands 和 agents 中使用 MCP tools
@@ -101,19 +101,19 @@ plugin-dev 工具包提供 9 个用于构建 Claude Code 插件的专业技能�
 
 ### 通过 LSP 添加代码智能
 
-**技能：`lsp-integration`**
+**Skill：`lsp-integration`**
 
 当用户需要以下内容时使用：
 
-- 向插件添加 Language Server Protocol servers
+- 向 plugin 添加 Language Server Protocol servers
 - 启用受支持的代码导航能力，例如 go-to-definition 和 find-references
 - 配置语言特定服务器（pyright、gopls、rust-analyzer）
 - 设置 extensionToLanguage 映射
 - 增强 Claude 的代码理解能力
 
-### 管理插件配置
+### 管理 plugin 配置
 
-**技能：`plugin-settings`**
+**Skill：`plugin-settings`**
 
 当用户需要以下内容时使用：
 
@@ -123,19 +123,19 @@ plugin-dev 工具包提供 9 个用于构建 Claude Code 插件的专业技能�
 - 创建临时激活的 hooks
 - 管理 agent 状态
 
-### 创建插件市场
+### 创建 plugin marketplace
 
-**技能：`marketplace-structure`**
+**Skill：`marketplace-structure`**
 
 当用户需要以下内容时使用：
 
-- 为多个插件创建 marketplace
+- 为多个 plugins 创建 marketplace
 - 配置 marketplace.json
-- 设置插件来源（relative、GitHub、git URL）
-- 向团队分发插件
-- 组织插件集合
+- 设置 plugin source（relative、GitHub、git URL）
+- 向团队分发 plugins
+- 组织 plugin 集合
 
-## 技能选择决策树
+## skill 选择决策树
 
 ```
 User wants to...
@@ -150,55 +150,55 @@ User wants to...
 └── Distribute multiple plugins? → marketplace-structure
 ```
 
-## 常见多技能工作流
+## 常见多 skill 工作流
 
-### 构建完整插件
+### 构建完整 plugin
 
 1. **开始**：加载 `plugin-structure` skill 以创建目录布局
-2. **添加功能**：为面向用户的命令加载 `command-development`
+2. **添加功能**：为面向用户的 command 加载 `command-development`
 3. **自动化**：为事件驱动行为加载 `hook-development`
 4. **配置**：如果需要用户配置，则加载 `plugin-settings`
 5. **验证**：使用 plugin-validator agent 验证结构
 
-### 创建由 MCP 驱动的插件
+### 创建由 MCP 驱动的 plugin
 
 1. **开始**：加载 `plugin-structure` 以建立基础结构
 2. **集成**：加载 `mcp-integration` 以配置 MCP servers
-3. **命令**：加载 `command-development` 以创建使用 MCP tools 的命令
-4. **代理**：加载 `agent-development` 以支持自主 MCP 工作流
+3. **Command**：加载 `command-development` 以创建使用 MCP tools 的 commands
+4. **Agent**：加载 `agent-development` 以支持自主 MCP 工作流
 
-### 构建代码智能插件
+### 构建代码智能 plugin
 
 1. **开始**：加载 `plugin-structure` 以建立基础结构
 2. **LSP**：加载 `lsp-integration` 以配置语言服务器
-3. **命令**：加载 `command-development` 以创建使用 LSP 功能的命令
+3. **Command**：加载 `command-development` 以创建使用 LSP 功能的 commands
 
-### 构建以技能为核心的插件
+### 构建 skill-focused plugin
 
 1. **开始**：加载 `plugin-structure` 以建立基础结构
-2. **技能**：加载 `skill-development` 以创建专业技能
-3. **验证**：使用 skill-reviewer agent 验证技能质量
+2. **Skill**：加载 `skill-development` 以创建专业 skills
+3. **验证**：使用 skill-reviewer agent 验证 skill 质量
 
-## 可用代理
+## 可用 agents
 
-plugin-dev 插件还提供 3 个代理：
+plugin-dev plugin 还提供 3 个 agents：
 
-| 代理 | 用途 |
+| Agent | 用途 |
 | ---- | ---- |
-| **plugin-validator** | 验证插件结构和 manifests         |
-| **skill-reviewer**   | 审查技能质量和触发方式           |
-| **agent-creator**    | 根据描述生成新的代理          |
+| **plugin-validator** | 验证 plugin 结构和 manifests         |
+| **skill-reviewer**   | 审查 skill 质量和触发方式           |
+| **agent-creator**    | 根据描述生成新的 agent              |
 
-在创建组件后应主动使用代理以确保质量。
+在创建组件后应主动使用 agents 以确保质量。
 
-## 可用命令
+## 可用 commands
 
-| 命令 | 用途 |
+| Command | 用途 |
 | ---- | ---- |
-| `/plugin-dev:plugin-dev-guide`   | 总览与技能路由                        |
-| `/plugin-dev:start`              | 入口点 - 选择创建插件或 marketplace   |
-| `/plugin-dev:create-plugin`      | 8 阶段引导式插件创建工作流            |
-| `/plugin-dev:create-marketplace` | 8 阶段引导式 marketplace 创建工作流   |
+| `/plugin-dev:plugin-dev-guide`   | 总览与 skill 路由                        |
+| `/plugin-dev:start`              | 入口点 - 选择创建 plugin 或 marketplace   |
+| `/plugin-dev:create-plugin`      | 8 阶段引导式 plugin 创建 workflow         |
+| `/plugin-dev:create-marketplace` | 8 阶段引导式 marketplace 创建 workflow    |
 
 ---
 
@@ -208,8 +208,8 @@ $ARGUMENTS
 
 如果用户在上方提供了请求，请分析该请求并执行以下其一：
 
-1. 如果请求明显对应单一领域，**路由到特定技能**
+1. 如果请求明显对应单一领域，**路由到特定 skill**
 2. 使用本指南中的总览信息**直接回答**
 3. 如果请求有歧义，**请求澄清**
 
-如果没有提供请求，则总结可用的插件开发能力，并询问用户想构建什么或想了解什么。
+如果没有提供请求，则总结可用的 plugin development 能力，并询问用户想构建什么或想了解什么。

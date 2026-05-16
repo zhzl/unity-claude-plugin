@@ -1,13 +1,13 @@
 ---
 name: plugin-structure
-description: 当用户要求 "create a plugin"、"scaffold a plugin"、理解 plugin structure、组织插件组件、设置 plugin.json、使用 ${CLAUDE_PLUGIN_ROOT}、添加 commands/agents/skills/hooks、添加 lspServers、配置 auto-discovery、处理 headless mode、CI mode、plugin in CI、github actions、plugin caching、plugin CLI、install plugin、installation scope、auto-update、validate plugin、plugin validate、debug plugin、output styles、outputStyles、custom output format、response formatting、--verbose，或需要关于插件目录布局、manifest 配置、组件组织、文件命名约定或 Claude Code 插件架构最佳实践的指导时，应使用此技能。
+description: 当用户要求 "create a plugin"、"scaffold a plugin"、理解 plugin structure、组织 plugin 组件、设置 plugin.json、使用 ${CLAUDE_PLUGIN_ROOT}、添加 commands/agents/skills/hooks、添加 lspServers、配置 auto-discovery、处理 headless mode、CI mode、plugin in CI、github actions、plugin caching、plugin CLI、install plugin、installation scope、auto-update、validate plugin、plugin validate、debug plugin、output styles、outputStyles、custom output format、response formatting、--verbose，或需要关于 plugin 目录布局、manifest 配置、组件组织、文件命名约定或 Claude Code plugin 架构最佳实践的指导时，应使用此 skill。
 ---
 
-# Claude Code 的插件结构
+# Claude Code 的 plugin structure
 
 ## 概览
 
-Claude Code 插件遵循标准化的目录结构，并支持组件自动发现。掌握这套结构，才能创建组织良好、易于维护、并能与 Claude Code 无缝集成的插件。
+Claude Code plugin 遵循标准化的目录结构，并支持组件自动发现。掌握这套结构，才能创建组织良好、易于维护、并能与 Claude Code 无缝集成的 plugin。
 
 **关键概念：**
 
@@ -19,7 +19,7 @@ Claude Code 插件遵循标准化的目录结构，并支持组件自动发现�
 
 ## 目录结构
 
-每个 Claude Code 插件都遵循这种组织模式：
+每个 Claude Code plugin 都遵循这种组织模式：
 
 ```
 plugin-name/
@@ -39,13 +39,13 @@ plugin-name/
 **关键规则：**
 
 1. **Manifest 位置**：如果存在，`plugin.json` manifest 必须位于 `.claude-plugin/` 中，并且必须包含 `name`
-2. **组件位置**：所有组件目录（commands、agents、skills、hooks）都必须位于插件根目录层级，不能嵌套在 `.claude-plugin/` 内
-3. **可选组件**：只为插件实际使用的组件创建目录
+2. **组件位置**：所有组件目录（commands、agents、skills、hooks）都必须位于 plugin 根目录层级，不能嵌套在 `.claude-plugin/` 内
+3. **可选组件**：只为 plugin 实际使用的组件创建目录
 4. **命名约定**：所有目录名和文件名都使用 kebab-case
 
-## 插件 Manifest（plugin.json）
+## Plugin manifest（plugin.json）
 
-可选的 manifest 用于定义插件元数据和配置。当你需要元数据、自定义组件路径或配置时，请使用 `.claude-plugin/plugin.json`；如果存在，它必须包含 `name`：
+可选的 manifest 用于定义 plugin 元数据和配置。当你需要元数据、自定义组件路径或配置时，请使用 `.claude-plugin/plugin.json`；如果存在，它必须包含 `name`：
 
 ### 必填字段
 
@@ -58,7 +58,7 @@ plugin-name/
 **名称要求：**
 
 - 使用 kebab-case 格式（小写字母加连字符）
-- 在已安装插件中必须唯一
+- 在已安装 plugin 中必须唯一
 - 不能包含空格或特殊字符
 - 示例：`code-review-assistant`、`test-runner`、`api-docs`
 
@@ -82,7 +82,7 @@ plugin-name/
 ```
 
 **版本格式**：遵循语义化版本（MAJOR.MINOR.PATCH）
-**Keywords**：用于插件发现与分类
+**Keywords**：用于 plugin 发现与分类
 
 ### 组件路径配置
 
@@ -102,7 +102,7 @@ plugin-name/
 
 **路径规则：**
 
-- 必须相对于插件根目录
+- 必须相对于 plugin 根目录
 - 必须以 `./` 开头
 - 不能使用绝对路径
 - 对于支持多个位置的字段，可使用数组
@@ -225,7 +225,7 @@ allowed-tools: Read, Grep, Glob # Optional: restricts available tools
 
 **位置**：`hooks/hooks.json`，或内联写在 `plugin.json` 中
 **格式**：定义事件处理器的 JSON 配置
-**注册方式**：插件启用时会自动注册 hooks
+**注册方式**：plugin 启用时会自动注册 hooks
 
 **示例结构：**
 
@@ -264,9 +264,9 @@ hooks/
 
 ### MCP Servers
 
-**位置**：插件根目录下的 `.mcp.json`，或内联写在 `plugin.json` 中
+**位置**：plugin 根目录下的 `.mcp.json`，或内联写在 `plugin.json` 中
 **格式**：用于定义 MCP server 的 JSON 配置
-**自动启动**：插件启用时，servers 会自动启动
+**自动启动**：plugin 启用时，servers 会自动启动
 
 **示例格式：**
 
@@ -335,7 +335,7 @@ hooks/
 }
 ```
 
-**用法**：插件可以为其领域定义一致的输出格式。引用路径中的样式文件会被加载，以自定义 Claude 的输出行为。
+**用法**：plugin 可以为其领域定义一致的输出格式。引用路径中的样式文件会被加载，以自定义 Claude 的输出行为。
 
 有关 output styles 的完整指南，包括 frontmatter schema、文件位置以及何时使用 styles 而不是其他组件，请参见 `references/output-styles.md`。
 
@@ -343,7 +343,7 @@ hooks/
 
 ### ${CLAUDE_PLUGIN_ROOT}
 
-对所有插件内部路径引用，都应使用 `${CLAUDE_PLUGIN_ROOT}` 环境变量：
+对所有 plugin 内部路径引用，都应使用 `${CLAUDE_PLUGIN_ROOT}` 环境变量：
 
 ```json
 {
@@ -351,7 +351,7 @@ hooks/
 }
 ```
 
-**为什么重要**：插件的安装位置会因以下因素而不同：
+**为什么重要**：plugin 的安装位置会因以下因素而不同：
 
 - 用户的安装方式（marketplace、local、npm）
 - 操作系统约定
@@ -449,8 +449,8 @@ Claude Code 会自动发现并加载组件：
 
 **发现时机：**
 
-- 插件安装时：组件向 Claude Code 注册
-- 插件启用时：组件可供使用
+- plugin 安装时：组件向 Claude Code 注册
+- plugin 启用时：组件可供使用
 - 无需重启：更改会在下一次 Claude Code 会话生效
 
 **覆盖行为**：自定义 `skills` 路径会补充默认目录；自定义 `commands`、`agents` 和 `outputStyles` 路径会替换默认值，除非显式列出默认路径。
@@ -469,7 +469,7 @@ Claude Code 会自动发现并加载组件：
    - 仅在简单场景下使用内联配置
 
 3. **文档**：包含 README 文件
-   - 插件根目录：整体用途和用法
+   - plugin 根目录：整体用途和用法
    - 组件目录：具体指导
    - Script 目录：用法与要求
 
@@ -504,7 +504,7 @@ Claude Code 会自动发现并加载组件：
 
 ## 常见模式
 
-### 最小插件
+### Minimal plugin
 
 只有一个 command、没有依赖：
 
@@ -516,9 +516,9 @@ my-plugin/
     └── hello.md       # Single command
 ```
 
-### 全功能插件
+### Full-featured plugin
 
-包含所有组件类型的完整插件：
+包含所有组件类型的完整 plugin：
 
 ```
 my-plugin/
@@ -534,9 +534,9 @@ my-plugin/
 └── scripts/           # Shared utilities
 ```
 
-### 以技能为核心的插件
+### Skill-focused plugin
 
-只提供 skills 的插件：
+只提供 skills 的 plugin：
 
 ```
 my-plugin/
@@ -549,9 +549,9 @@ my-plugin/
         └── SKILL.md
 ```
 
-## 插件缓存
+## Plugin 缓存
 
-Claude Code 会缓存插件内容以提升性能。理解缓存行为有助于开发和调试。
+Claude Code 会缓存 plugin 内容以提升性能。理解缓存行为有助于开发和调试。
 
 ### 会被缓存的内容
 
@@ -564,29 +564,29 @@ Claude Code 会缓存插件内容以提升性能。理解缓存行为有助于�
 在以下情况下，缓存内容会刷新：
 
 - Claude Code 会话重启
-- 插件被重新安装或更新
+- plugin 被重新安装或更新
 - 用户运行 `/plugins refresh`（如果可用）
 
 ### 为什么外部路径会失败
 
-**重要：** 插件目录之外的路径可能无法可靠工作，原因包括：
+**重要：** plugin 目录之外的路径可能无法可靠工作，原因包括：
 
-1. **安全边界** - 插件被限制在其目录范围内
+1. **安全边界** - plugin 被限制在其目录范围内
 2. **缓存** - 外部路径的变更不会被监控
 3. **可移植性** - 外部路径在不同机器上会失效
 
 **始终使用：**
 
-- `${CLAUDE_PLUGIN_ROOT}` 表示插件内部路径
+- `${CLAUDE_PLUGIN_ROOT}` 表示 plugin 内部路径
 - 打包资源，而不是外部文件引用
 - 环境变量表示用户特定路径
 
 ### 开发工作流
 
-开发期间，可通过以下方式重新加载插件：
+开发期间，可通过以下方式重新加载 plugin：
 
 1. 退出 Claude Code
-2. 修改插件文件
+2. 修改 plugin 文件
 3. 重启 Claude Code
 
 或者使用 `--plugin-dir` 在不安装的情况下进行测试：
@@ -597,26 +597,26 @@ claude --plugin-dir /path/to/plugin
 
 ## 运行时上下文
 
-插件会根据运行时上下文表现出不同的行为。交互式会话支持 slash commands 和用户提示；headless mode（`claude -p`）以及 GitHub Actions 则属于非交互环境，某些特性不可用。
+plugin 会根据运行时上下文表现出不同的行为。交互式会话支持 slash commands 和用户提示；headless mode（`claude -p`）以及 GitHub Actions 则属于非交互环境，某些特性不可用。
 
-- **Headless/CI mode:** 参见 `references/headless-ci-mode.md`，了解如何设计能在 `claude -p` 和 CI 流水线中工作的插件
-- **GitHub Actions:** 参见 `references/github-actions.md`，了解如何将插件集成到 `claude-code-action@v1`
+- **Headless/CI mode:** 参见 `references/headless-ci-mode.md`，了解如何设计能在 `claude -p` 和 CI 流水线中工作的 plugin
+- **GitHub Actions:** 参见 `references/github-actions.md`，了解如何将 plugin 集成到 `claude-code-action@v1`
 - **高级主题：** 参见 `references/advanced-topics.md`，了解缓存行为、installation scopes、CLI 管理、keybindings、status line 和 auto-update 行为
 
-## 插件校验
+## Plugin validation
 
 Claude Code 提供了内建的校验工具：
 
-- **`claude plugin validate`**（CLI）/ **`/plugin validate`**（TUI）：校验插件与 marketplace 结构，检查 JSON 语法、必填字段、组件发现和路径解析
-- **`claude --debug`**：显示详细的插件加载日志，包括发现了哪些组件、注册错误以及 hook 执行细节
-- **`claude --verbose`**：在插件加载期间使用 `--verbose` 获取额外调试输出，包括 hook 注册和 MCP server 连接
-- **`/plugins`**：查看已安装插件、其状态以及 Errors 标签中的任何错误
+- **`claude plugin validate`**（CLI）/ **`/plugin validate`**（TUI）：校验 plugin 与 marketplace 结构，检查 JSON 语法、必填字段、组件发现和路径解析
+- **`claude --debug`**：显示详细的 plugin 加载日志，包括发现了哪些组件、注册错误以及 hook 执行细节
+- **`claude --verbose`**：在 plugin 加载期间使用 `--verbose` 获取额外调试输出，包括 hook 注册和 MCP server 连接
+- **`/plugins`**：查看已安装 plugin、其状态以及 Errors 标签中的任何错误
 
 在开发过程中尽早并频繁使用这些校验工具。
 
 ### 附加 Source 类型
 
-当 marketplace schema 支持时，Marketplace 条目可以指向基于 package 的插件 source。对于 npm packages，应将 npm package 信息放在 marketplace 插件的 `source` 对象中，而不是在插件本身中记录直接的包管理器安装方式。
+当 marketplace schema 支持时，Marketplace 条目可以指向基于 package 的 plugin source。对于 npm packages，应将 npm package 信息放在 marketplace plugin 的 `source` 对象中，而不是在 plugin 本身中记录直接的包管理器安装方式。
 
 在 marketplace 条目配置完成后，可使用 `claude plugin install <plugin-name>@<marketplace-name>` 进行 marketplace 安装。
 
@@ -627,7 +627,7 @@ Claude Code 提供了内建的校验工具：
 - 确认文件位于正确目录且扩展名正确
 - 检查 YAML frontmatter 语法（commands、agents、skills）
 - 确保 skill 使用的是 `SKILL.md`（而不是 `README.md` 或其他名称）
-- 确认插件已在 Claude Code 设置中启用
+- 确认 plugin 已在 Claude Code 设置中启用
 
 **路径解析错误**：
 
@@ -638,16 +638,16 @@ Claude Code 提供了内建的校验工具：
 
 **自动发现未生效**：
 
-- 确认目录位于插件根目录（而不是 `.claude-plugin/` 内）
+- 确认目录位于 plugin 根目录（而不是 `.claude-plugin/` 内）
 - 检查文件命名是否遵循约定（kebab-case、正确扩展名）
 - 确认 manifest 中的自定义路径正确
-- 重启 Claude Code 以重新加载插件配置
+- 重启 Claude Code 以重新加载 plugin 配置
 
-**插件之间发生冲突**：
+**plugins 之间发生冲突**：
 
 - 使用唯一且具描述性的组件名称
-- 如有需要，为 commands 加上插件名称命名空间
-- 在插件 README 中记录潜在冲突
+- 如有需要，为 commands 加上 plugin 名称命名空间
+- 在 plugin README 中记录潜在冲突
 - 对相关功能考虑使用 command 前缀
 
 ---
@@ -658,8 +658,8 @@ Claude Code 提供了内建的校验工具：
 
 - **`references/component-patterns.md`** - 每种组件类型的详细模式
 - **`references/manifest-reference.md`** - 完整的 plugin.json 字段参考
-- **`references/headless-ci-mode.md`** - Headless 和 CI mode 下的插件兼容性
-- **`references/github-actions.md`** - 插件的 GitHub Actions 集成
+- **`references/headless-ci-mode.md`** - Headless 和 CI mode 下的 plugin 兼容性
+- **`references/github-actions.md`** - plugin 的 GitHub Actions 集成
 - **`references/advanced-topics.md`** - 缓存、installation scopes、CLI commands 等更多主题
 - **`references/output-styles.md`** - Output style frontmatter schema、文件位置和使用指导
 
@@ -667,6 +667,6 @@ Claude Code 提供了内建的校验工具：
 
 `examples/` 中的可工作示例：
 
-- **`minimal-plugin.md`** - 单 command 插件结构
-- **`standard-plugin.md`** - 包含多个组件的典型插件
-- **`advanced-plugin.md`** - 包含全部组件类型的全功能插件
+- **`minimal-plugin.md`** - 单 command plugin structure
+- **`standard-plugin.md`** - 包含多个组件的典型 plugin
+- **`advanced-plugin.md`** - 包含全部组件类型的 full-featured plugin

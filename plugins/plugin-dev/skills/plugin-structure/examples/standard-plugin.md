@@ -1,6 +1,6 @@
-# 标准插件示例
+# Standard Plugin 示例
 
-一个结构良好的插件，包含 commands、agents 和 skills。
+一个结构良好的 plugin，包含 commands、agents 和 skills。
 
 ## 目录结构
 
@@ -601,7 +601,7 @@ Suggestions:
 
 ## 何时使用这种模式
 
-- 用于分发的生产级插件
+- 用于分发的生产级 plugin
 - 团队协作工具
-- 需要强制一致性的插件
+- 需要强制一致性的 plugin
 - 具有多个入口点的复杂工作流

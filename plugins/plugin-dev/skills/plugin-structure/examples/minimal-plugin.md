@@ -1,6 +1,6 @@
-# 最小插件示例
+# Minimal Plugin 示例
 
-一个只有单个 command 的最简插件。
+一个只有单个 command 的最简 plugin。
 
 ## 目录结构
 
@@ -47,7 +47,7 @@ Include the current timestamp in the greeting to show the command executed succe
 
 ## 用法
 
-安装插件后：
+安装 plugin 后：
 
 ```
 $ claude
@@ -70,10 +70,10 @@ Executed at: 2025-01-15 14:30:22 UTC
 
 - 快速原型
 - 单一用途的小工具
-- 学习插件开发
+- 学习 plugin development
 - 只提供一个明确功能的内部团队工具
 
-## 扩展这个插件
+## 扩展这个 plugin
 
 要添加更多功能：
 
