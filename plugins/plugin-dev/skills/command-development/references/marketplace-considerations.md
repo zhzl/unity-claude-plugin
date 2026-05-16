@@ -137,7 +137,7 @@ fi
 
 ## 面向陌生用户的用户体验
 
-### 清晰 Onboarding
+### 清晰入门引导
 
 **首次运行体验：**
 
@@ -575,7 +575,7 @@ Reply with an emoji or:
 Your feedback matters!
 ```
 
-**Usage analytics 准备：**
+**使用分析准备：**
 
 ```markdown
 <!--

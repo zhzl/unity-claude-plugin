@@ -302,7 +302,7 @@ EOF
 
 - Command 能与其他 plugin 组件协同工作
 - Command 之间交互正确
-- 多次调用之间的 state management 可用
+- 多次调用之间的状态管理可用
 - Workflow command 按顺序执行
 
 **测试场景：**
@@ -638,7 +638,7 @@ watch -n 1 'ps aux | grep claude'
 - [ ] 可与其他 command 协同工作
 - [ ] 可与 hooks 协同工作（如适用）
 - [ ] 可与 MCP 协同工作（如适用）
-- [ ] State management 可用
+- [ ] 状态管理可用
 
 ### 质量
 
@@ -718,7 +718,7 @@ chmod 644 /path/to/referenced/file
 
 1. **尽早测试，经常测试**：开发过程中持续 validation
 2. **自动化 validation**：使用脚本进行可重复检查
-3. **测试边界情况**：不要只测试成功路径（happy path）
+3. **测试边界情况**：不要只测试成功路径
 4. **获取反馈**：广泛发布前让他人测试
 5. **记录测试**：保留测试场景用于回归测试
 6. **生产中监控**：发布后关注问题

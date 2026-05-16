@@ -32,7 +32,7 @@ Agent uses plugin resources:
 - Agent 必须存在于 `plugin/agents/` 目录
 - Claude 使用 Agent tool 启动 agent
 - 记录 agent 能力
-- 引用 agent 使用的 plugin resources
+- 引用 agent 使用的 plugin 资源
 
 ## Skill 集成
 
@@ -105,7 +105,7 @@ Compile findings into report following template.
 **适用场景：**
 
 - 复杂的多步骤 workflow
-- 利用多个 plugin capabilities
+- 利用多个 plugin 能力
 - 需要专门分析
 - 需要结构化输出
 

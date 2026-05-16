@@ -728,7 +728,7 @@ MIT License - see `LICENSE` if your plugin provides one.
 
 ### 文档位置
 
-1. **Command 文件内**：核心用法、示例、inline explanations
+1. **Command 文件内**：核心用法、示例、内联说明
 2. **README**：安装、配置、troubleshooting
 3. **独立文档**：详细指南、教程、API reference
 4. **注释**：面向维护者的实现细节

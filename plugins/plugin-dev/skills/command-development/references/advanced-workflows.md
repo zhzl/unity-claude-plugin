@@ -690,7 +690,7 @@ Written to .claude/deployment-state.local.md
 Next: Run /deployment-validate
 ```
 
-### Validation 验证 Command
+### 验证 Command
 
 ```markdown
 ---
