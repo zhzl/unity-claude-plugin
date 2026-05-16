@@ -3,7 +3,7 @@ name: skill-development
 description: 当用户要求 "create a skill"、"add a skill to plugin"、"write a new skill"、"improve skill description"、"SKILL.md format"、"skill frontmatter"、"skill triggers"、"progressive disclosure"、"Skill() syntax"、"SLASH_COMMAND_TOOL_CHAR_BUDGET"，或需要 Claude Code plugin 的 skill 结构、组织、触发条件、可见性预算与开发最佳实践指导时使用。
 ---
 
-# Claude Code Plugins 的 Skill Development
+# Claude Code Plugins 的 Skill 开发
 
 本 skill 提供为 Claude Code plugins 创建有效 skills 的指导。
 
@@ -187,7 +187,7 @@ disable-model-invocation: true
 
 **可见性对比：**
 
-| 设置 | Slash 菜单 | Skill Tool | Auto-Discovery |
+| 设置 | Slash 菜单 | Skill tool | Auto-discovery |
 | --- | --- | --- | --- |
 | `user-invocable: true`（默认） | 可见 | 允许 | 是 |
 | `user-invocable: false` | 隐藏 | 允许 | 是 |
@@ -483,7 +483,7 @@ skill-name/
 
 适合：简单知识，不需要复杂资源
 
-### Standard Skill（推荐）
+### 标准 Skill（推荐）
 
 ```
 skill-name/
@@ -544,7 +544,7 @@ skill-name/
 - **`examples/complete-skill.md`** - 包含 references/、examples/ 和 scripts/ 的完整 skill（API testing 示例）
 - **`examples/frontmatter-templates.md`** - 常见使用场景的 frontmatter 模式快速参考
 
-### Reference 文件
+### 参考文件
 
 如需详细指导，查阅：
 
@@ -556,7 +556,7 @@ skill-name/
 Plugin-dev 的 skills 展示了最佳实践：
 
 - `../hook-development/` - Progressive disclosure、工具
-- `../agent-development/` - AI-assisted creation、references
+- `../agent-development/` - AI 辅助创建、references
 - `../mcp-integration/` - 完整 references
 - `../plugin-settings/` - 真实 examples
 - `../command-development/` - 清晰关键概念
