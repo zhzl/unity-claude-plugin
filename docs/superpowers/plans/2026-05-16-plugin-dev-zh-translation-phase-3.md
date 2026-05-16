@@ -479,7 +479,7 @@ git commit -m "docs: translate plugin structure skill examples"
 - 修改：`plugins/plugin-dev/skills/plugin-structure/references/manifest-reference.md`
 - 修改：`plugins/plugin-dev/skills/plugin-structure/references/output-styles.md`
 
-- [ ] **步骤 1：翻译 6 个 reference 文件的代码块外自然语言**
+- [x] **步骤 1：翻译 6 个 reference 文件的代码块外自然语言**
 
 编辑本任务列出的 6 个 reference 文件：
 
@@ -488,7 +488,7 @@ git commit -m "docs: translate plugin structure skill examples"
 - `manifest`、`frontmatter`、`workflow`、`validation` 等术语按 Phase 1 术语表处理中英关键词。
 - 若发现同文件内链接文字或资源索引与现有文件职责不一致，可修正文案；不得改链接目标到范围外文件。
 
-- [ ] **步骤 2：验证 plugin-structure reference 代码块未改变**
+- [x] **步骤 2：验证 plugin-structure reference 代码块未改变**
 
 运行：
 
@@ -538,7 +538,7 @@ PY
 
 预期：输出 `code blocks unchanged: 6 files`。
 
-- [ ] **步骤 3：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 3：提交检查点（仅用户明确授权时执行）**
 
 运行：
 
