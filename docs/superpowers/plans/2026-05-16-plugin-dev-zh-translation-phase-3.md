@@ -841,7 +841,7 @@ git commit -m "docs: translate command development workflow references"
 - 修改：`plugins/plugin-dev/skills/skill-development/examples/frontmatter-templates.md`
 - 修改：`plugins/plugin-dev/skills/skill-development/examples/minimal-skill.md`
 
-- [ ] **步骤 1：翻译 `skill-development/SKILL.md` 的代码块外自然语言**
+- [x] **步骤 1：翻译 `skill-development/SKILL.md` 的代码块外自然语言**
 
 编辑 `plugins/plugin-dev/skills/skill-development/SKILL.md`：
 
@@ -850,7 +850,7 @@ git commit -m "docs: translate command development workflow references"
 - 正文中的 about skills、frontmatter fields、bundled resources、dynamic content、progressive disclosure、creation process、validation checklist、best practices、resources 等解释性文字中文化。
 - `SKILL.md`、`references/`、`examples/`、`scripts/`、frontmatter 字段名、`Skill()` 语法、环境变量、路径和代码块保持原文。
 
-- [ ] **步骤 2：翻译 skill examples 的代码块外自然语言**
+- [x] **步骤 2：翻译 skill examples 的代码块外自然语言**
 
 编辑：
 
@@ -864,7 +864,7 @@ git commit -m "docs: translate command development workflow references"
 - YAML frontmatter 模板、目录树、脚本示例、路径、字段名和代码块保持原文。
 - `progressive disclosure`、`frontmatter`、`skill`、`command`、`validation` 等术语保留英文关键词。
 
-- [ ] **步骤 3：验证 skill-development 入口和示例代码块未改变**
+- [x] **步骤 3：验证 skill-development 入口和示例代码块未改变**
 
 运行：
 
@@ -912,7 +912,7 @@ PY
 
 预期：输出 `code blocks unchanged: 4 files`。
 
-- [ ] **步骤 4：验证 `skill-development/SKILL.md` frontmatter protected fields 和触发词**
+- [x] **步骤 4：验证 `skill-development/SKILL.md` frontmatter protected fields 和触发词**
 
 运行：
 
@@ -934,7 +934,7 @@ PY
 
 预期：输出 `skill-development frontmatter ok`。
 
-- [ ] **步骤 5：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 5：提交检查点（仅用户明确授权时执行）**
 
 运行：
 
