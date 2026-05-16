@@ -165,7 +165,7 @@ User wants to...
 1. **开始**：加载 `plugin-structure` 以建立基础结构
 2. **集成**：加载 `mcp-integration` 以配置 MCP servers
 3. **命令**：加载 `command-development` 以创建使用 MCP tools 的命令
-4. **Agents**：加载 `agent-development` 以支持自主 MCP 工作流
+4. **代理**：加载 `agent-development` 以支持自主 MCP 工作流
 
 ### 构建代码智能插件
 
@@ -176,7 +176,7 @@ User wants to...
 ### 构建以技能为核心的插件
 
 1. **开始**：加载 `plugin-structure` 以建立基础结构
-2. **Skills**：加载 `skill-development` 以创建专业技能
+2. **技能**：加载 `skill-development` 以创建专业技能
 3. **验证**：使用 skill-reviewer agent 验证技能质量
 
 ## 可用代理（Agents）
