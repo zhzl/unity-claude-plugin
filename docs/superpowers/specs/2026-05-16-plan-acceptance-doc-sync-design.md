@@ -19,6 +19,7 @@ Superpowers 的长期工作流已经区分 `ROADMAP.md`、阶段规格和阶段�
 - 不新增后台同步机制。
 - 不新增 CLI 命令、schema validator 或自动扫描器。
 - 不改变 roadmap 的 manual-only 触发规则。
+- 不改变既有 roadmap discovery / brainstorming 边界规则；`new-roadmap` discovery 继续保留内置 brainstorming-lite。
 - 不允许子代理修改 roadmap 的目标、共享约束、phase 结构或 phase success criteria。
 - 不改变 `writing-plans` 生成计划的基础格式。
 

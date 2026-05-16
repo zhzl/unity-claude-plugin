@@ -56,6 +56,30 @@ assert_file_contains() {
     fi
 }
 
+assert_section_contains() {
+    local file="$1"
+    local section="$2"
+    local pattern="$3"
+    local test_name="$4"
+    local content
+
+    content=$(awk -v section="$section" '
+        $0 == section { in_section=1; next }
+        in_section && /^## / { exit }
+        in_section { print }
+    ' "$file")
+
+    if echo "$content" | grep -Fq -- "$pattern"; then
+        echo "  [PASS] $test_name"
+    else
+        echo "  [FAIL] $test_name"
+        echo "  Expected pattern: $pattern"
+        echo "  In section: $section"
+        echo "  In file: $file"
+        exit 1
+    fi
+}
+
 assert_file_exists "$SKILL" "Skill file exists"
 assert_file_exists "$REFERENCE" "Reference file exists"
 assert_file_exists "$DISCOVERY_REFERENCE" "Roadmap discovery reference exists"
@@ -92,19 +116,20 @@ assert_file_contains "$SKILL" "change-roadmap" "change-roadmap action documented
 
 echo ""
 echo "Test 2c: Acceptance-driven roadmap sync..."
-assert_file_contains "$SKILL" "最终验收通过后的事实性 roadmap 同步" "Final acceptance roadmap sync is documented"
-assert_file_contains "$SKILL" "验收同步允许更新的字段" "Allowed sync fields section exists"
-assert_file_contains "$SKILL" "Implementation Summary" "Implementation Summary can be synchronized"
-assert_file_contains "$SKILL" "Verification Evidence" "Verification Evidence can be synchronized"
-assert_file_contains "$SKILL" "Current State" "Current State can be synchronized"
-assert_file_contains "$SKILL" "Next Manual Action" "Next Manual Action can be synchronized"
-assert_file_contains "$SKILL" "Change Log" "Change Log can be synchronized"
-assert_file_contains "$SKILL" '不得修改 `Goal`' "Goal cannot be changed by sync"
-assert_file_contains "$SKILL" '不得修改 `Shared Constraints`' "Shared Constraints cannot be changed by sync"
-assert_file_contains "$SKILL" "不得修改 phase success criteria" "Phase success criteria cannot be changed by sync"
-assert_file_contains "$SKILL" "证据不足以覆盖 phase success criteria" "Insufficient evidence blocks completion"
-assert_file_contains "$SKILL" "不新增后台同步机制" "Background sync remains forbidden"
-assert_file_contains "$SKILL" "只报告问题并停止" "Structural changes stop sync"
+assert_file_contains "$SKILL" "## 验收同步规则" "Acceptance sync section exists"
+assert_section_contains "$SKILL" "## 验收同步规则" "最终验收通过后的事实性 roadmap 同步" "Final acceptance roadmap sync is documented"
+assert_section_contains "$SKILL" "## 验收同步规则" "验收同步允许更新的字段" "Allowed sync fields section exists"
+assert_section_contains "$SKILL" "## 验收同步规则" '- Phase Details 中对应 phase 的 `Implementation Summary`' "Implementation Summary can be synchronized"
+assert_section_contains "$SKILL" "## 验收同步规则" '- Phase Details 中对应 phase 的 `Verification Evidence`' "Verification Evidence can be synchronized"
+assert_section_contains "$SKILL" "## 验收同步规则" '- `Current State`' "Current State can be synchronized"
+assert_section_contains "$SKILL" "## 验收同步规则" '- `Next Manual Action`' "Next Manual Action can be synchronized"
+assert_section_contains "$SKILL" "## 验收同步规则" '- `Change Log`' "Change Log can be synchronized"
+assert_section_contains "$SKILL" "## 验收同步规则" '不得修改 `Goal`' "Goal cannot be changed by sync"
+assert_section_contains "$SKILL" "## 验收同步规则" '不得修改 `Shared Constraints`' "Shared Constraints cannot be changed by sync"
+assert_section_contains "$SKILL" "## 验收同步规则" "不得修改 phase success criteria" "Phase success criteria cannot be changed by sync"
+assert_section_contains "$SKILL" "## 验收同步规则" "证据不足以覆盖 phase success criteria" "Insufficient evidence blocks completion"
+assert_section_contains "$SKILL" "## 验收同步规则" "不新增后台同步机制" "Background sync remains forbidden"
+assert_section_contains "$SKILL" "## 验收同步规则" "只报告问题并停止" "Structural changes stop sync"
 
 echo ""
 echo "Test 2b: Roadmap discovery before drafting..."

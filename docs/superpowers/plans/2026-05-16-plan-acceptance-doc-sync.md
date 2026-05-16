@@ -29,6 +29,7 @@
 
 - 不修改 `plugins/superpowers/skills/writing-plans/SKILL.md`。
 - 不修改 roadmap reference 模板。
+- 不改变既有 roadmap discovery / brainstorming 边界规则；已有 `new-roadmap` discovery 内置 brainstorming-lite 规则继续保留。
 - 不新增 CLI 命令、schema validator、后台同步机制或自然触发测试。
 
 ---

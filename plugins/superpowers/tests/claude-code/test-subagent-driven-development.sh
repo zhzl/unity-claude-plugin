@@ -37,6 +37,8 @@ assert_file_contains "$SKILL" "不提前勾选后续任务" "Future tasks are no
 assert_file_contains "$SKILL" "主会话只检查 VCS diff" "Controller only verifies diff"
 assert_file_contains "$SKILL" "roadmap 同步子代理" "Roadmap sync subagent is documented"
 assert_file_contains "$SKILL" '读取 plan 头部的 `Roadmap` 和 `Phase` 字段' "Roadmap and Phase are read from plan header"
+assert_file_contains "$SKILL" "plan 头部包含 Roadmap 和 Phase?" "Roadmap sync is conditional in the flowchart"
+assert_file_contains "$SKILL" "跳过 roadmap 同步" "Roadmap sync has a skip path"
 assert_file_contains "$SKILL" "不主动查找 roadmap" "No proactive roadmap search"
 assert_file_contains "$SKILL" "证据不足时不得标记 completed" "Insufficient evidence blocks completed status"
 
@@ -68,7 +70,13 @@ else
     exit 1
 fi
 
-if assert_order "$skill_text" "分派最终代码审查子智能体审查整体实现" "分派 roadmap 同步子智能体更新 ROADMAP.md" "Roadmap sync after final review"; then
+if assert_order "$skill_text" "分派最终代码审查子智能体审查整体实现" "plan 头部包含 Roadmap 和 Phase?" "Roadmap metadata check after final review"; then
+    : # pass
+else
+    exit 1
+fi
+
+if assert_order "$skill_text" "plan 头部包含 Roadmap 和 Phase?" "分派 roadmap 同步子智能体按 plan 头部更新 ROADMAP.md" "Roadmap sync after metadata check"; then
     : # pass
 else
     exit 1

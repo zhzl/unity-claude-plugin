@@ -63,8 +63,10 @@ digraph process {
     "读取计划，提取所有任务的完整文本，记录上下文，创建 TodoWrite" [shape=box];
     "还有剩余任务?" [shape=diamond];
     "分派最终代码审查子智能体审查整体实现" [shape=box];
-    "分派 roadmap 同步子智能体更新 ROADMAP.md" [shape=box];
+    "plan 头部包含 Roadmap 和 Phase?" [shape=diamond];
+    "分派 roadmap 同步子智能体按 plan 头部更新 ROADMAP.md" [shape=box];
     "主会话检查 roadmap VCS diff" [shape=box];
+    "跳过 roadmap 同步" [shape=box];
     "使用 superpowers:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
 
     "读取计划，提取所有任务的完整文本，记录上下文，创建 TodoWrite" -> "分派实现子智能体 (./implementer-prompt.md)";
@@ -86,9 +88,12 @@ digraph process {
     "在 TodoWrite 中标记任务完成" -> "还有剩余任务?";
     "还有剩余任务?" -> "分派实现子智能体 (./implementer-prompt.md)" [label="是"];
     "还有剩余任务?" -> "分派最终代码审查子智能体审查整体实现" [label="否"];
-    "分派最终代码审查子智能体审查整体实现" -> "分派 roadmap 同步子智能体更新 ROADMAP.md";
-    "分派 roadmap 同步子智能体更新 ROADMAP.md" -> "主会话检查 roadmap VCS diff";
+    "分派最终代码审查子智能体审查整体实现" -> "plan 头部包含 Roadmap 和 Phase?";
+    "plan 头部包含 Roadmap 和 Phase?" -> "分派 roadmap 同步子智能体按 plan 头部更新 ROADMAP.md" [label="是"];
+    "plan 头部包含 Roadmap 和 Phase?" -> "跳过 roadmap 同步" [label="否"];
+    "分派 roadmap 同步子智能体按 plan 头部更新 ROADMAP.md" -> "主会话检查 roadmap VCS diff";
     "主会话检查 roadmap VCS diff" -> "使用 superpowers:finishing-a-development-branch";
+    "跳过 roadmap 同步" -> "使用 superpowers:finishing-a-development-branch";
 }
 ```
 
@@ -111,7 +116,7 @@ digraph process {
 
 ### 最终 roadmap 同步
 
-所有任务完成并通过最终代码审查后，分派 roadmap 同步子代理更新 `ROADMAP.md`。
+所有任务完成并通过最终代码审查后，先检查 plan 头部是否包含 `Roadmap` 和 `Phase` 字段；只有包含时，才分派 roadmap 同步子代理更新 `ROADMAP.md`。没有这些字段时，跳过 roadmap 同步并进入收尾。
 
 roadmap 同步子代理必须遵守：
 
