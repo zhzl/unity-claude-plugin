@@ -1,16 +1,16 @@
 # Advanced Workflow Patterns
 
-Multi-step command sequences and composition patterns for complex workflows.
+复杂 workflow 的多步骤 command 序列与组合模式。
 
-## Overview
+## 概述
 
-Advanced workflows combine multiple commands, coordinate state across invocations, and create sophisticated automation sequences. These patterns enable building complex functionality from simple command building blocks.
+高级 workflow 会组合多个 command、在多次调用之间协调状态，并创建更复杂的自动化序列。这些模式支持用简单的 command 构建块搭建复杂功能。
 
 ## Multi-Step Command Patterns
 
 ### Sequential Workflow Command
 
-Commands that guide users through multi-step processes:
+引导用户完成多步骤流程的 command：
 
 ```markdown
 ---
@@ -62,16 +62,16 @@ Would you like to:
 Reply with your choice and I'll help complete the action.
 ```
 
-**Key features:**
+**关键特性：**
 
-- Numbered steps for clarity
-- Bash execution for context
-- Decision points for user input
-- Next action suggestions
+- 用编号步骤提升清晰度
+- 通过 Bash 执行获取上下文
+- 为用户输入设置决策点
+- 提供下一步操作建议
 
 ### State-Carrying Workflow
 
-Commands that maintain state between invocations:
+在多次调用之间维护状态的 command：
 
 ```markdown
 ---
@@ -113,7 +113,7 @@ Next steps:
 State saved. Run `/deploy-test` to continue.
 ```
 
-**Next command** (`/deploy-test`):
+**下一个 command**（`/deploy-test`）：
 
 ```markdown
 ---
@@ -130,16 +130,16 @@ Updating state to 'tested'...
 Tests complete. Run `/deploy-build` to continue.
 ```
 
-**Pattern benefits:**
+**模式收益：**
 
-- Persistent state across commands
-- Clear workflow progression
-- Safety checkpoints
-- Resume capability
+- 在多个 command 之间持久化状态
+- 清晰的 workflow 推进路径
+- 安全检查点
+- 可恢复能力
 
 ### Conditional Workflow Branching
 
-Commands that adapt based on conditions:
+根据条件自适应的 command：
 
 ```markdown
 ---
@@ -184,7 +184,7 @@ Ready to deploy? (yes/no)
 
 ### Command Chaining
 
-Commands designed to work together:
+设计为协同工作的 command：
 
 ```markdown
 ---
@@ -207,17 +207,17 @@ I'll compile results and prepare comprehensive review materials.
 Starting sequence...
 ```
 
-**Individual commands** are simple:
+**单个 command** 保持简单：
 
-- `/format-code` - Just formats
-- `/lint-code` - Just lints
-- `/test-all` - Just tests
+- `/format-code` - 只负责格式化
+- `/lint-code` - 只负责 lint
+- `/test-all` - 只负责测试
 
-**Composition command** orchestrates them.
+**组合 command** 负责 orchestration。
 
 ### Pipeline Pattern
 
-Commands that process output from previous commands:
+处理前一个 command 输出的 command：
 
 ```markdown
 ---
@@ -263,7 +263,7 @@ Would you like me to:
 
 ### Parallel Execution Pattern
 
-Commands that coordinate multiple simultaneous operations:
+协调多个并行操作的 command：
 
 ```markdown
 ---
@@ -300,9 +300,9 @@ Details:
 
 ## Workflow State Management
 
-### Using .local.md Files
+### 使用 .local.md 文件
 
-Store workflow state in plugin-specific files:
+将 workflow 状态存储在 plugin 专用文件中：
 
 ```markdown
 .claude/plugin-name-workflow.local.md:
@@ -338,7 +338,7 @@ Pending steps:
 - Smoke tests
 ```
 
-**Reading state in commands:**
+**在 command 中读取状态：**
 
 ```markdown
 ---
@@ -357,7 +357,7 @@ Next action based on state: [determined action]
 
 ### Workflow Recovery
 
-Handle interrupted workflows:
+处理中断的 workflow：
 
 ```markdown
 ---
@@ -390,7 +390,7 @@ Which would you like? (1/2/3)
 
 ### Cross-Command Communication
 
-Commands that signal each other:
+相互发出信号的 command：
 
 ```markdown
 ---
@@ -413,7 +413,7 @@ This signals other commands that feature is ready for:
 Feature marked complete.
 ```
 
-**Other commands check for flag:**
+**其他 command 检查 flag：**
 
 ```markdown
 ---
@@ -430,7 +430,7 @@ If the flag exists, include the completed feature in the release notes.
 
 ### Workflow Locking
 
-Prevent concurrent workflow execution:
+防止并发执行 workflow：
 
 ```markdown
 ---
@@ -455,7 +455,7 @@ Deployment started. Lock created.
 [Proceed with deployment]
 ```
 
-**Lock cleanup:**
+**清理 lock：**
 
 ```markdown
 ---
@@ -628,36 +628,36 @@ If any step fails, resume with:
 
 ### Workflow Design
 
-1. **Clear progression**: Number steps, show current position
-2. **Explicit state**: Don't rely on implicit state
-3. **User control**: Provide decision points
-4. **Error recovery**: Handle failures gracefully
-5. **Progress indication**: Show what's done, what's pending
+1. **清晰推进**：给步骤编号，显示当前位置
+2. **显式状态**：不要依赖隐式状态
+3. **用户控制**：提供决策点
+4. **错误恢复**：优雅处理失败
+5. **进度提示**：显示已完成与待处理事项
 
 ### Command Composition
 
-1. **Single responsibility**: Each command does one thing well
-2. **Composable design**: Commands work together easily
-3. **Standard interfaces**: Consistent input/output formats
-4. **Loose coupling**: Commands don't depend on each other's internals
+1. **单一职责**：每个 command 把一件事做好
+2. **可组合设计**：command 易于协同工作
+3. **标准接口**：保持一致的输入/输出格式
+4. **松耦合**：command 不依赖彼此的内部实现
 
 ### State Management
 
-1. **Persistent state**: Use .local.md files
-2. **Atomic updates**: Write complete state files atomically
-3. **State validation**: Check state file format/completeness
-4. **Cleanup**: Remove stale state files
-5. **Documentation**: Document state file formats
+1. **持久化状态**：使用 .local.md 文件
+2. **原子更新**：以原子方式写入完整状态文件
+3. **状态 validation**：检查状态文件格式与完整性
+4. **清理**：移除过期状态文件
+5. **文档化**：记录状态文件格式
 
 ### Error Handling
 
-1. **Fail fast**: Detect errors early
-2. **Clear messages**: Explain what went wrong
-3. **Recovery options**: Provide clear next steps
-4. **State preservation**: Keep state for recovery
-5. **Rollback capability**: Support undoing changes
+1. **快速失败**：尽早检测错误
+2. **清晰消息**：解释哪里出了问题
+3. **恢复选项**：提供明确的下一步
+4. **状态保留**：保留状态以便恢复
+5. **Rollback 能力**：支持撤销变更
 
-## Example: Complete Deployment Workflow
+## 示例：完整 Deployment Workflow
 
 ### Initialize Command
 
@@ -745,4 +745,4 @@ rm .claude/deployment-state.local.md
 Deployment workflow complete.
 ```
 
-This complete workflow demonstrates state management, sequential execution, error handling, and clean separation of concerns across multiple commands.
+这个完整 workflow 展示了如何在多个 command 之间进行 state management、顺序执行、error handling，以及清晰的职责分离。

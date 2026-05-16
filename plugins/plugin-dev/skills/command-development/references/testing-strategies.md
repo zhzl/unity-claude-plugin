@@ -1,22 +1,22 @@
 # Command Testing Strategies
 
-Comprehensive strategies for testing slash commands before deployment and distribution.
+在部署和分发前测试 slash commands 的综合策略。
 
-## Overview
+## 概述
 
-Testing commands ensures they work correctly, handle edge cases, and provide good user experience. A systematic testing approach catches issues early and builds confidence in command reliability.
+测试 command 可确保它们行为正确、能处理边界情况，并提供良好的用户体验。系统化测试方法能尽早发现问题，并增强对 command 可靠性的信心。
 
 ## Testing Levels
 
 ### Level 1: Syntax and Structure Validation
 
-**What to test:**
+**测试内容：**
 
-- YAML frontmatter syntax
-- Markdown format
-- File location and naming
+- YAML frontmatter 语法
+- Markdown 格式
+- 文件位置与命名
 
-**How to test:**
+**测试方法：**
 
 ```bash
 # Validate YAML frontmatter
@@ -32,7 +32,7 @@ ls .claude/commands/*.md
 test -f .claude/commands/my-command.md && echo "Found" || echo "Missing"
 ```
 
-**Automated validation script:**
+**自动 validation 脚本：**
 
 ```bash
 #!/bin/bash
@@ -72,13 +72,13 @@ echo "✓ Command file structure valid"
 
 ### Level 2: Frontmatter Field Validation
 
-**What to test:**
+**测试内容：**
 
-- Field types correct
-- Values in valid ranges
-- Required fields present (if any)
+- 字段类型正确
+- 值在有效范围内
+- 存在必需字段（如适用）
 
-**Validation script:**
+**Validation 脚本：**
 
 ```bash
 #!/bin/bash
@@ -126,13 +126,13 @@ echo "✓ Frontmatter fields valid"
 
 ### Level 3: Manual Command Invocation
 
-**What to test:**
+**测试内容：**
 
-- Command appears in `/help`
-- Command executes without errors
-- Output is as expected
+- Command 出现在 `/help` 中
+- Command 执行无错误
+- 输出符合预期
 
-**Test procedure:**
+**测试流程：**
 
 ```bash
 # 1. Start Claude Code
@@ -157,25 +157,25 @@ tail -f ~/.claude/debug-logs/latest
 
 ### Level 4: Argument Testing
 
-**What to test:**
+**测试内容：**
 
-- Positional arguments work ($1, $2, etc.)
-- $ARGUMENTS captures all arguments
-- Missing arguments handled gracefully
-- Invalid arguments detected
+- 位置参数可用（$1、$2 等）
+- $ARGUMENTS 捕获所有参数
+- 缺失参数能优雅处理
+- 无效参数能被检测
 
-**Test matrix:**
+**测试矩阵：**
 
-| Test Case     | Command                  | Expected Result                              |
+| 测试用例 | Command | 预期结果 |
 | ------------- | ------------------------ | -------------------------------------------- |
-| No args       | `/cmd`                   | Graceful handling or useful message          |
-| One arg       | `/cmd arg1`              | $1 substituted correctly                     |
-| Two args      | `/cmd arg1 arg2`         | $1 and $2 substituted                        |
-| Extra args    | `/cmd a b c d`           | All captured or extras ignored appropriately |
-| Special chars | `/cmd "arg with spaces"` | Quotes handled correctly                     |
-| Empty arg     | `/cmd ""`                | Empty string handled                         |
+| 无参数 | `/cmd` | 优雅处理或给出有用消息 |
+| 一个参数 | `/cmd arg1` | $1 被正确替换 |
+| 两个参数 | `/cmd arg1 arg2` | $1 和 $2 被替换 |
+| 额外参数 | `/cmd a b c d` | 全部捕获或适当忽略额外参数 |
+| 特殊字符 | `/cmd "arg with spaces"` | 正确处理引号 |
+| 空参数 | `/cmd ""` | 处理空字符串 |
 
-**Test script:**
+**测试脚本：**
 
 ```bash
 #!/bin/bash
@@ -212,14 +212,14 @@ echo "  Manual test required"
 
 ### Level 5: File Reference Testing
 
-**What to test:**
+**测试内容：**
 
-- @ syntax loads file contents
-- Non-existent files handled
-- Large files handled appropriately
-- Multiple file references work
+- @ 语法能加载文件内容
+- 不存在的文件能被处理
+- 大文件能被适当处理
+- 多个文件引用可用
 
-**Test procedure:**
+**测试流程：**
 
 ```bash
 # Create isolated test files
@@ -252,14 +252,14 @@ PY
 
 ### Level 6: Bash Execution Testing
 
-**What to test:**
+**测试内容：**
 
-- Literal `!` command syntax executes correctly in command files
-- Command output included in prompt
-- Command failures handled
-- Security: only allowed commands run
+- command 文件中的字面 `!` command 语法能正确执行
+- command 输出被包含进 prompt
+- command 失败能被处理
+- 安全性：只运行允许的 command
 
-**Test procedure:**
+**测试流程：**
 
 ```bash
 # Create test command with bash execution
@@ -298,14 +298,14 @@ EOF
 
 ### Level 7: Integration Testing
 
-**What to test:**
+**测试内容：**
 
-- Commands work with other plugin components
-- Commands interact correctly with each other
-- State management works across invocations
-- Workflow commands execute in sequence
+- Command 能与其他 plugin 组件协同工作
+- Command 之间交互正确
+- 多次调用之间的 state management 可用
+- Workflow command 按顺序执行
 
-**Test scenarios:**
+**测试场景：**
 
 #### Scenario 1: Command + Hook Integration
 
@@ -351,7 +351,7 @@ EOF
 
 ### Command Test Suite
 
-Create a test suite script:
+创建测试套件脚本：
 
 ```bash
 #!/bin/bash
@@ -396,7 +396,7 @@ exit $FAILED_TESTS
 
 ### Pre-Commit Hook
 
-Validate commands before committing:
+提交前 validation command：
 
 ```bash
 #!/bin/bash
@@ -425,7 +425,7 @@ echo "✓ All commands valid"
 
 ### Continuous Testing
 
-Test commands in CI/CD:
+在 CI/CD 中测试 command：
 
 ```yaml
 # .github/workflows/test-commands.yml
@@ -464,14 +464,14 @@ jobs:
 
 ### Test Edge Cases
 
-**Empty arguments:**
+**空参数：**
 
 ```bash
 > /cmd ""
 > /cmd '' ''
 ```
 
-**Special characters:**
+**特殊字符：**
 
 ```bash
 > /cmd "arg with spaces"
@@ -481,13 +481,13 @@ jobs:
 > /cmd 'arg with "quotes"'
 ```
 
-**Long arguments:**
+**长参数：**
 
 ```bash
 > /cmd $(python -c "print('a' * 10000)")
 ```
 
-**Unusual file paths:**
+**不常见文件路径：**
 
 ```bash
 > /cmd ./file
@@ -496,7 +496,7 @@ jobs:
 > /cmd "/path with spaces/file"
 ```
 
-**Bash command edge cases:**
+**Bash command 边界情况：**
 
 ```markdown
 # Commands that might fail
@@ -562,18 +562,18 @@ watch -n 1 'ps aux | grep claude'
 
 ### Usability Checklist
 
-- [ ] Command name is intuitive
-- [ ] Description is clear in `/help`
-- [ ] Arguments are well-documented
-- [ ] Error messages are helpful
-- [ ] Output is formatted readably
-- [ ] Long-running commands show progress
-- [ ] Results are actionable
-- [ ] Edge cases have good UX
+- [ ] Command 名称直观
+- [ ] `/help` 中的 description 清晰
+- [ ] 参数文档完善
+- [ ] 错误消息有帮助
+- [ ] 输出格式易读
+- [ ] 长时间运行的 command 显示进度
+- [ ] 结果可执行
+- [ ] 边界情况有良好 UX
 
 ### User Acceptance Testing
 
-Recruit testers:
+招募测试者：
 
 ```markdown
 # Testing Guide for Beta Testers
@@ -607,53 +607,53 @@ Recruit testers:
 
 ## Testing Checklist
 
-Before releasing a command:
+发布 command 前：
 
 ### Structure
 
-- [ ] File in correct location
-- [ ] Correct .md extension
-- [ ] Valid YAML frontmatter (if present)
-- [ ] Markdown syntax correct
+- [ ] 文件位于正确位置
+- [ ] .md 扩展名正确
+- [ ] YAML frontmatter 有效（如存在）
+- [ ] Markdown 语法正确
 
 ### Functionality
 
-- [ ] Command appears in `/help`
-- [ ] Description is clear
-- [ ] Command executes without errors
-- [ ] Arguments work as expected
-- [ ] File references work
-- [ ] Bash execution works (if used)
+- [ ] Command 出现在 `/help` 中
+- [ ] Description 清晰
+- [ ] Command 执行无错误
+- [ ] 参数按预期工作
+- [ ] 文件引用可用
+- [ ] Bash 执行可用（如使用）
 
 ### Edge Cases
 
-- [ ] Missing arguments handled
-- [ ] Invalid arguments detected
-- [ ] Non-existent files handled
-- [ ] Special characters work
-- [ ] Long inputs handled
+- [ ] 缺失参数得到处理
+- [ ] 无效参数被检测
+- [ ] 不存在的文件得到处理
+- [ ] 特殊字符可用
+- [ ] 长输入得到处理
 
 ### Integration
 
-- [ ] Works with other commands
-- [ ] Works with hooks (if applicable)
-- [ ] Works with MCP (if applicable)
-- [ ] State management works
+- [ ] 可与其他 command 协同工作
+- [ ] 可与 hooks 协同工作（如适用）
+- [ ] 可与 MCP 协同工作（如适用）
+- [ ] State management 可用
 
 ### Quality
 
-- [ ] Performance acceptable
-- [ ] No security issues
-- [ ] Error messages helpful
-- [ ] Output formatted well
-- [ ] Documentation complete
+- [ ] 性能可接受
+- [ ] 无安全问题
+- [ ] 错误消息有帮助
+- [ ] 输出格式良好
+- [ ] 文档完整
 
 ### Distribution
 
-- [ ] Tested by others
-- [ ] Feedback incorporated
-- [ ] README updated
-- [ ] Examples provided
+- [ ] 已由他人测试
+- [ ] 已纳入反馈
+- [ ] README 已更新
+- [ ] 已提供示例
 
 ## Debugging Failed Tests
 
@@ -716,10 +716,10 @@ chmod 644 /path/to/referenced/file
 
 ## Best Practices
 
-1. **Test early, test often**: Validate as you develop
-2. **Automate validation**: Use scripts for repeatable checks
-3. **Test edge cases**: Don't just test the happy path
-4. **Get feedback**: Have others test before wide release
-5. **Document tests**: Keep test scenarios for regression testing
-6. **Monitor in production**: Watch for issues after release
-7. **Iterate**: Improve based on real usage data
+1. **尽早测试，经常测试**：开发过程中持续 validation
+2. **自动化 validation**：使用脚本进行可重复检查
+3. **测试边界情况**：不要只测试 happy path
+4. **获取反馈**：广泛发布前让他人测试
+5. **记录测试**：保留测试场景用于 regression testing
+6. **生产中监控**：发布后关注问题
+7. **迭代**：根据真实使用数据改进

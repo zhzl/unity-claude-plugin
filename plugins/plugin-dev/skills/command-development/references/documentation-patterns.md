@@ -1,10 +1,10 @@
 # Command Documentation Patterns
 
-Strategies for creating self-documenting, maintainable commands with excellent user experience.
+创建自文档化、可维护且具备优秀用户体验的 command 的策略。
 
-## Overview
+## 概述
 
-Well-documented commands are easier to use, maintain, and distribute. Documentation should be embedded in the command itself, making it immediately accessible to users and maintainers.
+文档完善的 command 更易使用、维护和分发。文档应嵌入 command 本身，让用户和维护者能立即访问。
 
 ## Self-Documenting Command Structure
 
@@ -72,54 +72,54 @@ CHANGELOG:
 
 ### Documentation Comment Sections
 
-**PURPOSE**: Why the command exists
+**PURPOSE**：command 存在的原因
 
-- Problem it solves
-- Use cases
-- When to use vs when not to use
+- 它解决的问题
+- 使用场景
+- 何时使用以及何时不应使用
 
-**USAGE**: Basic syntax
+**USAGE**：基本语法
 
-- Command invocation pattern
-- Required vs optional arguments
-- Default values
+- Command 调用模式
+- 必需参数与可选参数
+- 默认值
 
-**ARGUMENTS**: Detailed argument documentation
+**ARGUMENTS**：详细参数文档
 
-- Each argument described
-- Type information
-- Valid values/ranges
-- Defaults
+- 描述每个参数
+- 类型信息
+- 有效值/范围
+- 默认值
 
-**EXAMPLES**: Concrete usage examples
+**EXAMPLES**：具体用法示例
 
-- Common use cases
-- Edge cases
-- Expected outputs
+- 常见使用场景
+- 边界情况
+- 预期输出
 
-**REQUIREMENTS**: Prerequisites
+**REQUIREMENTS**：前置条件
 
-- Dependencies
-- Permissions
-- Environmental setup
+- 依赖项
+- 权限
+- 环境设置
 
-**RELATED COMMANDS**: Connections
+**RELATED COMMANDS**：关联项
 
-- Similar commands
-- Complementary commands
-- Alternative approaches
+- 相似 command
+- 互补 command
+- 替代方案
 
-**TROUBLESHOOTING**: Common issues
+**TROUBLESHOOTING**：常见问题
 
-- Known problems
-- Solutions
-- Workarounds
+- 已知问题
+- 解决方案
+- 变通方法
 
-**CHANGELOG**: Version history
+**CHANGELOG**：版本历史
 
-- What changed when
-- Breaking changes highlighted
-- Migration guidance
+- 何时变更了什么
+- 突出显示 breaking changes
+- 迁移指引
 
 ## In-Line Documentation Patterns
 
@@ -244,7 +244,7 @@ Proceeding with deployment...
 
 ### Built-in Help Command
 
-Create a help subcommand for complex commands:
+为复杂 command 创建 help subcommand：
 
 ```markdown
 ---
@@ -284,7 +284,7 @@ fi
 
 ### Contextual Help
 
-Provide help based on context:
+根据上下文提供帮助：
 
 ```markdown
 ---
@@ -626,7 +626,7 @@ RELATED FILES:
 
 ## README Documentation
 
-Commands should have companion README files:
+Command 应配套 README 文件：
 
 ```markdown
 # Command Name
@@ -720,50 +720,50 @@ MIT License - see `LICENSE` if your plugin provides one.
 
 ### Documentation Principles
 
-1. **Write for your future self**: Assume you'll forget details
-2. **Examples before explanations**: Show, then tell
-3. **Progressive disclosure**: Basic info first, details available
-4. **Keep it current**: Update docs when code changes
-5. **Test your docs**: Verify examples actually work
+1. **为未来的自己而写**：假设你会忘记细节
+2. **示例先于解释**：先展示，再说明
+3. **渐进式披露**：先给基础信息，再提供细节
+4. **保持最新**：代码变更时同步更新文档
+5. **测试文档**：确认示例确实可用
 
 ### Documentation Locations
 
-1. **In command file**: Core usage, examples, inline explanations
-2. **README**: Installation, configuration, troubleshooting
-3. **Separate docs**: Detailed guides, tutorials, API reference
-4. **Comments**: Implementation details for maintainers
+1. **Command 文件内**：核心用法、示例、inline explanations
+2. **README**：安装、配置、troubleshooting
+3. **独立文档**：详细指南、教程、API reference
+4. **注释**：面向维护者的实现细节
 
 ### Documentation Style
 
-1. **Clear and concise**: No unnecessary words
-2. **Active voice**: "Run the command" not "The command can be run"
-3. **Consistent terminology**: Use same terms throughout
-4. **Formatted well**: Use headings, lists, code blocks
-5. **Accessible**: Assume reader is beginner
+1. **清晰简洁**：不要有多余文字
+2. **主动语态**：使用“运行 command”，而不是“command 可以被运行”
+3. **术语一致**：全文使用相同术语
+4. **格式良好**：使用标题、列表和 code blocks
+5. **易于理解**：假设读者是初学者
 
 ### Documentation Maintenance
 
-1. **Version everything**: Track what changed when
-2. **Deprecate gracefully**: Warn before removing features
-3. **Migration guides**: Help users upgrade
-4. **Archive old docs**: Keep old versions accessible
-5. **Review regularly**: Ensure docs match reality
+1. **一切都版本化**：跟踪何时变更了什么
+2. **优雅废弃**：移除功能前先警告
+3. **迁移指南**：帮助用户升级
+4. **归档旧文档**：保留旧版本可访问
+5. **定期审查**：确保文档符合现实
 
 ## Documentation Checklist
 
-Before releasing a command:
+发布 command 前：
 
-- [ ] Description in frontmatter is clear
-- [ ] argument-hint documents all arguments
-- [ ] Usage examples in comments
-- [ ] Common use cases shown
-- [ ] Error messages are helpful
-- [ ] Requirements documented
-- [ ] Related commands listed
-- [ ] Changelog maintained
-- [ ] Version number updated
-- [ ] README created/updated
-- [ ] Examples actually work
-- [ ] Troubleshooting section complete
+- [ ] frontmatter 中的 description 清晰
+- [ ] argument-hint 记录了所有参数
+- [ ] 注释中有用法示例
+- [ ] 展示了常见使用场景
+- [ ] 错误消息有帮助
+- [ ] 记录了 requirements
+- [ ] 列出了 related commands
+- [ ] 维护了 changelog
+- [ ] 更新了版本号
+- [ ] 创建/更新了 README
+- [ ] 示例确实可用
+- [ ] troubleshooting 部分完整
 
-With good documentation, commands become self-service, reducing support burden and improving user experience.
+有了良好文档，command 就能变成自助式工具，减少支持负担并改善用户体验。

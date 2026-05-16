@@ -1,10 +1,10 @@
 # Plugin Integration Patterns
 
-Commands can integrate with other plugin components for powerful workflows.
+Command 可以与其他 plugin 组件集成，形成强大的 workflow。
 
 ## Agent Integration
 
-Launch plugin agents for complex tasks:
+为复杂任务启动 plugin agent：
 
 ```markdown
 ---
@@ -27,16 +27,16 @@ Agent uses plugin resources:
 - ${CLAUDE_PLUGIN_ROOT}/checklists/review.md
 ```
 
-**Key points:**
+**关键点：**
 
-- Agent must exist in `plugin/agents/` directory
-- Claude uses the Agent tool to launch the agent
-- Document agent capabilities
-- Reference plugin resources agent uses
+- Agent 必须存在于 `plugin/agents/` 目录
+- Claude 使用 Agent tool 启动 agent
+- 记录 agent 能力
+- 引用 agent 使用的 plugin resources
 
 ## Skill Integration
 
-Leverage plugin skills for specialized knowledge:
+利用 plugin skill 获取专门知识：
 
 ```markdown
 ---
@@ -56,27 +56,27 @@ Use the api-docs-standards skill to ensure:
 Generate production-ready API docs.
 ```
 
-**Key points:**
+**关键点：**
 
-- Skill must exist in `plugin/skills/` directory
-- Mention skill name to trigger invocation
-- Document skill purpose
-- Explain what skill provides
+- Skill 必须存在于 `plugin/skills/` 目录
+- 提及 skill 名称以触发调用
+- 记录 skill 用途
+- 解释 skill 提供什么能力
 
 ## Hook Coordination
 
-Design commands that work with plugin hooks:
+设计能与 plugin hooks 协同工作的 command：
 
-- Commands can prepare state for hooks to process
-- Hooks execute automatically on tool events
-- Commands should document expected hook behavior
-- Guide Claude on interpreting hook output
+- Command 可以为 hooks 准备待处理状态
+- Hooks 会在 tool 事件上自动执行
+- Command 应记录预期的 hook 行为
+- 指导 Claude 如何解读 hook 输出
 
-See `plugin-features-reference.md` for examples of commands that coordinate with hooks.
+有关与 hooks 协调的 command 示例，请参阅 `plugin-features-reference.md`。
 
 ## Multi-Component Workflows
 
-Combine agents, skills, and scripts:
+组合 agents、skills 和 scripts：
 
 ```markdown
 ---
@@ -102,16 +102,16 @@ Template: @${CLAUDE_PLUGIN_ROOT}/templates/review.md
 Compile findings into report following template.
 ```
 
-**When to use:**
+**适用场景：**
 
-- Complex multi-step workflows
-- Leverage multiple plugin capabilities
-- Require specialized analysis
-- Need structured outputs
+- 复杂的多步骤 workflow
+- 利用多个 plugin capabilities
+- 需要专门分析
+- 需要结构化输出
 
 ## Validation Patterns
 
-Commands should validate inputs and resources before processing.
+Command 应在处理前 validation 输入和资源。
 
 ### Argument Validation
 
@@ -183,9 +183,9 @@ Suggest likely causes
 Provide troubleshooting steps
 ```
 
-**Best practices:**
+**Best practices：**
 
-- Validate early in command
-- Provide helpful error messages
-- Suggest corrective actions
-- Handle edge cases gracefully
+- 在 command 早期进行 validation
+- 提供有帮助的错误消息
+- 建议纠正操作
+- 优雅处理边界情况

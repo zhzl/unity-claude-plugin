@@ -1,16 +1,16 @@
 # Marketplace Considerations for Commands
 
-Guidelines for creating commands designed for distribution and marketplace success.
+创建面向分发且能在 marketplace 成功的 command 的指南。
 
-## Overview
+## 概述
 
-Commands distributed through marketplaces need additional consideration beyond personal use commands. They must work across environments, handle diverse use cases, and provide excellent user experience for unknown users.
+通过 marketplace 分发的 command 需要考虑个人自用 command 之外的额外因素。它们必须能跨环境工作、处理多样化使用场景，并为陌生用户提供优秀体验。
 
 ## Design for Distribution
 
 ### Universal Compatibility
 
-**Cross-platform considerations:**
+**跨平台注意事项：**
 
 ```markdown
 ---
@@ -30,7 +30,7 @@ Set platform-specific values based on the result:
 [Platform-appropriate implementation...]
 ```
 
-**Avoid platform-specific commands:**
+**避免平台特定 command：**
 
 ```markdown
 <!-- BAD: macOS-specific -->
@@ -42,7 +42,7 @@ Set platform-specific values based on the result:
 
 ### Minimal Dependencies
 
-**Check for required tools:**
+**检查必需工具：**
 
 ```markdown
 ---
@@ -77,7 +77,7 @@ If all dependencies are available, continue.
 [Continue with command...]
 ```
 
-**Document optional dependencies:**
+**记录可选依赖：**
 
 ```markdown
 <!--
@@ -96,7 +96,7 @@ DEPENDENCIES:
 
 ### Graceful Degradation
 
-**Handle missing features:**
+**处理缺失功能：**
 
 ```markdown
 ---
@@ -139,7 +139,7 @@ fi
 
 ### Clear Onboarding
 
-**First-run experience:**
+**首次运行体验：**
 
 ```markdown
 ---
@@ -176,7 +176,7 @@ fi
 [Normal command execution...]
 ```
 
-**Progressive feature discovery:**
+**渐进式功能发现：**
 
 ```markdown
 ---
@@ -199,7 +199,7 @@ For more tips: /command tips
 
 ### Comprehensive Error Handling
 
-**Anticipate user mistakes:**
+**预判用户错误：**
 
 ```markdown
 ---
@@ -239,7 +239,7 @@ fi
 [Command continues...]
 ```
 
-**Helpful diagnostics:**
+**有帮助的诊断信息：**
 
 ```markdown
 ---
@@ -274,7 +274,7 @@ For support, include the above diagnostics.
 
 ### Namespace Awareness
 
-**Avoid name collisions:**
+**避免名称冲突：**
 
 ```markdown
 ---
@@ -301,7 +301,7 @@ Reasoning: Clearest ownership, least likely to conflict
 [Implementation...]
 ```
 
-**Document naming rationale:**
+**记录命名理由：**
 
 ```markdown
 <!--
@@ -323,7 +323,7 @@ Final choice balances:
 
 ### Configurability
 
-**User preferences:**
+**用户偏好：**
 
 ```markdown
 ---
@@ -346,7 +346,7 @@ If it exists, parse YAML frontmatter for `verbose`, `color`, and `max_results`; 
 [Use configuration in command...]
 ```
 
-**Sensible defaults:**
+**合理默认值：**
 
 ```markdown
 ---
@@ -382,7 +382,7 @@ verbose: true
 
 ### Version Compatibility
 
-**Version checking:**
+**版本检查：**
 
 ```markdown
 ---
@@ -424,7 +424,7 @@ fi
 [Command continues...]
 ```
 
-**Deprecation warnings:**
+**弃用警告：**
 
 ```markdown
 ---
@@ -457,7 +457,7 @@ fi
 
 ### Command Discovery
 
-**Descriptive naming:**
+**描述性命名：**
 
 ```markdown
 ---
@@ -475,7 +475,7 @@ description: Do the thing
 <!-- BAD: Vague description -->
 ```
 
-**Searchable keywords:**
+**可搜索关键词：**
 
 ```markdown
 <!--
@@ -488,7 +488,7 @@ for related functionality in the marketplace.
 
 ### Showcase Examples
 
-**Compelling demonstrations:**
+**有吸引力的演示：**
 
 ```markdown
 ---
@@ -544,7 +544,7 @@ Ready to analyze your code...
 
 ### User Reviews and Feedback
 
-**Feedback mechanism:**
+**反馈机制：**
 
 ```markdown
 ---
@@ -575,7 +575,7 @@ Reply with an emoji or:
 Your feedback matters!
 ```
 
-**Usage analytics preparation:**
+**Usage analytics 准备：**
 
 ```markdown
 <!--
@@ -598,7 +598,7 @@ Privacy-preserving:
 
 ### Professional Polish
 
-**Consistent branding:**
+**一致的品牌呈现：**
 
 ```markdown
 ---
@@ -622,7 +622,7 @@ Part of the [Plugin Name] suite
 Powered by Plugin Name v2.1.0
 ```
 
-**Attention to detail:**
+**关注细节：**
 
 ```markdown
 <!-- Details that matter -->
@@ -638,7 +638,7 @@ Powered by Plugin Name v2.1.0
 
 ### Reliability
 
-**Idempotency:**
+**幂等性：**
 
 ```markdown
 ---
@@ -672,7 +672,7 @@ Marking complete...
 echo "$(date)" > .claude/operation-completed.flag
 ```
 
-**Atomic operations:**
+**原子操作：**
 
 ```markdown
 ---
@@ -745,7 +745,7 @@ Support:
 
 ### Beta Testing
 
-**Beta release approach:**
+**Beta 发布方式：**
 
 ```markdown
 ---
@@ -792,7 +792,7 @@ Your feedback helps make this command better.
 
 ### Update Strategy
 
-**Versioned commands:**
+**版本化 command：**
 
 ```markdown
 <!--
@@ -820,7 +820,7 @@ Release schedule:
 -->
 ```
 
-**Update notifications:**
+**更新通知：**
 
 ```markdown
 ---
@@ -857,26 +857,26 @@ fi
 
 ### Distribution Design
 
-1. **Universal**: Works across platforms and environments
-2. **Self-contained**: Minimal dependencies, clear requirements
-3. **Graceful**: Degrades gracefully when features unavailable
-4. **Forgiving**: Anticipates and handles user mistakes
-5. **Helpful**: Clear errors, good defaults, excellent docs
+1. **通用**：可跨平台和环境工作
+2. **自包含**：最少依赖，requirements 清晰
+3. **优雅**：功能不可用时能 graceful degradation
+4. **宽容**：预判并处理用户错误
+5. **有帮助**：错误清晰，默认值合理，文档优秀
 
 ### Marketplace Success
 
-1. **Discoverable**: Clear name, good description, searchable keywords
-2. **Professional**: Polished presentation, consistent branding
-3. **Reliable**: Tested thoroughly, handles edge cases
-4. **Maintainable**: Versioned, updated regularly, supported
-5. **User-focused**: Great UX, responsive to feedback
+1. **可发现**：名称清晰，description 良好，keywords 可搜索
+2. **专业**：展示精致，品牌一致
+3. **可靠**：充分测试，处理边界情况
+4. **可维护**：版本化，定期更新，有支持渠道
+5. **以用户为中心**：优秀 UX，响应反馈
 
 ### Quality Standards
 
-1. **Complete**: Fully documented, all features working
-2. **Tested**: Works in real environments, edge cases handled
-3. **Secure**: No vulnerabilities, safe operations
-4. **Performant**: Reasonable speed, resource-efficient
-5. **Ethical**: Privacy-respecting, user consent
+1. **完整**：文档齐全，所有功能可用
+2. **已测试**：可在真实环境工作，覆盖边界情况
+3. **安全**：无漏洞，操作安全
+4. **高性能**：速度合理，资源效率高
+5. **合乎伦理**：尊重隐私，获得用户同意
 
-With these considerations, commands become marketplace-ready and delight users across diverse environments and use cases.
+有了这些考虑，command 就能达到 marketplace-ready 状态，并在多样环境与使用场景中让用户满意。
