@@ -80,9 +80,9 @@ Semantic versioning 指南：
 **最佳实践（best practices）：**
 
 - 聚焦 plugin 做什么，而不是怎么做
-- 使用 active voice
-- 提及 key features 或 benefits
-- 控制在 200 characters 以下，便于 marketplace display
+- 使用主动语态（active voice）
+- 提及关键功能或收益（key features / benefits）
+- 控制在 200 characters 以下，便于 marketplace 展示
 
 **示例：**
 

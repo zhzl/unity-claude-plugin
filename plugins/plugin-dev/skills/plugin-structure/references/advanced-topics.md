@@ -122,7 +122,7 @@ claude mcp serve
 ### 默认行为
 
 - **官方 marketplaces：** 默认启用 auto-update
-- **第三方/local marketplaces：** 默认禁用 auto-update
+- **第三方 / 本地 marketplaces：** 默认禁用 auto-update
 
 ### 环境变量
 
@@ -168,7 +168,7 @@ claude mcp serve
 rm -rf ~/.claude/plugins/cache
 ```
 
-这会强制下次 session start 时重新缓存。
+这会强制下次 session 启动时重新缓存。
 
 ## Plugin CLI 管理 commands
 

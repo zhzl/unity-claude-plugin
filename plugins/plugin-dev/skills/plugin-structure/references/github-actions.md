@@ -1,6 +1,6 @@
 # Plugins 的 GitHub Actions 集成
 
-Plugins 通过 `claude-code-action` 与 GitHub Actions 交互；这是 Anthropic 官方用于在 CI workflows 中运行 Claude Code 的 action。理解这种集成有助于 plugin developers 确保 plugins 在 automated pipelines 中顺畅工作。
+这是 Anthropic 官方用于在 CI workflow 中运行 Claude Code 的 action。理解这种集成有助于 plugin 开发者确保 plugin 在自动化 pipeline 中顺畅工作。
 
 ## 概览
 
@@ -9,7 +9,7 @@ Plugins 通过 `claude-code-action` 与 GitHub Actions 交互；这是 Anthropic
 - 对 PRs 进行 automated code review
 - 通过 comments 处理 issues
 - 由 @claude mentions 触发的 custom automation
-- 定期 analysis 和 reporting（Scheduled analysis and reporting）
+- 定期分析和报告（scheduled analysis and reporting）
 
 ## 设置
 
@@ -21,7 +21,7 @@ Plugins 通过 `claude-code-action` 与 GitHub Actions 交互；这是 Anthropic
 /install-github-app
 ```
 
-这会引导安装 Claude GitHub app 并配置 workflows。
+这会引导安装 Claude GitHub App 并配置 workflows。
 
 ### 手动设置
 
@@ -196,7 +196,7 @@ claude_args: "--allowedTools 'Read,Grep,Glob'"
 
 Read-only tools 可防止昂贵的 write/execute loops。
 
-## CI 的 Plugin Design
+## 面向 CI 的 Plugin 设计
 
 ### 记录 CI workflows
 

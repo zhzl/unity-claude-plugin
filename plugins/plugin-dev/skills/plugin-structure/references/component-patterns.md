@@ -130,7 +130,7 @@ commands/
 **优势**：
 
 - 最大化组织性
-- 清晰 boundaries
+- 清晰边界
 - 可扩展结构
 
 ## Agent 组织模式
@@ -500,7 +500,7 @@ run_tests
 - 一致 behavior
 - 更容易维护
 
-### 分层 architecture
+### 分层架构（layered architecture）
 
 将 concerns 分离到不同 layers：
 
