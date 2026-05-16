@@ -42,7 +42,7 @@
 - 读取：`docs/superpowers/specs/2026-05-16-reviewing-specs-design.md`
 - 不创建或修改文件。
 
-- [ ] **步骤 1：确认设计规格仍存在**
+- [x] **步骤 1：确认设计规格仍存在**
 
 运行：
 
@@ -52,7 +52,7 @@ test -f "docs/superpowers/specs/2026-05-16-reviewing-specs-design.md" && echo "s
 
 预期：输出 `spec exists`。
 
-- [ ] **步骤 2：运行基线场景 1，观察 pre-spec 需求质疑失败**
+- [x] **步骤 2：运行基线场景 1，观察 pre-spec 需求质疑失败**
 
 使用 `Agent` 工具，`subagent_type` 选择 `general-purpose`，提示词如下：
 
@@ -81,7 +81,7 @@ test -f "docs/superpowers/specs/2026-05-16-reviewing-specs-design.md" && echo "s
 
 如果没有观察到任何失败模式，记录“基线场景 1 未失败”，继续运行后两个场景；三个场景都未失败时停止实现并向用户报告，因为没有观察到创建 skill 的红灯证据。
 
-- [ ] **步骤 3：运行基线场景 2，观察架构/性能审查失败**
+- [x] **步骤 3：运行基线场景 2，观察架构/性能审查失败**
 
 使用 `Agent` 工具，`subagent_type` 选择 `general-purpose`，提示词如下：
 
@@ -107,7 +107,7 @@ test -f "docs/superpowers/specs/2026-05-16-reviewing-specs-design.md" && echo "s
 - 建议继续扩展代码审查或安全审查，扩大范围。
 - 只给一般架构建议，没有 narrow revision。
 
-- [ ] **步骤 4：运行基线场景 3，观察 spec/plan 一致性审查失败**
+- [x] **步骤 4：运行基线场景 3，观察 spec/plan 一致性审查失败**
 
 使用 `Agent` 工具，`subagent_type` 选择 `general-purpose`，提示词如下：
 
@@ -139,7 +139,7 @@ Plan 摘要：
 - 没有指出 code review 模式越过非目标。
 - 没有指出“人工浏览文档”不能证明成功标准。
 
-- [ ] **步骤 5：记录基线失败模式**
+- [x] **步骤 5：记录基线失败模式**
 
 在当前对话中记录每个场景观察到的失败模式，格式如下：
 
@@ -152,7 +152,7 @@ Plan 摘要：
 
 预期：至少一个场景有明确失败记录；如果三个场景都无失败，停止执行并向用户报告。
 
-- [ ] **步骤 6：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 6：提交检查点（仅用户明确授权时执行）**
 
 预期：无文件变更，不执行 commit。
 
@@ -163,7 +163,7 @@ Plan 摘要：
 **文件：**
 - 创建：`plugins/superpowers/skills/reviewing-specs/SKILL.md`
 
-- [ ] **步骤 1：创建 skill 目录**
+- [x] **步骤 1：创建 skill 目录**
 
 运行：
 
@@ -173,7 +173,7 @@ ls "plugins/superpowers/skills" && mkdir -p "plugins/superpowers/skills/reviewin
 
 预期：`ls` 显示现有 skill 目录；`mkdir -p` 成功且无错误输出。
 
-- [ ] **步骤 2：写入 `SKILL.md`**
+- [x] **步骤 2：写入 `SKILL.md`**
 
 创建 `plugins/superpowers/skills/reviewing-specs/SKILL.md`，内容如下：
 
@@ -388,7 +388,7 @@ Minor improvements 最多 3 条。
 | 把 concern 当成必须修改 | concern 只表示需要用户接受的风险 |
 ~~~
 
-- [ ] **步骤 3：验证 frontmatter、必需章节和边界词**
+- [x] **步骤 3：验证 frontmatter、必需章节和边界词**
 
 运行：
 
@@ -429,7 +429,7 @@ PY
 
 预期：输出 `skill structure ok`。
 
-- [ ] **步骤 4：检查新增文件 diff**
+- [x] **步骤 4：检查新增文件 diff**
 
 运行：
 
@@ -439,7 +439,7 @@ git diff -- "plugins/superpowers/skills/reviewing-specs/SKILL.md"
 
 预期：diff 只新增 `SKILL.md`，没有其他文件变更来自本任务。
 
-- [ ] **步骤 5：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 5：提交检查点（仅用户明确授权时执行）**
 
 运行：
 
@@ -463,7 +463,7 @@ EOF
 - 读取：`plugins/superpowers/skills/reviewing-specs/SKILL.md`
 - 可能修改：`plugins/superpowers/skills/reviewing-specs/SKILL.md`，仅当验证发现 skill 未能约束行为时做最小修订。
 
-- [ ] **步骤 1：运行 with-skill 场景 1，验证需求质疑输出**
+- [x] **步骤 1：运行 with-skill 场景 1，验证需求质疑输出**
 
 使用 `Agent` 工具，`subagent_type` 选择 `general-purpose`，提示词如下：
 
@@ -485,7 +485,7 @@ EOF
 
 预期：输出包含 `## Top must-fix issues`，并指出非目标缺失、成功标准不可验证或代码实现审查越界中的至少两项；输出不包含完整 spec 或实现计划。
 
-- [ ] **步骤 2：运行 with-skill 场景 2，验证架构/性能输出**
+- [x] **步骤 2：运行 with-skill 场景 2，验证架构/性能输出**
 
 使用 `Agent` 工具，`subagent_type` 选择 `general-purpose`，提示词如下：
 
@@ -506,7 +506,7 @@ EOF
 
 预期：输出包含 `## Top architecture/performance issues`，并指出自动触发、自动修改、范围扩张或执行成本中的至少两项；问题应带 `[blocking|concern]` 严重性。
 
-- [ ] **步骤 3：运行 with-skill 场景 3，验证 spec/plan 一致性输出**
+- [x] **步骤 3：运行 with-skill 场景 3，验证 spec/plan 一致性输出**
 
 使用 `Agent` 工具，`subagent_type` 选择 `general-purpose`，提示词如下：
 
@@ -537,7 +537,7 @@ Plan 摘要：
 - plan 添加 code review 模式违反非目标。
 - plan 验证缺少压力场景，不能证明成功标准。
 
-- [ ] **步骤 4：验证手动触发边界**
+- [x] **步骤 4：验证手动触发边界**
 
 使用 `Agent` 工具，`subagent_type` 选择 `general-purpose`，提示词如下：
 
@@ -551,13 +551,13 @@ Plan 摘要：
 
 预期：明确回答不应该使用，因为没有用户明确手动审查请求。
 
-- [ ] **步骤 5：修复验证失败（仅在需要时执行）**
+- [x] **步骤 5：修复验证失败（仅在需要时执行）**
 
 如果任一 with-skill 场景失败，只对 `plugins/superpowers/skills/reviewing-specs/SKILL.md` 做最小修改。修改后只重跑失败场景。
 
 预期：所有 with-skill 场景通过。
 
-- [ ] **步骤 6：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 6：提交检查点（仅用户明确授权时执行）**
 
 运行：
 
@@ -580,7 +580,7 @@ EOF
 **文件：**
 - 验证：`plugins/superpowers/skills/reviewing-specs/SKILL.md`
 
-- [ ] **步骤 1：运行结构和边界自检**
+- [x] **步骤 1：运行结构和边界自检**
 
 运行：
 
@@ -612,7 +612,7 @@ PY
 
 预期：输出 `reviewing-specs quality checks ok`。
 
-- [ ] **步骤 2：运行 Markdown diff 检查**
+- [x] **步骤 2：运行 Markdown diff 检查**
 
 运行：
 
@@ -622,7 +622,7 @@ git diff --check -- "plugins/superpowers/skills/reviewing-specs/SKILL.md"
 
 预期：无输出，退出码为 0。
 
-- [ ] **步骤 3：确认本计划范围内只有目标文件变更**
+- [x] **步骤 3：确认本计划范围内只有目标文件变更**
 
 运行：
 
@@ -644,7 +644,7 @@ PY
 
 预期：输出 `target skill changes only within implementation scope`。仓库中可能存在用户此前留下的其他未提交文件；不要修改或提交它们。
 
-- [ ] **步骤 4：汇总验证证据**
+- [x] **步骤 4：汇总验证证据**
 
 在最终回复中列出：
 
@@ -658,7 +658,7 @@ PY
 
 预期：最终回复只汇报本计划目标文件的结果，并说明是否创建 commit。
 
-- [ ] **步骤 5：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 5：提交检查点（仅用户明确授权时执行）**
 
 运行：
 
