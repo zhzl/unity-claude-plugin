@@ -1,4 +1,4 @@
-# Complete Skill 示例
+# 完整 Skill 示例
 
 展示所有可选组件和 progressive disclosure 的完整 skill。
 

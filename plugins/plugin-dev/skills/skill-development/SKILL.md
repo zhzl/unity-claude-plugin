@@ -349,7 +349,7 @@ Skills 应设计为 auto-compaction 后可重新发现。当 Claude 的上下文
 2. **规划可复用内容**：分析示例，识别哪些 scripts、references 和 assets 会有帮助
 3. **创建结构**：用 `mkdir -p skills/skill-name/{references,examples,scripts}` 建立 skill 目录
 4. **编辑 Skill**：编写带正确 frontmatter 和祈使式正文的 SKILL.md；创建捆绑资源
-5. **Validate and Test**：检查结构、触发短语、写作风格和 progressive disclosure
+5. **验证和测试**：检查结构、触发短语、写作风格和 progressive disclosure
 6. **迭代**：基于真实使用和反馈改进
 
 ### 关键写作指南
@@ -378,7 +378,7 @@ my-plugin/
         └── scripts/
 ```
 
-### Auto-Discovery
+### Auto-Discovery（自动发现）
 
 Claude Code 会自动发现 skills：
 
@@ -431,7 +431,7 @@ claude --plugin-dir /path/to/plugin
 
 每个示例都展示了 progressive disclosure 和强触发能力。
 
-## Validation Checklist
+## Validation 检查清单
 
 完成 skill 前：
 
@@ -472,9 +472,9 @@ claude --plugin-dir /path/to/plugin
 - [ ] 内容对目标任务有帮助
 - [ ] 文件之间没有重复信息
 
-## Quick Reference
+## 快速参考
 
-### Minimal Skill
+### 最小 Skill
 
 ```
 skill-name/
@@ -496,7 +496,7 @@ skill-name/
 
 适合：大多数包含详细文档的 plugin skills
 
-### Complete Skill
+### 完整 Skill
 
 ```
 skill-name/
@@ -515,7 +515,7 @@ skill-name/
 
 ## 最佳实践总结
 
-**DO：**
+**应做：**
 
 - 在 description 中使用第三人称（`This skill should be used when...`）
 - 包含具体触发短语（`create X`、`configure Y`）
@@ -526,7 +526,7 @@ skill-name/
 - 提供可运行 examples
 - 为常见操作创建 utility scripts
 
-**DON'T：**
+**不要做：**
 
 - 使用第二人称（`You should...`）
 - 使用模糊触发条件
@@ -544,7 +544,7 @@ skill-name/
 - **`examples/complete-skill.md`** - 包含 references/、examples/ 和 scripts/ 的完整 skill（API testing 示例）
 - **`examples/frontmatter-templates.md`** - 常见使用场景的 frontmatter 模式快速参考
 
-### Reference Files
+### Reference 文件
 
 如需详细指导，查阅：
 

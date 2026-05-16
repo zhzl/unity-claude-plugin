@@ -1,4 +1,4 @@
-# Minimal Skill 示例
+# 最小 Skill 示例
 
 只有一个 SKILL.md 文件的极简 skill。
 
