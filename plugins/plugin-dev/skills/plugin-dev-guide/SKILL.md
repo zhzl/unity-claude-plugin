@@ -51,7 +51,7 @@ plugin-dev 工具包提供 9 个用于构建 Claude Code 插件的专业技能�
 - 使用 @ 语法引用文件
 - 在反引号前使用字面量 `!` 内联执行 bash
 
-### 创建自主代理（Agents）
+### 创建自主代理
 
 **技能：`agent-development`**
 
@@ -63,7 +63,7 @@ plugin-dev 工具包提供 9 个用于构建 Claude Code 插件的专业技能�
 - 选择 agent 模型和颜色
 - 限制 agent 可访问的工具
 
-### 构建技能（Skills）
+### 构建技能
 
 **技能：`skill-development`**
 
@@ -173,7 +173,7 @@ User wants to...
 2. **LSP**：加载 `lsp-integration` 以配置语言服务器
 3. **命令**：加载 `command-development` 以创建使用 LSP 功能的命令
 
-### 构建以 Skill 为核心的插件
+### 构建以技能为核心的插件
 
 1. **开始**：加载 `plugin-structure` 以建立基础结构
 2. **Skills**：加载 `skill-development` 以创建专业技能
