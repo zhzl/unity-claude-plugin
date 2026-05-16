@@ -683,7 +683,9 @@ bash ${CLAUDE_PLUGIN_ROOT}/skills/kubernetes-ops/scripts/validate-manifest.sh de
 ### 多层级组织
 
 **Commands**：按功能组织（CI、monitoring、admin）
+
 **Agents**：按角色拆分（orchestration 与 specialized）
+
 **Skills**：提供丰富资源（references、examples、scripts）
 
 ### MCP 集成
@@ -719,7 +721,7 @@ bash ${CLAUDE_PLUGIN_ROOT}/skills/kubernetes-ops/scripts/validate-manifest.sh de
 
 ### 监控集成
 
-通过 lib integrations 提供内建监控：
+通过 `lib/integrations/` 提供内建监控：
 
 - Datadog 用于指标
 - PagerDuty 用于告警

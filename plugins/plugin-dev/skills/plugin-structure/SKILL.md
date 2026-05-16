@@ -82,7 +82,8 @@ plugin-name/
 ```
 
 **版本格式**：遵循语义化版本（MAJOR.MINOR.PATCH）
-**Keywords**：用于 plugin 发现与分类
+
+**`keywords`**：用于 plugin 发现与分类
 
 ### 组件路径配置
 
@@ -112,7 +113,9 @@ plugin-name/
 ### Commands
 
 **位置**：`commands/` 目录
+
 **格式**：带 YAML frontmatter 的 Markdown 文件
+
 **自动发现**：`commands/` 中的所有 `.md` 文件都会自动加载
 
 Commands 是简单、可由用户直接调用的提示，存放为单个 `.md` 文件。适用于不需要打包附属资源的场景。Commands 和 skills 都通过 Skill tool 调用——commands 本质上可以看作简单版 skills。
@@ -142,7 +145,9 @@ Command implementation instructions...
 ### Agents
 
 **位置**：`agents/` 目录
+
 **格式**：带 YAML frontmatter 的 Markdown 文件
+
 **自动发现**：`agents/` 中的所有 `.md` 文件都会自动加载
 
 **示例结构：**
@@ -173,7 +178,9 @@ Detailed agent instructions and knowledge...
 ### Skills
 
 **位置**：`skills/` 目录，每个 skill 使用一个子目录
+
 **格式**：每个 skill 位于自己的目录中，并包含 `SKILL.md` 文件
+
 **自动发现**：skill 子目录中的所有 `SKILL.md` 文件都会自动加载
 
 Skills 是带打包资源的复杂提示（scripts、references、examples）。适用于需要渐进式信息披露或辅助文件的场景。Skills 和 commands 都通过 Skill tool 调用。
@@ -217,14 +224,16 @@ allowed-tools: Read, Grep, Glob # Optional: restricts available tools
 
 适用于只读工作流、安全敏感任务或范围受限的操作。
 
-**Supporting files**：Skills 可以在子目录中包含 scripts、references、examples 或 assets
+**Supporting files（支持文件）**：Skills 可以在子目录中包含 scripts、references、examples 或 assets
 
 **用法**：Claude Code 会根据任务上下文与 description 的匹配情况，自主激活相应 skills
 
 ### Hooks
 
 **位置**：`hooks/hooks.json`，或内联写在 `plugin.json` 中
+
 **格式**：定义事件处理器的 JSON 配置
+
 **注册方式**：plugin 启用时会自动注册 hooks
 
 **示例结构：**
@@ -265,7 +274,9 @@ hooks/
 ### MCP Servers
 
 **位置**：plugin 根目录下的 `.mcp.json`，或内联写在 `plugin.json` 中
+
 **格式**：用于定义 MCP server 的 JSON 配置
+
 **自动启动**：plugin 启用时，servers 会自动启动
 
 **示例格式：**
@@ -289,7 +300,9 @@ hooks/
 ### LSP Servers
 
 **位置**：内联写在 `plugin.json` 的 `lspServers` 字段下
-**格式**：用于定义 Language Server Protocol servers 的 JSON 配置
+
+**格式**：用于定义 Language Server Protocol（LSP）server 的 JSON 配置
+
 **自动启动**：当打开与扩展名匹配的文件时，servers 会启动
 
 **示例格式：**
@@ -316,7 +329,9 @@ hooks/
 ### Output Styles
 
 **位置**：在 `plugin.json` 的 `outputStyles` 字段中通过路径引用
+
 **格式**：指向样式文件/目录的字符串路径或路径数组
+
 **用途**：自定义 Claude 的响应格式
 
 **示例格式：**
@@ -614,7 +629,7 @@ Claude Code 提供了内建的校验工具：
 
 在开发过程中尽早并频繁使用这些校验工具。
 
-### 附加 Source 类型
+### 附加 `source` 类型
 
 当 marketplace schema 支持时，Marketplace 条目可以指向基于 package 的 plugin source。对于 npm packages，应将 npm package 信息放在 marketplace plugin 的 `source` 对象中，而不是在 plugin 本身中记录直接的包管理器安装方式。
 

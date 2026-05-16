@@ -70,7 +70,7 @@ Executed at: 2025-01-15 14:30:22 UTC
 
 - 快速原型
 - 单一用途的小工具
-- 学习 plugin development
+- 学习 plugin 开发
 - 只提供一个明确功能的内部团队工具
 
 ## 扩展这个 plugin
