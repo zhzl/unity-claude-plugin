@@ -43,9 +43,9 @@
 ## Current State
 
 - **Roadmap Status:** active
-- **Current Phase:** Phase 1 — Inventory and glossary
+- **Current Phase:** Phase 2 — Core plugin content
 - **Last Sync:** 2026-05-15
-- **Next Manual Action:** 审查 Phase 1 规格；批准后为 Phase 1 准备实现计划。
+- **Next Manual Action:** 为 Phase 2 准备规格讨论 brief。
 
 ## Blockers
 
@@ -55,7 +55,7 @@
 
 | Phase | Status | Scope | Artifacts |
 |---|---|---|---|
-| Phase 1 — Inventory and glossary | designed | 盘点文件、定义术语表和保留规则 | Spec `docs/superpowers/specs/2026-05-15-plugin-dev-zh-translation-phase-1-design.md`; Plan pending; Implementation Summary pending; Verification Evidence pending |
+| Phase 1 — Inventory and glossary | completed | 盘点文件、定义术语表和保留规则 | Spec `docs/superpowers/specs/2026-05-15-plugin-dev-zh-translation-phase-1-design.md`; Plan `docs/superpowers/plans/2026-05-15-plugin-dev-zh-translation-phase-1.md`; Implementation Summary recorded; Verification Evidence recorded |
 | Phase 2 — Core plugin content | needs-spec | 翻译 `.claude-plugin`、`commands`、`agents`、`docs` | Spec pending; Plan pending; Implementation Summary pending; Verification Evidence pending |
 | Phase 3 — Core development skills | needs-spec | 翻译 `plugin-dev-guide`、`plugin-structure`、`command-development`、`skill-development` | Spec pending; Plan pending; Implementation Summary pending; Verification Evidence pending |
 | Phase 4 — Integration and tooling skills | needs-spec | 翻译 `agent-development`、`hook-development`、`mcp-integration`、`lsp-integration`、`plugin-settings`、`marketplace-structure` | Spec pending; Plan pending; Implementation Summary pending; Verification Evidence pending |
@@ -65,7 +65,7 @@
 
 ### Phase 1 — Inventory and glossary
 
-- **Status:** designed
+- **Status:** completed
 - **Scope:** 盘点 `plugins/plugin-dev` 下的 Markdown、JSON 和 shell 文件；定义中文术语表、保留原文规则和高风险字段清单。
 - **Out of scope:** 实际批量翻译内容；修改插件行为；重排目录结构。
 - **Success Criteria:**
@@ -74,9 +74,9 @@
   - 高风险字段和不可翻译 token 有明确规则。
 - **Artifacts:**
   - **Spec:** `docs/superpowers/specs/2026-05-15-plugin-dev-zh-translation-phase-1-design.md`
-  - **Plan:** pending
-  - **Implementation Summary:** pending
-  - **Verification Evidence:** pending
+  - **Plan:** `docs/superpowers/plans/2026-05-15-plugin-dev-zh-translation-phase-1.md`
+  - **Implementation Summary:** Phase 1 established a complete 99-file inventory, Chinese+English glossary, non-translatable rules, high-risk field rules, and verification evidence requirements in the approved spec.
+  - **Verification Evidence:** 2026-05-15: `target_count 99`, `listed_count 99`, `missing_count 0`, `extra_count 0`, suffix counts `{'.json': 6, '.md': 79, '.sh': 14}`, top-level counts `{'.claude-plugin': 1, 'agents': 3, 'commands': 4, 'docs': 5, 'skills': 86}`, required terms covered, required risk sections covered.
 
 ### Phase 2 — Core plugin content
 
@@ -178,9 +178,11 @@
 - 详细规格应写入 `docs/superpowers/specs/`。
 - 详细执行计划应写入 `docs/superpowers/plans/`。
 - Implementation Summary 只记录主要变更、commit/PR 引用或执行摘要，不记录详细实现步骤。
-- 下一步建议先审查 `docs/superpowers/specs/2026-05-15-plugin-dev-zh-translation-phase-1-design.md`；批准后手动调用 `/superpowers:roadmap-management write-plan docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md Phase 1`。
+- 下一步建议手动调用 `/superpowers:roadmap-management write-spec docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md Phase 2`。
 
 ## Change Log
 
+- 2026-05-15: Completed Phase 1 with validated inventory, glossary, non-translatable rules, and high-risk field rules; current phase advanced to Phase 2.
+- 2026-05-15: Added Phase 1 implementation plan artifact and marked Phase 1 as planned.
 - 2026-05-15: Added Phase 1 spec artifact and marked Phase 1 as designed.
 - 2026-05-15: Created roadmap from approved draft for translating `plugins/plugin-dev` content into Chinese.
