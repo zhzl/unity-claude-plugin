@@ -1,8 +1,8 @@
-# Complete Skill Example
+# Complete Skill 示例
 
-A full-featured skill demonstrating all optional components and progressive disclosure.
+展示所有可选组件和 progressive disclosure 的完整 skill。
 
-## Directory Structure
+## 目录结构
 
 ```text
 api-testing/
@@ -17,7 +17,7 @@ api-testing/
     └── generate-test.sh
 ```
 
-## File Contents
+## 文件内容
 
 ### SKILL.md
 
@@ -420,9 +420,9 @@ EOF
 echo "Generated: $OUTPUT_FILE"
 ```
 
-## Usage
+## 使用方式
 
-After installing the plugin containing this skill:
+安装包含此 skill 的 plugin 后：
 
 ```text
 $ claude
@@ -439,29 +439,29 @@ $ claude
 [Claude uses scripts/generate-test.sh or explains the pattern]
 ```
 
-## Key Points
+## 要点
 
-1. **Progressive disclosure**: Core patterns in SKILL.md, details in references/
-2. **Working examples**: Real executable scripts users can run
-3. **Utility scripts**: Automation for common tasks
-4. **Strong triggers**: Multiple specific phrases for different use cases
-5. **Cross-references**: SKILL.md points to resources when appropriate
+1. **Progressive disclosure**：核心模式放在 SKILL.md，细节放在 references/
+2. **可运行示例**：用户可以运行的真实可执行 scripts
+3. **工具 scripts**：用于常见任务的自动化
+4. **强触发词**：针对不同使用场景提供多个具体短语
+5. **交叉引用**：SKILL.md 在适当位置指向资源
 
-## When to Use This Pattern
+## 何时使用此模式
 
-- Complex domains requiring detailed documentation
-- Skills with reusable scripts or utilities
-- Topics with multiple sub-areas (auth, assertions, etc.)
-- Skills that benefit from working code examples
+- 需要详细文档的复杂领域
+- 包含可复用 scripts 或工具的 skills
+- 有多个子领域的主题（auth、assertions 等）
+- 受益于可运行代码示例的 skills
 
-## Progressive Disclosure in Action
+## Progressive Disclosure 实践
 
-| Level       | Content                    | Word Count |
-| ----------- | -------------------------- | ---------- |
-| Metadata    | name + description         | ~50 words  |
-| SKILL.md    | Core patterns, quick start | ~400 words |
-| references/ | Detailed guides            | ~600 words |
-| examples/   | Working code               | N/A (code) |
-| scripts/    | Automation                 | N/A (code) |
+| 层级 | 内容 | 字数 |
+| --- | --- | --- |
+| Metadata | name + description | ~50 词 |
+| SKILL.md | 核心模式、quick start | ~400 词 |
+| references/ | 详细指南 | ~600 词 |
+| examples/ | 可运行代码 | N/A（代码） |
+| scripts/ | 自动化 | N/A（代码） |
 
-Total context loaded depends on user needs, not skill complexity.
+加载到上下文中的总内容取决于用户需求，而不是 skill 的复杂度。

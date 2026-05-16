@@ -1,15 +1,15 @@
-# Minimal Skill Example
+# Minimal Skill 示例
 
-A bare-bones skill with just a SKILL.md file.
+只有一个 SKILL.md 文件的极简 skill。
 
-## Directory Structure
+## 目录结构
 
 ```text
 git-conventions/
 └── SKILL.md
 ```
 
-## File Contents
+## 文件内容
 
 ### SKILL.md
 
@@ -36,17 +36,17 @@ Follow the Conventional Commits specification:
 ```
 ````
 
-### Types
+### 类型
 
-- **feat**: New feature
-- **fix**: Bug fix
-- **docs**: Documentation changes
-- **style**: Code style changes (formatting, semicolons)
-- **refactor**: Code refactoring without behavior change
-- **test**: Adding or updating tests
-- **chore**: Maintenance tasks
+- **feat**：新功能
+- **fix**：Bug 修复
+- **docs**：文档变更
+- **style**：代码风格变更（格式、分号）
+- **refactor**：不改变行为的代码重构
+- **test**：添加或更新测试
+- **chore**：维护任务
 
-### Examples
+### 示例
 
 ```text
 feat(auth): add OAuth2 login support
@@ -56,22 +56,23 @@ fix(api): handle null response from external service
 docs(readme): update installation instructions
 ```
 
-## Branch Naming
+## 分支命名
 
-Use descriptive prefixes:
+使用描述性前缀：
 
-- `feature/` - New features
-- `fix/` - Bug fixes
-- `docs/` - Documentation updates
-- `chore/` - Maintenance tasks
+- `feature/` - 新功能
+- `fix/` - Bug 修复
+- `docs/` - 文档更新
+- `chore/` - 维护任务
 
-### Examples
+### 示例
 
 ```text
 feature/user-authentication
 fix/null-pointer-exception
 docs/api-reference
 ```
+
 
 ````
 
@@ -86,26 +87,26 @@ $ claude
 [Skill loads and provides Conventional Commits guidance]
 ````
 
-## Key Points
+## 要点
 
-1. **Single file**: Only SKILL.md required
-2. **Strong triggers**: Description includes specific phrases users would say
-3. **Third-person description**: "This skill should be used when..."
-4. **Imperative body**: Instructions use "Follow...", "Use...", not "You should..."
-5. **Focused content**: ~300 words, no external resources needed
+1. **单文件**：只需要 SKILL.md
+2. **强触发词**：Description 包含用户会说的具体短语
+3. **第三人称 description**：`This skill should be used when...`
+4. **祈使式正文**：指令使用 `Follow...`、`Use...`，而不是 `You should...`
+5. **内容聚焦**：约 300 词，不需要外部资源
 
-## When to Use This Pattern
+## 何时使用此模式
 
-- Simple domain knowledge
-- Quick reference guides
-- Team conventions and standards
-- Single-topic utilities
-- Learning skill development
+- 简单领域知识
+- 快速参考指南
+- 团队约定和标准
+- 单主题工具
+- 学习 skill development
 
-## Extending This Skill
+## 扩展此 Skill
 
-To add more functionality:
+添加更多功能时：
 
-1. **Add references**: Create `references/` for detailed documentation
-2. **Add examples**: Create `examples/` for working code samples
-3. **Add scripts**: Create `scripts/` for automation utilities
+1. **添加 references**：创建 `references/` 保存详细文档
+2. **添加 examples**：创建 `examples/` 保存可运行代码示例
+3. **添加 scripts**：创建 `scripts/` 保存自动化工具

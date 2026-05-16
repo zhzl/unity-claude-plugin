@@ -1,50 +1,47 @@
 ---
 name: skill-development
-description: This skill should be used when the user asks to "create a skill", "add a skill to plugin", "write a new skill", "improve skill description", "organize skill content", "SKILL.md format", "skill frontmatter", "skill triggers", "trigger phrases for skills", "progressive disclosure", "skill references folder", "skill examples folder", "validate skill", "skill model field", "skill hooks", "scoped hooks in skill", "visibility budget", "context budget", "SLASH_COMMAND_TOOL_CHAR_BUDGET", "skill permissions", "Skill() syntax", "visual output", or needs guidance on skill structure, file organization, writing style, or skill development best practices for Claude Code plugins.
+description: 当用户要求 "create a skill"、"add a skill to plugin"、"write a new skill"、"improve skill description"、"SKILL.md format"、"skill frontmatter"、"skill triggers"、"progressive disclosure"、"Skill() syntax"、"SLASH_COMMAND_TOOL_CHAR_BUDGET"，或需要 Claude Code plugin 的 skill 结构、组织、触发条件、可见性预算与开发最佳实践指导时使用。
 ---
 
-# Skill Development for Claude Code Plugins
+# Claude Code Plugins 的 Skill Development
 
-This skill provides guidance for creating effective skills for Claude Code plugins.
+本 skill 提供为 Claude Code plugins 创建有效 skills 的指导。
 
-## About Skills
+## 关于 Skills
 
-Skills are modular, self-contained packages that extend Claude's capabilities by providing
-specialized knowledge, workflows, and tools. Think of them as "onboarding guides" for specific
-domains or tasks—they transform Claude from a general-purpose agent into a specialized agent
-equipped with procedural knowledge that no model can fully possess.
+Skills 是模块化、自包含的包，通过提供专门知识、workflows 和工具来扩展 Claude 的能力。可以把它们看作特定领域或任务的“入职指南”：它们把 Claude 从通用 agent 转换为具备流程知识的专业 agent，而这些流程知识不是任何模型都能完整掌握的。
 
-### Skill Precedence
+### Skill 优先级
 
-When multiple skills share the same name, precedence determines which loads:
+多个 skills 使用同名时，按以下优先级决定加载哪一个：
 
-1. Enterprise (managed settings) — highest priority
-2. Personal (`~/.claude/skills/`)
-3. Project (`.claude/skills/`)
-4. Plugin skills — lowest priority
+1. Enterprise（托管设置）— 最高优先级
+2. Personal（`~/.claude/skills/`）
+3. Project（`.claude/skills/`）
+4. Plugin skills — 最低优先级
 
-Plugin developers should use distinctive, ideally namespaced names (the plugin system auto-namespaces as `plugin-name:skill-name`) to avoid collisions with user or project skills.
+Plugin 开发者应使用有辨识度、最好带命名空间的名称（plugin 系统会自动命名为 `plugin-name:skill-name`），以避免与用户或项目 skills 冲突。
 
-### Skills and Commands: Unified Mechanism
+### Skills 与 Commands：统一机制
 
-Skills and commands share the same underlying mechanism (Skill tool). The choice depends on complexity needs:
+Skills 和 commands 共享同一底层机制（Skill tool）。选择哪一个取决于复杂度需求：
 
-- **Use commands** (`commands/foo.md`): Simple prompts without bundled resources
-- **Use skills** (`skills/foo/SKILL.md`): Complex workflows needing scripts, references, or examples
+- **使用 commands**（`commands/foo.md`）：不带捆绑资源的简单 prompts
+- **使用 skills**（`skills/foo/SKILL.md`）：需要 scripts、references 或 examples 的复杂 workflows
 
-Both support `$ARGUMENTS`, the `[BANG]` placeholder before backticks for bash execution in documentation, and frontmatter fields. Actual skill and command files use a literal `!`; this repository writes `[BANG]` in docs to avoid accidental execution in examples. Skills add bundled resources and progressive disclosure.
+两者都支持 `$ARGUMENTS`、文档中用于 bash 执行的反引号前 `[BANG]` 占位符，以及 frontmatter 字段。实际 skill 和 command 文件使用字面量 `!`；本仓库文档中写 `[BANG]` 是为了避免 examples 中意外执行。Skills 额外提供捆绑资源和 progressive disclosure。
 
-### What Skills Provide
+### Skills 提供什么
 
-1. Specialized workflows - Multi-step procedures for specific domains
-2. Tool integrations - Instructions for working with specific file formats or APIs
-3. Domain expertise - Company-specific knowledge, schemas, business logic
-4. Bundled resources - Scripts, references, and assets for complex and repetitive tasks
-5. Visual output generation - Scripts that produce HTML/interactive visualizations
+1. 专门 workflows - 面向特定领域的多步骤流程
+2. 工具集成 - 使用特定文件格式或 API 的说明
+3. 领域知识 - 公司专用知识、schemas、业务逻辑
+4. 捆绑资源 - 面向复杂和重复任务的 scripts、references 与 assets
+5. 视觉输出生成 - 生成 HTML/交互式可视化的 scripts
 
-### Anatomy of a Skill
+### Skill 剖析
 
-Every skill consists of a required SKILL.md file and optional bundled resources:
+每个 skill 都包含必需的 SKILL.md 文件和可选的捆绑资源：
 
 ```
 skill-name/
@@ -59,15 +56,15 @@ skill-name/
     └── assets/           - Files used in output (templates, icons, fonts, etc.)
 ```
 
-#### SKILL.md (required)
+#### SKILL.md（必需）
 
-**Metadata Quality:** The `name` and `description` in YAML frontmatter determine when Claude will use the skill. Be specific about what the skill does and when to use it. Use the third-person (e.g. "This skill should be used when..." instead of "Use this skill when...").
+**Metadata 质量：** YAML frontmatter 中的 `name` 和 `description` 决定 Claude 何时使用该 skill。要具体说明 skill 做什么、何时使用。使用第三人称（例如 `This skill should be used when...`，而不是 `Use this skill when...`）。
 
-#### Optional Frontmatter Fields
+#### 可选 Frontmatter 字段
 
 ##### allowed-tools
 
-Optionally restrict which tools Claude can use when the skill is active:
+可选地限制 skill 激活时 Claude 能使用哪些工具：
 
 ```yaml
 ---
@@ -77,17 +74,17 @@ allowed-tools: Read, Grep, Glob
 ---
 ```
 
-Use `allowed-tools` for:
+将 `allowed-tools` 用于：
 
-- Read-only skills that shouldn't modify files
-- Security-sensitive workflows
-- Skills with limited scope
+- 不应修改文件的只读 skills
+- 安全敏感 workflows
+- 范围受限的 skills
 
-When specified, Claude can only use the listed tools without needing permission. If omitted, Claude follows the standard permission model.
+指定后，Claude 只能无须额外许可地使用列出的工具。省略时，Claude 遵循标准权限模型。
 
 ##### context
 
-Control how the skill's context is loaded:
+控制 skill 的上下文如何加载：
 
 ```yaml
 ---
@@ -97,20 +94,20 @@ context: fork
 ---
 ```
 
-**Values:**
+**取值：**
 
-- `fork` - Run skill in a subagent (separate context), preserving main agent's context
-- Not specified - Run in main agent's context (default)
+- `fork` - 在 subagent 中运行 skill（独立上下文），保留 main agent 的上下文
+- 未指定 - 在 main agent 的上下文中运行（默认）
 
-Use `context: fork` for:
+将 `context: fork` 用于：
 
-- Skills that load large reference files
-- Skills that might pollute the main context
-- Expensive operations you want isolated
+- 会加载大型 reference 文件的 skills
+- 可能污染主上下文的 skills
+- 希望隔离的高成本操作
 
 ##### agent
 
-Specify which agent type handles the skill when `context: fork` is set:
+当设置 `context: fork` 时，指定由哪种 agent 类型处理该 skill：
 
 ```yaml
 ---
@@ -121,17 +118,17 @@ agent: Explore
 ---
 ```
 
-**Values:**
+**取值：**
 
-- `Explore` - Fast agent for codebase exploration
-- `Plan` - Architect agent for implementation planning
-- `general-purpose` - General-purpose agent (default if `context: fork`)
+- `Explore` - 用于代码库探索的快速 agent
+- `Plan` - 用于实现规划的架构 agent
+- `general-purpose` - 通用 agent（`context: fork` 时的默认值）
 
-Requires `context: fork` to be set.
+要求已设置 `context: fork`。
 
 ##### skills
 
-Load other skills into the forked agent's context:
+将其他 skills 加载到 forked agent 的上下文：
 
 ```yaml
 ---
@@ -145,11 +142,11 @@ skills:
 ---
 ```
 
-Requires `context: fork` to be set. Only skills from the same plugin can be loaded.
+要求已设置 `context: fork`。只能加载同一 plugin 中的 skills。
 
 ##### user-invocable
 
-Control whether the skill appears in the slash command menu:
+控制该 skill 是否出现在 slash command 菜单中：
 
 ```yaml
 ---
@@ -159,18 +156,18 @@ user-invocable: false
 ---
 ```
 
-**Default:** `true` (skills are visible in the `/` menu)
+**默认值：** `true`（skills 在 `/` 菜单中可见）
 
-**Important:** This field only controls slash menu visibility. It does NOT affect:
+**重要：** 此字段只控制 slash 菜单可见性。它不会影响：
 
-- **Skill tool access** - Claude can still invoke the skill programmatically
-- **Auto-discovery** - Claude still discovers and uses the skill based on context
+- **Skill tool 访问** - Claude 仍可通过程序方式调用该 skill
+- **Auto-discovery** - Claude 仍会基于上下文发现并使用该 skill
 
-Use `user-invocable: false` for skills that Claude should use automatically but users shouldn't invoke directly.
+对 Claude 应自动使用、但用户不应直接调用的 skills，使用 `user-invocable: false`。
 
 ##### disable-model-invocation
 
-Prevent Claude from programmatically invoking the skill via the Skill tool:
+阻止 Claude 通过 Skill tool 以程序方式调用该 skill：
 
 ```yaml
 ---
@@ -180,25 +177,25 @@ disable-model-invocation: true
 ---
 ```
 
-**Default:** `false` (programmatic invocation allowed)
+**默认值：** `false`（允许程序化调用）
 
-Use for skills that should only be manually invoked by users, such as:
+用于只应由用户手动调用的 skills，例如：
 
-- Destructive operations requiring human judgment
-- Interactive workflows needing user input
-- Approval processes
+- 需要人工判断的破坏性操作
+- 需要用户输入的交互式 workflows
+- 审批流程
 
-**Visibility comparison:**
+**可见性对比：**
 
-| Setting                          | Slash Menu | Skill Tool | Auto-Discovery |
-| -------------------------------- | ---------- | ---------- | -------------- |
-| `user-invocable: true` (default) | Visible    | Allowed    | Yes            |
-| `user-invocable: false`          | Hidden     | Allowed    | Yes            |
-| `disable-model-invocation: true` | Visible    | Blocked    | Yes            |
+| 设置 | Slash 菜单 | Skill Tool | Auto-Discovery |
+| --- | --- | --- | --- |
+| `user-invocable: true`（默认） | 可见 | 允许 | 是 |
+| `user-invocable: false` | 隐藏 | 允许 | 是 |
+| `disable-model-invocation: true` | 可见 | 阻止 | 是 |
 
 ##### model
 
-Override which model handles the skill:
+覆盖处理该 skill 的模型：
 
 ```yaml
 ---
@@ -208,15 +205,15 @@ model: haiku
 ---
 ```
 
-**Values:** `sonnet`, `opus`, `haiku`, or `inherit` (default)
+**取值：** `sonnet`、`opus`、`haiku` 或 `inherit`（默认）
 
-Use `haiku` for fast/cheap skills, `opus` for complex reasoning requiring maximum capability. Default behavior (`inherit`) uses the conversation's current model.
+对快速/低成本 skills 使用 `haiku`；对需要最高能力的复杂推理使用 `opus`。默认行为（`inherit`）使用对话当前模型。
 
-See `references/advanced-frontmatter.md` for detailed guidance on model selection.
+关于模型选择的详细指导，参见 `references/advanced-frontmatter.md`。
 
 ##### hooks
 
-Define scoped hooks that activate only when this skill is in use:
+定义仅在使用该 skill 时激活的 scoped hooks：
 
 ```yaml
 ---
@@ -231,13 +228,13 @@ hooks:
 ---
 ```
 
-Scoped hooks follow the same event/matcher/hook structure as `hooks.json` but are lifecycle-bound to the skill. Supported events: `PreToolUse`, `PostToolUse`, `Stop`.
+Scoped hooks 遵循与 `hooks.json` 相同的 event/matcher/hook 结构，但生命周期绑定到该 skill。支持的 events：`PreToolUse`、`PostToolUse`、`Stop`。
 
-See `references/advanced-frontmatter.md` for full syntax and comparison with `hooks.json`.
+完整语法以及与 `hooks.json` 的对比，参见 `references/advanced-frontmatter.md`。
 
 ##### argument-hint
 
-Provides autocomplete hint text shown in the `/` menu for the skill's expected arguments:
+提供在 `/` 菜单中显示的自动补全提示文本，用于说明该 skill 期望的参数：
 
 ```yaml
 ---
@@ -245,58 +242,58 @@ argument-hint: "<file-path> [--verbose]"
 ---
 ```
 
-Purely cosmetic — helps users understand what arguments the skill expects. Does not affect argument parsing.
+这只是展示用途，帮助用户理解该 skill 期望哪些参数。它不影响参数解析。
 
-#### Bundled Resources (optional)
+#### 捆绑资源（可选）
 
-##### Scripts (`scripts/`)
+##### Scripts（`scripts/`）
 
-Executable code (Python/Bash/etc.) for tasks that require deterministic reliability or are repeatedly rewritten.
+用于需要确定性可靠性或会被反复重写的任务的可执行代码（Python/Bash 等）。
 
-- **When to include**: When the same code is being rewritten repeatedly or deterministic reliability is needed
-- **Example**: `scripts/rotate_pdf.py` for PDF rotation tasks
-- **Benefits**: Token efficient, deterministic, may be executed without loading into context
+- **何时包含**：当同一段代码会被反复重写，或需要确定性可靠性时
+- **示例**：用于 PDF 旋转任务的 `scripts/rotate_pdf.py`
+- **收益**：Token 高效、确定性强，并且可以不加载到上下文就执行
 
-##### References (`references/`)
+##### References（`references/`）
 
-Documentation and reference material intended to be loaded as needed into context.
+文档和参考材料，按需加载到上下文中。
 
-- **When to include**: For documentation that Claude should reference while working
-- **Examples**: `references/schema.md` for database schemas, `references/api_docs.md` for API specifications
-- **Best practice**: If files are large (>10k words), include grep search patterns in SKILL.md
-- **Avoid duplication**: Information should live in either SKILL.md or references files, not both
+- **何时包含**：当 Claude 工作时应参考这些文档
+- **示例**：数据库 schemas 的 `references/schema.md`，API 规范的 `references/api_docs.md`
+- **最佳实践**：如果文件很大（>10k 词），在 SKILL.md 中包含 grep 搜索模式
+- **避免重复**：信息应只存在于 SKILL.md 或 references 文件之一，不要两处都有
 
-##### Assets (`assets/`)
+##### Assets（`assets/`）
 
-Files not intended to be loaded into context, but rather used within the output Claude produces.
+不用于加载到上下文、而是在 Claude 产出的输出中使用的文件。
 
-- **When to include**: When the skill needs files that will be used in the final output
-- **Examples**: `assets/logo.png` for brand assets, `assets/slides.pptx` for templates
+- **何时包含**：当 skill 需要最终输出会用到的文件时
+- **示例**：品牌素材 `assets/logo.png`，模板 `assets/slides.pptx`
 
-### Dynamic Content in Skills
+### Skills 中的动态内容
 
-Skills support dynamic content injection and variable substitution for context-aware behavior.
+Skills 支持动态内容注入和变量替换，以提供上下文感知行为。
 
-#### String Substitutions
+#### 字符串替换
 
-Use variables in skill content that get replaced at runtime:
+在 skill 内容中使用运行时会被替换的变量：
 
 ```markdown
 The session ID is: ${CLAUDE_SESSION_ID}
 Arguments passed: $ARGUMENTS
 ```
 
-**Available substitutions:**
+**可用替换：**
 
-- `$ARGUMENTS` - Arguments passed when skill is invoked (e.g., `/skill-name arg1 arg2`)
-- `$ARGUMENTS[0]`, `$ARGUMENTS[1]`, etc. - Individual positional arguments (zero-indexed). `$ARGUMENTS[0]` is the first argument after the skill name.
-- `$1`, `$2`, `$3`, etc. - 1-indexed shorthand for positional arguments. `$1` is equivalent to `$ARGUMENTS[0]`, `$2` to `$ARGUMENTS[1]`, etc.
-- `${CLAUDE_SESSION_ID}` - Current session identifier
-- `${CLAUDE_PLUGIN_ROOT}` - Plugin directory path
+- `$ARGUMENTS` - 调用 skill 时传入的参数（例如 `/skill-name arg1 arg2`）
+- `$ARGUMENTS[0]`、`$ARGUMENTS[1]` 等 - 各个位置参数（从 0 开始）。`$ARGUMENTS[0]` 是 skill 名称后的第一个参数。
+- `$1`、`$2`、`$3` 等 - 位置参数的 1 起始简写。`$1` 等价于 `$ARGUMENTS[0]`，`$2` 等价于 `$ARGUMENTS[1]`，依此类推。
+- `${CLAUDE_SESSION_ID}` - 当前 session 标识符
+- `${CLAUDE_PLUGIN_ROOT}` - Plugin 目录路径
 
-#### Dynamic Context Injection
+#### 动态上下文注入
 
-Execute commands to inject their output into skill context using backtick syntax:
+使用反引号语法执行命令，并将其输出注入 skill 上下文：
 
 ```markdown
 ## Current Project Status
@@ -308,64 +305,64 @@ Recent commits:
 [BANG]`git log --oneline -5`
 ```
 
-**Syntax in docs:** `` [BANG]`command` ``
+**文档中的语法：** `` [BANG]`command` ``
 
-Replace `[BANG]` with a literal `!` when writing an actual skill or command file.
+编写实际 skill 或 command 文件时，将 `[BANG]` 替换为字面量 `!`。
 
-**Use cases:**
+**使用场景：**
 
-- Load current project state (git status, package.json)
-- Include dynamic configuration
-- Fetch environment-specific information
+- 加载当前项目状态（git status、package.json）
+- 包含动态配置
+- 获取环境特定信息
 
-**Security note:** Commands execute in the user's environment. Only use trusted commands.
+**安全说明：** 命令会在用户环境中执行。只使用可信命令。
 
-### Progressive Disclosure Design Principle
+### Progressive Disclosure 设计原则
 
-Skills use a three-level loading system to manage context efficiently:
+Skills 使用三级加载系统来高效管理上下文：
 
-1. **Metadata (name + description)** - Available for discovery when the skill fits within the shared visibility budget (~100 words)
-2. **SKILL.md body** - Loaded when Claude actually invokes the skill (<5k words)
-3. **Bundled resources** - Loaded as needed by Claude after skill invocation (Unlimited\*)
+1. **Metadata（name + description）** - 当 skill 位于共享可见性预算（约 100 词）内时，可用于发现
+2. **SKILL.md 正文** - Claude 实际调用 skill 时加载（<5k 词）
+3. **捆绑资源** - Skill 调用后由 Claude 按需加载（无限制\*）
 
-\*Unlimited because scripts can be executed without reading into context window.
+\*无限制是因为 scripts 可以执行，而不必读入上下文窗口。
 
-**Visibility budget:** Claude Code allocates approximately 2% of the context window (or ~16KB fallback) for skill descriptions via `SLASH_COMMAND_TOOL_CHAR_BUDGET`. When total description text across all installed skills exceeds this budget, some skills may be excluded from auto-discovery. Keep descriptions concise and move detail into the SKILL.md body and references. See `references/advanced-frontmatter.md` for optimization guidance.
+**可见性预算：** Claude Code 通过 `SLASH_COMMAND_TOOL_CHAR_BUDGET` 为 skill descriptions 分配约 2% 的上下文窗口（或约 16KB fallback）。当所有已安装 skills 的 description 文本总量超过此预算时，某些 skills 可能会被排除在 auto-discovery 之外。保持 descriptions 简洁，并把细节移入 SKILL.md 正文和 references。优化指导参见 `references/advanced-frontmatter.md`。
 
-### Context Management for Plugins
+### Plugins 的上下文管理
 
-Skills should be designed for re-discoverability after auto-compaction. When Claude's context approaches its limit, older messages are automatically compressed. After compaction:
+Skills 应设计为 auto-compaction 后可重新发现。当 Claude 的上下文接近限制时，较早的消息会自动压缩。压缩后：
 
-- **Descriptions survive**: Skill descriptions remain available (they're tool definitions, not conversation content)
-- **Skill body is lost**: The full SKILL.md content from a previous invocation may be compacted away
-- **Re-triggering works**: Users can invoke the skill again to reload its content
+- **Descriptions 保留**：Skill descriptions 仍可用（它们是工具定义，不是对话内容）
+- **Skill 正文丢失**：先前调用中的完整 SKILL.md 内容可能被压缩掉
+- **重新触发有效**：用户可以再次调用该 skill 以重新加载其内容
 
-**`PreCompact` hook**: Plugins can use a `PreCompact` hook to preserve critical information before compaction occurs. Use this to save state that would otherwise be lost.
+**`PreCompact` hook**：Plugins 可以使用 `PreCompact` hook 在压缩发生前保留关键信息。用它保存否则会丢失的状态。
 
-**Cross-plugin budget**: Skill descriptions from ALL installed plugins compete for the same visibility budget. Write concise, keyword-rich descriptions to maximize discoverability without consuming excessive space.
+**跨 plugin 预算**：所有已安装 plugins 的 skill descriptions 竞争同一个可见性预算。编写简洁、关键词丰富的 descriptions，以在不过度占用空间的情况下最大化可发现性。
 
-## Skill Creation Process
+## Skill 创建流程
 
-To create a skill, follow these six steps. For detailed instructions on each step, see `references/skill-creation-workflow.md`.
+创建 skill 时遵循这六个步骤。每个步骤的详细说明参见 `references/skill-creation-workflow.md`。
 
-1. **Understand the Skill**: Gather concrete examples of how the skill will be used through user questions and feedback
-2. **Plan Reusable Contents**: Analyze examples to identify what scripts, references, and assets would be helpful
-3. **Create Structure**: Set up the skill directory with `mkdir -p skills/skill-name/{references,examples,scripts}`
-4. **Edit the Skill**: Write SKILL.md with proper frontmatter and imperative-form body; create bundled resources
-5. **Validate and Test**: Check structure, trigger phrases, writing style, and progressive disclosure
-6. **Iterate**: Improve based on real-world usage and feedback
+1. **理解 Skill**：通过用户问题和反馈收集该 skill 将如何使用的具体示例
+2. **规划可复用内容**：分析示例，识别哪些 scripts、references 和 assets 会有帮助
+3. **创建结构**：用 `mkdir -p skills/skill-name/{references,examples,scripts}` 建立 skill 目录
+4. **编辑 Skill**：编写带正确 frontmatter 和祈使式正文的 SKILL.md；创建捆绑资源
+5. **Validate and Test**：检查结构、触发短语、写作风格和 progressive disclosure
+6. **迭代**：基于真实使用和反馈改进
 
-### Key Writing Guidelines
+### 关键写作指南
 
-- **Description**: Use third-person ("This skill should be used when...") with specific trigger phrases
-- **Body**: Use imperative/infinitive form ("To create X, do Y"), not second person ("You should...")
-- **Size**: Target 1,500-2,000 words; move detailed content to references/
+- **Description**：使用第三人称（`This skill should be used when...`）并包含具体触发短语
+- **正文**：使用祈使式/不定式（`To create X, do Y`），不要使用第二人称（`You should...`）
+- **大小**：目标 1,500-2,000 词；将详细内容移到 references/
 
-## Plugin-Specific Considerations
+## Plugin 专用注意事项
 
-### Skill Location in Plugins
+### Plugin 中的 Skill 位置
 
-Plugin skills live in the plugin's `skills/` directory:
+Plugin skills 位于 plugin 的 `skills/` 目录：
 
 ```
 my-plugin/
@@ -383,21 +380,21 @@ my-plugin/
 
 ### Auto-Discovery
 
-Claude Code automatically discovers skills:
+Claude Code 会自动发现 skills：
 
-- Scans `skills/` directory
-- Finds subdirectories containing `SKILL.md`
-- Loads skill metadata (name + description) for discovery when the skill is included within the shared visibility budget
-- Loads the SKILL.md body when Claude invokes the skill
-- Loads references/examples when needed after invocation
+- 扫描 `skills/` 目录
+- 查找包含 `SKILL.md` 的子目录
+- 当 skill 被纳入共享可见性预算时，加载 skill metadata（name + description）用于发现
+- Claude 调用 skill 时加载 SKILL.md 正文
+- 调用后在需要时加载 references/examples
 
-### No Packaging Needed
+### 无需打包
 
-Plugin skills are distributed as part of the plugin, not as separate ZIP files. Users get skills when they install the plugin.
+Plugin skills 随 plugin 一起分发，不是单独的 ZIP 文件。用户安装 plugin 时就会获得 skills。
 
-### Testing in Plugins
+### 在 Plugins 中测试
 
-Test skills by installing plugin locally:
+通过本地安装 plugin 来测试 skills：
 
 ```bash
 # Test with --plugin-dir
@@ -407,73 +404,73 @@ claude --plugin-dir /path/to/plugin
 # Verify skill loads correctly
 ```
 
-## Examples from Plugin-Dev
+## Plugin-Dev 示例
 
-Study the skills in this plugin as examples of best practices:
+学习此 plugin 中的 skills，作为最佳实践示例：
 
-**hook-development skill:**
+**hook-development skill：**
 
-- Excellent trigger phrases: "create a hook", "add a PreToolUse hook", etc.
-- Lean SKILL.md with detailed content moved to references/
-- 3 references/ files for detailed content
-- 3 examples/ of working hooks
-- 3 scripts/ utilities
+- 出色的触发短语：`create a hook`、`add a PreToolUse hook` 等
+- 精简的 SKILL.md，详细内容移到 references/
+- 3 个 references/ 文件提供详细内容
+- 3 个 examples/ 展示可运行 hooks
+- 3 个 scripts/ 工具
 
-**agent-development skill:**
+**agent-development skill：**
 
-- Strong triggers: "create an agent", "agent frontmatter", etc.
-- Focused SKILL.md with references for deeper details
-- References include the AI generation prompt from Claude Code
-- Complete agent examples
+- 强触发词：`create an agent`、`agent frontmatter` 等
+- 聚焦的 SKILL.md，并用 references 承载更深细节
+- References 包含来自 Claude Code 的 AI generation prompt
+- 完整 agent examples
 
-**plugin-settings skill:**
+**plugin-settings skill：**
 
-- Specific triggers: "plugin settings", ".local.md files", "YAML frontmatter"
-- References show real implementations (multi-agent-swarm, ralph-wiggum)
-- Working parsing scripts
+- 具体触发词：`plugin settings`、`.local.md files`、`YAML frontmatter`
+- References 展示真实实现（multi-agent-swarm、ralph-wiggum）
+- 可运行 parsing scripts
 
-Each demonstrates progressive disclosure and strong triggering.
+每个示例都展示了 progressive disclosure 和强触发能力。
 
 ## Validation Checklist
 
-Before finalizing a skill:
+完成 skill 前：
 
-**Structure:**
+**结构：**
 
-- [ ] SKILL.md file exists with valid YAML frontmatter
-- [ ] Frontmatter has `name` and `description` fields
-- [ ] Name uses only lowercase letters, numbers, and hyphens (max 64 chars)
-- [ ] Description is under 1024 characters
-- [ ] (Optional) `allowed-tools` field if restricting tool access
-- [ ] (Optional) `context: fork` if running in subagent
-- [ ] (Optional) `agent` field if specifying agent type (requires `context: fork`)
-- [ ] (Optional) `skills` array if loading other skills (requires `context: fork`)
-- [ ] (Optional) `user-invocable` field if hiding from slash menu
-- [ ] (Optional) `disable-model-invocation` field if blocking programmatic use
-- [ ] (Optional) `model` field if overriding model (`sonnet`/`opus`/`haiku`/`inherit`)
-- [ ] (Optional) `hooks` field for scoped hooks (same format as `hooks.json`)
-- [ ] (Optional) `argument-hint` field for autocomplete hints
-- [ ] Markdown body is present and substantial
-- [ ] Referenced files actually exist
+- [ ] SKILL.md 文件存在且包含有效 YAML frontmatter
+- [ ] Frontmatter 包含 `name` 和 `description` 字段
+- [ ] Name 只使用小写字母、数字和连字符（最多 64 个字符）
+- [ ] Description 少于 1024 个字符
+- [ ] （可选）如果限制工具访问，包含 `allowed-tools` 字段
+- [ ] （可选）如果在 subagent 中运行，包含 `context: fork`
+- [ ] （可选）如果指定 agent 类型，包含 `agent` 字段（要求 `context: fork`）
+- [ ] （可选）如果加载其他 skills，包含 `skills` 数组（要求 `context: fork`）
+- [ ] （可选）如果从 slash 菜单隐藏，包含 `user-invocable` 字段
+- [ ] （可选）如果阻止程序化使用，包含 `disable-model-invocation` 字段
+- [ ] （可选）如果覆盖模型，包含 `model` 字段（`sonnet`/`opus`/`haiku`/`inherit`）
+- [ ] （可选）如果使用 scoped hooks，包含 `hooks` 字段（格式与 `hooks.json` 相同）
+- [ ] （可选）如果需要自动补全提示，包含 `argument-hint` 字段
+- [ ] Markdown 正文存在且内容充实
+- [ ] 引用的文件确实存在
 
-**Description Quality:**
+**Description 质量：**
 
-- [ ] Uses third person ("This skill should be used when...")
-- [ ] Includes specific trigger phrases users would say
-- [ ] Lists concrete scenarios ("create X", "configure Y")
+- [ ] 使用第三人称（`This skill should be used when...`）
+- [ ] 包含用户会说的具体触发短语
+- [ ] 列出具体场景（`create X`、`configure Y`）
 
-**Content Quality:**
+**内容质量：**
 
-- [ ] SKILL.md body uses imperative/infinitive form
-- [ ] Body is focused and lean (1,500-2,000 words ideal, <3k max)
-- [ ] Detailed content moved to references/
-- [ ] Examples are complete and working
+- [ ] SKILL.md 正文使用祈使式/不定式
+- [ ] 正文聚焦且精简（理想 1,500-2,000 词，最多 <3k）
+- [ ] 详细内容移到 references/
+- [ ] Examples 完整且可运行
 
-**Testing:**
+**测试：**
 
-- [ ] Skill triggers on expected user queries
-- [ ] Content is helpful for intended tasks
-- [ ] No duplicated information across files
+- [ ] Skill 会在预期用户查询下触发
+- [ ] 内容对目标任务有帮助
+- [ ] 文件之间没有重复信息
 
 ## Quick Reference
 
@@ -484,9 +481,9 @@ skill-name/
 └── SKILL.md
 ```
 
-Good for: Simple knowledge, no complex resources needed
+适合：简单知识，不需要复杂资源
 
-### Standard Skill (Recommended)
+### Standard Skill（推荐）
 
 ```
 skill-name/
@@ -497,7 +494,7 @@ skill-name/
     └── working-example.sh
 ```
 
-Good for: Most plugin skills with detailed documentation
+适合：大多数包含详细文档的 plugin skills
 
 ### Complete Skill
 
@@ -514,53 +511,53 @@ skill-name/
     └── validate.sh
 ```
 
-Good for: Complex domains with validation utilities
+适合：包含 validation 工具的复杂领域
 
-## Best Practices Summary
+## 最佳实践总结
 
-**DO:**
+**DO：**
 
-- Use third-person in description ("This skill should be used when...")
-- Include specific trigger phrases ("create X", "configure Y")
-- Keep SKILL.md lean (1,500-2,000 words)
-- Use progressive disclosure (move details to references/)
-- Write in imperative/infinitive form
-- Reference supporting files clearly
-- Provide working examples
-- Create utility scripts for common operations
+- 在 description 中使用第三人称（`This skill should be used when...`）
+- 包含具体触发短语（`create X`、`configure Y`）
+- 保持 SKILL.md 精简（1,500-2,000 词）
+- 使用 progressive disclosure（将细节移到 references/）
+- 使用祈使式/不定式写作
+- 清楚引用支持文件
+- 提供可运行 examples
+- 为常见操作创建 utility scripts
 
-**DON'T:**
+**DON'T：**
 
-- Use second person ("You should...")
-- Have vague trigger conditions
-- Put everything in SKILL.md (>3,000 words without references/)
-- Leave resources unreferenced
-- Include broken or incomplete examples
+- 使用第二人称（`You should...`）
+- 使用模糊触发条件
+- 把所有内容都放进 SKILL.md（没有 references/ 且 >3,000 词）
+- 留下未引用资源
+- 包含损坏或不完整 examples
 
-## Additional Resources
+## 其他资源
 
-### Example Skills
+### 示例 Skills
 
-Copy-paste ready skill templates in `examples/`:
+`examples/` 中提供可直接复制粘贴的 skill 模板：
 
-- **`examples/minimal-skill.md`** - Bare-bones skill with just SKILL.md (git conventions example)
-- **`examples/complete-skill.md`** - Full skill with references/, examples/, and scripts/ (API testing example)
-- **`examples/frontmatter-templates.md`** - Quick-reference frontmatter patterns for common use cases
+- **`examples/minimal-skill.md`** - 只有 SKILL.md 的极简 skill（git conventions 示例）
+- **`examples/complete-skill.md`** - 包含 references/、examples/ 和 scripts/ 的完整 skill（API testing 示例）
+- **`examples/frontmatter-templates.md`** - 常见使用场景的 frontmatter 模式快速参考
 
 ### Reference Files
 
-For detailed guidance, consult:
+如需详细指导，查阅：
 
-- **`references/skill-creation-workflow.md`** - Plugin-specific skill creation workflow (recommended for plugin skills)
-- **`references/skill-creator-original.md`** - Original generic skill-creator methodology (includes init/packaging scripts for standalone skills)
+- **`references/skill-creation-workflow.md`** - Plugin 专用 skill 创建 workflow（推荐用于 plugin skills）
+- **`references/skill-creator-original.md`** - 原始通用 skill-creator 方法论（包含独立 skills 的 init/packaging scripts）
 
-### Study These Skills
+### 学习这些 Skills
 
-Plugin-dev's skills demonstrate best practices:
+Plugin-dev 的 skills 展示了最佳实践：
 
-- `../hook-development/` - Progressive disclosure, utilities
-- `../agent-development/` - AI-assisted creation, references
-- `../mcp-integration/` - Comprehensive references
-- `../plugin-settings/` - Real-world examples
-- `../command-development/` - Clear critical concepts
-- `../plugin-structure/` - Good organization
+- `../hook-development/` - Progressive disclosure、工具
+- `../agent-development/` - AI-assisted creation、references
+- `../mcp-integration/` - 完整 references
+- `../plugin-settings/` - 真实 examples
+- `../command-development/` - 清晰关键概念
+- `../plugin-structure/` - 良好组织

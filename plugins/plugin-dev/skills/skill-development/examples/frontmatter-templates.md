@@ -1,10 +1,10 @@
-# Frontmatter Templates
+# Frontmatter 模板
 
-Copy-paste ready YAML frontmatter templates for common skill patterns.
+可直接复制粘贴的 YAML frontmatter 模板，适用于常见 skill 模式。
 
-## Basic Skill
+## 基础 Skill
 
-The minimal required frontmatter:
+最小必需 frontmatter：
 
 ```yaml
 ---
@@ -13,14 +13,14 @@ description: This skill should be used when the user asks to "do X", "perform Y"
 ---
 ```
 
-**Requirements:**
+**要求：**
 
-- `name`: kebab-case, matches directory name
-- `description`: Third-person, starts with "This skill should be used when..."
+- `name`：kebab-case，与目录名匹配
+- `description`：第三人称，以 `This skill should be used when...` 开头
 
-## Skill with Strong Triggers
+## 带强触发词的 Skill
 
-Multiple specific trigger phrases for better activation:
+使用多个具体触发短语以获得更好的激活效果：
 
 ```yaml
 ---
@@ -29,16 +29,16 @@ description: This skill should be used when the user asks to "create a migration
 ---
 ```
 
-**Best practices:**
+**最佳实践：**
 
-- Include 5-10 specific trigger phrases
-- Use phrases users actually say (quoted)
-- Cover variations ("create a migration", "write migration", "new migration")
-- Include related concepts ("schema changes", "alter table")
+- 包含 5-10 个具体触发短语
+- 使用用户实际会说的短语（加引号）
+- 覆盖不同说法（`create a migration`、`write migration`、`new migration`）
+- 包含相关概念（`schema changes`、`alter table`）
 
-## Read-Only Skill
+## 只读 Skill
 
-Restrict to read-only tools for safe exploration:
+限制为只读工具，便于安全探索：
 
 ```yaml
 ---
@@ -48,16 +48,16 @@ allowed-tools: Read, Grep, Glob
 ---
 ```
 
-**Use cases:**
+**使用场景：**
 
-- Code analysis and exploration
-- Documentation generation
-- Security audits
-- Dependency reviews
+- 代码分析和探索
+- 文档生成
+- 安全审计
+- 依赖审查
 
-## Multi-Domain Skill
+## 多领域 Skill
 
-Skill covering related sub-topics:
+覆盖相关子主题的 skill：
 
 ```yaml
 ---
@@ -66,7 +66,7 @@ description: This skill should be used when the user asks to "deploy to AWS", "c
 ---
 ```
 
-**Organization tip:** Use references/ subdirectories for sub-topics:
+**组织建议：** 对子主题使用 references/ 子目录：
 
 ```text
 references/
@@ -79,9 +79,9 @@ references/
     └── policies.md
 ```
 
-## Security-Focused Skill
+## 安全优先 Skill
 
-Restricted tools for sensitive operations:
+为敏感操作限制工具：
 
 ```yaml
 ---
@@ -91,15 +91,15 @@ allowed-tools: Read, Grep, AskUserQuestion
 ---
 ```
 
-**Security considerations:**
+**安全注意事项：**
 
-- Exclude Write, Edit, Bash to prevent accidental exposure
-- Include AskUserQuestion for confirmation flows
-- Document why restrictions exist in SKILL.md
+- 排除 Write、Edit、Bash，避免意外暴露
+- 包含 AskUserQuestion，用于确认流程
+- 在 SKILL.md 中说明为什么存在这些限制
 
-## Plugin-Specific Skill
+## Plugin 专用 Skill
 
-Skill designed for a specific plugin context:
+为特定 plugin 上下文设计的 skill：
 
 ```yaml
 ---
@@ -108,58 +108,58 @@ description: This skill should be used when the user asks to "test plugin", "val
 ---
 ```
 
-**Plugin context:**
+**Plugin 上下文：**
 
-- Reference plugin-specific paths with `${CLAUDE_PLUGIN_ROOT}`
-- Assume plugin structure exists
-- Cross-reference other plugin skills
+- 使用 `${CLAUDE_PLUGIN_ROOT}` 引用 plugin 专用路径
+- 假设 plugin 结构已经存在
+- 交叉引用其他 plugin skills
 
-## Frontmatter Field Reference
+## Frontmatter 字段参考
 
-| Field           | Required | Type   | Description                   |
-| --------------- | -------- | ------ | ----------------------------- |
-| `name`          | Yes      | string | Skill identifier (kebab-case) |
-| `description`   | Yes      | string | When to use (third-person)    |
-| `allowed-tools` | No       | string | Comma-separated tool names    |
+| 字段 | 必需 | 类型 | 描述 |
+| --- | --- | --- | --- |
+| `name` | 是 | string | Skill 标识符（kebab-case） |
+| `description` | 是 | string | 何时使用（第三人称） |
+| `allowed-tools` | 否 | string | 逗号分隔的工具名称 |
 
-## Common Mistakes
+## 常见错误
 
-### Wrong: Second-person description
+### 错误：第二人称 description
 
 ```yaml
 # DON'T
 description: Use this skill when you want to create migrations.
 ```
 
-### Right: Third-person description
+### 正确：第三人称 description
 
 ```yaml
 # DO
 description: This skill should be used when the user asks to "create migrations"...
 ```
 
-### Wrong: Vague triggers
+### 错误：模糊触发条件
 
 ```yaml
 # DON'T
 description: This skill should be used for database stuff.
 ```
 
-### Right: Specific triggers
+### 正确：具体触发条件
 
 ```yaml
 # DO
 description: This skill should be used when the user asks to "create a migration", "run migrations", "rollback migration"...
 ```
 
-### Wrong: Missing quotes around phrases
+### 错误：短语缺少引号
 
 ```yaml
 # DON'T
 description: This skill should be used when the user asks to create a migration...
 ```
 
-### Right: Quoted trigger phrases
+### 正确：为触发短语加引号
 
 ```yaml
 # DO
