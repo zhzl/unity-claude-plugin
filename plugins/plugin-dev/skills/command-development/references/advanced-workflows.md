@@ -1,4 +1,4 @@
-# Advanced Workflow Patterns
+# 高级 Workflow 模式
 
 复杂 workflow 的多步骤 command 序列与组合模式。
 
@@ -6,9 +6,9 @@
 
 高级 workflow 会组合多个 command、在多次调用之间协调状态，并创建更复杂的自动化序列。这些模式支持用简单的 command 构建块搭建复杂功能。
 
-## Multi-Step Command Patterns
+## 多步骤 Command 模式
 
-### Sequential Workflow Command
+### 顺序 Workflow Command
 
 引导用户完成多步骤流程的 command：
 
@@ -69,7 +69,7 @@ Reply with your choice and I'll help complete the action.
 - 为用户输入设置决策点
 - 提供下一步操作建议
 
-### State-Carrying Workflow
+### 携带状态的 Workflow
 
 在多次调用之间维护状态的 command：
 
@@ -137,7 +137,7 @@ Tests complete. Run `/deploy-build` to continue.
 - 安全检查点
 - 可恢复能力
 
-### Conditional Workflow Branching
+### 条件式 Workflow 分支
 
 根据条件自适应的 command：
 
@@ -180,9 +180,9 @@ Based on above, proceeding with: [determined workflow]
 Ready to deploy? (yes/no)
 ```
 
-## Command Composition Patterns
+## Command 组合模式
 
-### Command Chaining
+### Command 链接
 
 设计为协同工作的 command：
 
@@ -213,9 +213,9 @@ Starting sequence...
 - `/lint-code` - 只负责 lint
 - `/test-all` - 只负责测试
 
-**组合 command** 负责 orchestration。
+**组合 command** 负责编排。
 
-### Pipeline Pattern
+### Pipeline（流水线）模式
 
 处理前一个 command 输出的 command：
 
@@ -261,7 +261,7 @@ Would you like me to:
 3. Create GitHub issues for each
 ```
 
-### Parallel Execution Pattern
+### 并行执行模式
 
 协调多个并行操作的 command：
 
@@ -298,7 +298,7 @@ Details:
 [Collated results from all checks]
 ```
 
-## Workflow State Management
+## Workflow 状态管理
 
 ### 使用 .local.md 文件
 
@@ -355,7 +355,7 @@ Current stage: @.claude/plugin-name-workflow.local.md
 Next action based on state: [determined action]
 ```
 
-### Workflow Recovery
+### Workflow 恢复
 
 处理中断的 workflow：
 
@@ -386,9 +386,9 @@ State file: @.claude/plugin-name-workflow.local.md
 Which would you like? (1/2/3)
 ```
 
-## Workflow Coordination Patterns
+## Workflow 协调模式
 
-### Cross-Command Communication
+### 跨 Command 通信
 
 相互发出信号的 command：
 
@@ -428,7 +428,7 @@ If the flag exists, include the completed feature in the release notes.
 [Include in release notes]
 ```
 
-### Workflow Locking
+### Workflow 锁定
 
 防止并发执行 workflow：
 
@@ -471,9 +471,9 @@ rm .claude/deployment.lock
 Ready for next deployment.
 ```
 
-## Advanced Argument Handling
+## 高级参数处理
 
-### Optional Arguments with Defaults
+### 带默认值的可选参数
 
 ```markdown
 ---
@@ -492,7 +492,7 @@ Note: Using defaults for missing arguments:
 - Version defaults to 'latest'
 ```
 
-### Argument Validation
+### 参数 Validation
 
 ```markdown
 ---
@@ -514,7 +514,7 @@ fi
 Environment validated. Proceeding...
 ```
 
-### Argument Transformation
+### 参数转换
 
 ```markdown
 ---
@@ -540,9 +540,9 @@ esac
 Deploying to: $ENV
 ```
 
-## Error Handling in Workflows
+## Workflow 中的错误处理
 
-### Graceful Failure
+### 优雅失败
 
 ```markdown
 ---
@@ -575,7 +575,7 @@ What would you like to do?
 [Continue only if Step 1 succeeded]
 ```
 
-### Rollback on Failure
+### 失败时 Rollback
 
 ```markdown
 ---
@@ -599,7 +599,7 @@ Report rollback status and check logs for failure details.
 Deployment complete.
 ```
 
-### Checkpoint Recovery
+### Checkpoint 恢复
 
 ```markdown
 ---
@@ -624,9 +624,9 @@ If any step fails, resume with:
 /deployment-resume [last-successful-checkpoint]
 ```
 
-## Best Practices
+## 最佳实践
 
-### Workflow Design
+### Workflow 设计
 
 1. **清晰推进**：给步骤编号，显示当前位置
 2. **显式状态**：不要依赖隐式状态
@@ -634,14 +634,14 @@ If any step fails, resume with:
 4. **错误恢复**：优雅处理失败
 5. **进度提示**：显示已完成与待处理事项
 
-### Command Composition
+### Command 组合
 
 1. **单一职责**：每个 command 把一件事做好
 2. **可组合设计**：command 易于协同工作
 3. **标准接口**：保持一致的输入/输出格式
 4. **松耦合**：command 不依赖彼此的内部实现
 
-### State Management
+### 状态管理
 
 1. **持久化状态**：使用 .local.md 文件
 2. **原子更新**：以原子方式写入完整状态文件
@@ -649,7 +649,7 @@ If any step fails, resume with:
 4. **清理**：移除过期状态文件
 5. **文档化**：记录状态文件格式
 
-### Error Handling
+### 错误处理
 
 1. **快速失败**：尽早检测错误
 2. **清晰消息**：解释哪里出了问题
@@ -659,7 +659,7 @@ If any step fails, resume with:
 
 ## 示例：完整 Deployment Workflow
 
-### Initialize Command
+### 初始化 Command
 
 ```markdown
 ---
@@ -690,7 +690,7 @@ Written to .claude/deployment-state.local.md
 Next: Run /deployment-validate
 ```
 
-### Validation Command
+### Validation 验证 Command
 
 ```markdown
 ---
@@ -711,7 +711,7 @@ Updating state to 'validated'...
 Next: Run /deployment-execute
 ```
 
-### Execution Command
+### 执行 Command
 
 ```markdown
 ---
@@ -731,7 +731,7 @@ Updating state to 'completed'...
 Cleanup: /deployment-cleanup
 ```
 
-### Cleanup Command
+### 清理 Command
 
 ```markdown
 ---
@@ -745,4 +745,4 @@ rm .claude/deployment-state.local.md
 Deployment workflow complete.
 ```
 
-这个完整 workflow 展示了如何在多个 command 之间进行 state management、顺序执行、error handling，以及清晰的职责分离。
+这个完整 workflow 展示了如何在多个 command 之间进行状态管理、顺序执行、错误处理，以及清晰的职责分离。

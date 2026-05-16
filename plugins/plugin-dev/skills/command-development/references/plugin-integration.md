@@ -1,8 +1,8 @@
-# Plugin Integration Patterns
+# Plugin 集成模式
 
 Command 可以与其他 plugin 组件集成，形成强大的 workflow。
 
-## Agent Integration
+## Agent 集成
 
 为复杂任务启动 plugin agent：
 
@@ -34,7 +34,7 @@ Agent uses plugin resources:
 - 记录 agent 能力
 - 引用 agent 使用的 plugin resources
 
-## Skill Integration
+## Skill 集成
 
 利用 plugin skill 获取专门知识：
 
@@ -63,7 +63,7 @@ Generate production-ready API docs.
 - 记录 skill 用途
 - 解释 skill 提供什么能力
 
-## Hook Coordination
+## Hook 协调
 
 设计能与 plugin hooks 协同工作的 command：
 
@@ -74,7 +74,7 @@ Generate production-ready API docs.
 
 有关与 hooks 协调的 command 示例，请参阅 `plugin-features-reference.md`。
 
-## Multi-Component Workflows
+## 多组件 Workflow
 
 组合 agents、skills 和 scripts：
 
@@ -109,11 +109,11 @@ Compile findings into report following template.
 - 需要专门分析
 - 需要结构化输出
 
-## Validation Patterns
+## Validation 模式
 
-Command 应在处理前 validation 输入和资源。
+Command 应在处理前验证输入和资源。
 
-### Argument Validation
+### 参数 Validation
 
 ```markdown
 ---
@@ -130,7 +130,7 @@ Explain valid environments: dev, staging, prod
 Show usage: /deploy [environment]
 ```
 
-### File Existence Checks
+### 文件存在性检查
 
 ```markdown
 ---
@@ -148,7 +148,7 @@ Show expected format
 Provide example configuration
 ```
 
-### Plugin Resource Validation
+### Plugin Resource Validation（资源验证）
 
 ```markdown
 ---
@@ -165,7 +165,7 @@ If all checks pass, run analysis.
 Otherwise, report missing components.
 ```
 
-### Error Handling
+### 错误处理
 
 ```markdown
 ---
@@ -183,7 +183,7 @@ Suggest likely causes
 Provide troubleshooting steps
 ```
 
-**Best practices：**
+**最佳实践：**
 
 - 在 command 早期进行 validation
 - 提供有帮助的错误消息

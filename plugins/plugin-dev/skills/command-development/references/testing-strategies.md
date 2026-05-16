@@ -1,4 +1,4 @@
-# Command Testing Strategies
+# Command 测试策略
 
 在部署和分发前测试 slash commands 的综合策略。
 
@@ -6,9 +6,9 @@
 
 测试 command 可确保它们行为正确、能处理边界情况，并提供良好的用户体验。系统化测试方法能尽早发现问题，并增强对 command 可靠性的信心。
 
-## Testing Levels
+## 测试层级
 
-### Level 1: Syntax and Structure Validation
+### Level 1：语法与结构 Validation
 
 **测试内容：**
 
@@ -70,7 +70,7 @@ fi
 echo "✓ Command file structure valid"
 ```
 
-### Level 2: Frontmatter Field Validation
+### Level 2：Frontmatter 字段 Validation
 
 **测试内容：**
 
@@ -124,7 +124,7 @@ fi
 echo "✓ Frontmatter fields valid"
 ```
 
-### Level 3: Manual Command Invocation
+### Level 3：手动调用 Command
 
 **测试内容：**
 
@@ -155,7 +155,7 @@ tail -f ~/.claude/debug-logs/latest
 # Look for errors or warnings
 ```
 
-### Level 4: Argument Testing
+### Level 4：参数测试
 
 **测试内容：**
 
@@ -210,7 +210,7 @@ echo "  Expected: Entire phrase captured"
 echo "  Manual test required"
 ```
 
-### Level 5: File Reference Testing
+### Level 5：文件引用测试
 
 **测试内容：**
 
@@ -250,7 +250,7 @@ PY
 # Verify reasonable behavior (may truncate or warn)
 ```
 
-### Level 6: Bash Execution Testing
+### Level 6：Bash 执行测试
 
 **测试内容：**
 
@@ -296,7 +296,7 @@ EOF
 # Verify: Permission denied or appropriate error
 ```
 
-### Level 7: Integration Testing
+### Level 7：集成测试
 
 **测试内容：**
 
@@ -307,7 +307,7 @@ EOF
 
 **测试场景：**
 
-#### Scenario 1: Command + Hook Integration
+#### 场景 1：Command + Hook 集成
 
 ```bash
 # Setup: Command that triggers a hook
@@ -320,7 +320,7 @@ EOF
 # Verify: Hook executes and validates before command completes
 ```
 
-#### Scenario 2: Command Sequence
+#### 场景 2：Command 序列
 
 ```bash
 # Setup: Multi-command workflow
@@ -334,7 +334,7 @@ EOF
 # Verify: State file cleaned up
 ```
 
-#### Scenario 3: Command + MCP Integration
+#### 场景 3：Command + MCP 集成
 
 ```bash
 # Setup: Command uses MCP tools
@@ -347,9 +347,9 @@ EOF
 # 3. Results included in output
 ```
 
-## Automated Testing Approaches
+## 自动化测试方法
 
-### Command Test Suite
+### Command 测试套件
 
 创建测试套件脚本：
 
@@ -394,7 +394,7 @@ echo "Failed: $FAILED_TESTS"
 exit $FAILED_TESTS
 ```
 
-### Pre-Commit Hook
+### Pre-Commit Hook（提交前检查）
 
 提交前 validation command：
 
@@ -423,7 +423,7 @@ done
 echo "✓ All commands valid"
 ```
 
-### Continuous Testing
+### 持续测试
 
 在 CI/CD 中测试 command：
 
@@ -460,9 +460,9 @@ jobs:
           fi
 ```
 
-## Edge Case Testing
+## 边界情况测试
 
-### Test Edge Cases
+### 测试边界情况
 
 **空参数：**
 
@@ -512,9 +512,9 @@ jobs:
 `yes | head -n 1000000`
 ```
 
-## Performance Testing
+## 性能测试
 
-### Response Time Testing
+### 响应时间测试
 
 ```bash
 #!/bin/bash
@@ -542,7 +542,7 @@ echo "  - Variance"
 echo "  - Acceptable threshold: < 3 seconds for fast commands"
 ```
 
-### Resource Usage Testing
+### 资源使用测试
 
 ```bash
 # Monitor Claude Code during command execution
@@ -558,9 +558,9 @@ watch -n 1 'ps aux | grep claude'
 # - Process count
 ```
 
-## User Experience Testing
+## 用户体验测试
 
-### Usability Checklist
+### 可用性 Checklist
 
 - [ ] Command 名称直观
 - [ ] `/help` 中的 description 清晰
@@ -571,7 +571,7 @@ watch -n 1 'ps aux | grep claude'
 - [ ] 结果可执行
 - [ ] 边界情况有良好 UX
 
-### User Acceptance Testing
+### 用户验收测试
 
 招募测试者：
 
@@ -605,18 +605,18 @@ watch -n 1 'ps aux | grep claude'
 4. Would you use this command regularly?
 ```
 
-## Testing Checklist
+## 测试 Checklist
 
 发布 command 前：
 
-### Structure
+### 结构
 
 - [ ] 文件位于正确位置
 - [ ] .md 扩展名正确
 - [ ] YAML frontmatter 有效（如存在）
 - [ ] Markdown 语法正确
 
-### Functionality
+### 功能
 
 - [ ] Command 出现在 `/help` 中
 - [ ] Description 清晰
@@ -625,7 +625,7 @@ watch -n 1 'ps aux | grep claude'
 - [ ] 文件引用可用
 - [ ] Bash 执行可用（如使用）
 
-### Edge Cases
+### 边界情况
 
 - [ ] 缺失参数得到处理
 - [ ] 无效参数被检测
@@ -633,14 +633,14 @@ watch -n 1 'ps aux | grep claude'
 - [ ] 特殊字符可用
 - [ ] 长输入得到处理
 
-### Integration
+### 集成
 
 - [ ] 可与其他 command 协同工作
 - [ ] 可与 hooks 协同工作（如适用）
 - [ ] 可与 MCP 协同工作（如适用）
 - [ ] State management 可用
 
-### Quality
+### 质量
 
 - [ ] 性能可接受
 - [ ] 无安全问题
@@ -648,18 +648,18 @@ watch -n 1 'ps aux | grep claude'
 - [ ] 输出格式良好
 - [ ] 文档完整
 
-### Distribution
+### 分发
 
 - [ ] 已由他人测试
 - [ ] 已纳入反馈
 - [ ] README 已更新
 - [ ] 已提供示例
 
-## Debugging Failed Tests
+## 调试失败测试
 
-### Common Issues and Solutions
+### 常见问题与解决方案
 
-#### Issue: Command not appearing in /help
+#### 问题：Command 未出现在 /help 中
 
 ```bash
 # Check file location
@@ -675,7 +675,7 @@ head -n 20 .claude/commands/my-command.md
 claude --debug
 ```
 
-#### Issue: Arguments not substituting
+#### 问题：参数未替换
 
 ```bash
 # Verify syntax
@@ -686,7 +686,7 @@ grep '\$ARGUMENTS' .claude/commands/my-command.md
 echo "Test: \$1 and \$2" > .claude/commands/test-args.md
 ```
 
-#### Issue: Bash commands not executing
+#### 问题：Bash command 未执行
 
 ```bash
 # Check allowed-tools
@@ -701,7 +701,7 @@ date
 echo "test"
 ```
 
-#### Issue: File references not working
+#### 问题：文件引用不可用
 
 ```bash
 # Check @ syntax
@@ -714,12 +714,12 @@ ls -la /path/to/referenced/file
 chmod 644 /path/to/referenced/file
 ```
 
-## Best Practices
+## 最佳实践
 
 1. **尽早测试，经常测试**：开发过程中持续 validation
 2. **自动化 validation**：使用脚本进行可重复检查
-3. **测试边界情况**：不要只测试 happy path
+3. **测试边界情况**：不要只测试成功路径（happy path）
 4. **获取反馈**：广泛发布前让他人测试
-5. **记录测试**：保留测试场景用于 regression testing
+5. **记录测试**：保留测试场景用于回归测试
 6. **生产中监控**：发布后关注问题
 7. **迭代**：根据真实使用数据改进

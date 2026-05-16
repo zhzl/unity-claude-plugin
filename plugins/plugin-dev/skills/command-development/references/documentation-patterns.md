@@ -1,4 +1,4 @@
-# Command Documentation Patterns
+# Command 文档模式
 
 创建自文档化、可维护且具备优秀用户体验的 command 的策略。
 
@@ -6,9 +6,9 @@
 
 文档完善的 command 更易使用、维护和分发。文档应嵌入 command 本身，让用户和维护者能立即访问。
 
-## Self-Documenting Command Structure
+## 自文档化 Command 结构
 
-### Complete Command Template
+### 完整 Command 模板
 
 ```markdown
 ---
@@ -70,7 +70,7 @@ CHANGELOG:
 [Provide clear output...]
 ```
 
-### Documentation Comment Sections
+### 文档注释分区
 
 **PURPOSE**：command 存在的原因
 
@@ -121,9 +121,9 @@ CHANGELOG:
 - 突出显示 breaking changes
 - 迁移指引
 
-## In-Line Documentation Patterns
+## 内联文档模式
 
-### Commented Sections
+### 带注释的分区
 
 ```markdown
 ---
@@ -153,7 +153,7 @@ Based on analysis, recommend:
 <!-- END: Next steps for user -->
 ```
 
-### Inline Explanations
+### 内联说明
 
 ```markdown
 ---
@@ -205,7 +205,7 @@ Deployment complete!
 3. Notify team: /notify-deployment $1
 ```
 
-### Decision Point Documentation
+### 决策点文档
 
 ```markdown
 ---
@@ -240,9 +240,9 @@ Review the above configuration.
 Proceeding with deployment...
 ```
 
-## Help Text Patterns
+## Help 文本文案模式
 
-### Built-in Help Command
+### 内置 Help Command
 
 为复杂 command 创建 help subcommand：
 
@@ -282,7 +282,7 @@ fi
 [Regular command processing...]
 ```
 
-### Contextual Help
+### 上下文 Help
 
 根据上下文提供帮助：
 
@@ -318,9 +318,9 @@ fi
 [Command continues if operation provided...]
 ```
 
-## Error Message Documentation
+## 错误消息文档
 
-### Helpful Error Messages
+### 有帮助的错误消息
 
 ```markdown
 ---
@@ -368,7 +368,7 @@ fi
 [Command continues if validation passes...]
 ```
 
-### Error Recovery Guidance
+### 错误恢复指引
 
 ```markdown
 ---
@@ -412,9 +412,9 @@ Exit.
 fi
 ```
 
-## Usage Example Documentation
+## 用法示例文档
 
-### Embedded Examples
+### 嵌入式示例
 
 ```markdown
 ---
@@ -472,7 +472,7 @@ Now processing your request...
 [Command implementation...]
 ```
 
-### Example-Driven Documentation
+### 示例驱动文档
 
 ```markdown
 ---
@@ -533,9 +533,9 @@ Format: $2
 [Perform transformation...]
 ```
 
-## Maintenance Documentation
+## 维护文档
 
-### Version and Changelog
+### 版本与 Changelog
 
 ```markdown
 <!--
@@ -580,7 +580,7 @@ KNOWN ISSUES:
 -->
 ```
 
-### Maintenance Notes
+### 维护说明
 
 ```markdown
 <!--
@@ -624,7 +624,7 @@ RELATED FILES:
 -->
 ```
 
-## README Documentation
+## README 文档
 
 Command 应配套 README 文件：
 
@@ -716,9 +716,9 @@ MIT License - see `LICENSE` if your plugin provides one.
 - Email: support@example.com
 ```
 
-## Best Practices
+## 最佳实践
 
-### Documentation Principles
+### 文档原则
 
 1. **为未来的自己而写**：假设你会忘记细节
 2. **示例先于解释**：先展示，再说明
@@ -726,14 +726,14 @@ MIT License - see `LICENSE` if your plugin provides one.
 4. **保持最新**：代码变更时同步更新文档
 5. **测试文档**：确认示例确实可用
 
-### Documentation Locations
+### 文档位置
 
 1. **Command 文件内**：核心用法、示例、inline explanations
 2. **README**：安装、配置、troubleshooting
 3. **独立文档**：详细指南、教程、API reference
 4. **注释**：面向维护者的实现细节
 
-### Documentation Style
+### 文档风格
 
 1. **清晰简洁**：不要有多余文字
 2. **主动语态**：使用“运行 command”，而不是“command 可以被运行”
@@ -741,7 +741,7 @@ MIT License - see `LICENSE` if your plugin provides one.
 4. **格式良好**：使用标题、列表和 code blocks
 5. **易于理解**：假设读者是初学者
 
-### Documentation Maintenance
+### 文档维护
 
 1. **一切都版本化**：跟踪何时变更了什么
 2. **优雅废弃**：移除功能前先警告
@@ -749,7 +749,7 @@ MIT License - see `LICENSE` if your plugin provides one.
 4. **归档旧文档**：保留旧版本可访问
 5. **定期审查**：确保文档符合现实
 
-## Documentation Checklist
+## 文档 Checklist
 
 发布 command 前：
 

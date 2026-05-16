@@ -1,4 +1,4 @@
-# Marketplace Considerations for Commands
+# Command Marketplace 注意事项
 
 创建面向分发且能在 marketplace 成功的 command 的指南。
 
@@ -6,9 +6,9 @@
 
 通过 marketplace 分发的 command 需要考虑个人自用 command 之外的额外因素。它们必须能跨环境工作、处理多样化使用场景，并为陌生用户提供优秀体验。
 
-## Design for Distribution
+## 面向分发的设计
 
-### Universal Compatibility
+### 通用兼容性
 
 **跨平台注意事项：**
 
@@ -40,7 +40,7 @@ Set platform-specific values based on the result:
 <!-- GOOD: Ask Claude to use the Bash tool to detect pbcopy, xclip, or clip.exe before choosing a clipboard command. -->
 ```
 
-### Minimal Dependencies
+### 最少依赖
 
 **检查必需工具：**
 
@@ -94,7 +94,7 @@ DEPENDENCIES:
 -->
 ```
 
-### Graceful Degradation
+### 优雅降级
 
 **处理缺失功能：**
 
@@ -135,9 +135,9 @@ fi
 [Adapt behavior based on available features...]
 ```
 
-## User Experience for Unknown Users
+## 面向陌生用户的用户体验
 
-### Clear Onboarding
+### 清晰 Onboarding
 
 **首次运行体验：**
 
@@ -197,7 +197,7 @@ You can speed up this command with the --fast flag:
 For more tips: /command tips
 ```
 
-### Comprehensive Error Handling
+### 全面的错误处理
 
 **预判用户错误：**
 
@@ -270,9 +270,9 @@ This information helps debug the issue.
 For support, include the above diagnostics.
 ```
 
-## Distribution Best Practices
+## 分发最佳实践
 
-### Namespace Awareness
+### Namespace 意识
 
 **避免名称冲突：**
 
@@ -321,7 +321,7 @@ Final choice balances:
 -->
 ```
 
-### Configurability
+### 可配置性
 
 **用户偏好：**
 
@@ -380,7 +380,7 @@ verbose: true
 \`\`\`
 ```
 
-### Version Compatibility
+### 版本兼容性
 
 **版本检查：**
 
@@ -453,9 +453,9 @@ fi
 [Handle both old and new flags during deprecation period...]
 ```
 
-## Marketplace Presentation
+## Marketplace 呈现
 
-### Command Discovery
+### Command 发现
 
 **描述性命名：**
 
@@ -486,7 +486,7 @@ for related functionality in the marketplace.
 -->
 ```
 
-### Showcase Examples
+### 展示示例
 
 **有吸引力的演示：**
 
@@ -542,7 +542,7 @@ Ready to analyze your code...
 [Command implementation...]
 ```
 
-### User Reviews and Feedback
+### 用户评价与反馈
 
 **反馈机制：**
 
@@ -594,9 +594,9 @@ Privacy-preserving:
 -->
 ```
 
-## Quality Standards
+## 质量标准
 
-### Professional Polish
+### 专业打磨
 
 **一致的品牌呈现：**
 
@@ -636,7 +636,7 @@ Powered by Plugin Name v2.1.0
 ✓ Confirm successful operations
 ```
 
-### Reliability
+### 可靠性
 
 **幂等性：**
 
@@ -697,9 +697,9 @@ If validation fails:
 - Explain that no changes were applied and the operation is safe to retry.
 ```
 
-## Testing for Distribution
+## 面向分发的测试
 
-### Pre-Release Checklist
+### 发布前 Checklist
 
 ```markdown
 <!--
@@ -743,7 +743,7 @@ Support:
 -->
 ```
 
-### Beta Testing
+### Beta 测试
 
 **Beta 发布方式：**
 
@@ -788,9 +788,9 @@ Help improve this command:
 Your feedback helps make this command better.
 ```
 
-## Maintenance and Updates
+## 维护与更新
 
-### Update Strategy
+### 更新策略
 
 **版本化 command：**
 
@@ -853,17 +853,17 @@ fi
 [Command continues...]
 ```
 
-## Best Practices Summary
+## 最佳实践总结
 
-### Distribution Design
+### 分发设计
 
 1. **通用**：可跨平台和环境工作
-2. **自包含**：最少依赖，requirements 清晰
-3. **优雅**：功能不可用时能 graceful degradation
+2. **自包含**：最少依赖，依赖要求清晰
+3. **优雅**：功能不可用时能优雅降级
 4. **宽容**：预判并处理用户错误
 5. **有帮助**：错误清晰，默认值合理，文档优秀
 
-### Marketplace Success
+### Marketplace 成功要素
 
 1. **可发现**：名称清晰，description 良好，keywords 可搜索
 2. **专业**：展示精致，品牌一致
@@ -871,7 +871,7 @@ fi
 4. **可维护**：版本化，定期更新，有支持渠道
 5. **以用户为中心**：优秀 UX，响应反馈
 
-### Quality Standards
+### 质量标准
 
 1. **完整**：文档齐全，所有功能可用
 2. **已测试**：可在真实环境工作，覆盖边界情况
