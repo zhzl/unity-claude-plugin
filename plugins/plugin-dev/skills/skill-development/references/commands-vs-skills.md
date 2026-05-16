@@ -24,9 +24,9 @@ command 和 skill 都：
 
 | 设置                                | 用户 (/) | Claude (Skill tool) |
 | ----------------------------------- | -------- | ------------------- |
-| 默认                                | Yes      | Yes                 |
-| disable-model-invocation: true      | Yes      | No                  |
-| user-invocable: false（仅 skills）  | No       | Yes                 |
+| 默认                                | 是       | 是                  |
+| disable-model-invocation: true      | 是       | 否                  |
+| user-invocable: false（仅 skills）  | 否       | 是                  |
 
 ## 迁移：Command 到 Skill
 

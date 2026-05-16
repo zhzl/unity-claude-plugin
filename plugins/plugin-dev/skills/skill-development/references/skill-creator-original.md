@@ -16,10 +16,10 @@ Skills 是模块化、自包含的包，通过提供 specialized knowledge、wor
 
 ### Skills 提供什么
 
-1. Specialized workflows - 面向特定领域的多步骤 procedures
-2. Tool integrations - 使用特定 file formats 或 APIs 的说明
-3. Domain expertise - 公司特定知识、schemas、业务逻辑
-4. Bundled resources - 面向复杂和重复任务的 scripts、references 和 assets
+1. 专用 workflows：面向特定领域的多步骤 procedures
+2. Tool integrations（工具集成）：使用特定 file formats 或 APIs 的说明
+3. Domain expertise（领域知识）：公司特定知识、schemas、业务逻辑
+4. Bundled resources（捆绑资源）：面向复杂和重复任务的 scripts、references 和 assets
 
 ### Skill 的组成
 
@@ -81,7 +81,7 @@ Skills 使用三级加载系统来高效管理 context：
 2. **SKILL.md body** - skill 触发时加载（<5k words）
 3. **Bundled resources** - Claude 按需加载（Unlimited\*）
 
-\*Unlimited 是因为 scripts 可以在不读入 context window 的情况下执行。
+\*无限制，是因为 scripts 可以在不读入 context window 的情况下执行。
 
 ## Skill 创建流程
 
@@ -174,7 +174,7 @@ scripts/init_skill.py <skill-name> --path <output-directory>
 
 ### 步骤 5：打包 Skill
 
-在原始通用 workflow 中，skill 准备好后会被打包成可分发的 zip file；在此 plugin 中不要默认执行此步骤。Packaging 过程会先自动 validation 该 skill，确保其满足所有要求：
+在原始通用 workflow 中，skill 准备好后会被打包成可分发的 zip file；在此 plugin 中不要默认执行此步骤。Packaging 过程会先自动验证该 skill，确保其满足所有要求：
 
 ```text
 # Archival example only; script may not exist in this plugin.
@@ -198,7 +198,7 @@ Packaging script 会：
 
 2. **Package** skill（如果 validation 通过），创建以 skill 命名的 zip file（例如 `my-skill.zip`），其中包含所有文件并保持适合分发的正确目录结构。
 
-如果 validation 失败，脚本会报告错误并退出，不会创建 package。修复所有 validation errors 后再次运行 packaging command。
+如果 validation 失败，脚本会报告错误并退出，不会创建 package。修复所有 validation 错误后再次运行 packaging 命令。
 
 ### 步骤 6：迭代
 
