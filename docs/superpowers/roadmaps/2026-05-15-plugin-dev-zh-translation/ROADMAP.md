@@ -45,7 +45,7 @@
 - **Roadmap Status:** active
 - **Current Phase:** Phase 2 — Core plugin content
 - **Last Sync:** 2026-05-15
-- **Next Manual Action:** 为 Phase 2 准备规格讨论 brief。
+- **Next Manual Action:** `/superpowers:roadmap-management write-spec docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md Phase 2`
 
 ## Blockers
 
