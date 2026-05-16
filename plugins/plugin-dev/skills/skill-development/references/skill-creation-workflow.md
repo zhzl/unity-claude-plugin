@@ -1,4 +1,4 @@
-# Skill Creation Workflow
+# Skill 创建 workflow（Skill Creation Workflow）
 
 本参考为 Claude Code plugins 创建 skills 提供详细的分步说明。概览请参见主 SKILL.md。
 
@@ -131,7 +131,7 @@ Working examples in `examples/`:
 - **`example-script.sh`** - Working example
 ```
 
-## 步骤 5：Validate and Test
+## 步骤 5：验证和测试
 
 **对于 plugin skills，validation 不同于通用 skills：**
 
@@ -171,7 +171,7 @@ skill-reviewer agent 会检查 description 质量、内容组织和 progressive 
 - 澄清含糊指令
 - 添加 edge case 处理
 
-## Progressive Disclosure 实践
+## 渐进式披露（Progressive Disclosure）实践
 
 ### SKILL.md 中放什么
 
@@ -179,7 +179,7 @@ skill-reviewer agent 会检查 description 质量、内容组织和 progressive 
 
 - 核心概念和概览
 - 必要 procedures 和 workflows
-- Quick reference tables
+- 快速参考表（Quick reference tables）
 - 指向 references/examples/scripts 的指针
 - 最常见用例
 
@@ -190,10 +190,10 @@ skill-reviewer agent 会检查 description 质量、内容组织和 progressive 
 **移到 references/（按需加载）：**
 
 - 详细 patterns 和高级技巧
-- Comprehensive API documentation
-- Migration guides
-- Edge cases 和 troubleshooting
-- 大量 examples 和 walkthroughs
+- 完整 API documentation（Comprehensive API documentation）
+- 迁移指南（Migration guides）
+- Edge cases 和故障排查（troubleshooting）
+- 大量 examples 和演练（walkthroughs）
 
 每个 reference file 可以较大（2,000-5,000+ 词）。
 
@@ -202,26 +202,26 @@ skill-reviewer agent 会检查 description 质量、内容组织和 progressive 
 **可运行代码示例：**
 
 - 完整、可运行的 scripts
-- Configuration files
-- Template files
-- Real-world usage examples
+- 配置文件（Configuration files）
+- 模板文件（Template files）
+- 真实使用示例（Real-world usage examples）
 
 用户可以直接复制并改造这些内容。
 
 ### scripts/ 中放什么
 
-**Utility scripts：**
+**实用 scripts（Utility scripts）：**
 
-- Validation tools
-- Testing helpers
-- Parsing utilities
-- Automation scripts
+- 验证工具（Validation tools）
+- 测试 helpers（Testing helpers）
+- 解析 utilities（Parsing utilities）
+- 自动化 scripts（Automation scripts）
 
 应可执行并有文档说明。
 
 ## 写作风格指南
 
-### Imperative/Infinitive Form
+### 祈使/不定式形式（Imperative/Infinitive Form）
 
 使用动词优先的指令，不使用第二人称：
 
@@ -282,7 +282,7 @@ The user might validate values...
 
 ### 错误 1：Trigger Description 太弱
 
-**Bad：**
+**错误（Bad）：**
 
 ```yaml
 description: Provides guidance for working with hooks.
@@ -290,7 +290,7 @@ description: Provides guidance for working with hooks.
 
 为什么不好：模糊，没有具体 trigger phrases，不是第三人称
 
-**Good：**
+**正确（Good）：**
 
 ```yaml
 description: This skill should be used when the user asks to "create a hook", "add a PreToolUse hook", "validate tool use", or mentions hook events. Provides comprehensive hooks API guidance.
@@ -300,7 +300,7 @@ description: This skill should be used when the user asks to "create a hook", "a
 
 ### 错误 2：SKILL.md 内容过多
 
-**Bad：**
+**错误（Bad）：**
 
 ```
 skill-name/
@@ -309,7 +309,7 @@ skill-name/
 
 为什么不好：加载 skill 时会膨胀 context，详细内容总是被加载
 
-**Good：**
+**正确（Good）：**
 
 ```
 skill-name/
@@ -323,7 +323,7 @@ skill-name/
 
 ### 错误 3：第二人称写作
 
-**Bad：**
+**错误（Bad）：**
 
 ```markdown
 You should start by reading the configuration file.
@@ -333,7 +333,7 @@ You can use the grep tool to search.
 
 为什么不好：第二人称，不是 imperative form
 
-**Good：**
+**正确（Good）：**
 
 ```markdown
 Start by reading the configuration file.
@@ -345,7 +345,7 @@ Use the grep tool to search for patterns.
 
 ### 错误 4：缺少资源引用
 
-**Bad：**
+**错误（Bad）：**
 
 ```markdown
 # SKILL.md
@@ -357,7 +357,7 @@ Use the grep tool to search for patterns.
 
 为什么不好：Claude 不知道 references 存在
 
-**Good：**
+**正确（Good）：**
 
 ```markdown
 # SKILL.md

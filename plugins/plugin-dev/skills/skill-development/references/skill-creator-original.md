@@ -44,7 +44,7 @@ skill-name/
 
 #### Bundled Resources（可选）
 
-##### Scripts（`scripts/`）
+##### 脚本（Scripts，`scripts/`）
 
 用于需要 deterministic reliability 或会被反复重写任务的可执行代码（Python/Bash 等）。
 
@@ -53,7 +53,7 @@ skill-name/
 - **收益**：Token 高效、确定性强，可在不加载到 context 的情况下执行
 - **说明**：Claude 可能仍需读取 scripts，以便进行 patching 或 environment-specific 调整
 
-##### References（`references/`）
+##### 参考资料（References，`references/`）
 
 按需加载到 context 的文档和参考材料，用于指导 Claude 的流程和思考。
 
@@ -64,7 +64,7 @@ skill-name/
 - **最佳实践**：如果文件较大（>10k words），在 SKILL.md 中包含 grep search patterns
 - **避免重复**：信息应只存在于 SKILL.md 或 references files 之一，不要两边重复。除非内容确实是 skill 的核心，否则优先放入 references files；这样能保持 SKILL.md 精简，同时让信息可发现，避免占用 context window。SKILL.md 只保留必要 procedural instructions 和 workflow guidance；将详细 reference material、schemas 和 examples 移到 references files。
 
-##### Assets（`assets/`）
+##### 资源文件（Assets，`assets/`）
 
 不用于加载进 context，而是供 Claude 生成输出时使用的文件。
 
@@ -174,7 +174,7 @@ scripts/init_skill.py <skill-name> --path <output-directory>
 
 ### 步骤 5：打包 Skill
 
-当 skill 准备好后，应将其打包成可分发的 zip file 并分享给用户。Packaging 过程会先自动 validation 该 skill，确保其满足所有要求：
+在原始通用 workflow 中，skill 准备好后会被打包成可分发的 zip file；在此 plugin 中不要默认执行此步骤。Packaging 过程会先自动 validation 该 skill，确保其满足所有要求：
 
 ```text
 # Archival example only; script may not exist in this plugin.

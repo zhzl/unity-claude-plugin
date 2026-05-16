@@ -124,7 +124,7 @@ hooks:
           prompt: 'Verify that all generated code has tests. Return {"decision": "block", "reason": "missing tests for..."} only when work should continue; omit decision when satisfied.'
 ```
 
-## Skill Visibility Budget
+## Skill 可见性预算（Skill Visibility Budget）
 
 Claude Code 会为 skill descriptions 分配字符预算，以高效管理 context window 使用量。
 
@@ -162,7 +162,7 @@ Claude Code 会为 skill descriptions 分配字符预算，以高效管理 conte
 - 单个 skill descriptions 超过 500 个字符
 - 一个 plugin 有 20+ 个 skills，且 descriptions 冗长
 
-## Skill Permission Syntax
+## Skill 权限语法（Skill Permission Syntax）
 
 Skills 可以使用 `Skill()` 语法在 settings.json allow rules 中引用：
 
@@ -190,11 +190,11 @@ Skills 可以使用 `Skill()` 语法在 settings.json allow rules 中引用：
 }
 ```
 
-这支持精细控制哪些 skills 可由 Claude auto-invoked，哪些需要显式用户调用。与 `disable-model-invocation` frontmatter 结合使用可获得最大控制力。
+这支持精细控制哪些 skills 可由 Claude 自动调用，哪些需要显式用户调用。与 `disable-model-invocation` frontmatter 结合使用可获得最大控制力。
 
-## Visual Output Generators
+## 视觉输出生成器（Visual Output Generators）
 
-Skills 可以打包生成视觉输出（HTML files、charts、interactive visualizations）的 scripts，为用户提供丰富体验。
+Skills 可以打包生成视觉输出（HTML files、图表、交互式可视化）的 scripts，为用户提供丰富体验。
 
 ### 模式
 
