@@ -757,7 +757,7 @@ git commit -m "docs: translate command development core references"
 - 修改：`plugins/plugin-dev/skills/command-development/references/plugin-integration.md`
 - 修改：`plugins/plugin-dev/skills/command-development/references/testing-strategies.md`
 
-- [ ] **步骤 1：翻译 5 个 reference 文件的代码块外自然语言**
+- [x] **步骤 1：翻译 5 个 reference 文件的代码块外自然语言**
 
 编辑本任务列出的 5 个 reference 文件：
 
@@ -766,7 +766,7 @@ git commit -m "docs: translate command development core references"
 - `workflow`、`marketplace`、`validation`、`plugin`、`command` 等术语按 Phase 1 术语表处理中英关键词。
 - 同文件内若有明显过时或矛盾的说明，可修正解释文字；不得新增命令能力或变更示例行为。
 
-- [ ] **步骤 2：验证本组 reference 代码块未改变**
+- [x] **步骤 2：验证本组 reference 代码块未改变**
 
 运行：
 
@@ -815,7 +815,7 @@ PY
 
 预期：输出 `code blocks unchanged: 5 files`。
 
-- [ ] **步骤 3：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 3：提交检查点（仅用户明确授权时执行）**
 
 运行：
 
