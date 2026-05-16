@@ -1,8 +1,8 @@
-# Advanced Plugin Example
+# Advanced Plugin 示例
 
-A complex, enterprise-grade plugin with MCP integration and advanced organization.
+一个复杂的企业级插件，包含 MCP 集成和高级组织结构。
 
-## Directory Structure
+## 目录结构
 
 ```
 enterprise-devops/
@@ -98,7 +98,7 @@ enterprise-devops/
         └── service.yaml
 ```
 
-## File Contents
+## 文件内容
 
 ### .claude-plugin/plugin.json
 
@@ -678,75 +678,75 @@ bash ${CLAUDE_PLUGIN_ROOT}/skills/kubernetes-ops/scripts/validate-manifest.sh de
 }
 ```
 
-## Key Features
+## 关键特性
 
-### Multi-Level Organization
+### 多层级组织
 
-**Commands**: Organized by function (CI, monitoring, admin)
-**Agents**: Separated by role (orchestration vs. specialized)
-**Skills**: Rich resources (references, examples, scripts)
+**Commands**：按功能组织（CI、monitoring、admin）
+**Agents**：按角色拆分（orchestration 与 specialized）
+**Skills**：提供丰富资源（references、examples、scripts）
 
-### MCP Integration
+### MCP 集成
 
-Three custom MCP servers:
+三个自定义 MCP servers：
 
-- **Kubernetes**: Cluster operations
-- **Terraform**: Infrastructure provisioning
-- **GitHub Actions**: CI/CD automation
+- **Kubernetes**：集群操作
+- **Terraform**：基础设施供应
+- **GitHub Actions**：CI/CD 自动化
 
-### Shared Libraries
+### 共享库
 
-Reusable code in `lib/`:
+`lib/` 中的可复用代码：
 
-- **Core**: Common utilities (logging, config, auth)
-- **Integrations**: External services (Slack, Datadog)
-- **Utils**: Helper functions (retry, validation)
+- **Core**：通用工具（logging、config、auth）
+- **Integrations**：外部服务（Slack、Datadog）
+- **Utils**：辅助函数（retry、validation）
 
-### Configuration Management
+### 配置管理
 
-Environment-specific configs in `config/`:
+`config/` 中按环境区分的配置：
 
-- **Environments**: Per-environment settings
-- **Templates**: Reusable deployment templates
+- **Environments**：各环境设置
+- **Templates**：可复用的部署模板
 
-### Security Automation
+### 安全自动化
 
-Multiple security hooks:
+多个安全 hooks：
 
-- Secret scanning before writes
-- Permission validation on session start
-- Configuration auditing on completion
+- 写入前进行 secret 扫描
+- 会话开始时验证权限
+- 完成时审计配置
 
-### Monitoring Integration
+### 监控集成
 
-Built-in monitoring via lib integrations:
+通过 lib integrations 提供内建监控：
 
-- Datadog for metrics
-- PagerDuty for alerts
-- Slack for notifications
+- Datadog 用于指标
+- PagerDuty 用于告警
+- Slack 用于通知
 
-## Use Cases
+## 使用场景
 
-1. **Multi-environment deployments**: Orchestrated rollouts across dev/staging/prod
-2. **Infrastructure as code**: Terraform automation with state management
-3. **CI/CD automation**: Build, test, deploy pipelines
-4. **Monitoring and observability**: Integrated metrics and alerting
-5. **Security enforcement**: Automated security scanning and validation
-6. **Team collaboration**: Slack notifications and status updates
+1. **多环境部署**：跨 dev/staging/prod 的编排式发布
+2. **基础设施即代码**：带状态管理的 Terraform 自动化
+3. **CI/CD 自动化**：构建、测试、部署流水线
+4. **监控与可观测性**：集成指标与告警
+5. **安全约束**：自动化安全扫描与校验
+6. **团队协作**：Slack 通知与状态更新
 
-## When to Use This Pattern
+## 何时使用这种模式
 
-- Large-scale enterprise deployments
-- Multiple environment management
-- Complex CI/CD workflows
-- Integrated monitoring requirements
-- Security-critical infrastructure
-- Team collaboration needs
+- 大规模企业部署
+- 多环境管理
+- 复杂的 CI/CD 工作流
+- 需要集成监控的场景
+- 安全关键型基础设施
+- 团队协作需求
 
-## Scaling Considerations
+## 扩展性考量
 
-- **Performance**: Separate MCP servers for parallel operations
-- **Organization**: Multi-level directories for scalability
-- **Maintainability**: Shared libraries reduce duplication
-- **Flexibility**: Environment configs enable customization
-- **Security**: Layered security hooks and validation
+- **Performance**：拆分 MCP servers 以支持并行操作
+- **Organization**：多层级目录便于扩展
+- **Maintainability**：共享库减少重复
+- **Flexibility**：环境配置支持定制化
+- **Security**：分层的安全 hooks 与校验

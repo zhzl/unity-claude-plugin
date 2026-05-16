@@ -1,8 +1,8 @@
-# Minimal Plugin Example
+# Minimal Plugin 示例
 
-A bare-bones plugin with a single command.
+一个只有单个 command 的最简插件。
 
-## Directory Structure
+## 目录结构
 
 ```
 hello-world/
@@ -12,7 +12,7 @@ hello-world/
     └── hello.md
 ```
 
-## File Contents
+## 文件内容
 
 ### .claude-plugin/plugin.json
 
@@ -45,9 +45,9 @@ Output the following message to the user:
 Include the current timestamp in the greeting to show the command executed successfully.
 ```
 
-## Usage
+## 用法
 
-After installing the plugin:
+安装插件后：
 
 ```
 $ claude
@@ -59,25 +59,25 @@ Use this as a starting point for building more complex plugins.
 Executed at: 2025-01-15 14:30:22 UTC
 ```
 
-## Key Points
+## 关键点
 
-1. **Minimal manifest**: Only the required `name` field
-2. **Single command**: One markdown file in `commands/` directory
-3. **Auto-discovery**: Claude Code finds the command automatically
-4. **No dependencies**: No scripts, hooks, or external resources
+1. **最小 manifest**：只有必需的 `name` 字段
+2. **单个 command**：`commands/` 目录中的一个 markdown 文件
+3. **自动发现**：Claude Code 会自动找到这个 command
+4. **无依赖**：没有 scripts、hooks 或外部资源
 
-## When to Use This Pattern
+## 何时使用这种模式
 
-- Quick prototypes
-- Single-purpose utilities
-- Learning plugin development
-- Internal team tools with one specific function
+- 快速原型
+- 单一用途的小工具
+- 学习插件开发
+- 只提供一个明确功能的内部团队工具
 
-## Extending This Plugin
+## 扩展这个插件
 
-To add more functionality:
+要添加更多功能：
 
-1. **Add commands**: Create more `.md` files in `commands/`
-2. **Add metadata**: Update `plugin.json` with version, description, author
-3. **Add agents**: Create `agents/` directory with agent definitions
-4. **Add hooks**: Create `hooks/hooks.json` for event handling
+1. **添加 commands**：在 `commands/` 中创建更多 `.md` 文件
+2. **添加元数据**：在 `plugin.json` 中补充 version、description、author
+3. **添加 agents**：创建 `agents/` 目录并加入 agent 定义
+4. **添加 hooks**：创建 `hooks/hooks.json` 处理事件

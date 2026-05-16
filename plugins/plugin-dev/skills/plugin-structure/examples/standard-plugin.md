@@ -1,8 +1,8 @@
-# Standard Plugin Example
+# Standard Plugin 示例
 
-A well-structured plugin with commands, agents, and skills.
+一个结构良好的插件，包含 commands、agents 和 skills。
 
-## Directory Structure
+## 目录结构
 
 ```
 code-quality/
@@ -34,7 +34,7 @@ code-quality/
     └── generate-report.py
 ```
 
-## File Contents
+## 文件内容
 
 ### .claude-plugin/plugin.json
 
@@ -523,9 +523,9 @@ echo '{"systemMessage": "Code quality checks passed. Ready to commit."}'
 exit 0
 ```
 
-## Usage Examples
+## 用法示例
 
-### Running Commands
+### 运行 Commands
 
 ```
 $ claude
@@ -564,7 +564,7 @@ Failed Tests:
   ...
 ```
 
-### Using Agents
+### 使用 Agents
 
 ```
 > Review the changes in src/api/users.js
@@ -591,17 +591,17 @@ Suggestions:
      - Priority: MEDIUM
 ```
 
-## Key Points
+## 关键点
 
-1. **Complete manifest**: All recommended metadata fields
-2. **Multiple components**: Commands, agents, skills, hooks
-3. **Rich skills**: References and examples for detailed information
-4. **Automation**: Hooks enforce standards automatically
-5. **Integration**: Components work together cohesively
+1. **完整 manifest**：包含所有推荐的元数据字段
+2. **多种组件**：commands、agents、skills、hooks
+3. **丰富的 skills**：通过 references 和 examples 提供详细信息
+4. **自动化**：hooks 自动执行规范检查
+5. **集成性**：各组件协同工作、形成完整体验
 
-## When to Use This Pattern
+## 何时使用这种模式
 
-- Production plugins for distribution
-- Team collaboration tools
-- Plugins requiring consistency enforcement
-- Complex workflows with multiple entry points
+- 用于分发的生产级插件
+- 团队协作工具
+- 需要强制一致性的插件
+- 具有多个入口点的复杂工作流

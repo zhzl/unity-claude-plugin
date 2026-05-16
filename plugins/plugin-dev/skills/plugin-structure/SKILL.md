@@ -1,25 +1,25 @@
 ---
 name: plugin-structure
-description: This skill should be used when the user asks to "create a plugin", "scaffold a plugin", "understand plugin structure", "organize plugin components", "set up plugin.json", "use ${CLAUDE_PLUGIN_ROOT}", "add commands/agents/skills/hooks", "add lspServers", "configure auto-discovery", "headless mode", "CI mode", "plugin in CI", "github actions", "plugin caching", "plugin CLI", "install plugin", "installation scope", "auto-update", "validate plugin", "plugin validate", "debug plugin", "output styles", "outputStyles", "custom output format", "response formatting", "--verbose", or needs guidance on plugin directory layout, manifest configuration, component organization, file naming conventions, or Claude Code plugin architecture best practices.
+description: 当用户要求 "create a plugin"、"scaffold a plugin"、理解 plugin structure、组织插件组件、设置 plugin.json、使用 ${CLAUDE_PLUGIN_ROOT}、添加 commands/agents/skills/hooks、添加 lspServers、配置 auto-discovery、处理 headless mode、CI mode、plugin in CI、github actions、plugin caching、plugin CLI、install plugin、installation scope、auto-update、validate plugin、plugin validate、debug plugin、output styles、outputStyles、custom output format、response formatting、--verbose，或需要关于插件目录布局、manifest 配置、组件组织、文件命名约定或 Claude Code 插件架构最佳实践的指导时，应使用此技能。
 ---
 
-# Plugin Structure for Claude Code
+# Claude Code 的插件结构
 
-## Overview
+## 概览
 
-Claude Code plugins follow a standardized directory structure with automatic component discovery. Master this structure to create well-organized, maintainable plugins that integrate seamlessly with Claude Code.
+Claude Code 插件遵循标准化的目录结构，并支持组件自动发现。掌握这套结构，才能创建组织良好、易于维护、并能与 Claude Code 无缝集成的插件。
 
-**Key concepts:**
+**关键概念：**
 
-- Conventional directory layout for automatic discovery
-- Optional manifest-driven configuration in `.claude-plugin/plugin.json` when metadata, custom paths, or configuration are needed
-- Component-based organization (commands, agents, skills, hooks)
-- Portable path references using `${CLAUDE_PLUGIN_ROOT}`
-- Explicit vs. auto-discovered component loading
+- 用于自动发现的约定式目录布局
+- 当需要元数据、自定义路径或配置时，可在 `.claude-plugin/plugin.json` 中使用可选的 manifest 驱动配置
+- 基于组件的组织方式（commands、agents、skills、hooks）
+- 使用 `${CLAUDE_PLUGIN_ROOT}` 的可移植路径引用
+- 显式加载与自动发现加载的区别
 
-## Directory Structure
+## 目录结构
 
-Every Claude Code plugin follows this organizational pattern:
+每个 Claude Code 插件都遵循这种组织模式：
 
 ```
 plugin-name/
@@ -36,18 +36,18 @@ plugin-name/
 └── scripts/                 # Helper scripts and utilities
 ```
 
-**Critical rules:**
+**关键规则：**
 
-1. **Manifest location**: If present, the `plugin.json` manifest belongs in `.claude-plugin/` and must include `name`
-2. **Component locations**: All component directories (commands, agents, skills, hooks) MUST be at plugin root level, NOT nested inside `.claude-plugin/`
-3. **Optional components**: Only create directories for components the plugin actually uses
-4. **Naming convention**: Use kebab-case for all directory and file names
+1. **Manifest 位置**：如果存在，`plugin.json` manifest 必须位于 `.claude-plugin/` 中，并且必须包含 `name`
+2. **组件位置**：所有组件目录（commands、agents、skills、hooks）都必须位于插件根目录层级，不能嵌套在 `.claude-plugin/` 内
+3. **可选组件**：只为插件实际使用的组件创建目录
+4. **命名约定**：所有目录名和文件名都使用 kebab-case
 
-## Plugin Manifest (plugin.json)
+## 插件 Manifest（plugin.json）
 
-The optional manifest defines plugin metadata and configuration. Use `.claude-plugin/plugin.json` when you need metadata, custom component paths, or configuration; when present, it must include `name`:
+可选的 manifest 用于定义插件元数据和配置。当你需要元数据、自定义组件路径或配置时，请使用 `.claude-plugin/plugin.json`；如果存在，它必须包含 `name`：
 
-### Required Fields
+### 必填字段
 
 ```json
 {
@@ -55,14 +55,14 @@ The optional manifest defines plugin metadata and configuration. Use `.claude-pl
 }
 ```
 
-**Name requirements:**
+**名称要求：**
 
-- Use kebab-case format (lowercase with hyphens)
-- Must be unique across installed plugins
-- No spaces or special characters
-- Example: `code-review-assistant`, `test-runner`, `api-docs`
+- 使用 kebab-case 格式（小写字母加连字符）
+- 在已安装插件中必须唯一
+- 不能包含空格或特殊字符
+- 示例：`code-review-assistant`、`test-runner`、`api-docs`
 
-### Recommended Metadata
+### 推荐元数据
 
 ```json
 {
@@ -81,12 +81,12 @@ The optional manifest defines plugin metadata and configuration. Use `.claude-pl
 }
 ```
 
-**Version format**: Follow semantic versioning (MAJOR.MINOR.PATCH)
-**Keywords**: Use for plugin discovery and categorization
+**版本格式**：遵循语义化版本（MAJOR.MINOR.PATCH）
+**Keywords**：用于插件发现与分类
 
-### Component Path Configuration
+### 组件路径配置
 
-Specify custom paths for components:
+为组件指定自定义路径：
 
 ```json
 {
@@ -98,26 +98,26 @@ Specify custom paths for components:
 }
 ```
 
-**Important**: Path behavior is field-specific. Custom `skills` paths supplement the default `./skills` directory. Custom `commands`, `agents`, and `outputStyles` paths replace defaults unless the default path is explicitly listed, as shown above. Hooks, MCP, and LSP have their own file/merge behavior.
+**重要**：路径行为因字段而异。自定义 `skills` 路径会补充默认的 `./skills` 目录。自定义 `commands`、`agents` 和 `outputStyles` 路径会替换默认值，除非像上例那样显式列出默认路径。Hooks、MCP 和 LSP 则各自有独立的文件/合并行为。
 
-**Path rules:**
+**路径规则：**
 
-- Must be relative to plugin root
-- Must start with `./`
-- Cannot use absolute paths
-- Support arrays for fields that accept multiple locations
+- 必须相对于插件根目录
+- 必须以 `./` 开头
+- 不能使用绝对路径
+- 对于支持多个位置的字段，可使用数组
 
-## Component Organization
+## 组件组织
 
 ### Commands
 
-**Location**: `commands/` directory
-**Format**: Markdown files with YAML frontmatter
-**Auto-discovery**: All `.md` files in `commands/` load automatically
+**位置**：`commands/` 目录
+**格式**：带 YAML frontmatter 的 Markdown 文件
+**自动发现**：`commands/` 中的所有 `.md` 文件都会自动加载
 
-Simple, user-invocable prompts stored as single `.md` files. Use when you don't need bundled resources. Both commands and skills are invoked via the Skill tool—commands are essentially simple skills.
+Commands 是简单、可由用户直接调用的提示，存放为单个 `.md` 文件。适用于不需要打包附属资源的场景。Commands 和 skills 都通过 Skill tool 调用——commands 本质上可以看作简单版 skills。
 
-**Example structure**:
+**示例结构：**
 
 ```
 commands/
@@ -126,7 +126,7 @@ commands/
 └── deploy.md        # /deploy command
 ```
 
-**File format**:
+**文件格式：**
 
 ```markdown
 ---
@@ -137,15 +137,15 @@ description: Command description
 Command implementation instructions...
 ```
 
-**Usage**: Commands integrate as native slash commands in Claude Code
+**用法**：Commands 会以原生 slash command 的形式集成到 Claude Code 中
 
 ### Agents
 
-**Location**: `agents/` directory
-**Format**: Markdown files with YAML frontmatter
-**Auto-discovery**: All `.md` files in `agents/` load automatically
+**位置**：`agents/` 目录
+**格式**：带 YAML frontmatter 的 Markdown 文件
+**自动发现**：`agents/` 中的所有 `.md` 文件都会自动加载
 
-**Example structure**:
+**示例结构：**
 
 ```
 agents/
@@ -154,7 +154,7 @@ agents/
 └── refactorer.md
 ```
 
-**File format**:
+**文件格式：**
 
 ```markdown
 ---
@@ -168,17 +168,17 @@ color: blue
 Detailed agent instructions and knowledge...
 ```
 
-**Usage**: Users can invoke agents manually, or Claude Code selects them automatically based on task context
+**用法**：用户可以手动调用 agents，Claude Code 也会根据任务上下文自动选择它们
 
 ### Skills
 
-**Location**: `skills/` directory with subdirectories per skill
-**Format**: Each skill in its own directory with `SKILL.md` file
-**Auto-discovery**: All `SKILL.md` files in skill subdirectories load automatically
+**位置**：`skills/` 目录，每个 skill 使用一个子目录
+**格式**：每个 skill 位于自己的目录中，并包含 `SKILL.md` 文件
+**自动发现**：skill 子目录中的所有 `SKILL.md` 文件都会自动加载
 
-Complex prompts with bundled resources (scripts, references, examples). Use when you need progressive disclosure or supporting files. Both skills and commands are invoked via the Skill tool.
+Skills 是带打包资源的复杂提示（scripts、references、examples）。适用于需要渐进式信息披露或辅助文件的场景。Skills 和 commands 都通过 Skill tool 调用。
 
-**Example structure**:
+**示例结构：**
 
 ```
 skills/
@@ -194,7 +194,7 @@ skills/
         └── migration-template.sql
 ```
 
-**SKILL.md format**:
+**SKILL.md 格式：**
 
 ```markdown
 ---
@@ -205,7 +205,7 @@ description: When to use this skill
 Skill instructions and guidance...
 ```
 
-**Tool restrictions** (optional): Skills can include `allowed-tools` in frontmatter to limit tool access:
+**工具限制**（可选）：Skills 可以在 frontmatter 中包含 `allowed-tools` 来限制工具访问：
 
 ```yaml
 ---
@@ -215,19 +215,19 @@ allowed-tools: Read, Grep, Glob # Optional: restricts available tools
 ---
 ```
 
-Use for read-only workflows, security-sensitive tasks, or limited-scope operations.
+适用于只读工作流、安全敏感任务或范围受限的操作。
 
-**Supporting files**: Skills can include scripts, references, examples, or assets in subdirectories
+**Supporting files**：Skills 可以在子目录中包含 scripts、references、examples 或 assets
 
-**Usage**: Claude Code autonomously activates skills based on task context matching the description
+**用法**：Claude Code 会根据任务上下文与 description 的匹配情况，自主激活相应 skills
 
 ### Hooks
 
-**Location**: `hooks/hooks.json` or inline in `plugin.json`
-**Format**: JSON configuration defining event handlers
-**Registration**: Hooks register automatically when plugin enables
+**位置**：`hooks/hooks.json`，或内联写在 `plugin.json` 中
+**格式**：定义事件处理器的 JSON 配置
+**注册方式**：插件启用时会自动注册 hooks
 
-**Example structure**:
+**示例结构：**
 
 ```
 hooks/
@@ -237,7 +237,7 @@ hooks/
     └── check-style.sh   # Hook script
 ```
 
-**Configuration format**:
+**配置格式：**
 
 ```json
 {
@@ -258,17 +258,17 @@ hooks/
 }
 ```
 
-**Available events**: PreToolUse, PermissionRequest, PostToolUse, Stop, SubagentStop, SessionStart, SessionEnd, UserPromptSubmit, PreCompact, Notification
+**可用事件**：PreToolUse、PermissionRequest、PostToolUse、Stop、SubagentStop、SessionStart、SessionEnd、UserPromptSubmit、PreCompact、Notification
 
-**Usage**: Hooks execute automatically in response to Claude Code events
+**用法**：Hooks 会响应 Claude Code 事件自动执行
 
 ### MCP Servers
 
-**Location**: `.mcp.json` at plugin root or inline in `plugin.json`
-**Format**: JSON configuration for MCP server definitions
-**Auto-start**: Servers start automatically when plugin enables
+**位置**：插件根目录下的 `.mcp.json`，或内联写在 `plugin.json` 中
+**格式**：用于定义 MCP server 的 JSON 配置
+**自动启动**：插件启用时，servers 会自动启动
 
-**Example format**:
+**示例格式：**
 
 ```json
 {
@@ -284,15 +284,15 @@ hooks/
 }
 ```
 
-**Usage**: MCP servers integrate seamlessly with Claude Code's tool system
+**用法**：MCP servers 会与 Claude Code 的工具系统无缝集成
 
 ### LSP Servers
 
-**Location**: Inline in `plugin.json` under `lspServers` field
-**Format**: JSON configuration for Language Server Protocol servers
-**Auto-start**: Servers start when files matching extensions are opened
+**位置**：内联写在 `plugin.json` 的 `lspServers` 字段下
+**格式**：用于定义 Language Server Protocol servers 的 JSON 配置
+**自动启动**：当打开与扩展名匹配的文件时，servers 会启动
 
-**Example format**:
+**示例格式：**
 
 ```json
 {
@@ -309,17 +309,17 @@ hooks/
 }
 ```
 
-**Usage**: LSP servers can provide supported code intelligence capabilities such as go-to-definition, references, and hover
+**用法**：LSP servers 可以提供受支持的代码智能能力，例如 go-to-definition、references 和 hover
 
-For detailed LSP configuration, see the `lsp-integration` skill.
+关于详细的 LSP 配置，请参见 `lsp-integration` skill。
 
 ### Output Styles
 
-**Location**: Path reference in `plugin.json` under `outputStyles` field
-**Format**: String path or array of paths to style files/directories
-**Purpose**: Customize how Claude formats responses
+**位置**：在 `plugin.json` 的 `outputStyles` 字段中通过路径引用
+**格式**：指向样式文件/目录的字符串路径或路径数组
+**用途**：自定义 Claude 的响应格式
 
-**Example format**:
+**示例格式：**
 
 ```json
 {
@@ -327,7 +327,7 @@ For detailed LSP configuration, see the `lsp-integration` skill.
 }
 ```
 
-Or with multiple paths:
+或使用多个路径：
 
 ```json
 {
@@ -335,15 +335,15 @@ Or with multiple paths:
 }
 ```
 
-**Usage**: Plugins can define consistent output formatting for their domain. Style files in the referenced path are loaded to customize Claude's output behavior.
+**用法**：插件可以为其领域定义一致的输出格式。引用路径中的样式文件会被加载，以自定义 Claude 的输出行为。
 
-For comprehensive output styles guidance including frontmatter schema, file locations, and when to use styles vs other components, see `references/output-styles.md`.
+有关 output styles 的完整指南，包括 frontmatter schema、文件位置以及何时使用 styles 而不是其他组件，请参见 `references/output-styles.md`。
 
-## Portable Path References
+## 可移植路径引用
 
 ### ${CLAUDE_PLUGIN_ROOT}
 
-Use `${CLAUDE_PLUGIN_ROOT}` environment variable for all intra-plugin path references:
+对所有插件内部路径引用，都应使用 `${CLAUDE_PLUGIN_ROOT}` 环境变量：
 
 ```json
 {
@@ -351,28 +351,28 @@ Use `${CLAUDE_PLUGIN_ROOT}` environment variable for all intra-plugin path refer
 }
 ```
 
-**Why it matters**: Plugins install in different locations depending on:
+**为什么重要**：插件的安装位置会因以下因素而不同：
 
-- User installation method (marketplace, local, npm)
-- Operating system conventions
-- User preferences
+- 用户的安装方式（marketplace、local、npm）
+- 操作系统约定
+- 用户偏好
 
-**Where to use it**:
+**适用位置**：
 
-- Hook command paths
-- MCP server command arguments
-- Script execution references
-- Resource file paths
+- Hook command 路径
+- MCP server command 参数
+- Script 执行引用
+- 资源文件路径
 
-**Never use**:
+**绝不要使用**：
 
-- Hardcoded absolute paths (`/Users/name/plugins/...`)
-- Relative paths from working directory (`./scripts/...` in commands)
-- Home directory shortcuts (`~/plugins/...`)
+- 硬编码绝对路径（`/Users/name/plugins/...`）
+- 相对于工作目录的路径（例如 commands 中的 `./scripts/...`）
+- Home 目录缩写（`~/plugins/...`）
 
-### Path Resolution Rules
+### 路径解析规则
 
-**In manifest JSON fields** (hooks, MCP servers):
+**在 manifest JSON 字段中**（hooks、MCP servers）：
 
 ```json
 {
@@ -380,13 +380,13 @@ Use `${CLAUDE_PLUGIN_ROOT}` environment variable for all intra-plugin path refer
 }
 ```
 
-**In component files** (commands, agents, skills):
+**在组件文件中**（commands、agents、skills）：
 
 ```markdown
 Reference scripts at: ${CLAUDE_PLUGIN_ROOT}/scripts/helper.py
 ```
 
-**In executed scripts**:
+**在执行的脚本中**：
 
 ```bash
 #!/bin/bash
@@ -394,23 +394,23 @@ Reference scripts at: ${CLAUDE_PLUGIN_ROOT}/scripts/helper.py
 source "${CLAUDE_PLUGIN_ROOT}/lib/common.sh"
 ```
 
-## File Naming Conventions
+## 文件命名约定
 
-### Component Files
+### 组件文件
 
-**Commands**: Use kebab-case `.md` files
+**Commands**：使用 kebab-case 的 `.md` 文件
 
 - `code-review.md` → `/code-review`
 - `run-tests.md` → `/run-tests`
 - `api-docs.md` → `/api-docs`
 
-**Agents**: Use kebab-case `.md` files describing role
+**Agents**：使用描述角色的 kebab-case `.md` 文件
 
 - `test-generator.md`
 - `code-reviewer.md`
 - `performance-analyzer.md`
 
-**Skills**: Use kebab-case directory names
+**Skills**：使用 kebab-case 的目录名
 
 - `api-testing/`
 - `database-migrations/`
@@ -418,95 +418,95 @@ source "${CLAUDE_PLUGIN_ROOT}/lib/common.sh"
 
 ### Supporting Files
 
-**Scripts**: Use descriptive kebab-case names with appropriate extensions
+**Scripts**：使用带合适扩展名、语义清晰的 kebab-case 名称
 
 - `validate-input.sh`
 - `generate-report.py`
 - `process-data.js`
 
-**Documentation**: Use kebab-case markdown files
+**Documentation**：使用 kebab-case 的 markdown 文件
 
 - `api-reference.md`
 - `migration-guide.md`
 - `best-practices.md`
 
-**Configuration**: Use standard names
+**Configuration**：使用标准命名
 
 - `hooks.json`
 - `.mcp.json`
 - `plugin.json`
 
-## Auto-Discovery Mechanism
+## 自动发现机制
 
-Claude Code automatically discovers and loads components:
+Claude Code 会自动发现并加载组件：
 
-1. **Plugin manifest**: Reads `.claude-plugin/plugin.json` when present
-2. **Commands**: Scans `commands/` directory for `.md` files
-3. **Agents**: Scans `agents/` directory for `.md` files
-4. **Skills**: Scans `skills/` for subdirectories containing `SKILL.md`
-5. **Hooks**: Loads configuration from `hooks/hooks.json` or manifest
-6. **MCP servers**: Loads configuration from `.mcp.json` or manifest
+1. **Plugin manifest**：存在时读取 `.claude-plugin/plugin.json`
+2. **Commands**：扫描 `commands/` 目录中的 `.md` 文件
+3. **Agents**：扫描 `agents/` 目录中的 `.md` 文件
+4. **Skills**：扫描 `skills/` 中包含 `SKILL.md` 的子目录
+5. **Hooks**：从 `hooks/hooks.json` 或 manifest 加载配置
+6. **MCP servers**：从 `.mcp.json` 或 manifest 加载配置
 
-**Discovery timing**:
+**发现时机：**
 
-- Plugin installation: Components register with Claude Code
-- Plugin enable: Components become available for use
-- No restart required: Changes take effect on next Claude Code session
+- 插件安装时：组件向 Claude Code 注册
+- 插件启用时：组件可供使用
+- 无需重启：更改会在下一次 Claude Code 会话生效
 
-**Override behavior**: Custom `skills` paths supplement the default directory; custom `commands`, `agents`, and `outputStyles` paths replace defaults unless the default path is explicitly listed.
+**覆盖行为**：自定义 `skills` 路径会补充默认目录；自定义 `commands`、`agents` 和 `outputStyles` 路径会替换默认值，除非显式列出默认路径。
 
-## Best Practices
+## 最佳实践
 
-### Organization
+### 组织方式
 
-1. **Logical grouping**: Group related components together
-   - Put test-related commands, agents, and skills together
-   - Create subdirectories in `scripts/` for different purposes
+1. **逻辑分组**：将相关组件组织在一起
+   - 将测试相关的 commands、agents 和 skills 放在一起
+   - 在 `scripts/` 中按用途创建子目录
 
-2. **Minimal manifest**: Keep `plugin.json` lean
-   - Only specify custom paths when necessary
-   - Rely on auto-discovery for standard layouts
-   - Use inline configuration only for simple cases
+2. **最小化 manifest**：保持 `plugin.json` 精简
+   - 仅在必要时指定自定义路径
+   - 标准布局优先依赖自动发现
+   - 仅在简单场景下使用内联配置
 
-3. **Documentation**: Include README files
-   - Plugin root: Overall purpose and usage
-   - Component directories: Specific guidance
-   - Script directories: Usage and requirements
+3. **文档**：包含 README 文件
+   - 插件根目录：整体用途和用法
+   - 组件目录：具体指导
+   - Script 目录：用法与要求
 
-### Naming
+### 命名
 
-1. **Consistency**: Use consistent naming across components
-   - If command is `test-runner`, name related agent `test-runner-agent`
-   - Match skill directory names to their purpose
+1. **一致性**：跨组件使用一致的命名
+   - 如果 command 叫 `test-runner`，相关 agent 可命名为 `test-runner-agent`
+   - Skill 目录名应与其用途匹配
 
-2. **Clarity**: Use descriptive names that indicate purpose
-   - Good: `api-integration-testing/`, `code-quality-checker.md`
-   - Avoid: `utils/`, `misc.md`, `temp.sh`
+2. **清晰性**：使用能体现用途的描述性名称
+   - 好：`api-integration-testing/`、`code-quality-checker.md`
+   - 避免：`utils/`、`misc.md`、`temp.sh`
 
-3. **Length**: Balance brevity with clarity
-   - Commands: 2-3 words (`review-pr`, `run-ci`)
-   - Agents: Describe role clearly (`code-reviewer`, `test-generator`)
-   - Skills: Topic-focused (`error-handling`, `api-design`)
+3. **长度**：在简洁与清晰之间取得平衡
+   - Commands：2-3 个词（`review-pr`、`run-ci`）
+   - Agents：清楚描述角色（`code-reviewer`、`test-generator`）
+   - Skills：聚焦主题（`error-handling`、`api-design`）
 
-### Portability
+### 可移植性
 
-1. **Always use ${CLAUDE_PLUGIN_ROOT}**: Never hardcode paths
-2. **Test on multiple systems**: Verify on macOS, Linux, Windows
-3. **Document dependencies**: List required tools and versions
-4. **Avoid system-specific features**: Use portable bash/Python constructs
+1. **始终使用 ${CLAUDE_PLUGIN_ROOT}**：绝不要硬编码路径
+2. **在多系统上测试**：验证 macOS、Linux、Windows
+3. **记录依赖**：列出所需工具和版本
+4. **避免系统特定特性**：使用可移植的 bash/Python 写法
 
-### Maintenance
+### 维护
 
-1. **Version consistently**: Update version in plugin.json for releases
-2. **Deprecate gracefully**: Mark old components clearly before removal
-3. **Document breaking changes**: Note changes affecting existing users
-4. **Test thoroughly**: Verify all components work after changes
+1. **一致地管理版本**：发布时更新 plugin.json 中的版本
+2. **平滑弃用**：移除前清楚标记旧组件
+3. **记录 breaking changes**：说明会影响现有用户的变更
+4. **充分测试**：变更后验证所有组件都能正常工作
 
-## Common Patterns
+## 常见模式
 
 ### Minimal Plugin
 
-Single command with no dependencies:
+只有一个 command、没有依赖：
 
 ```
 my-plugin/
@@ -518,7 +518,7 @@ my-plugin/
 
 ### Full-Featured Plugin
 
-Complete plugin with all component types:
+包含所有组件类型的完整插件：
 
 ```
 my-plugin/
@@ -536,7 +536,7 @@ my-plugin/
 
 ### Skill-Focused Plugin
 
-Plugin providing only skills:
+只提供 skills 的插件：
 
 ```
 my-plugin/
@@ -549,124 +549,124 @@ my-plugin/
         └── SKILL.md
 ```
 
-## Plugin Caching
+## 插件缓存
 
-Claude Code caches plugin content for performance. Understanding caching behavior helps with development and debugging.
+Claude Code 会缓存插件内容以提升性能。理解缓存行为有助于开发和调试。
 
-### What Gets Cached
+### 会被缓存的内容
 
-- Plugin manifest (plugin.json)
-- Component files (commands, agents, skills)
-- Configuration files (hooks.json, .mcp.json)
+- Plugin manifest（plugin.json）
+- 组件文件（commands、agents、skills）
+- 配置文件（hooks.json、.mcp.json）
 
-### Cache Invalidation
+### 缓存失效
 
-Cached content refreshes when:
+在以下情况下，缓存内容会刷新：
 
-- Claude Code session restarts
-- Plugin is reinstalled or updated
-- User runs `/plugins refresh` (if available)
+- Claude Code 会话重启
+- 插件被重新安装或更新
+- 用户运行 `/plugins refresh`（如果可用）
 
-### Why External Paths Fail
+### 为什么外部路径会失败
 
-**Important:** Paths outside the plugin directory may not work reliably because:
+**重要：** 插件目录之外的路径可能无法可靠工作，原因包括：
 
-1. **Security boundary** - Plugins are sandboxed to their directory
-2. **Caching** - External paths aren't monitored for changes
-3. **Portability** - External paths break on different machines
+1. **安全边界** - 插件被限制在其目录范围内
+2. **缓存** - 外部路径的变更不会被监控
+3. **可移植性** - 外部路径在不同机器上会失效
 
-**Always use:**
+**始终使用：**
 
-- `${CLAUDE_PLUGIN_ROOT}` for paths within the plugin
-- Bundled resources instead of external file references
-- Environment variables for user-specific paths
+- `${CLAUDE_PLUGIN_ROOT}` 表示插件内部路径
+- 打包资源，而不是外部文件引用
+- 环境变量表示用户特定路径
 
-### Development Workflow
+### 开发工作流
 
-During development, reload plugins by:
+开发期间，可通过以下方式重新加载插件：
 
-1. Exiting Claude Code
-2. Making changes to plugin files
-3. Restarting Claude Code
+1. 退出 Claude Code
+2. 修改插件文件
+3. 重启 Claude Code
 
-Or use `--plugin-dir` for testing without installation:
+或者使用 `--plugin-dir` 在不安装的情况下进行测试：
 
 ```bash
 claude --plugin-dir /path/to/plugin
 ```
 
-## Runtime Contexts
+## 运行时上下文
 
-Plugins behave differently depending on the runtime context. Interactive sessions support slash commands and user prompts; headless mode (`claude -p`) and GitHub Actions provide non-interactive environments where some features are unavailable.
+插件会根据运行时上下文表现出不同的行为。交互式会话支持 slash commands 和用户提示；headless mode（`claude -p`）以及 GitHub Actions 则属于非交互环境，某些特性不可用。
 
-- **Headless/CI mode:** See `references/headless-ci-mode.md` for designing plugins that work in `claude -p` and CI pipelines
-- **GitHub Actions:** See `references/github-actions.md` for integrating plugins with `claude-code-action@v1`
-- **Advanced topics:** See `references/advanced-topics.md` for caching behavior, installation scopes, CLI management, keybindings, status line, and auto-update behavior
+- **Headless/CI mode:** 参见 `references/headless-ci-mode.md`，了解如何设计能在 `claude -p` 和 CI 流水线中工作的插件
+- **GitHub Actions:** 参见 `references/github-actions.md`，了解如何将插件集成到 `claude-code-action@v1`
+- **Advanced topics:** 参见 `references/advanced-topics.md`，了解缓存行为、installation scopes、CLI 管理、keybindings、status line 和 auto-update 行为
 
-## Plugin Validation
+## 插件校验
 
-Claude Code provides built-in validation tools:
+Claude Code 提供了内建的校验工具：
 
-- **`claude plugin validate`** (CLI) / **`/plugin validate`** (TUI): Validates plugin and marketplace structure, checking JSON syntax, required fields, component discovery, and path resolution
-- **`claude --debug`**: Shows detailed plugin loading logs, including which components were discovered, registration errors, and hook execution details
-- **`claude --verbose`**: Use `--verbose` for additional debugging output during plugin loading, including hook registration and MCP server connections
-- **`/plugins`**: View installed plugins, their status, and any errors in the Errors tab
+- **`claude plugin validate`**（CLI）/ **`/plugin validate`**（TUI）：校验插件与 marketplace 结构，检查 JSON 语法、必填字段、组件发现和路径解析
+- **`claude --debug`**：显示详细的插件加载日志，包括发现了哪些组件、注册错误以及 hook 执行细节
+- **`claude --verbose`**：在插件加载期间使用 `--verbose` 获取额外调试输出，包括 hook 注册和 MCP server 连接
+- **`/plugins`**：查看已安装插件、其状态以及 Errors 标签中的任何错误
 
-Use validation early and often during development.
+在开发过程中尽早并频繁使用这些校验工具。
 
-### Additional Source Types
+### 附加 Source 类型
 
-Marketplace entries can point at package-based plugin sources when supported by the marketplace schema. For npm packages, put the npm package information in the marketplace plugin `source` object rather than documenting direct package-manager installs in the plugin itself.
+当 marketplace schema 支持时，Marketplace 条目可以指向基于 package 的插件 source。对于 npm packages，应将 npm package 信息放在 marketplace 插件的 `source` 对象中，而不是在插件本身中记录直接的包管理器安装方式。
 
-Use `claude plugin install <plugin-name>@<marketplace-name>` for marketplace installs once the marketplace entry is configured.
+在 marketplace 条目配置完成后，可使用 `claude plugin install <plugin-name>@<marketplace-name>` 进行 marketplace 安装。
 
-## Troubleshooting
+## 故障排查
 
-**Component not loading**:
+**组件未加载**：
 
-- Verify file is in correct directory with correct extension
-- Check YAML frontmatter syntax (commands, agents, skills)
-- Ensure skill has `SKILL.md` (not `README.md` or other name)
-- Confirm plugin is enabled in Claude Code settings
+- 确认文件位于正确目录且扩展名正确
+- 检查 YAML frontmatter 语法（commands、agents、skills）
+- 确保 skill 使用的是 `SKILL.md`（而不是 `README.md` 或其他名称）
+- 确认插件已在 Claude Code 设置中启用
 
-**Path resolution errors**:
+**路径解析错误**：
 
-- Replace all hardcoded paths with `${CLAUDE_PLUGIN_ROOT}`
-- Verify paths are relative and start with `./` in manifest
-- Check that referenced files exist at specified paths
-- Test with `echo $CLAUDE_PLUGIN_ROOT` in hook scripts
+- 将所有硬编码路径替换为 `${CLAUDE_PLUGIN_ROOT}`
+- 确认 manifest 中的路径是相对路径并以 `./` 开头
+- 检查被引用的文件是否存在于指定路径
+- 在 hook scripts 中使用 `echo $CLAUDE_PLUGIN_ROOT` 进行测试
 
-**Auto-discovery not working**:
+**自动发现未生效**：
 
-- Confirm directories are at plugin root (not in `.claude-plugin/`)
-- Check file naming follows conventions (kebab-case, correct extensions)
-- Verify custom paths in manifest are correct
-- Restart Claude Code to reload plugin configuration
+- 确认目录位于插件根目录（而不是 `.claude-plugin/` 内）
+- 检查文件命名是否遵循约定（kebab-case、正确扩展名）
+- 确认 manifest 中的自定义路径正确
+- 重启 Claude Code 以重新加载插件配置
 
-**Conflicts between plugins**:
+**插件之间发生冲突**：
 
-- Use unique, descriptive component names
-- Namespace commands with plugin name if needed
-- Document potential conflicts in plugin README
-- Consider command prefixes for related functionality
+- 使用唯一且具描述性的组件名称
+- 如有需要，为 commands 加上插件名称命名空间
+- 在插件 README 中记录潜在冲突
+- 对相关功能考虑使用 command 前缀
 
 ---
 
-## Additional Resources
+## 附加资源
 
 ### Reference Files
 
-- **`references/component-patterns.md`** - Detailed patterns for each component type
-- **`references/manifest-reference.md`** - Complete plugin.json field reference
-- **`references/headless-ci-mode.md`** - Headless and CI mode plugin compatibility
-- **`references/github-actions.md`** - GitHub Actions integration for plugins
-- **`references/advanced-topics.md`** - Caching, installation scopes, CLI commands, and more
-- **`references/output-styles.md`** - Output style frontmatter schema, file locations, and usage guidance
+- **`references/component-patterns.md`** - 每种组件类型的详细模式
+- **`references/manifest-reference.md`** - 完整的 plugin.json 字段参考
+- **`references/headless-ci-mode.md`** - Headless 和 CI mode 下的插件兼容性
+- **`references/github-actions.md`** - 插件的 GitHub Actions 集成
+- **`references/advanced-topics.md`** - 缓存、installation scopes、CLI commands 等更多主题
+- **`references/output-styles.md`** - Output style frontmatter schema、文件位置和使用指导
 
 ### Example Files
 
-Working examples in `examples/`:
+`examples/` 中的可工作示例：
 
-- **`minimal-plugin.md`** - Single command plugin structure
-- **`standard-plugin.md`** - Typical plugin with multiple components
-- **`advanced-plugin.md`** - Full-featured plugin with all component types
+- **`minimal-plugin.md`** - 单 command 插件结构
+- **`standard-plugin.md`** - 包含多个组件的典型插件
+- **`advanced-plugin.md`** - 包含全部组件类型的全功能插件
