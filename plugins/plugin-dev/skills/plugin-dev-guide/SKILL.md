@@ -13,8 +13,8 @@ plugin-dev 工具包提供 9 个用于构建 Claude Code 插件的专业技能�
 
 ### 技能快速参考
 
-| Skill                     | Purpose                              |
-| ------------------------- | ------------------------------------ |
+| 技能 | 用途 |
+| ---- | ---- |
 | **plugin-structure**      | 目录布局、manifest 与组件组织        |
 | **command-development**   | 简单 prompt（commands/ 中的单个 .md 文件） |
 | **agent-development**     | 自主子 agent                         |
@@ -29,7 +29,7 @@ plugin-dev 工具包提供 9 个用于构建 Claude Code 插件的专业技能�
 
 ### 开始一个新插件
 
-**Skill: `plugin-structure`**
+**技能：`plugin-structure`**
 
 当用户需要以下内容时使用：
 
@@ -41,7 +41,7 @@ plugin-dev 工具包提供 9 个用于构建 Claude Code 插件的专业技能�
 
 ### 添加面向用户的命令
 
-**Skill: `command-development`**
+**技能：`command-development`**
 
 当用户需要以下内容时使用：
 
@@ -51,9 +51,9 @@ plugin-dev 工具包提供 9 个用于构建 Claude Code 插件的专业技能�
 - 使用 @ 语法引用文件
 - 在反引号前使用字面量 `!` 内联执行 bash
 
-### 创建自主 Agents
+### 创建自主代理（Agents）
 
-**Skill: `agent-development`**
+**技能：`agent-development`**
 
 当用户需要以下内容时使用：
 
@@ -63,9 +63,9 @@ plugin-dev 工具包提供 9 个用于构建 Claude Code 插件的专业技能�
 - 选择 agent 模型和颜色
 - 限制 agent 可访问的工具
 
-### 构建 Skills
+### 构建技能（Skills）
 
-**Skill: `skill-development`**
+**技能：`skill-development`**
 
 当用户需要以下内容时使用：
 
@@ -77,7 +77,7 @@ plugin-dev 工具包提供 9 个用于构建 Claude Code 插件的专业技能�
 
 ### 实现事件 Hooks
 
-**Skill: `hook-development`**
+**技能：`hook-development`**
 
 当用户需要以下内容时使用：
 
@@ -89,7 +89,7 @@ plugin-dev 工具包提供 9 个用于构建 Claude Code 插件的专业技能�
 
 ### 通过 MCP 集成外部服务
 
-**Skill: `mcp-integration`**
+**技能：`mcp-integration`**
 
 当用户需要以下内容时使用：
 
@@ -101,7 +101,7 @@ plugin-dev 工具包提供 9 个用于构建 Claude Code 插件的专业技能�
 
 ### 通过 LSP 添加代码智能
 
-**Skill: `lsp-integration`**
+**技能：`lsp-integration`**
 
 当用户需要以下内容时使用：
 
@@ -113,7 +113,7 @@ plugin-dev 工具包提供 9 个用于构建 Claude Code 插件的专业技能�
 
 ### 管理插件配置
 
-**Skill: `plugin-settings`**
+**技能：`plugin-settings`**
 
 当用户需要以下内容时使用：
 
@@ -125,7 +125,7 @@ plugin-dev 工具包提供 9 个用于构建 Claude Code 插件的专业技能�
 
 ### 创建插件市场
 
-**Skill: `marketplace-structure`**
+**技能：`marketplace-structure`**
 
 当用户需要以下内容时使用：
 
@@ -179,22 +179,22 @@ User wants to...
 2. **Skills**：加载 `skill-development` 以创建专业技能
 3. **验证**：使用 skill-reviewer agent 验证技能质量
 
-## 可用 Agents
+## 可用代理（Agents）
 
-plugin-dev 插件还提供 3 个 agents：
+plugin-dev 插件还提供 3 个代理（agents）：
 
-| Agent                | Purpose                          |
-| -------------------- | -------------------------------- |
+| 代理 | 用途 |
+| ---- | ---- |
 | **plugin-validator** | 验证插件结构和 manifests         |
 | **skill-reviewer**   | 审查技能质量和触发方式           |
 | **agent-creator**    | 根据描述生成新的 agents          |
 
 在创建组件后应主动使用 agents 以确保质量。
 
-## 可用 Commands
+## 可用命令（Commands）
 
-| Command                          | Purpose                               |
-| -------------------------------- | ------------------------------------- |
+| 命令 | 用途 |
+| ---- | ---- |
 | `/plugin-dev:plugin-dev-guide`   | 总览与技能路由                        |
 | `/plugin-dev:start`              | 入口点 - 选择创建插件或 marketplace   |
 | `/plugin-dev:create-plugin`      | 8 阶段引导式插件创建工作流            |
