@@ -54,19 +54,19 @@ Semantic versioning 指南：
 
 - **MAJOR**：不兼容 API changes、breaking changes
 - **MINOR**：新 functionality，backward-compatible
-- **PATCH**：Bug fixes，backward-compatible
+- **PATCH**：Bug fixes（问题修复），backward-compatible
 
 **预发布 versions（pre-release versions）：**
 
-- `"1.0.0-alpha.1"` - Alpha release
-- `"1.0.0-beta.2"` - Beta release
-- `"1.0.0-rc.1"` - Release candidate
+- `"1.0.0-alpha.1"` - Alpha release（Alpha 版本）
+- `"1.0.0-beta.2"` - Beta release（Beta 版本）
+- `"1.0.0-rc.1"` - Release candidate（发布候选版本）
 
 **示例：**
 
-- `"0.1.0"` - Initial development
-- `"1.0.0"` - First stable release
-- `"1.2.3"` - Patch update to 1.2
+- `"0.1.0"` - Initial development（初始开发）
+- `"1.0.0"` - First stable release（首个稳定版本）
+- `"1.2.3"` - Patch update to 1.2（1.2 的 patch 更新）
 - `"2.0.0"` - 包含 breaking changes 的 major version
 
 #### description
@@ -75,7 +75,7 @@ Semantic versioning 指南：
 **长度**：建议 50-200 characters
 **示例**：`"Automates code review workflows with style checks and automated feedback"`
 
-简要说明 plugin purpose 和 functionality。
+简要说明 plugin 的用途和功能。
 
 **最佳实践（best practices）：**
 
@@ -86,10 +86,10 @@ Semantic versioning 指南：
 
 **示例：**
 
-- ✅ "Generates comprehensive test suites from code analysis and coverage reports"
-- ✅ "Integrates with Jira for automatic issue tracking and sprint management"
-- ❌ "A plugin that helps you do testing stuff"
-- ❌ "This is a very long description that goes on and on about every single feature..."
+- ✅ "基于代码分析和覆盖率报告生成全面的测试套件"
+- ✅ "与 Jira 集成，用于自动 issue tracking 和 sprint management"
+- ❌ "一个帮助你做测试相关事情的 plugin"
+- ❌ "这是一段很长的 description，会没完没了地描述每一个 feature..."
 
 ### Metadata fields（metadata 字段）
 
@@ -183,15 +183,15 @@ Source code repository 位置。
 **格式**：SPDX identifier
 **示例**：`"MIT"`
 
-Software license identifier。
+Software license identifier（软件 license 标识符）。
 
 **常见 licenses：**
 
-- `"MIT"` - Permissive，常用选择
-- `"Apache-2.0"` - Permissive，带 patent grant
-- `"GPL-3.0"` - Copyleft
-- `"BSD-3-Clause"` - Permissive
-- `"ISC"` - Permissive，类似 MIT
+- `"MIT"` - Permissive（宽松型），常用选择
+- `"Apache-2.0"` - Permissive（宽松型），带 patent grant
+- `"GPL-3.0"` - Copyleft（著佐权）
+- `"BSD-3-Clause"` - Permissive（宽松型）
+- `"ISC"` - Permissive（宽松型），类似 MIT
 - `"UNLICENSED"` - Proprietary，非 open source
 
 **完整列表：** <https://spdx.org/licenses/>

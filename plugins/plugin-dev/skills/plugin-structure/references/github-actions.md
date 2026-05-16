@@ -7,7 +7,7 @@ Plugins 通过 `claude-code-action` 与 GitHub Actions 交互；这是 Anthropic
 `claude-code-action@v1` 会在 GitHub Actions 内运行 Claude Code，从而支持：
 
 - 对 PRs 进行 automated code review
-- 通过 comments 实现 issues
+- 通过 comments 处理 issues
 - 由 @claude mentions 触发的 custom automation
 - 定期 analysis 和 reporting（Scheduled analysis and reporting）
 
@@ -102,12 +102,12 @@ fi
 | Parameter | 用途 | 示例 |
 | ------------------- | ----------------------- | -------------------------------------- |
 | `prompt` | 给 Claude 的 instructions | `"Review this PR"` |
-| `claude_args` | CLI arguments | `"--max-turns 10 --model haiku"` |
-| `anthropic_api_key` | API key secret | `${{ secrets.ANTHROPIC_API_KEY }}` |
-| `github_token` | GitHub API access | `${{ secrets.GITHUB_TOKEN }}` |
+| `claude_args` | CLI 参数（CLI arguments） | `"--max-turns 10 --model haiku"` |
+| `anthropic_api_key` | API key secret（API 密钥 secret） | `${{ secrets.ANTHROPIC_API_KEY }}` |
+| `github_token` | GitHub API 访问权限（GitHub API access） | `${{ secrets.GITHUB_TOKEN }}` |
 | `trigger_phrase` | Custom trigger | `"@review-bot"`（默认：`"@claude"`） |
 
-### 用于 Plugin Control 的 claude_args
+### 用于控制 plugin 的 claude_args
 
 通过 `claude_args` 传递 CLI flags：
 

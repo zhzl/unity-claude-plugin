@@ -53,12 +53,12 @@ Plugins 可以提供 status line scripts，在 Claude Code footer 中显示上�
 JSON input 包含：
 
 - `model.display_name` — 当前 model 名称
-- `cost.total_cost_usd` — Session cost
+- `cost.total_cost_usd` — Session 成本
 - `cost.total_lines_added` / `total_lines_removed` — 代码变更
-- `context_window.used_percentage` — Context usage
-- `context_window.total_input_tokens` / `total_output_tokens` — Token counts
-- `workspace.current_dir` / `project_dir` — Directory info
-- `version` — Claude Code version
+- `context_window.used_percentage` — Context 使用率
+- `context_window.total_input_tokens` / `total_output_tokens` — Token 计数
+- `workspace.current_dir` / `project_dir` — Directory 信息
+- `version` — Claude Code 版本
 
 ### Plugin 用例
 
@@ -82,7 +82,7 @@ Claude Code 本身可以作为 MCP server，向其他 MCP clients 暴露其能�
 claude mcp serve
 ```
 
-**与 plugin 开发者的相关性：** 边缘场景。当构建需要一个 Claude Code instance 与另一个 instance 通信的 toolchains，或将 Claude Code 集成到更大的 MCP-based system 中时，这很有用。Plugin MCP servers 不受此功能影响。
+**与 plugin 开发者的相关性：** 边缘场景。当构建需要一个 Claude Code instance 与另一个 instance 通信的 toolchain，或将 Claude Code 集成到更大的 MCP-based system 中时，这很有用。Plugin MCP servers 不受此功能影响。
 
 ## MCP `@` resource 引用语法
 
@@ -139,7 +139,7 @@ claude mcp serve
 - 在 CHANGELOG 中记录 breaking changes
 - 考虑使用 pre-release versions（`2.0.0-beta.1`）进行测试
 
-## Plugin caching
+## Plugin 缓存
 
 ### Caching 工作方式
 

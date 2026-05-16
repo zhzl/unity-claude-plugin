@@ -14,7 +14,7 @@ Claude Code 启动时：
 4. **注册 components**：使其可供 Claude Code 使用
 5. **初始化**：启动 MCP servers，注册 hooks
 
-**时机**：Component registration 发生在 Claude Code initialization 期间，而不是持续进行。
+**时机**：Component registration 发生在 Claude Code 初始化期间，而不是持续进行。
 
 ### 激活阶段
 
@@ -89,7 +89,7 @@ workflow-commands/     # Workflow automation
 
 - 按用途组织
 - 更容易维护
-- 可以按 directory 限制 access
+- 可以按 directory 限制访问
 
 ### 层级结构
 

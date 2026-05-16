@@ -72,7 +72,7 @@ claude -p "Run tests and fix failures" --allowedTools "Read,Edit,Bash" --max-tur
 
 ## 结构化输出（structured output）
 
-### JSON output
+### JSON 输出（JSON output）
 
 获取机器可读响应：
 
@@ -90,7 +90,7 @@ claude -p "List all TODO comments" --output-format json
 }
 ```
 
-### JSON schema validation
+### JSON schema 验证（JSON schema validation）
 
 强制使用特定输出结构：
 
