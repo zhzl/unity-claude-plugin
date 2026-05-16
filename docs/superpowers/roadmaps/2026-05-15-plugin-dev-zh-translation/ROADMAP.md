@@ -6,7 +6,7 @@
 - **Slug:** plugin-dev-zh-translation
 - **Status:** active
 - **Created:** 2026-05-15
-- **Last Sync:** 2026-05-15
+- **Last Sync:** 2026-05-16
 - **Roadmap Path:** `docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md`
 - **Target Path:** `plugins/plugin-dev`
 
@@ -27,6 +27,7 @@
 - 只翻译自然语言；代码块、shell 命令、JSON 键、路径、模型名和 API 名默认保持原文。
 - frontmatter 的 `description` 若会影响触发或发现，应保留关键英文触发词或采用中英混排以避免语义丢失。
 - 每个阶段完成前必须提供具体验证证据，例如 diff 抽查、格式校验、脚本/manifest 校验或相关测试输出。
+- 每个翻译阶段完成后，必须校验该阶段涉及的 command、skill、agent 的结构、触发描述、工具字段、示例指令和用户可读说明是否正确；若发现既有错误、不一致或会影响使用体验的问题，应在不改变插件功能边界的前提下一并矫正。涉及新增功能、行为变更、目录重构、新校验器或新自动化机制的修复，仍需另行确认或进入后续 scope。
 
 ## Success Criteria
 
@@ -39,13 +40,14 @@
 
 - 2026-05-15: 采用五阶段路线图：盘点术语、核心插件内容、核心开发技能、集成工具技能、示例脚本和最终一致性验证。
 - 2026-05-15: 翻译范围以用户可读自然语言为主；机器可读字段默认保持原文，必要时在触发描述中保留关键英文词。
+- 2026-05-16: 翻译阶段同时承担同范围 command、skill、agent 的结构与内容正确性校验；可在不改变插件功能边界的前提下矫正既有问题。
 
 ## Current State
 
 - **Roadmap Status:** active
-- **Current Phase:** Phase 2 — Core plugin content
-- **Last Sync:** 2026-05-15
-- **Next Manual Action:** `/superpowers:roadmap-management write-spec docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md Phase 2`
+- **Current Phase:** Phase 3 — Core development skills
+- **Last Sync:** 2026-05-16
+- **Next Manual Action:** `/superpowers:roadmap-management write-spec docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md Phase 3`
 
 ## Blockers
 
@@ -56,7 +58,7 @@
 | Phase | Status | Scope | Artifacts |
 |---|---|---|---|
 | Phase 1 — Inventory and glossary | completed | 盘点文件、定义术语表和保留规则 | Spec `docs/superpowers/specs/2026-05-15-plugin-dev-zh-translation-phase-1-design.md`; Plan `docs/superpowers/plans/2026-05-15-plugin-dev-zh-translation-phase-1.md`; Implementation Summary recorded; Verification Evidence recorded |
-| Phase 2 — Core plugin content | needs-spec | 翻译 `.claude-plugin`、`commands`、`agents`、`docs` | Spec pending; Plan pending; Implementation Summary pending; Verification Evidence pending |
+| Phase 2 — Core plugin content | completed | 翻译 `.claude-plugin`、`commands`、`agents`、`docs`，并校验矫正同范围 commands/agents | Spec `docs/superpowers/specs/2026-05-16-plugin-dev-zh-translation-phase-2-design.md`; Plan `docs/superpowers/plans/2026-05-16-plugin-dev-zh-translation-phase-2.md`; Implementation Summary recorded; Verification Evidence recorded |
 | Phase 3 — Core development skills | needs-spec | 翻译 `plugin-dev-guide`、`plugin-structure`、`command-development`、`skill-development` | Spec pending; Plan pending; Implementation Summary pending; Verification Evidence pending |
 | Phase 4 — Integration and tooling skills | needs-spec | 翻译 `agent-development`、`hook-development`、`mcp-integration`、`lsp-integration`、`plugin-settings`、`marketplace-structure` | Spec pending; Plan pending; Implementation Summary pending; Verification Evidence pending |
 | Phase 5 — Examples, scripts, and final consistency | needs-spec | 处理 JSON/shell 示例可读文本并做整体一致性验证 | Spec pending; Plan pending; Implementation Summary pending; Verification Evidence pending |
@@ -80,18 +82,19 @@
 
 ### Phase 2 — Core plugin content
 
-- **Status:** needs-spec
-- **Scope:** 翻译 `.claude-plugin`、`commands`、`agents` 和 `docs` 下的用户可读自然语言内容。
-- **Out of scope:** `skills` 子目录；shell/JSON 示例的最终一致性处理；任何行为变更。
+- **Status:** completed
+- **Scope:** 翻译 `.claude-plugin`、`commands`、`agents` 和 `docs` 下的用户可读自然语言内容，并校验矫正同范围 command 和 agent 的结构、触发描述、工具字段、示例指令和用户可读说明问题。
+- **Out of scope:** `skills` 子目录；shell/JSON 示例的最终一致性处理；新增功能、行为变更、目录重构、新校验器或新自动化机制。
 - **Success Criteria:**
   - 核心插件 manifest、命令、代理和 docs 中的用户可读内容已中文化。
   - frontmatter、manifest 字段、命令名、代理名和路径保持可解析。
   - 相关文件经抽查确认没有误译代码块或机器可读字段。
+  - 本阶段涉及的 command 和 agent 经校验，发现的既有结构、触发或说明问题已在不改变功能边界的前提下矫正，或记录为需另行确认的后续问题。
 - **Artifacts:**
-  - **Spec:** pending
-  - **Plan:** pending
-  - **Implementation Summary:** pending
-  - **Verification Evidence:** pending
+  - **Spec:** `docs/superpowers/specs/2026-05-16-plugin-dev-zh-translation-phase-2-design.md`
+  - **Plan:** `docs/superpowers/plans/2026-05-16-plugin-dev-zh-translation-phase-2.md`
+  - **Implementation Summary:** Phase 2 translated the plugin manifest description, 4 command workflows, 3 agent definitions, and 5 docs files to Chinese-first user-readable content while preserving code blocks, machine-readable fields, paths, commands, tool names, and behavior; same-scope command/agent wording issues were corrected without changing functionality.
+  - **Verification Evidence:** 2026-05-16: scope check showed exactly 13 Phase 2 `plugins/plugin-dev` files modified and all were `M` with no `A/D/R`; JSON check passed (`plugin.json ok: valid JSON, only description changed`); code block parity passed (`all Markdown code blocks match HEAD`); frontmatter check passed (protected fields unchanged, descriptions changed); command validator passed for 4 files with `Errors: 0`, `Warnings: 4` location warnings; agent validator passed for 3 files with 3 non-blocking second-person style warnings; final review reported PASS. Behavior unchanged: no `skills/`, shell scripts, command names, agent names, paths, or directory structure changed. Out-of-scope findings recorded: original `**.md` glob and release-procedure code-block comments/examples remain protected for later decision.
 
 ### Phase 3 — Core development skills
 
@@ -178,10 +181,13 @@
 - 详细规格应写入 `docs/superpowers/specs/`。
 - 详细执行计划应写入 `docs/superpowers/plans/`。
 - Implementation Summary 只记录主要变更、commit/PR 引用或执行摘要，不记录详细实现步骤。
-- 下一步建议手动调用 `/superpowers:roadmap-management write-spec docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md Phase 2`。
+- 下一步建议手动调用 `/superpowers:roadmap-management write-spec docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md Phase 3`。
 
 ## Change Log
 
+- 2026-05-16: Completed Phase 2 with verified translation of core plugin content and advanced current phase to Phase 3.
+- 2026-05-16: Added Phase 2 implementation plan artifact and marked Phase 2 as planned.
+- 2026-05-16: Added approved global constraint requiring each translation phase to validate and, within scope, correct related command/skill/agent quality issues; linked Phase 2 spec artifact and marked Phase 2 as designed.
 - 2026-05-15: Completed Phase 1 with validated inventory, glossary, non-translatable rules, and high-risk field rules; current phase advanced to Phase 2.
 - 2026-05-15: Added Phase 1 implementation plan artifact and marked Phase 1 as planned.
 - 2026-05-15: Added Phase 1 spec artifact and marked Phase 1 as designed.

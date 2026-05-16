@@ -1,22 +1,22 @@
-# Version Release Procedure
+# 版本发布流程
 
-This document describes the complete release workflow for plugin-dev.
+本文档描述 plugin-dev 的完整发布工作流。
 
-## Version Files
+## 版本文件
 
-Version must be synchronized across these files on release:
+发布时必须在以下文件之间同步版本：
 
-- `plugins/plugin-dev/.claude-plugin/plugin.json` (source of truth)
-- Optional root `.claude-plugin/marketplace.json` if this repository is also published as a marketplace
+- `plugins/plugin-dev/.claude-plugin/plugin.json`（事实来源）
+- 可选的根目录 `.claude-plugin/marketplace.json`，如果此仓库也作为 marketplace 发布
 
 ```bash
 # Verify version consistency
 rg '"version"' plugins/plugin-dev/.claude-plugin/plugin.json
 ```
 
-## Release Steps
+## 发布步骤
 
-### 1. Create Release Branch
+### 1. 创建发布分支
 
 ```bash
 # Ensure main is up to date
@@ -27,12 +27,12 @@ git pull origin main
 git checkout -b release/v0.x.x
 ```
 
-### 2. Update Version Numbers
+### 2. 更新版本号
 
-Update version in **all version files** (must match):
+在**所有版本文件**中更新版本（必须一致）：
 
-- `plugins/plugin-dev/.claude-plugin/plugin.json` (source of truth)
-- Optional root `.claude-plugin/marketplace.json` if this repository is also published as a marketplace
+- `plugins/plugin-dev/.claude-plugin/plugin.json`（事实来源）
+- 可选的根目录 `.claude-plugin/marketplace.json`，如果此仓库也作为 marketplace 发布
 
 ```bash
 # Find current version to replace
@@ -42,18 +42,18 @@ rg '"version"' plugins/plugin-dev/.claude-plugin/plugin.json
 rg '"version"' plugins/plugin-dev/.claude-plugin/plugin.json
 ```
 
-### 3. Update Documentation
+### 3. 更新文档
 
-- `CHANGELOG.md`, if present - Add release notes following Keep a Changelog format:
-  1. Review commits since last release: `git log v0.x.x..HEAD --oneline`
-  2. Organize into sections: Added, Changed, Fixed, Security, Performance, Documentation
-  3. Group related changes and reference PR numbers
-  4. Add version comparison links at bottom of file
-- Any other relevant documentation
+- 如果存在 `CHANGELOG.md`，按 Keep a Changelog 格式添加发布说明：
+  1. 查看自上次发布以来的提交：`git log v0.x.x..HEAD --oneline`
+  2. 按 Added、Changed、Fixed、Security、Performance、Documentation 分组
+  3. 将相关变更归类，并引用 PR 编号
+  4. 在文件底部添加版本比较链接
+- 其他相关文档
 
-> **Note**: If the repository has a README version badge, it can be configured to update from GitHub releases.
+> **说明**: 如果仓库有 README 版本徽章，可以将其配置为从 GitHub releases 更新。
 
-### 4. Test and Validate
+### 4. 测试与验证
 
 ```bash
 # Lint markdown files
@@ -70,7 +70,7 @@ claude --plugin-dir plugins/plugin-dev
 # Test agents trigger appropriately
 ```
 
-### 5. Commit and Create PR
+### 5. 提交并创建 PR
 
 ```bash
 # Review and stage only intended release files
@@ -98,9 +98,9 @@ gh pr create --title "chore: prepare release v0.x.x" \
 "
 ```
 
-### 6. Merge and Create Release
+### 6. 合并并创建发布（Release）
 
-After PR review and approval:
+在 PR 审查并批准后：
 
 ```bash
 # Merge PR via GitHub UI or:
@@ -123,6 +123,6 @@ Brief description of the release focus.
 EOF
 ```
 
-**Note**: Main branch is protected and requires PRs. All version bumps must go through the release branch workflow. The `--target main` flag ensures the tag is created on the correct commit.
+**说明**: main 分支受保护并要求通过 PR。所有版本更新都必须走发布分支工作流。`--target main` 标志可确保 tag 在正确的 commit 上创建。
 
-**Publishing**: The `plugins/plugin-dev/` directory is the distributable plugin unit. If this repository also has a root `.claude-plugin/marketplace.json`, that root manifest defines marketplace distribution; otherwise, treat `plugins/plugin-dev/` as the plugin to publish or install directly.
+**发布（Publishing）**：`plugins/plugin-dev/` 目录是可分发的插件单元。如果此仓库也有根目录 `.claude-plugin/marketplace.json`，则该根 manifest 定义 marketplace 分发；否则，将 `plugins/plugin-dev/` 视为直接发布或安装的插件。

@@ -1,12 +1,12 @@
 ---
-description: Overview of plugin development capabilities
+description: 插件开发（plugin development）能力概览与使用说明
 argument-hint: "[question or task]"
 allowed-tools: Skill, AskUserQuestion
 model: sonnet
 ---
 
-Invoke the plugin-dev:plugin-dev-guide skill to load plugin development guidance.
+调用 plugin-dev:plugin-dev-guide skill，以加载插件开发（plugin development）指南。
 
-Then help with: $ARGUMENTS
+然后协助处理：$ARGUMENTS
 
-If no arguments provided, summarize what plugin development capabilities are available and ask the user what they want to build or learn about.
+如果未提供参数，请总结可用的插件开发（plugin development）能力，并询问用户想要构建什么或了解什么。

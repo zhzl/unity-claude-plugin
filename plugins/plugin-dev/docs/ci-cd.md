@@ -1,50 +1,50 @@
-# CI/CD Workflows
+# CI/CD 工作流
 
-Documentation for GitHub Actions workflows, labels, and templates when those repository files are present.
+当仓库中存在这些仓库文件时，本文档说明 GitHub Actions 工作流、标签（labels）和模板。
 
-## PR Workflows
+## PR 工作流
 
-| Workflow                   | Trigger                        | Purpose                    |
+| 工作流（Workflow）         | 触发条件                       | 用途                       |
 | -------------------------- | ------------------------------ | -------------------------- |
-| `markdownlint.yml`         | `**.md` changed                | Lint markdown files        |
-| `links.yml`                | `**.md` changed                | Check for broken links     |
-| `component-validation.yml` | Plugin components changed      | Validate plugin components |
-| `version-check.yml`        | Version files changed          | Ensure version consistency |
-| `validate-workflows.yml`   | `.github/workflows/**` changed | Lint GitHub Actions        |
-| `yaml-lint.yml`            | `.github/workflows/**` changed | Lint YAML files            |
-| `claude-pr-review.yml`     | All PRs (non-draft)            | AI-powered code review     |
+| `markdownlint.yml`         | `**.md` 变更                   | 检查 Markdown 文件         |
+| `links.yml`                | `**.md` 变更                   | 检查失效链接               |
+| `component-validation.yml` | 插件组件变更                   | 验证插件组件               |
+| `version-check.yml`        | 版本文件变更                   | 确保版本一致性             |
+| `validate-workflows.yml`   | `.github/workflows/**` 变更    | 检查 GitHub Actions 工作流 |
+| `yaml-lint.yml`            | `.github/workflows/**` 变更    | 检查 YAML 文件             |
+| `claude-pr-review.yml`     | 所有非草稿 PR                  | AI 驱动的代码审查          |
 
-## Other Workflows
+## 其他工作流
 
-- `claude.yml` - Main Claude Code workflow
-- `stale.yml` - Manages stale issues/PRs (Mon/Wed/Fri)
-- `semantic-labeler.yml` - Auto-labels issues/PRs
-- `ci-failure-analysis.yml` - Analyzes CI failures
-- `sync-labels.yml` - Synchronizes repository labels
-- `greet.yml` - Greets new contributors
+- `claude.yml` - 主 Claude Code 工作流
+- `stale.yml` - 管理过期 issue/PR（周一/周三/周五）
+- `semantic-labeler.yml` - 自动为 issue/PR 添加标签
+- `ci-failure-analysis.yml` - 分析 CI 失败
+- `sync-labels.yml` - 同步仓库标签
+- `greet.yml` - 欢迎新贡献者
 
-## Labels
+## 标签（Labels）
 
-Issues and PRs can use a structured labeling system defined in `.github/labels.yml` when present:
+当存在时，Issue 和 PR 可以使用在 `.github/labels.yml` 中定义的结构化标签系统：
 
-| Category  | Format        | Examples                                                                                      |
-| --------- | ------------- | --------------------------------------------------------------------------------------------- |
-| Component | `component:*` | `component:skill`, `component:agent`, `component:hook`, `component:command`, `component:docs` |
-| Priority  | `priority:*`  | `priority:critical`, `priority:high`, `priority:medium`, `priority:low`                       |
-| Status    | `status:*`    | `status:blocked`, `status:in-progress`, `status:needs-review`                                 |
-| Effort    | `effort:*`    | `effort:small` (<1h), `effort:medium` (1-4h), `effort:large` (>4h)                            |
+| 类别 | 格式         | 示例                                                                                          |
+| ---- | ------------ | --------------------------------------------------------------------------------------------- |
+| 组件 | `component:*` | `component:skill`, `component:agent`, `component:hook`, `component:command`, `component:docs` |
+| 优先级 | `priority:*`  | `priority:critical`, `priority:high`, `priority:medium`, `priority:low`                       |
+| 状态 | `status:*`    | `status:blocked`, `status:in-progress`, `status:needs-review`                                 |
+| 工作量 | `effort:*`    | `effort:small` (<1h), `effort:medium` (1-4h), `effort:large` (>4h)                            |
 
-The `semantic-labeler.yml` workflow auto-labels PRs based on file paths changed.
+`semantic-labeler.yml` 工作流会根据变更的文件路径自动为 PR 添加标签。
 
-## Issue & PR Templates
+## Issue 与 PR 模板
 
-Repositories can include templates in `.github/`:
+仓库可以在 `.github/` 中包含模板：
 
-**Issue Templates** (4 types):
+**Issue 模板**（4 种类型）：
 
-- `bug_report.yml` - Bug reports with reproduction steps
-- `feature_request.yml` - Feature requests with use cases
-- `documentation.yml` - Documentation improvements
-- `question.yml` - Questions and discussions
+- `bug_report.yml` - 包含复现步骤的 bug 报告
+- `feature_request.yml` - 包含 use case 的功能请求
+- `documentation.yml` - 文档改进
+- `question.yml` - 问题与讨论
 
-**Pull Request Template**: Component-specific checklists with validation requirements. If a `CONTRIBUTING.md` file is present, use it for PR guidelines.
+**拉取请求模板（Pull Request 模板）**：带有验证要求的按组件划分检查清单。如果存在 `CONTRIBUTING.md` 文件，请使用它作为 PR 指南。

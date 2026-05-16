@@ -1,7 +1,7 @@
 {
   "name": "plugin-dev",
   "version": "0.4.0",
-  "description": "Comprehensive toolkit for developing Claude Code plugins. Includes focused skills covering hooks, MCP integration, LSP servers, commands, agents, marketplaces, and best practices, plus a guide skill for navigation. AI-assisted plugin creation and validation.",
+  "description": "用于开发 Claude Code plugins 的综合工具包。包含面向 hooks、MCP integration、LSP servers、commands、agents、marketplaces 与 best practices 的聚焦 skills，并提供用于导航的 guide skill。支持 AI 辅助的 plugin 创建与校验（AI-assisted plugin creation and validation）。",
   "author": {
     "name": "Steve Nims",
     "url": "https://github.com/sjnims"

@@ -1,33 +1,33 @@
-# Workflow Command Security
+# 工作流命令安全性
 
-Security considerations for the plugin creation workflows.
+插件创建工作流的安全注意事项。
 
-## Required Tool Access
+## 所需工具访问
 
-The workflow commands (`/plugin-dev:create-plugin` and `/plugin-dev:create-marketplace`) require broad file system access to perform their scaffolding functions:
+工作流命令（`/plugin-dev:create-plugin` 和 `/plugin-dev:create-marketplace`）需要较广泛的文件系统访问权限来执行其脚手架功能：
 
 ```yaml
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash(mkdir *), Bash(git init *), ...
 ```
 
-**Why this access is needed:**
+**为什么需要这些访问权限：**
 
-- Creating plugin directory structures requires `Write` and `Bash(mkdir *)`
-- Generating manifest files and component templates requires `Write` and `Edit`
-- Initializing git repositories requires `Bash(git init *)`
-- Exploring existing code for patterns requires `Read`, `Grep`, `Glob`
+- 创建插件目录结构需要 `Write` 和 `Bash(mkdir *)`
+- 生成 manifest 文件和组件模板需要 `Write` 和 `Edit`
+- 初始化 git 仓库需要 `Bash(git init *)`
+- 为了寻找模式而探索现有代码需要 `Read`、`Grep`、`Glob`
 
-## Security Considerations
+## 安全注意事项
 
-- These commands can write to any location within the user's permission scope
-- The commands prompt for confirmation before creating structures
-- Review the target directory before starting a workflow
-- In multi-user environments, verify the working directory is appropriate
+- 这些命令可以在用户权限范围内向任意位置写入
+- 这些命令会在创建结构之前请求确认
+- 在启动工作流之前审查目标目录
+- 在多用户环境中，确认工作目录是否合适
 
-## Design Contrast with `/plugin-dev:start`
+## 与 `/plugin-dev:start` 的设计对比
 
-The entry point command uses `disable-model-invocation: true` and restricts tools to `AskUserQuestion, TaskCreate, TaskGet, TaskUpdate, TaskList` since it only routes to other commands. The workflow commands need broader access because they perform the actual file creation work.
+入口命令使用 `disable-model-invocation: true`，并将工具限制为 `AskUserQuestion, TaskCreate, TaskGet, TaskUpdate, TaskList`，因为它只负责路由到其他命令。工作流命令需要更广泛的访问权限，因为它们执行实际的文件创建工作。
 
-## For Security-Sensitive Environments
+## 面向安全敏感环境
 
-Review the `allowed-tools` frontmatter in each command file to understand exactly what access is granted. Future Claude Code versions may support path-scoped tool restrictions (e.g., `Write(./plugins/*)`), which would allow tighter scoping.
+查看每个命令文件中的 `allowed-tools` frontmatter，以准确了解授予了哪些访问权限。未来版本的 Claude Code 可能会支持按路径限定的工具限制（例如 `Write(./plugins/*)`），从而实现更严格的范围控制。

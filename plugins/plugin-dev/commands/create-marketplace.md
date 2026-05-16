@@ -1,65 +1,65 @@
 ---
-description: Create plugin marketplaces with guided workflow
+description: 使用 guided workflow 创建 plugin marketplace
 argument-hint: "[marketplace-description]"
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash(mkdir *), Bash(git init *), TaskCreate, TaskGet, TaskUpdate, TaskList, AskUserQuestion, Skill, Agent
 model: sonnet
 ---
 
-# Marketplace Creation Workflow
+# 插件市场（Marketplace）创建工作流
 
-Guide the user through creating a complete plugin marketplace from initial concept to validated, distributable collection. Follow a systematic approach: understand requirements, plan plugins, configure structure, add entries, validate, and prepare for distribution.
+引导用户从初始概念开始，创建一个完整的 plugin marketplace，并最终形成经过验证、可分发的集合。遵循系统化方法：理解需求、规划插件、配置结构、添加条目、验证，并为分发做好准备。
 
-## Core Principles
+## 核心原则
 
-- **Ask clarifying questions**: Identify all ambiguities about marketplace purpose, plugins, distribution strategy. Ask specific questions rather than making assumptions. Wait for user answers before proceeding.
-- **Load marketplace-structure skill**: Use the Skill tool to load the marketplace-structure skill for schema and pattern guidance
-- **Use plugin-validator agent**: Leverage the plugin-validator agent for comprehensive marketplace validation
-- **Follow best practices**: Apply patterns from this repository's own marketplace.json
-- **Use Task tools**: Track all progress throughout all phases using TaskCreate, TaskUpdate, and TaskList
+- **提出澄清问题**：识别关于 marketplace 目的、插件和分发策略的所有歧义。提出具体问题，而不是做假设。在继续之前等待用户回答。
+- **加载 marketplace-structure skill**：使用 Skill 工具加载 marketplace-structure skill，以获取 schema 和模式指导
+- **使用 plugin-validator agent**：利用 plugin-validator agent 对 marketplace 进行全面验证
+- **遵循最佳实践**：参考本仓库自身 marketplace.json 的模式
+- **使用 Task tools**：在所有阶段使用 TaskCreate、TaskUpdate 和 TaskList 跟踪全部进度
 
-**Initial request:** $ARGUMENTS
+**初始请求：** $ARGUMENTS
 
-**Security note:** This workflow has broad file system access to create marketplace structures. It can write files and create directories within your permission scope. Review the target directory before starting, and see [docs/workflow-security.md](../docs/workflow-security.md) for details.
-
----
-
-## Phase 1: Discovery
-
-**Goal**: Understand what marketplace needs to be created and its purpose
-
-**Actions**:
-
-1. Create task list with all 8 phases
-2. If marketplace purpose is clear from arguments:
-   - Summarize understanding
-   - Identify marketplace type (team internal, community, single-plugin, multi-plugin)
-3. If marketplace purpose is unclear, ask user:
-   - What plugins will this marketplace contain?
-   - Who is the target audience? (team, community, public)
-   - Will plugins be local (in same repo) or external (GitHub, git URLs)?
-   - Single maintainer or community contributions?
-4. Summarize understanding and confirm with user before proceeding
-
-**Output**: Clear statement of marketplace purpose and distribution strategy
+**安全说明：** 此 workflow 具有较广的文件系统访问权限，可用于创建 marketplace 结构。它可以在你的权限范围内写入文件并创建目录。开始前请检查目标目录，详情参见 [docs/workflow-security.md](../docs/workflow-security.md)。
 
 ---
 
-## Phase 2: Plugin Planning
+## 第 1 阶段（Phase 1）：发现与需求澄清
 
-**Goal**: Determine which plugins to include and their sources
+**目标**：理解需要创建什么 marketplace，以及它的用途
 
-**MUST load marketplace-structure skill** using Skill tool before this phase.
+**操作**：
 
-**Actions**:
+1. 创建包含全部 8 个阶段的任务列表
+2. 如果从参数中已经可以明确 marketplace 的用途：
+   - 总结你的理解
+   - 识别 marketplace 类型（团队内部、社区、单插件、多插件）
+3. 如果 marketplace 用途不清晰，向用户提问：
+   - 这个 marketplace 会包含哪些插件？
+   - 目标受众是谁？（团队、社区、公开）
+   - 插件会是本地的（同仓库）还是外部的（GitHub、git URL）？
+   - 由单个维护者维护，还是接受社区贡献？
+4. 总结理解，并在继续前与用户确认
 
-1. Load marketplace-structure skill for schema guidance
-2. List plugins to include in marketplace:
-   - For each plugin: name, source type, brief description
-3. Categorize by source type:
-   - **Local (relative path)**: Plugins maintained in same repository
-   - **GitHub**: External plugins on GitHub
-   - **Git URL**: External plugins on GitLab, Bitbucket, or self-hosted
-4. Present plugin plan to user as table:
+**输出**：关于 marketplace 用途和分发策略的清晰说明
+
+---
+
+## 第 2 阶段（Phase 2）：插件规划
+
+**目标**：确定要包含哪些插件及其来源
+
+**在进入此阶段前，必须使用 Skill 工具加载 marketplace-structure skill。**
+
+**操作**：
+
+1. 加载 marketplace-structure skill 以获得 schema 指导
+2. 列出要纳入 marketplace 的插件：
+   - 对每个插件，记录名称、来源类型和简要描述
+3. 按来源类型分类：
+   - **本地（Local / relative path）**：在同一仓库中维护的插件
+   - **GitHub**：托管在 GitHub 上的外部插件
+   - **Git URL（仓库地址）**：托管在 GitLab、Bitbucket 或自建服务上的外部插件
+4. 以表格形式向用户展示插件规划：
 
    ```text
    | Plugin Name      | Source Type | Description            |
@@ -69,37 +69,37 @@ Guide the user through creating a complete plugin marketplace from initial conce
    | legacy-tool      | git-url     | Legacy utility         |
    ```
 
-5. For each local plugin, determine:
-   - Does it already exist? (will validate)
-   - Need to create it? (redirect to /plugin-dev:create-plugin)
-6. Get user confirmation or adjustments
+5. 对每个本地插件，确定：
+   - 它是否已经存在？（将进行验证）
+   - 是否需要创建？（引导到 /plugin-dev:create-plugin）
+6. 获取用户确认或调整意见
 
-**Output**: Confirmed list of plugins with sources
+**输出**：带有来源信息的已确认插件列表
 
 ---
 
-## Phase 3: Metadata Design
+## 第 3 阶段（Phase 3）：元数据设计
 
-**Goal**: Define marketplace metadata and owner information
+**目标**：定义 marketplace 元数据和所有者信息
 
-**Actions**:
+**操作**：
 
-1. Determine marketplace name:
-   - Must be kebab-case (lowercase, hyphens)
-   - Should be descriptive of purpose
-   - Examples: `team-tools`, `security-plugins`, `awesome-claude-plugins`
+1. 确定 marketplace 名称：
+   - 必须使用 kebab-case（小写加连字符）
+   - 应准确描述用途
+   - 示例：`team-tools`、`security-plugins`、`awesome-claude-plugins`
 
-2. Gather owner information:
-   - Ask user: "Who maintains this marketplace?"
-   - Required: name
-   - Optional: email, url
+2. 收集所有者信息：
+   - 询问用户："谁来维护这个 marketplace？"
+   - 必填：name
+   - 可选：email、url
 
-3. Define optional metadata:
-   - description: Brief marketplace description
-   - version: Initial version (recommend 1.0.0 or 0.1.0)
-   - pluginRoot: Base path for relative sources (default: none)
+3. 定义可选元数据：
+   - description：marketplace 的简要说明
+   - version：初始版本（建议 1.0.0 或 0.1.0）
+   - pluginRoot：相对来源的基础路径（默认：无）
 
-4. Present configuration summary:
+4. 展示配置摘要：
 
    ```json
    {
@@ -115,30 +115,30 @@ Guide the user through creating a complete plugin marketplace from initial conce
    }
    ```
 
-5. Get user confirmation
+5. 获取用户确认
 
-**Output**: Confirmed marketplace metadata
+**输出**：已确认的 marketplace 元数据
 
 ---
 
-## Phase 4: Structure Creation
+## 第 4 阶段（Phase 4）：结构创建
 
-**Goal**: Create marketplace directory structure and manifest
+**目标**：创建 marketplace 目录结构和 manifest
 
-**Actions**:
+**操作**：
 
-1. Determine marketplace location:
-   - Ask user: "Where should I create the marketplace?"
-   - Offer options: current directory, new directory, custom path
+1. 确定 marketplace 的位置：
+   - 询问用户："我应该在哪里创建这个 marketplace？"
+   - 提供选项：当前目录、新目录、自定义路径
 
-2. Create directory structure using bash:
+2. 使用 bash 创建目录结构：
 
    ```bash
    mkdir -p marketplace-name/.claude-plugin
    mkdir -p marketplace-name/plugins  # if local plugins
    ```
 
-3. Create `.claude-plugin/marketplace.json` manifest using Write tool:
+3. 使用 Write 工具创建 `.claude-plugin/marketplace.json` manifest：
 
    ```json
    {
@@ -154,19 +154,19 @@ Guide the user through creating a complete plugin marketplace from initial conce
    }
    ```
 
-   This empty `plugins` array is a temporary scaffold only; add plugin entries in Phase 5 before treating the marketplace as complete.
+   这个空的 `plugins` 数组只是临时脚手架；在将 marketplace 视为完成之前，需要在 Phase 5 中补充插件条目。
 
-4. Create README.md template with:
-   - Marketplace description
-   - Installation instructions
-   - Available plugins table (to be filled in Phase 5)
-   - Contributing guidelines (if community)
+4. 创建 README.md 模板，包含：
+   - Marketplace 描述
+   - 安装说明
+   - 可用插件表格（将在 Phase 5 填充）
+   - 贡献指南（如果是社区型）
 
-5. Initialize git repo if creating new directory (only `git init` is available; additional git operations like staging and committing are left to the user after the workflow completes to respect their commit preferences)
+5. 如果创建的是新目录，则初始化 git 仓库（仅允许 `git init`；额外的 git 操作如暂存和提交应留给用户在 workflow 完成后自行执行，以尊重其提交偏好）
 
-**Output**: Marketplace directory structure created
+**输出**：marketplace 目录结构已创建
 
-**Post-workflow git operations** (user can run after completion):
+**workflow 结束后的 git 操作**（用户可在完成后自行运行）：
 
 ```bash
 git status --short
@@ -174,62 +174,62 @@ git add path/to/marketplace/.claude-plugin/marketplace.json path/to/marketplace/
 git commit -m "feat: initial marketplace structure"
 ```
 
-Stage only intended explicit paths from the new marketplace; do not use broad staging.
+只暂存新 marketplace 中明确指定的路径；不要使用宽泛的暂存方式。
 
 ---
 
-## Phase 5: Plugin Entry Configuration
+## 第 5 阶段（Phase 5）：插件条目配置
 
-**Goal**: Configure each plugin entry with appropriate metadata
+**目标**：为每个插件条目配置合适的元数据
 
-**Actions**:
+**操作**：
 
-1. For each plugin in the plan (from Phase 2):
+1. 对 Phase 2 计划中的每个插件：
 
-   **For local plugins**:
-   - If plugin exists:
-     - Read its plugin.json to get metadata
-     - Create entry with relative source path
-   - If plugin doesn't exist:
-     - Ask: "Plugin 'X' doesn't exist. Create it now or add placeholder?"
-     - If create: Ask the user to run `/plugin-dev:create-plugin` for that plugin first
-     - If placeholder: Create entry with TODO comment in README
+   **对于本地插件**：
+   - 如果插件已存在：
+     - 读取其 plugin.json 以获取元数据
+     - 使用相对 source path 创建条目
+   - 如果插件不存在：
+     - 询问："Plugin 'X' 不存在。现在创建它，还是先添加占位项？"
+     - 如果选择创建：请用户先运行 `/plugin-dev:create-plugin` 为该插件建好基础
+     - 如果选择占位：在 README 中创建带 TODO 注释的条目
 
-   **For GitHub plugins**:
-   - Create entry with github source object
-   - Prompt for version, description if not known
-   - Consider strict: false if plugin lacks plugin.json
+   **对于 GitHub 插件**：
+   - 创建带 github source object 的条目
+   - 若未知则提示补充 version 和 description
+   - 如果插件缺少 plugin.json，可考虑设置 strict: false
 
-   **For git URL plugins**:
-   - Create entry with url source object
-   - Prompt for version, description if not known
+   **对于 git URL 插件**：
+   - 创建带 url source object 的条目
+   - 若未知则提示补充 version 和 description
 
-2. For each entry, configure optional fields:
-   - version (recommend always including)
-   - description (recommend always including)
-   - category (if marketplace uses categories)
-   - tags (for discoverability)
+2. 为每个条目配置可选字段：
+   - version（建议始终包含）
+   - description（建议始终包含）
+   - category（如果 marketplace 使用分类）
+   - tags（提高可发现性）
 
-3. Update marketplace.json with all plugin entries
+3. 使用所有插件条目更新 marketplace.json
 
-4. Update README.md with plugin table:
+4. 使用插件表格更新 README.md：
 
    | Plugin | Description | Version |
    | ------ | ----------- | ------- |
    | X      | Does Y      | 1.0.0   |
 
-**Output**: All plugin entries configured in marketplace.json
+**输出**：marketplace.json 中的全部插件条目已配置完成
 
 ---
 
-## Phase 6: Distribution Setup
+## 第 6 阶段（Phase 6）：分发设置
 
-**Goal**: Configure distribution strategy based on target audience
+**目标**：根据目标受众配置分发策略
 
-**Actions**:
+**操作**：
 
-1. **For team/internal marketplaces**:
-   - Provide team settings configuration:
+1. **对于团队/内部 marketplace**：
+   - 提供团队 settings 配置：
 
      ```json
      {
@@ -244,189 +244,189 @@ Stage only intended explicit paths from the new marketplace; do not use broad st
      }
      ```
 
-   - Document which plugins should be in `enabledPlugins`
-   - Add to README: How team members install
+   - 记录哪些插件应放入 `enabledPlugins`
+   - 在 README 中补充：团队成员如何安装
 
-2. **For community/public marketplaces**:
-   - Create CONTRIBUTING.md with:
-     - Plugin submission guidelines
-     - Review process
-     - Quality requirements
-   - Create CI workflow for validation (optional):
-     - JSON syntax check
-     - Required field validation
-     - Duplicate name detection
+2. **对于社区/公开 marketplace**：
+   - 创建 CONTRIBUTING.md，包含：
+     - 插件提交流程指南
+     - 审核流程
+     - 质量要求
+   - 创建 CI workflow 用于验证（可选）：
+     - JSON 语法检查
+     - 必填字段验证
+     - 重复名称检测
 
-3. **For all marketplaces**:
-   - Document installation command in README:
+3. **对于所有 marketplace**：
+   - 在 README 中记录安装命令：
 
      ```text
      /plugin marketplace add owner/repo
      ```
 
-   - List individual plugin installation:
+   - 列出单个插件的安装方式：
 
      ```text
      /plugin install plugin-name@marketplace-name
      ```
 
-**Output**: Distribution documentation complete
+**输出**：分发文档已完善
 
 ---
 
-## Phase 7: Validation
+## 第 7 阶段（Phase 7）：校验
 
-**Goal**: Ensure marketplace meets quality standards
+**目标**：确保 marketplace 符合质量标准
 
-**Actions**:
+**操作**：
 
-1. **Run plugin-validator agent**:
-   - Use plugin-validator agent to validate marketplace
-   - Check: schema, required fields, plugin entries, source paths
+1. **运行 plugin-validator agent**：
+   - 使用 plugin-validator agent 验证 marketplace
+   - 检查：schema、必填字段、插件条目、source path
 
-2. **Fix critical issues**:
-   - Address any critical errors from validation
-   - Fix warnings that indicate real problems
+2. **修复关键问题**：
+   - 处理验证中的关键错误
+   - 修复那些代表真实问题的警告
 
-3. **Validate local plugins** (if any):
-   - For each local plugin, run plugin validation
-   - Fix any issues found
+3. **验证本地插件**（如有）：
+   - 对每个本地插件执行插件验证
+   - 修复发现的问题
 
-4. **Check best practices**:
-   - All entries have version
-   - All entries have description
-   - README documents all plugins
-   - Owner information complete
+4. **检查最佳实践**：
+   - 所有条目都带有 version
+   - 所有条目都带有 description
+   - README 记录了全部插件
+   - Owner 信息完整
 
-5. **Present validation report**:
-   - Summary of marketplace validation
-   - Summary of each local plugin validation
-   - Overall quality assessment
+5. **展示验证报告**：
+   - Marketplace 验证摘要
+   - 每个本地插件的验证摘要
+   - 整体质量评估
 
-6. **Ask user**: "Validation complete. Would you like me to fix any issues, or proceed to testing?"
+6. **询问用户**："验证已完成。你希望我修复问题，还是继续进入测试？"
 
-**Output**: Marketplace validated and ready for testing
+**输出**：marketplace 已验证，可进入测试
 
 ---
 
-## Phase 8: Testing & Finalization
+## 第 8 阶段（Phase 8）：测试与收尾
 
-**Goal**: Test marketplace installation and finalize
+**目标**：测试 marketplace 安装流程并完成收尾
 
-**Actions**:
+**操作**：
 
-1. **Test locally**:
-   - Show user how to test:
+1. **本地测试**：
+   - 向用户展示如何测试：
 
      ```text
      /plugin marketplace add ./path/to/marketplace
      ```
 
-   - List marketplace:
+   - 列出 marketplace：
 
      ```text
      /plugin marketplace list
      ```
 
-   - Install test plugin:
+   - 安装测试插件：
 
      ```text
      /plugin install plugin-name@marketplace-name
      ```
 
-2. **Verification checklist**:
-   - [ ] Marketplace adds successfully
-   - [ ] All plugins appear in `/plugin` browser
-   - [ ] Local plugins install correctly
-   - [ ] External plugins accessible (if public)
+2. **验证清单**：
+   - [ ] Marketplace 可成功添加
+   - [ ] 所有插件都会出现在 `/plugin` 浏览器中
+   - [ ] 本地插件可正确安装
+   - [ ] 外部插件可访问（如果是公开源）
 
-3. **Create summary**:
-   - Mark all tasks complete
-   - List what was created:
-     - Marketplace name and purpose
-     - Number of plugins configured
-     - Distribution strategy
-     - Key files created
-   - Next steps:
-     - Push to GitHub/git hosting
-     - Share with team
-     - Add to project settings
+3. **创建总结**：
+   - 将所有任务标记为完成
+   - 列出已创建内容：
+     - Marketplace 名称和用途
+     - 已配置插件数量
+     - 分发策略
+     - 创建的关键文件
+   - 后续步骤：
+     - 推送到 GitHub/git 托管平台
+     - 分享给团队
+     - 添加到项目 settings
 
-4. **Suggest improvements** (optional):
-   - Additional plugins to consider
-   - CI/CD integration opportunities
-   - Version management strategies
+4. **建议改进项**（可选）：
+   - 可进一步纳入的插件
+   - CI/CD 集成机会
+   - 版本管理策略
 
-**Output**: Complete, validated marketplace ready for distribution
-
----
-
-## Important Notes
-
-### Throughout All Phases
-
-- **Use Task tools** to track progress at every phase (TaskCreate, TaskUpdate, TaskList)
-- **Load marketplace-structure skill** for schema reference
-- **Use plugin-validator agent** for validation
-- **Ask for user confirmation** at key decision points
-- **Follow this repository's marketplace.json** as reference
-- **Apply best practices**:
-  - kebab-case names
-  - Complete owner information
-  - Version all entries
-  - Document all plugins in README
-  - Relative source paths and `metadata.pluginRoot` for local marketplace plugins
-
-### Key Decision Points (Wait for User)
-
-1. After Phase 1: Confirm marketplace purpose
-2. After Phase 2: Approve plugin plan
-3. After Phase 3: Confirm metadata
-4. After Phase 5: Proceed to distribution setup
-5. After Phase 7: Fix issues or proceed
-
-### Skills to Load
-
-- **Phase 2+**: marketplace-structure (for schema and patterns)
-- **Phase 5**: plugin-structure (if creating local plugins)
-
-### Quality Standards
-
-Every marketplace must meet these standards:
-
-- ✅ Valid JSON syntax
-- ✅ All required fields present (name, owner, plugins)
-- ✅ Plugin entries have name and source
-- ✅ No duplicate plugin names
-- ✅ Local source paths exist
-- ✅ README documents marketplace and plugins
-- ✅ Validated with plugin-validator agent
+**输出**：完整、已验证的 marketplace 已可用于分发
 
 ---
 
-## Example Workflow
+## 重要说明
 
-### User Request
+### 在所有阶段中
 
-"Create a marketplace for our team's internal tools"
+- **使用 Task tools** 在每个阶段跟踪进度（TaskCreate、TaskUpdate、TaskList）
+- **加载 marketplace-structure skill** 作为 schema 参考
+- **使用 plugin-validator agent** 执行验证
+- **在关键决策点请求用户确认**
+- **参考本仓库的 marketplace.json**
+- **应用最佳实践**：
+  - 使用 kebab-case 名称
+  - 完整的 owner 信息
+  - 所有条目带 version
+  - 在 README 中记录所有插件
+  - 对本地 marketplace 插件使用相对 source path 和 `metadata.pluginRoot`
 
-### Phase 1: Discovery
+### 关键决策点（等待用户）
 
-- Understand: Internal team distribution
-- Confirm: Team-only plugins, GitHub hosting
+1. Phase 1 之后：确认 marketplace 用途
+2. Phase 2 之后：批准插件规划
+3. Phase 3 之后：确认元数据
+4. Phase 5 之后：继续进行分发配置
+5. Phase 7 之后：修复问题或继续
 
-### Phase 2: Plugin Planning
+### 需要加载的技能（Skills）
 
-- 3 plugins: linter-config (local), security-scanner (local), docs-generator (github)
+- **Phase 2+**：marketplace-structure（用于 schema 和模式）
+- **Phase 5**：plugin-structure（如果要创建本地插件）
 
-### Phase 3: Metadata
+### 质量标准
+
+每个 marketplace 都必须满足以下标准：
+
+- ✅ JSON 语法有效
+- ✅ 所有必填字段齐全（name、owner、plugins）
+- ✅ 插件条目包含 name 和 source
+- ✅ 不存在重复插件名
+- ✅ 本地 source path 存在
+- ✅ README 记录了 marketplace 和插件
+- ✅ 已使用 plugin-validator agent 完成验证
+
+---
+
+## 示例工作流
+
+### 用户请求
+
+"为我们团队的内部工具创建一个 marketplace"
+
+### 第 1 阶段（Phase 1）：发现与需求澄清
+
+- 理解：面向内部团队分发
+- 确认：团队专用插件，使用 GitHub 托管
+
+### 第 2 阶段（Phase 2）：插件规划
+
+- 3 个插件：linter-config（local）、security-scanner（local）、docs-generator（github）
+
+### 第 3 阶段（Phase 3）：元数据
 
 - name: team-tools
 - owner: Platform Team
 - version: 1.0.0
 
-### Phase 4-8: Structure, Entries, Distribution, Validation, Testing
+### 第 4-8 阶段（Phase 4-8）：结构创建、条目配置、分发、校验与测试
 
 ---
 
-Begin with Phase 1: Discovery.
+从 Phase 1：发现与需求澄清 开始。

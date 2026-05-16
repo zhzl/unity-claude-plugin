@@ -1,37 +1,37 @@
-# Troubleshooting
+# 故障排查
 
-Extended debugging guide for plugin development.
+插件开发的扩展调试指南。
 
-## Common Issues
+## 常见问题
 
-| Problem                   | Cause                       | Solution                                                             |
-| ------------------------- | --------------------------- | -------------------------------------------------------------------- |
-| Plugin not loading        | Wrong directory path        | Use `plugins/plugin-dev`, not root                                   |
-| Skill not triggering      | Weak trigger phrases        | Add specific user queries to description                             |
-| Hook not firing           | Incorrect matcher pattern   | Check regex syntax, test with `test-hook.sh`                         |
-| Validation script fails   | Missing dependencies (`jq`) | Install required tools such as `jq` and shellcheck if your workflow uses them |
-| Shell execution in skills | Using `[BANG]` in actual skill or command files | Use literal `!` before backticks; `[BANG]` is only a documentation placeholder |
+| 问题 | 原因 | 解决方法 |
+| ---- | ---- | -------- |
+| 插件未加载 | 目录路径错误 | 使用 `plugins/plugin-dev`，不要使用仓库根目录 |
+| 技能（Skill）未触发 | 触发短语不够明确 | 在 description 中添加具体的用户查询示例 |
+| 钩子（Hook）未触发 | matcher 模式不正确 | 检查正则语法，并使用 `test-hook.sh` 测试 |
+| 验证脚本失败 | 缺少依赖（`jq`） | 如果工作流使用这些工具，请安装 `jq` 和 shellcheck 等必需工具 |
+| 技能中的 shell 执行 | 在实际 skill 或 command 文件中使用了 `[BANG]` | 在反引号前使用字面量 `!`（literal `!`）；`[BANG]` 仅是文档占位符 |
 
-## Debug Mode
+## 调试模式
 
-Run Claude Code with debug output:
+运行 Claude Code 并启用调试输出：
 
 ```bash
 claude --debug --plugin-dir plugins/plugin-dev
 ```
 
-## Validation Failures
+## 验证失败
 
-If components fail validation:
+如果组件验证失败：
 
-1. **Run the specific validator** for the component type
-2. **Check frontmatter** - ensure all required fields are present
-3. **Verify file location** - components must be in correct directories
-4. **Check naming** - use kebab-case for names (e.g., `my-agent`, not `myAgent`)
+1. **运行对应的校验器**，针对该组件类型执行
+2. **检查 frontmatter（前置元数据）** - 确保所有必需字段都存在
+3. **确认文件位置** - 组件必须位于正确的目录中
+4. **检查命名** - 名称使用 kebab-case（例如 `my-agent`，而不是 `myAgent`）
 
-## Utility Scripts
+## 实用脚本
 
-Paths relative to `plugins/plugin-dev/`:
+相对于 `plugins/plugin-dev/` 的路径：
 
 ```bash
 # Agent development
@@ -50,8 +50,8 @@ Paths relative to `plugins/plugin-dev/`:
 ./skills/plugin-settings/scripts/validate-settings.sh .claude/my-plugin.local.md
 ```
 
-## Getting More Help
+## 获取更多帮助
 
-- Check the plugin docs and any README/FAQ files present in your repository
-- Review any CONTRIBUTING guide present in your repository for project-specific conventions
-- Open an [issue](https://github.com/sjnims/plugin-dev/issues) if you're stuck
+- 查看仓库中存在的插件文档以及任何 README/FAQ 文件
+- 查看仓库中存在的任何 CONTRIBUTING 指南以了解项目特定约定
+- 如果卡住了，提交一个 [issue](https://github.com/sjnims/plugin-dev/issues)

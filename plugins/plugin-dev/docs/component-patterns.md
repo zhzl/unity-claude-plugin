@@ -1,24 +1,24 @@
-# Component Patterns
+# 组件模式
 
-Reference for plugin component frontmatter and structure.
+插件组件 frontmatter（前置元数据）与结构参考。
 
-## Agents
+## 代理（Agents）
 
-Agents require YAML frontmatter with:
+代理（Agents）需要包含以下内容的 YAML frontmatter（前置元数据）：
 
-- `name`: kebab-case identifier (3-50 chars) (required)
-- `description`: Starts with "Use this agent when...", includes `<example>` blocks (required)
-- `model`: inherit/sonnet/opus/haiku (optional; defaults to inherit)
-- `color`: blue/cyan/green/yellow/magenta/red (optional)
-- `tools`: Comma-separated list of allowed tools (optional, allowlist)
-- `disallowedTools`: Comma-separated list of blocked tools (optional, denylist — use one or the other)
-- `skills`: YAML list of skills the agent can load (optional)
-- `maxTurns`: Number limiting agentic turns (optional)
-- `memory`: user/project/local for persistent memory (optional)
+- `name`: kebab-case 标识符（3-50 个字符）（必需）
+- `description`: 以 "Use this agent when..." 开头，包含 `<example>` 块（必需）
+- `model`: inherit/sonnet/opus/haiku（可选；默认值为 inherit）
+- `color`: blue/cyan/green/yellow/magenta/red（可选）
+- `tools`: 允许工具的逗号分隔列表（可选，allowlist/允许列表）
+- `disallowedTools`: 屏蔽工具的逗号分隔列表（可选，denylist/拒绝列表 —— 二选一使用）
+- `skills`: 该 agent 可加载技能的 YAML 列表（可选）
+- `maxTurns`: 限制 agentic turns（自主轮次）的数量（可选）
+- `memory`: 持久化 memory（user/project/local）的配置（可选）
 
-For plugin-shipped agents, `permissionMode`, `mcpServers`, and `hooks` are not supported and should not be used in agent frontmatter.
+对于随插件分发的 agents，不支持 `permissionMode`、`mcpServers` 和 `hooks`，不应在 agent frontmatter 中使用。
 
-Example `skills` shape:
+`skills` 结构示例：
 
 ```yaml
 skills:
@@ -26,43 +26,43 @@ skills:
   - another-skill
 ```
 
-## Skills
+## 技能（Skills）
 
-Skills require:
+技能（Skills）需要：
 
-- Directory in `skills/skill-name/`
-- `SKILL.md` with YAML frontmatter (`name`, `description`)
-- Strong trigger phrases in description
-- Progressive disclosure (detailed content in `references/`)
+- 位于 `skills/skill-name/` 的目录
+- 带 YAML frontmatter（`name`、`description`）的 `SKILL.md`
+- `description` 中包含强触发短语
+- 渐进式披露（详细内容放在 `references/` 中）
 
-### Skill Structure
+### 技能结构（Skill 目录布局）
 
-Each skill follows progressive disclosure:
+每个 skill 都遵循渐进式披露：
 
-- `SKILL.md` - Core content (1,000-2,200 words, lean)
-- `references/` - Detailed documentation loaded into context as needed
-- `examples/` - Complete working examples and templates for copy-paste
-- `scripts/` - Utility scripts (executable without loading into context)
+- `SKILL.md` - 核心内容（1,000-2,200 词，保持精简）
+- `references/` - 按需加载到上下文中的详细文档
+- `examples/` - 可直接复制粘贴的完整可运行示例和模板
+- `scripts/` - 工具脚本（无需加载到上下文即可执行）
 
-## Commands
+## 命令（Commands）
 
-Commands are markdown files with frontmatter:
+命令（Commands）是带 frontmatter（前置元数据）的 markdown 文件：
 
-- `description`: Brief explanation (required)
-- `argument-hint`: Optional argument placeholder text
-- `allowed-tools`: Comma-separated list of permitted tools (restricts tool access)
-- `model`: Model to use for command execution (inherit/sonnet/opus/haiku)
-- `disable-model-invocation`: Set to `true` to prevent model invocation in subagents (for workflow commands that delegate to specialized agents)
+- `description`: 简要说明（必需）
+- `argument-hint`: 可选的参数占位提示文本
+- `allowed-tools`: 允许工具的逗号分隔列表（限制工具访问）
+- `model`: 用于命令执行的模型（inherit/sonnet/opus/haiku）
+- `disable-model-invocation`: 设为 `true` 以防止在 subagents 中调用模型（用于委派给专门 agents 的工作流命令）
 
-## Skills/Agents Optional Frontmatter
+## 技能与代理的可选 frontmatter（前置元数据，Skills/Agents）
 
-**Skills** use `allowed-tools`:
+**技能（Skills）** 使用 `allowed-tools`：
 
 ```yaml
 allowed-tools: Read, Grep, Glob # Read-only skill
 ```
 
-**Agents** use `tools` (allowlist) or `disallowedTools` (denylist):
+**代理（Agents）** 使用 `tools`（allowlist/允许列表）或 `disallowedTools`（denylist/拒绝列表）：
 
 ```yaml
 tools: Read, Grep, Glob # Allowlist
@@ -70,19 +70,19 @@ tools: Read, Grep, Glob # Allowlist
 disallowedTools: Bash, Write # Denylist
 ```
 
-> **Note:** Field names differ — skills use `allowed-tools`, agents use `tools`/`disallowedTools`.
+> **说明：** 字段名不同——skills 使用 `allowed-tools`，agents 使用 `tools`/`disallowedTools`。
 
-## Hooks
+## 钩子（Hooks）
 
-Hooks defined in `hooks/hooks.json`:
+在 `hooks/hooks.json` 中定义的 Hooks（钩子）：
 
-- Events: PreToolUse, PermissionRequest, PostToolUse, PostToolUseFailure, Stop, SubagentStart, SubagentStop, SessionStart, SessionEnd, UserPromptSubmit, PreCompact, Notification, TeammateIdle, TaskCompleted
-- Types: `prompt` (LLM-driven), `command` (bash scripts), or `agent` (multi-step with tools)
-- Use matchers for tool filtering (e.g., "Write|Edit", "\*")
+- 事件（Events）：PreToolUse、PermissionRequest、PostToolUse、PostToolUseFailure、Stop、SubagentStart、SubagentStop、SessionStart、SessionEnd、UserPromptSubmit、PreCompact、Notification、TeammateIdle、TaskCompleted
+- 类型（Types）：`prompt`（LLM-driven）、`command`（bash scripts）或 `agent`（带工具的多步骤流程）
+- 使用匹配器（matchers）进行工具过滤（例如 "Write|Edit"、"\*")
 
-### Plugin hooks.json Format
+### Plugin hooks.json 格式
 
-Plugin hooks use wrapper format with `hooks` field:
+插件 hooks 使用带 `hooks` 字段的包装格式（wrapper format/包装格式）：
 
 ```json
 {
