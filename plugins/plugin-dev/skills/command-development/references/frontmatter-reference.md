@@ -1,10 +1,10 @@
-# Command Frontmatter Reference
+# Command Frontmatter 参考
 
-Complete reference for YAML frontmatter fields in slash commands.
+slash command 中 YAML frontmatter 字段的完整参考。
 
-## Frontmatter Overview
+## Frontmatter 概览
 
-YAML frontmatter is optional metadata at the start of command files:
+YAML frontmatter 是 command 文件开头的可选元数据：
 
 ```markdown
 ---
@@ -17,20 +17,20 @@ argument-hint: "[arg1] [arg2]"
 Command prompt content here...
 ```
 
-All fields are optional. Commands work without any frontmatter.
+所有字段都是可选的。没有任何 frontmatter 时，command 仍可工作。
 
-## Field Specifications
+## 字段规格
 
 ### description
 
-**Type:** String
-**Required:** No
-**Default:** First line of command prompt
-**Max Length:** ~60 characters recommended for `/help` display
+**类型：** String
+**必填：** 否
+**默认值：** command prompt 的第一行
+**最大长度：** 建议约 60 个字符，以便在 `/help` 中整洁显示
 
-**Purpose:** Describes what the command does, shown in `/help` output
+**用途：** 描述 command 的作用，并显示在 `/help` 输出中
 
-**Examples:**
+**示例：**
 
 ```yaml
 description: Review code for security issues
@@ -44,42 +44,42 @@ description: Deploy to staging environment
 description: Generate API documentation
 ```
 
-**Best practices:**
+**最佳实践：**
 
-- Keep under 60 characters for clean display
-- Start with verb (Review, Deploy, Generate)
-- Be specific about what command does
-- Avoid redundant "command" or "slash command"
+- 控制在 60 个字符以内，便于整洁显示
+- 以动词开头（如 Review、Deploy、Generate）
+- 具体说明 command 做什么
+- 避免冗余的 “command” 或 “slash command”
 
-**Good:**
+**良好示例：**
 
-- ✅ "Review PR for code quality and security"
-- ✅ "Deploy application to specified environment"
-- ✅ "Generate comprehensive API documentation"
+- ✅ “Review PR for code quality and security”（清晰说明审查范围）
+- ✅ “Deploy application to specified environment”（动作和目标明确）
+- ✅ “Generate comprehensive API documentation”（输出目标具体）
 
-**Bad:**
+**不佳示例：**
 
-- ❌ "This command reviews PRs" (unnecessary "This command")
-- ❌ "Review" (too vague)
-- ❌ "A command that reviews pull requests for code quality, security issues, and best practices" (too long)
+- ❌ “This command reviews PRs”（“This command” 不必要）
+- ❌ “Review”（过于模糊）
+- ❌ “A command that reviews pull requests for code quality, security issues, and best practices”（过长）
 
 ### allowed-tools
 
-**Type:** Comma-separated string
-**Required:** No
-**Default:** Inherits from conversation permissions
+**类型：** 逗号分隔的字符串
+**必填：** 否
+**默认值：** 继承 conversation permissions
 
-**Purpose:** Restrict or specify which tools command can use
+**用途：** 限制或指定 command 可使用哪些 tools
 
-**Formats:**
+**格式：**
 
-**Single tool:**
+**单个 tool：**
 
 ```yaml
 allowed-tools: Read
 ```
 
-**Multiple tools (comma-separated):**
+**多个 tools（逗号分隔）：**
 
 ```yaml
 allowed-tools: Read, Write, Edit
@@ -89,15 +89,15 @@ allowed-tools: Read, Write, Edit
 allowed-tools: Read, Write, Bash(git *)
 ```
 
-**Tool Patterns:**
+**Tool 模式：**
 
-**Specific tools:**
+**指定 tools：**
 
 ```yaml
 allowed-tools: Read, Grep, Edit
 ```
 
-**Bash with command filter:**
+**带 command 过滤器的 Bash：**
 
 ```yaml
 allowed-tools: Bash(git *)           # Only git commands
@@ -105,50 +105,50 @@ allowed-tools: Bash(npm *)           # Only npm commands
 allowed-tools: Bash(docker *)        # Only docker commands
 ```
 
-**All tools (not recommended):**
+**所有 tools（不推荐）：**
 
 ```yaml
 allowed-tools: "*"
 ```
 
-**When to use:**
+**何时使用：**
 
-1. **Security:** Restrict command to safe operations
+1. **安全：** 将 command 限制为安全操作
 
    ```yaml
    allowed-tools: Read, Grep # Read-only command
    ```
 
-2. **Clarity:** Document required tools
+2. **清晰度：** 文档化所需 tools
 
    ```yaml
    allowed-tools: Bash(git *), Read
    ```
 
-3. **Bash execution:** Enable bash command output
+3. **Bash 执行：** 启用 bash command 输出
    ```yaml
    allowed-tools: Bash(git status *), Bash(git diff *)
    ```
 
-**Best practices:**
+**最佳实践：**
 
-- Be as restrictive as possible
-- Use command filters for Bash (e.g., `git *` not `*`)
-- Only specify when different from conversation permissions
-- Document why specific tools are needed
+- 尽可能严格限制
+- 为 Bash 使用 command 过滤器（例如 `git *`，不要用 `*`）
+- 仅在不同于 conversation permissions 时指定
+- 文档化为什么需要特定 tools
 
 ### model
 
-**Type:** String
-**Required:** No
-**Default:** Inherits from conversation
-**Values:** `sonnet`, `opus`, `haiku`, or `inherit`
+**类型：** String
+**必填：** 否
+**默认值：** 继承 conversation
+**取值：** `sonnet`、`opus`、`haiku` 或 `inherit`
 
-These values use the current default version of each model family. `inherit` uses the conversation's current model.
+这些取值使用各 model family 当前的默认版本。`inherit` 使用 conversation 当前的 model。
 
-**Purpose:** Specify which Claude model executes the command
+**用途：** 指定执行该 command 的 Claude model
 
-**Examples:**
+**示例：**
 
 ```yaml
 model: haiku # Fast, efficient for simple tasks
@@ -162,14 +162,14 @@ model: sonnet # Balanced performance (default)
 model: opus # Maximum capability for complex tasks
 ```
 
-**When to use:**
+**何时使用：**
 
-**Use `haiku` for:**
+**适合使用 `haiku` 的场景：**
 
-- Simple, formulaic commands
-- Fast execution needed
-- Low complexity tasks
-- Frequent invocations
+- 简单、程式化的 commands
+- 需要快速执行
+- 低复杂度任务
+- 频繁调用
 
 ```yaml
 ---
@@ -178,11 +178,11 @@ model: haiku
 ---
 ```
 
-**Use `sonnet` for:**
+**适合使用 `sonnet` 的场景：**
 
-- Standard commands (default)
-- Balanced speed/quality
-- Most common use cases
+- 标准 commands（默认）
+- 速度与质量平衡
+- 大多数常见用例
 
 ```yaml
 ---
@@ -191,12 +191,12 @@ model: sonnet
 ---
 ```
 
-**Use `opus` for:**
+**适合使用 `opus` 的场景：**
 
-- Complex analysis
-- Architectural decisions
-- Deep code understanding
-- Critical tasks
+- 复杂分析
+- 架构决策
+- 深入代码理解
+- 关键任务
 
 ```yaml
 ---
@@ -205,64 +205,64 @@ model: opus
 ---
 ```
 
-**Best practices:**
+**最佳实践：**
 
-- Omit unless specific need
-- Use `haiku` for speed when possible
-- Reserve `opus` for genuinely complex tasks
-- Test with different models to find right balance
+- 没有特定需要时省略
+- 可行时使用 `haiku` 以提升速度
+- 将 `opus` 留给真正复杂的任务
+- 用不同 models 测试，找到合适平衡
 
 ### argument-hint
 
-**Type:** String
-**Required:** No
-**Default:** None
+**类型：** String
+**必填：** 否
+**默认值：** 无
 
-**Purpose:** Document expected arguments for users and autocomplete
+**用途：** 为用户和自动补全文档化预期 arguments
 
-**Format:**
+**格式：**
 
 ```yaml
 argument-hint: "[arg1] [arg2] [optional-arg]"
 ```
 
-**Examples:**
+**示例：**
 
-**Single argument:**
+**单个 argument：**
 
 ```yaml
 argument-hint: "[pr-number]"
 ```
 
-**Multiple required arguments:**
+**多个必填 arguments：**
 
 ```yaml
 argument-hint: "[environment] [version]"
 ```
 
-**Optional arguments:**
+**可选 arguments：**
 
 ```yaml
 argument-hint: "[file-path] [options]"
 ```
 
-**Descriptive names:**
+**描述性名称：**
 
 ```yaml
 argument-hint: "[source-branch] [target-branch] [commit-message]"
 ```
 
-**Best practices:**
+**最佳实践：**
 
-- Use square brackets `[]` for each argument
-- Use descriptive names (not `arg1`, `arg2`)
-- Indicate optional vs required in description
-- Match order to positional arguments in command
-- Keep concise but clear
+- 为每个 argument 使用方括号 `[]`
+- 使用描述性名称（不要用 `arg1`、`arg2`）
+- 在说明中标明可选与必填
+- 顺序与 command 中的位置 arguments 保持一致
+- 保持简洁且清晰
 
-**Examples by pattern:**
+**按模式分类的示例：**
 
-**Simple command:**
+**简单 command：**
 
 ```yaml
 ---
@@ -272,7 +272,7 @@ argument-hint: "[issue-number]"
 Fix issue #$1...
 ```
 
-**Multi-argument:**
+**多 argument：**
 
 ```yaml
 ---
@@ -283,7 +283,7 @@ argument-hint: "[app-name] [environment] [version]"
 Deploy $1 to $2 using version $3...
 ```
 
-**With options:**
+**带 options：**
 
 ```yaml
 ---
@@ -296,21 +296,21 @@ Run tests matching $1 with options: $2
 
 ### disable-model-invocation
 
-**Type:** Boolean
-**Required:** No
-**Default:** false
+**类型：** Boolean
+**必填：** 否
+**默认值：** false
 
-**Purpose:** Prevent Skill tool from programmatically invoking command
+**用途：** 阻止 Skill tool 以编程方式调用 command
 
-**Examples:**
+**示例：**
 
 ```yaml
 disable-model-invocation: true
 ```
 
-**When to use:**
+**何时使用：**
 
-1. **Manual-only commands:** Commands requiring user judgment
+1. **仅手动 commands：** 需要用户判断的 commands
 
    ```yaml
    ---
@@ -319,7 +319,7 @@ disable-model-invocation: true
    ---
    ```
 
-2. **Destructive operations:** Commands with irreversible effects
+2. **破坏性操作：** 具有不可逆影响的 commands
 
    ```yaml
    ---
@@ -328,7 +328,7 @@ disable-model-invocation: true
    ---
    ```
 
-3. **Interactive workflows:** Commands needing user input
+3. **交互式 workflows：** 需要用户输入的 commands
    ```yaml
    ---
    description: Walk through setup wizard
@@ -336,37 +336,37 @@ disable-model-invocation: true
    ---
    ```
 
-**Default behavior (false):**
+**默认行为（false）：**
 
-- Command available to Skill tool
-- Claude can invoke programmatically
-- Still available for manual invocation
+- command 可被 Skill tool 使用
+- Claude 可以用编程方式调用
+- 仍可手动调用
 
-**When true:**
+**为 true 时：**
 
-- Command only invokable by user typing `/command`
-- Not available to Skill tool
-- Safer for sensitive operations
+- command 只能由用户输入 `/command` 调用
+- 不对 Skill tool 可用
+- 对敏感操作更安全
 
-**Best practices:**
+**最佳实践：**
 
-- Use sparingly (limits Claude's autonomy)
-- Document why in command comments
-- Consider if command should exist if always manual
+- 谨慎使用（会限制 Claude 的自主性）
+- 在 command 注释中说明原因
+- 如果总是手动，考虑该 command 是否仍应存在
 
-## Complete Examples
+## 完整示例
 
-### Minimal Command
+### 最小 command
 
-No frontmatter needed:
+不需要 frontmatter：
 
 ```markdown
 Review this code for common issues and suggest improvements.
 ```
 
-### Simple Command
+### 简单 command
 
-Just description:
+仅包含 description：
 
 ```markdown
 ---
@@ -376,9 +376,9 @@ description: Review code for issues
 Review this code for common issues and suggest improvements.
 ```
 
-### Standard Command
+### 标准 command
 
-Description and tools:
+包含 description 和 tools：
 
 ```markdown
 ---
@@ -395,9 +395,9 @@ Review each changed file for:
 - Best practices
 ```
 
-### Complex Command
+### 复杂 command
 
-All common fields:
+包含所有常用字段：
 
 ```markdown
 ---
@@ -418,9 +418,9 @@ Pre-deployment checks:
 Proceed with deployment following deployment runbook.
 ```
 
-### Manual-Only Command
+### 仅手动 command
 
-Restricted invocation:
+受限调用：
 
 ```markdown
 ---
@@ -449,11 +449,11 @@ Verify:
 Type "APPROVED" to confirm deployment.
 ```
 
-## Validation
+## Validation（验证）
 
-### Common Errors
+### 常见错误
 
-**Invalid YAML syntax:**
+**无效 YAML 语法：**
 
 ```yaml
 ---
@@ -463,41 +463,41 @@ model: sonnet
 --- # ❌ Missing closing quote above
 ```
 
-**Fix:** Validate YAML syntax
+**修复：** 验证 YAML 语法
 
-**Overly broad tool specification:**
+**过宽的 tool 规格：**
 
 ```yaml
 allowed-tools: Bash # Valid, but broad
 ```
 
-**Safer:** Use a narrower pattern such as `Bash(git *)` when the command only needs git access
+**更安全：** 当 command 只需要 git 访问时，使用更窄的模式，例如 `Bash(git *)`
 
-**Invalid model name:**
+**无效 model 名称：**
 
 ```yaml
 model: gpt4 # ❌ Not a valid Claude model
 ```
 
-**Fix:** Use `sonnet`, `opus`, `haiku`, or `inherit`
+**修复：** 使用 `sonnet`、`opus`、`haiku` 或 `inherit`
 
-### Validation Checklist
+### Validation（验证） 检查清单
 
-Before committing command:
+提交 command 前：
 
-- [ ] YAML syntax valid (no errors)
-- [ ] Description under 60 characters
-- [ ] allowed-tools uses proper format
-- [ ] model is valid value if specified
-- [ ] argument-hint matches positional arguments
-- [ ] disable-model-invocation used appropriately
+- [ ] YAML 语法有效（无错误）
+- [ ] description 少于 60 个字符
+- [ ] allowed-tools 使用正确格式
+- [ ] 如指定 model，其取值有效
+- [ ] argument-hint 匹配位置 arguments
+- [ ] disable-model-invocation 使用恰当
 
-## Best Practices Summary
+## 最佳实践总结
 
-1. **Start minimal:** Add frontmatter only when needed
-2. **Document arguments:** Always use argument-hint with arguments
-3. **Restrict tools:** Use most restrictive allowed-tools that works
-4. **Choose right model:** Use haiku for speed, opus for complexity
-5. **Manual-only sparingly:** Only use disable-model-invocation when necessary
-6. **Clear descriptions:** Make commands discoverable in `/help`
-7. **Test thoroughly:** Verify frontmatter works as expected
+1. **从最小配置开始：** 仅在需要时添加 frontmatter
+2. **文档化 arguments：** 有 arguments 时始终使用 argument-hint
+3. **限制 tools：** 使用能工作的最严格 allowed-tools
+4. **选择合适 model：** 用 haiku 追求速度，用 opus 处理复杂性
+5. **谨慎使用仅手动：** 仅在必要时使用 disable-model-invocation
+6. **清晰 descriptions：** 让 commands 可在 `/help` 中被发现
+7. **充分测试：** 验证 frontmatter 按预期工作
