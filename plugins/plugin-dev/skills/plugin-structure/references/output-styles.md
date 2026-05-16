@@ -11,7 +11,7 @@ Output styles 用于自定义 Claude 格式化和组织响应的方式。它们�
 - 由用户选择（不像 skills 那样自动触发）
 - 可以与 CLAUDE.md 指令共存（style 在格式化方面优先）
 
-## Frontmatter Schema
+## Frontmatter schema（frontmatter schema）
 
 Output style 文件使用 YAML frontmatter：
 
@@ -44,7 +44,7 @@ Output styles 可以在多个层级定义：
 | Project | `.claude/output-styles/*.md` | 单个项目 |
 | Plugin | 通过 `plugin.json` 中的 `outputStyles` 引用 | Plugin 用户 |
 
-### Plugin Bundling
+### Plugin 打包
 
 Plugins 通过 `plugin.json` 中的 `outputStyles` 字段打包 output styles：
 
@@ -64,11 +64,11 @@ Plugins 通过 `plugin.json` 中的 `outputStyles` 字段打包 output styles：
 
 当 plugin 加载时，引用路径中的 style 文件会被发现并注册。随后用户可以从 output style 选择器中选择它们。
 
-## Built-in Styles
+## 内置 styles
 
 Claude Code 包含用户可选择的 built-in output styles。Plugin 提供的 styles 会与 built-in styles 一起显示在 style 选择界面中。
 
-## 何时使用 Output Styles 而不是其他组件
+## 何时使用 output styles 而不是其他组件
 
 | 组件 | 最适合 | 持久性 |
 | ----------------- | --------------------------------------- | ------------------------------ |
@@ -89,7 +89,7 @@ Claude Code 包含用户可选择的 built-in output styles。Plugin 提供的 s
 - 你需要 tool restrictions 或 scoped hooks（使用 agent）
 - 指令是项目特定标准（使用 CLAUDE.md）
 
-## 示例：完整 Output Style
+## 示例：完整 output style
 
 ```markdown
 ---
@@ -107,7 +107,7 @@ When reviewing code:
 - Group by severity, highest first
 ```
 
-## Plugin Developer Tips
+## Plugin 开发者提示
 
 - 让 styles 聚焦于单一格式化关注点
 - 使用描述性名称，清楚说明该 style 的效果

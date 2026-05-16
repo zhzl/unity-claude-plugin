@@ -1,10 +1,10 @@
-# Component Organization Patterns
+# Component 组织模式
 
-有效组织 plugin components 的高级 patterns。
+有效组织 plugin components 的高级模式。
 
-## Component Lifecycle
+## Component 生命周期
 
-### Discovery Phase
+### 发现阶段
 
 Claude Code 启动时：
 
@@ -14,9 +14,9 @@ Claude Code 启动时：
 4. **注册 components**：使其可供 Claude Code 使用
 5. **初始化**：启动 MCP servers，注册 hooks
 
-**Timing**：Component registration 发生在 Claude Code initialization 期间，而不是持续进行。
+**时机**：Component registration 发生在 Claude Code initialization 期间，而不是持续进行。
 
-### Activation Phase
+### 激活阶段
 
 Components 被使用时：
 
@@ -26,9 +26,9 @@ Components 被使用时：
 **Hooks**：Event 发生 → Claude Code 调用匹配的 hooks
 **MCP Servers**：Tool call 匹配 server capability → 转发给 server
 
-## Command Organization Patterns
+## Command 组织模式
 
-### Flat Structure
+### 扁平结构
 
 单个 directory 包含所有 commands：
 
@@ -53,7 +53,7 @@ commands/
 - 不需要 configuration
 - Discovery 快
 
-### Categorized Structure
+### 分类结构
 
 用多个 directories 表示不同 command 类型：
 
@@ -71,7 +71,7 @@ workflow-commands/     # Workflow automation
 └── deploy.md
 ```
 
-**Manifest configuration**：
+**Manifest 配置：**
 
 ```json
 {
@@ -91,7 +91,7 @@ workflow-commands/     # Workflow automation
 - 更容易维护
 - 可以按 directory 限制 access
 
-### Hierarchical Structure
+### 层级结构
 
 为复杂 plugins 使用 nested organization：
 
@@ -133,9 +133,9 @@ commands/
 - 清晰 boundaries
 - 可扩展结构
 
-## Agent Organization Patterns
+## Agent 组织模式
 
-### Role-Based Organization
+### 按 role 组织
 
 按 agents 的主要 role 组织：
 
@@ -153,7 +153,7 @@ agents/
 - 用户手动调用 agents
 - Agent responsibilities 明确
 
-### Capability-Based Organization
+### 按 capability 组织
 
 按具体 capabilities 组织：
 
@@ -167,11 +167,11 @@ agents/
 
 **适用场景**：
 
-- Technology-specific agents
+- 面向特定技术的 agents（Technology-specific agents）
 - 关注 domain expertise
-- Automatic agent selection
+- 自动 agent 选择
 
-### Workflow-Based Organization
+### 按 workflow 组织
 
 按 workflow stage 组织：
 
@@ -185,13 +185,13 @@ agents/
 
 **适用场景**：
 
-- Sequential workflows
-- Stage-specific expertise
-- Pipeline automation
+- 顺序 workflows
+- 面向特定阶段的专长（Stage-specific expertise）
+- 流水线自动化（Pipeline automation）
 
-## Skill Organization Patterns
+## Skill 组织模式
 
-### Topic-Based Organization
+### 按 topic 组织
 
 每个 skill 覆盖一个特定 topic：
 
@@ -209,11 +209,11 @@ skills/
 
 **适用场景**：
 
-- Knowledge-based skills
-- Educational 或 reference content
+- 知识型 skills（Knowledge-based skills）
+- 教育型或 reference content
 - 广泛适用性
 
-### Tool-Based Organization
+### 按 tool 组织
 
 面向特定 tools 或 technologies 的 skills：
 
@@ -235,11 +235,11 @@ skills/
 
 **适用场景**：
 
-- Tool-specific expertise
+- 面向特定 tool 的专长（Tool-specific expertise）
 - 复杂 tool configurations
-- Tool best practices
+- Tool 最佳实践（Tool best practices）
 
-### Workflow-Based Organization
+### 按 workflow 组织
 
 面向完整 workflows 的 skills：
 
@@ -263,11 +263,11 @@ skills/
 
 **适用场景**：
 
-- Multi-step processes
-- Company-specific workflows
-- Process automation
+- 多步骤流程（Multi-step processes）
+- 公司特定 workflows（Company-specific workflows）
+- 流程自动化（Process automation）
 
-### Skill with Rich Resources
+### 包含丰富 resources 的 skill
 
 包含所有 resource types 的综合 skill：
 
@@ -290,17 +290,17 @@ skills/
         └── test-template.json
 ```
 
-**Resource usage**：
+**Resource 用法：**
 
 - **SKILL.md**：Overview，以及何时使用 resources
 - **references/**：详细 guides（按需加载）
 - **examples/**：可复制粘贴的 code samples
-- **scripts/**：Executable test runners
+- **scripts/**：可执行 test runners
 - **assets/**：Templates 和 configurations
 
-## Hook Organization Patterns
+## Hook 组织模式
 
-### Monolithic Configuration
+### 单体 configuration
 
 单个 hooks.json 包含所有 hooks：
 
@@ -330,9 +330,9 @@ hooks/
 
 - 总共 5-10 个 hooks
 - 简单 hook logic
-- Centralized configuration
+- 集中式 configuration
 
-### Event-Based Organization
+### 按 event 组织
 
 每种 event type 使用单独文件：
 
@@ -368,7 +368,7 @@ hooks/
 - 不同 teams 管理不同 events
 - 复杂 hook configurations
 
-### Purpose-Based Organization
+### 按用途组织
 
 按功能用途分组：
 
@@ -393,11 +393,11 @@ hooks/
 
 - 许多 hook scripts
 - 清晰 functional boundaries
-- Team specialization
+- 团队专长分工（Team specialization）
 
-## Script Organization Patterns
+## Script 组织模式
 
-### Flat Scripts
+### 扁平 scripts
 
 所有 scripts 放在单个 directory：
 
@@ -416,7 +416,7 @@ scripts/
 - 所有 scripts 相关
 - 简单 plugin
 
-### Categorized Scripts
+### 分类 scripts
 
 按用途分组：
 
@@ -440,9 +440,9 @@ scripts/
 
 - 10+ 个 scripts
 - 清晰 categories
-- Reusable utilities
+- 可复用 utilities
 
-### Language-Based Organization
+### 按 language 组织
 
 按 programming language 分组：
 
@@ -461,13 +461,13 @@ scripts/
 
 **适用场景**：
 
-- Multi-language scripts
+- 多语言 scripts（Multi-language scripts）
 - 不同 runtime requirements
-- Language-specific dependencies
+- 语言特定 dependencies（Language-specific dependencies）
 
-## Cross-Component Patterns
+## Cross-component 模式
 
-### Shared Resources
+### 共享 resources
 
 Components 共享 common resources：
 
@@ -486,7 +486,7 @@ plugin/
     └── deploy-utils.sh
 ```
 
-**Usage in components**：
+**在 components 中的用法：**
 
 ```bash
 #!/bin/bash
@@ -494,13 +494,13 @@ source "${CLAUDE_PLUGIN_ROOT}/lib/test-utils.sh"
 run_tests
 ```
 
-**Benefits**：
+**优势：**
 
-- Code reuse
-- Consistent behavior
+- 代码复用
+- 一致 behavior
 - 更容易维护
 
-### Layered Architecture
+### 分层 architecture
 
 将 concerns 分离到不同 layers：
 
@@ -521,9 +521,9 @@ plugin/
 - 多名 developers
 - 清晰 separation of concerns
 
-### Plugin Within Plugin
+### Plugin 内嵌 plugin
 
-Nested plugin structure：
+Nested plugin 结构：
 
 ```
 plugin/
@@ -541,7 +541,7 @@ plugin/
         └── agents/
 ```
 
-**Manifest**：
+**Manifest：**
 
 ```json
 {
@@ -555,38 +555,38 @@ plugin/
 
 **适用场景**：
 
-- Modular functionality
-- Optional features
-- Plugin families
+- 模块化 functionality
+- 可选 features
+- Plugin families（plugin 家族）
 
-## Best Practices
+## 最佳实践
 
-### Naming
+### 命名
 
-1. **Consistent naming**：让 file names 与 component purpose 匹配
-2. **Descriptive names**：说明 component 的作用
-3. **Avoid abbreviations**：使用完整单词以保持清晰
+1. **一致命名（Consistent naming）**：让 file names 与 component purpose 匹配
+2. **描述性名称（Descriptive names）**：说明 component 的作用
+3. **避免缩写（Avoid abbreviations）**：使用完整单词以保持清晰
 
-### Organization
+### 组织
 
-1. **Start simple**：使用 flat structure，必要时再重组
-2. **Group related items**：将相关 components 放在一起
-3. **Separate concerns**：不要混合无关 functionality
+1. **从简单开始（Start simple）**：使用 flat structure，必要时再重组
+2. **分组相关项（Group related items）**：将相关 components 放在一起
+3. **分离关注点（Separate concerns）**：不要混合无关 functionality
 
-### Scalability
+### 可扩展性
 
-1. **Plan for growth**：选择可扩展的 structure
-2. **Refactor early**：在变得痛苦之前重组
-3. **Document structure**：在 README 中说明 organization
+1. **规划增长（Plan for growth）**：选择可扩展的 structure
+2. **尽早重组（Refactor early）**：在变得痛苦之前重组
+3. **记录结构（Document structure）**：在 README 中说明 organization
 
-### Maintainability
+### 可维护性
 
-1. **Consistent patterns**：在整体中使用相同 structure
-2. **Minimize nesting**：保持 directory depth 可控
-3. **Use conventions**：遵循 community standards
+1. **一致模式（Consistent patterns）**：在整体中使用相同 structure
+2. **减少嵌套（Minimize nesting）**：保持 directory depth 可控
+3. **使用约定（Use conventions）**：遵循 community standards
 
-### Performance
+### 性能
 
-1. **Avoid deep nesting**：会影响 discovery time
-2. **Minimize custom paths**：尽可能使用 defaults
-3. **Keep configurations small**：大型 configs 会拖慢 loading
+1. **避免深层嵌套（Avoid deep nesting）**：会影响 discovery time
+2. **减少自定义 paths（Minimize custom paths）**：尽可能使用 defaults
+3. **保持 configurations 小（Keep configurations small）**：大型 configs 会拖慢 loading

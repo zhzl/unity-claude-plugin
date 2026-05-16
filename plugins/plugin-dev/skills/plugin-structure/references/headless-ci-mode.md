@@ -38,7 +38,7 @@ claude -p "Review the codebase for code quality issues"
 
 如果安装了匹配的 skill，Claude 仍可从 skill description 中发现它，并在合适时自动调用。`user-invocable: false` 只会隐藏 interactive slash invocation；它不会在 headless mode 中预加载完整的 SKILL.md body。
 
-## Permission Control
+## Permission control（permission 控制）
 
 ### --allowedTools
 
@@ -58,7 +58,7 @@ claude -p "Fix the bug" --allowedTools "Read,Write,Edit,Bash(git *)"
 | `mcp__myserver__*` | 来自特定 MCP server 的 tools |
 | `Write,Edit` | 多个 tools（逗号分隔） |
 
-**Plugin design tip：** 在 plugin README 中记录 CI usage 推荐的 `--allowedTools` 值。
+**Plugin 设计提示：** 在 plugin README 中记录 CI usage 推荐的 `--allowedTools` 值。
 
 ### --max-turns
 
@@ -70,9 +70,9 @@ claude -p "Run tests and fix failures" --allowedTools "Read,Edit,Bash" --max-tur
 
 每次 tool call 计为一个 turn。没有此限制时，Claude 可能会在复杂任务上无限迭代。
 
-## Structured Output
+## 结构化输出（structured output）
 
-### JSON Output
+### JSON output
 
 获取机器可读响应：
 
@@ -90,7 +90,7 @@ claude -p "List all TODO comments" --output-format json
 }
 ```
 
-### JSON Schema Validation
+### JSON schema validation
 
 强制使用特定输出结构：
 
@@ -100,9 +100,9 @@ claude -p "Extract function signatures from auth.py" \
   --json-schema '{"type":"object","properties":{"functions":{"type":"array","items":{"type":"string"}}},"required":["functions"]}'
 ```
 
-**Plugin design tip：** 如果你的 plugin 提供 analysis workflows，请记录用户可用于 structured CI output 的示例 JSON schemas。
+**Plugin 设计提示：** 如果你的 plugin 提供 analysis workflows，请记录用户可用于 structured CI output 的示例 JSON schemas。
 
-## System Prompt Interaction
+## System prompt 交互
 
 ### --append-system-prompt
 
@@ -124,15 +124,15 @@ claude -p "Analyze" --system-prompt "You are a security auditor..."
 
 **注意：** 这会替换默认 prompt，但 plugin content 仍会加载。`--system-prompt` 与 plugin skills 之间的交互可能产生意外行为。
 
-## Session Management
+## Session management（session 管理）
 
-### Continue Last Session
+### 继续上一个 session
 
 ```bash
 claude -p "What was the last change you made?" --continue
 ```
 
-### Resume Specific Session
+### 恢复指定 session
 
 ```bash
 claude -p "Continue fixing the auth bug" --resume "$SESSION_ID"
@@ -151,13 +151,13 @@ claude -p "Run the plugin's primary workflow" \
   --allowedTools "Read,Write,Edit,Bash"
 ```
 
-### 2. 避免 Interactive-Only Patterns
+### 2. 避免 interactive-only patterns
 
 - 不要在 critical workflows 中依赖 `AskUserQuestion`
 - 当用户输入不可用时，提供合理默认值
 - 设计无需用户确认也能工作的 hooks
 
-### 3. 记录 CI Usage
+### 3. 记录 CI usage
 
 在 plugin README 中包含 CI section：
 

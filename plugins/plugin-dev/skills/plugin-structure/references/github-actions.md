@@ -1,19 +1,19 @@
-# Plugins 的 GitHub Actions Integration
+# Plugins 的 GitHub Actions 集成
 
 Plugins 通过 `claude-code-action` 与 GitHub Actions 交互；这是 Anthropic 官方用于在 CI workflows 中运行 Claude Code 的 action。理解这种集成有助于 plugin developers 确保 plugins 在 automated pipelines 中顺畅工作。
 
-## Overview
+## 概览
 
 `claude-code-action@v1` 会在 GitHub Actions 内运行 Claude Code，从而支持：
 
-- PRs 的 automated code review
+- 对 PRs 进行 automated code review
 - 通过 comments 实现 issues
 - 由 @claude mentions 触发的 custom automation
-- Scheduled analysis 和 reporting
+- 定期 analysis 和 reporting（Scheduled analysis and reporting）
 
-## Setup
+## 设置
 
-### Quick Setup
+### 快速设置
 
 在 Claude Code 内运行：
 
@@ -23,13 +23,13 @@ Plugins 通过 `claude-code-action` 与 GitHub Actions 交互；这是 Anthropic
 
 这会引导安装 Claude GitHub app 并配置 workflows。
 
-### Manual Setup
+### 手动设置
 
 1. 安装 Claude GitHub App：`https://github.com/apps/claude`
 2. 将 `ANTHROPIC_API_KEY` 添加到 repository secrets
 3. 在 `.github/workflows/claude.yml` 创建 workflow file
 
-### Basic Workflow
+### 基础 workflow
 
 ```yaml
 name: Claude Code
@@ -50,14 +50,14 @@ jobs:
 
 ## Actions 中的 Plugins 工作方式
 
-### CLAUDE.md Integration
+### CLAUDE.md 集成
 
 Plugins 与 CI 交互最直接的方式是通过 CLAUDE.md。Project-level instructions（`.claude/CLAUDE.md`）会在 CI runs 中自动加载，提供：
 
-- Code style requirements
-- Review criteria
-- Project-specific rules
-- Plugin references
+- 代码风格要求（Code style requirements）
+- Review 标准（Review criteria）
+- 项目特定规则（Project-specific rules）
+- Plugin 引用（Plugin references）
 
 ### CI 中的 Hooks
 
@@ -95,11 +95,11 @@ fi
 
 由于 slash commands 在 headless mode 中不可用，请改为描述任务。Claude 可以从已安装 skills 的 descriptions 中发现它们，并可能基于上下文调用匹配的 skill；但完整的 `SKILL.md` body 只有在 Claude 实际调用该 skill 时才会加载。
 
-## Configuration Options
+## 配置选项（configuration options）
 
-### Key Parameters
+### 关键 parameters
 
-| Parameter | Purpose | Example |
+| Parameter | 用途 | 示例 |
 | ------------------- | ----------------------- | -------------------------------------- |
 | `prompt` | 给 Claude 的 instructions | `"Review this PR"` |
 | `claude_args` | CLI arguments | `"--max-turns 10 --model haiku"` |
@@ -118,7 +118,7 @@ claude_args: >-
   --allowedTools "Read,Grep,Glob,Bash(npm *)"
 ```
 
-### Custom Trigger Phrases
+### 自定义 trigger phrases
 
 更改默认 `@claude` trigger：
 
@@ -128,7 +128,7 @@ trigger_phrase: "@security-review"
 
 随后用户在 PR comments 中提及 `@security-review` 即可触发 workflow。
 
-## Provider Configurations
+## Provider 配置
 
 ### AWS Bedrock
 
@@ -158,9 +158,9 @@ trigger_phrase: "@security-review"
 
 需要 GCP Workload Identity Federation。
 
-## Cost Management
+## 成本管理（cost management）
 
-### Limit Turns
+### 限制 turns
 
 ```yaml
 claude_args: "--max-turns 10"
@@ -168,7 +168,7 @@ claude_args: "--max-turns 10"
 
 每个 tool call 都是一个 turn。先从较低值开始，再按需增加。
 
-### Use Cheaper Models
+### 使用更低成本的 models
 
 ```yaml
 claude_args: "--model haiku"
@@ -176,7 +176,7 @@ claude_args: "--model haiku"
 
 日常检查使用 Haiku，标准 reviews 使用 Sonnet，复杂 analysis 使用 Opus。
 
-### Set Workflow Timeouts
+### 设置 workflow timeouts
 
 ```yaml
 jobs:
@@ -188,7 +188,7 @@ jobs:
         # ...
 ```
 
-### Restrict Tool Access
+### 限制 tool access
 
 ```yaml
 claude_args: "--allowedTools 'Read,Grep,Glob'"
@@ -198,7 +198,7 @@ Read-only tools 可防止昂贵的 write/execute loops。
 
 ## CI 的 Plugin Design
 
-### Document CI Workflows
+### 记录 CI workflows
 
 在你的 plugin README 中包含示例 workflow snippets：
 
@@ -216,14 +216,14 @@ Add to `.github/workflows/claude.yml`:
 \`\`\`
 ```
 
-### Ensure CI Compatibility
+### 确保 CI 兼容性
 
 - 使用 `CI=true` environment variable 测试 hooks
 - 确保 scripts 不需要 interactive input
 - 优雅处理缺失 dependencies（并非所有 CI images 都有 `jq` 等）
 - 所有 paths 都使用 `${CLAUDE_PLUGIN_ROOT}`（cache directories 在 CI 中不同）
 
-### CI 中的 MCP Servers
+### CI 中的 MCP servers
 
 随 plugins 打包的 MCP servers 会在 CI 中启动，但：
 
