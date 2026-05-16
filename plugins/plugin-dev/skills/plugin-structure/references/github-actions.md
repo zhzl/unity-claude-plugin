@@ -81,7 +81,7 @@ fi
 # ...
 ```
 
-### 通过 prompt Parameter 使用 Skills
+### 通过 `prompt` parameter 使用 Skills
 
 在 workflow 的 `prompt` parameter 中引用 plugin skills：
 

@@ -168,7 +168,7 @@ claude mcp serve
 rm -rf ~/.claude/plugins/cache
 ```
 
-这会强制下次 session start 时重新 caching。
+这会强制下次 session start 时重新缓存。
 
 ## Plugin CLI 管理 commands
 
@@ -235,10 +235,10 @@ Plugins 可以安装在不同 scopes，影响谁可以访问：
 
 | Scope | 位置 | 是否共享 | 是否 gitignored | 用例 |
 | --------- | ----------------------------- | --------- | ---------- | ------------------------ |
-| `user` | `~/.claude/settings.json` | No | N/A | 个人 tools（默认） |
-| `project` | `.claude/settings.json` | Yes（git） | No | Team standards（团队标准） |
-| `local` | `.claude/settings.local.json` | No | Yes | 个人 project tools |
-| `managed` | System paths | Yes（MDM） | N/A | Enterprise enforcement（企业强制） |
+| `user` | `~/.claude/settings.json` | 否 | N/A | 个人 tools（默认） |
+| `project` | `.claude/settings.json` | 是（git） | 否 | Team standards（团队标准） |
+| `local` | `.claude/settings.local.json` | 否 | 是 | 个人 project tools |
+| `managed` | System paths（系统路径） | 是（MDM） | N/A | Enterprise enforcement（企业强制） |
 
 ### Scope 优先级
 

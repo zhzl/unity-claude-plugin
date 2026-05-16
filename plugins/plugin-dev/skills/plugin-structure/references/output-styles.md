@@ -11,7 +11,7 @@ Output styles 用于自定义 Claude 格式化和组织响应的方式。它们�
 - 由用户选择（不像 skills 那样自动触发）
 - 可以与 CLAUDE.md 指令共存（style 在格式化方面优先）
 
-## Frontmatter schema（frontmatter schema）
+## Frontmatter schema
 
 Output style 文件使用 YAML frontmatter：
 

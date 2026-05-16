@@ -1,4 +1,4 @@
-# Headless 与 CI Mode Plugin 兼容性
+# Headless Mode 与 CI Mode 的 Plugin 兼容性
 
 Plugins 在 headless mode（`claude -p`）与 interactive sessions 中的行为不同。理解这些差异，对构建能在所有 runtime contexts 中可靠工作的 plugins 至关重要。
 

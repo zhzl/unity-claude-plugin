@@ -20,11 +20,11 @@ Claude Code 启动时：
 
 Components 被使用时：
 
-**Commands**：用户输入 slash command → Claude Code 查找 → 执行
-**Agents**：任务到达 → Claude Code 评估 capabilities → 选择 agent
-**Skills**：任务 context 匹配 description → Claude Code 加载 skill
-**Hooks**：Event 发生 → Claude Code 调用匹配的 hooks
-**MCP Servers**：Tool call 匹配 server capability → 转发给 server
+- **Commands**：用户输入 slash command → Claude Code 查找 → 执行
+- **Agents**：任务到达 → Claude Code 评估 capabilities → 选择 agent
+- **Skills**：任务 context 匹配 description → Claude Code 加载 skill
+- **Hooks**：Event 发生 → Claude Code 调用匹配的 hooks
+- **MCP Servers**：Tool call 匹配 server capability → 转发给 server
 
 ## Command 组织模式
 

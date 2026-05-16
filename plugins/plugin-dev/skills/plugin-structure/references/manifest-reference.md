@@ -1,6 +1,6 @@
 # Plugin Manifest 参考
 
-`plugin.json` configuration 的完整参考。
+`plugin.json` 配置的完整参考。
 
 ## 文件位置
 
@@ -91,7 +91,7 @@ Semantic versioning 指南：
 - ❌ "A plugin that helps you do testing stuff"
 - ❌ "This is a very long description that goes on and on about every single feature..."
 
-### Metadata fields（metadata fields）
+### Metadata fields（metadata 字段）
 
 #### author
 
@@ -590,13 +590,13 @@ Claude Code 会在 plugin load 时验证 manifest：
 
 ## 最佳实践（best practices）
 
-### Metadata（metadata）
+### Metadata（元数据）
 
-1. **始终包含 version（Always include version）**：跟踪 changes 和 updates
-2. **编写清晰 description（Write clear descriptions）**：帮助用户理解 plugin purpose
-3. **提供联系信息（Provide contact information）**：支持 user support
-4. **链接到 documentation（Link to documentation）**：降低 support burden
-5. **选择合适 license（Choose appropriate license）**：匹配 project goals
+1. **始终包含 version**：跟踪 changes 和 updates
+2. **编写清晰 description**：帮助用户理解 plugin purpose
+3. **提供联系信息**：支持 user support
+4. **链接到 documentation**：降低 support burden
+5. **选择合适 license**：匹配 project goals
 
 ### Paths（paths）
 
