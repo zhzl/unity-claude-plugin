@@ -1,30 +1,30 @@
-# Advanced Skill Frontmatter Fields
+# 高级 Skill Frontmatter 字段
 
-This reference covers frontmatter fields that go beyond the core `name` and `description` requirements. These fields enable model selection, scoped hooks, and context budget optimization.
+本参考说明超出核心 `name` 和 `description` 要求的 frontmatter 字段。这些字段支持 model 选择、作用域 hooks，以及 context budget 优化。
 
 ## model
 
-Override the model used when a skill is active.
+覆盖 skill 激活时使用的 model。
 
-### Values
+### 取值
 
-| Value         | Behavior                                              |
+| 取值          | 行为                                                  |
 | ------------- | ----------------------------------------------------- |
-| `inherit`     | Use the conversation's current model (default)        |
-| `sonnet`      | Claude Sonnet — balanced performance and cost         |
-| `opus`        | Claude Opus — maximum capability, highest cost        |
-| `haiku`       | Claude Haiku — fastest, lowest cost                   |
-| Full model ID | Specific version (e.g., `claude-sonnet-4-5-20250929`) |
+| `inherit`     | 使用当前对话的 model（默认）                          |
+| `sonnet`      | Claude Sonnet — 性能与成本均衡                        |
+| `opus`        | Claude Opus — 能力最强，成本最高                      |
+| `haiku`       | Claude Haiku — 速度最快，成本最低                     |
+| Full model ID | 指定版本（例如 `claude-sonnet-4-5-20250929`）         |
 
-### When to Use Each
+### 何时使用各取值
 
-- **`inherit` (default):** Most skills. Lets the user's model choice apply.
-- **`haiku`:** Fast, cost-sensitive operations — linting, formatting checks, simple lookups. Good for skills that run frequently.
-- **`sonnet`:** Standard workflows — code review, generation, analysis. The balanced default.
-- **`opus`:** Complex reasoning — architectural decisions, security audits, detailed analysis requiring maximum capability.
-- **Full model ID:** Pin to a specific version when skill behavior depends on exact model capabilities.
+- **`inherit`（默认）：** 适用于大多数 skills。让用户的 model 选择生效。
+- **`haiku`：** 快速且成本敏感的操作 — linting、格式检查、简单查找。适合频繁运行的 skills。
+- **`sonnet`：** 标准 workflow — code review、生成、分析。均衡的默认选择。
+- **`opus`：** 复杂推理 — 架构决策、安全审计、需要最高能力的详细分析。
+- **Full model ID：** 当 skill 行为依赖精确 model 能力时，固定到特定版本。
 
-### Example
+### 示例
 
 ```yaml
 ---
@@ -34,23 +34,23 @@ model: haiku
 ---
 ```
 
-### Notes
+### 说明
 
-- Shorthand names (`sonnet`, `opus`, `haiku`) resolve to the current default version of each family
-- The `model` field is shared with commands (same syntax and behavior)
-- When `context: fork` is set, the model applies to the forked subagent
+- 简写名称（`sonnet`、`opus`、`haiku`）会解析为各 model family 的当前默认版本
+- `model` 字段与 commands 共用（语法和行为相同）
+- 设置 `context: fork` 时，该 model 会应用于 forked subagent
 
-## hooks (Scoped Hooks)
+## hooks（Scoped Hooks）
 
-Define hooks that activate only when the skill is in use, rather than globally for all tool calls.
+定义仅在使用该 skill 时激活的 hooks，而不是对所有 tool calls 全局激活。
 
-### Concept
+### 概念
 
-Unlike `hooks.json` (which applies globally whenever the plugin is active), scoped hooks in frontmatter are lifecycle-bound to the skill. They activate when the skill loads and deactivate when it completes. This enables skill-specific validation without affecting other workflows.
+不同于 `hooks.json`（plugin 激活时全局生效），frontmatter 中的 scoped hooks 与 skill 生命周期绑定。它们在 skill 加载时激活，并在 skill 完成时停用。这允许 skill-specific validation，而不会影响其他 workflows。
 
-### Format
+### 格式
 
-The `hooks` field uses the same event/matcher/hook structure as `hooks.json`:
+`hooks` 字段使用与 `hooks.json` 相同的 event/matcher/hook 结构：
 
 ```yaml
 ---
@@ -71,38 +71,38 @@ hooks:
 ---
 ```
 
-### Supported Events
+### 支持的事件
 
-Scoped hooks support a subset of hook events:
+Scoped hooks 支持 hook events 的子集：
 
-| Event         | Purpose                                          |
-| ------------- | ------------------------------------------------ |
-| `PreToolUse`  | Validate or block tool calls before execution    |
-| `PostToolUse` | Run checks after successful tool execution       |
-| `Stop`        | Verify completion criteria before skill finishes |
+| Event         | 用途                                           |
+| ------------- | ---------------------------------------------- |
+| `PreToolUse`  | 在执行前验证或阻止 tool calls                  |
+| `PostToolUse` | 在 tool 成功执行后运行检查                     |
+| `Stop`        | 在 skill 结束前验证完成条件                    |
 
-Other events (`SessionStart`, `UserPromptSubmit`, etc.) are session-level and don't apply to skill scope.
+其他事件（`SessionStart`、`UserPromptSubmit` 等）是 session-level，不适用于 skill 作用域。
 
-### Comparison with hooks.json
+### 与 hooks.json 的对比
 
-| Aspect   | `hooks.json`                               | Frontmatter `hooks`                           |
+| 方面     | `hooks.json`                               | Frontmatter `hooks`                           |
 | -------- | ------------------------------------------ | --------------------------------------------- |
-| Scope    | Global (always active when plugin enabled) | Skill-specific (active only during skill use) |
-| Events   | All 11+ hook events                        | PreToolUse, PostToolUse, Stop                 |
-| Location | `hooks/hooks.json` file                    | YAML frontmatter in SKILL.md                  |
-| Use case | Plugin-wide validation, logging            | Skill-specific safety checks                  |
+| 作用域   | 全局（plugin 启用时始终激活）              | Skill-specific（仅在使用 skill 时激活）       |
+| 事件     | 全部 11+ hook events                       | PreToolUse, PostToolUse, Stop                 |
+| 位置     | `hooks/hooks.json` 文件                    | SKILL.md 中的 YAML frontmatter                |
+| 用例     | Plugin-wide validation、logging            | Skill-specific safety checks                  |
 
-### Use Cases
+### 用例
 
-- **Skill-specific validation:** A "database writer" skill that validates SQL before execution
-- **Restricted workflows:** A "deploy" skill that checks branch and test status before allowing Bash commands
-- **Quality gates:** A "code generator" skill that runs linting after every Write operation
+- **Skill-specific validation：** “database writer” skill 在执行前验证 SQL
+- **受限 workflows：** “deploy” skill 在允许 Bash commands 前检查 branch 和 test 状态
+- **质量门禁：** “code generator” skill 在每次 Write operation 后运行 linting
 
-### Hook Types in Frontmatter
+### Frontmatter 中的 Hook 类型
 
-Both `command` and `prompt` hook types work in frontmatter:
+`command` 和 `prompt` 两种 hook types 都可用于 frontmatter：
 
-**Command hook** (executes a script):
+**Command hook**（执行脚本）：
 
 ```yaml
 hooks:
@@ -113,7 +113,7 @@ hooks:
           command: "${CLAUDE_PLUGIN_ROOT}/scripts/check-safety.sh"
 ```
 
-**Prompt hook** (LLM evaluation — for Stop events):
+**Prompt hook**（LLM evaluation — 用于 Stop events）：
 
 ```yaml
 hooks:
@@ -126,49 +126,49 @@ hooks:
 
 ## Skill Visibility Budget
 
-Claude Code allocates a character budget for skill descriptions to manage context window usage efficiently.
+Claude Code 会为 skill descriptions 分配字符预算，以高效管理 context window 使用量。
 
-### How It Works
+### 工作方式
 
-1. All installed skills contribute their `description` text to a shared budget
-2. Default budget: approximately 2% of the context window or ~16KB fallback (controlled by `SLASH_COMMAND_TOOL_CHAR_BUDGET`)
-3. When total descriptions exceed the budget, lower-priority skills may be excluded from auto-discovery
-4. Excluded skills are still available via explicit `/skill-name` invocation — they just won't auto-trigger
+1. 所有已安装 skills 的 `description` 文本都会计入共享预算
+2. 默认预算：约为 context window 的 2%，或使用 ~16KB fallback（由 `SLASH_COMMAND_TOOL_CHAR_BUDGET` 控制）
+3. 当 descriptions 总量超过预算时，优先级较低的 skills 可能会从 auto-discovery 中排除
+4. 被排除的 skills 仍可通过显式 `/skill-name` 调用 — 只是不会 auto-trigger
 
-### What Counts Against the Budget
+### 哪些内容计入预算
 
-- The `description` frontmatter field text
-- Skill name and metadata overhead
-- This applies across ALL installed plugins, not just yours
+- `description` frontmatter 字段文本
+- Skill name 和 metadata 开销
+- 这会跨所有已安装 plugins 生效，不只限于当前 plugin
 
-### Optimization Strategies
+### 优化策略
 
-1. **Keep descriptions concise:** Target 100-300 characters for the description field
-2. **Use trigger phrases, not explanations:** "create a hook", "add PreToolUse" is better than "This skill provides comprehensive guidance for creating event-driven automation..."
-3. **Move detail to SKILL.md body:** The body only loads when the skill triggers, not at discovery time
-4. **Progressive disclosure:** Description (always loaded) → SKILL.md body (on trigger) → references (on demand)
+1. **保持 descriptions 简洁：** `description` 字段目标为 100-300 个字符
+2. **使用 trigger phrases，而不是解释：** “create a hook”、“add PreToolUse” 优于 “This skill provides comprehensive guidance for creating event-driven automation...”。
+3. **将细节移到 SKILL.md 正文：** 正文只在 skill 触发时加载，不在 discovery 阶段加载
+4. **Progressive disclosure：** Description（始终加载）→ SKILL.md body（触发时加载）→ references（按需加载）
 
-### Checking Budget Usage
+### 检查预算使用量
 
-- `/context` command shows context usage including excluded skills if over budget
-- Environment variable: `SLASH_COMMAND_TOOL_CHAR_BUDGET=20000` to increase budget
-- Monitor with: `claude --debug` shows skill loading details
+- `/context` command 会显示 context 使用情况，包括超过预算时被排除的 skills
+- Environment variable：`SLASH_COMMAND_TOOL_CHAR_BUDGET=20000` 可增加预算
+- 通过 `claude --debug` 监控 skill loading 细节
 
-### Practical Impact
+### 实际影响
 
-For most plugins with 5-15 skills, the default budget is sufficient. Budget becomes a concern when:
+对于拥有 5-15 个 skills 的大多数 plugins，默认预算足够。以下情况会让预算成为问题：
 
-- Multiple plugins are installed simultaneously (each adding descriptions)
-- Individual skill descriptions exceed 500 characters
-- A plugin has 20+ skills with verbose descriptions
+- 同时安装多个 plugins（每个都会添加 descriptions）
+- 单个 skill descriptions 超过 500 个字符
+- 一个 plugin 有 20+ 个 skills，且 descriptions 冗长
 
 ## Skill Permission Syntax
 
-Skills can be referenced in settings.json allow rules using the `Skill()` syntax:
+Skills 可以使用 `Skill()` 语法在 settings.json allow rules 中引用：
 
-### Exact Match
+### 精确匹配
 
-Allow a specific skill to be invoked:
+允许调用特定 skill：
 
 ```json
 {
@@ -178,9 +178,9 @@ Allow a specific skill to be invoked:
 }
 ```
 
-### Prefix Match with Arguments
+### 带参数的前缀匹配
 
-Allow a skill with any arguments:
+允许带任意参数的 skill：
 
 ```json
 {
@@ -190,19 +190,19 @@ Allow a skill with any arguments:
 }
 ```
 
-This enables fine-grained control over which skills can be auto-invoked by Claude vs requiring explicit user invocation. Combine with `disable-model-invocation` frontmatter for maximum control.
+这支持精细控制哪些 skills 可由 Claude auto-invoked，哪些需要显式用户调用。与 `disable-model-invocation` frontmatter 结合使用可获得最大控制力。
 
 ## Visual Output Generators
 
-Skills can bundle scripts that generate visual output (HTML files, charts, interactive visualizations) for rich user experiences.
+Skills 可以打包生成视觉输出（HTML files、charts、interactive visualizations）的 scripts，为用户提供丰富体验。
 
-### Pattern
+### 模式
 
-1. Bundle a script (Python, Node.js, etc.) in the skill's `scripts/` directory
-2. The script generates an HTML file or other visual output
-3. Claude orchestrates: reads data, runs the script, presents the result
+1. 在 skill 的 `scripts/` 目录中打包脚本（Python、Node.js 等）
+2. 脚本生成 HTML file 或其他视觉输出
+3. Claude 负责协调：读取数据、运行脚本、呈现结果
 
-### Example Structure
+### 示例结构
 
 ```
 visualization-skill/
@@ -213,7 +213,7 @@ visualization-skill/
     └── chart-options.md     # Configuration reference
 ```
 
-### SKILL.md Usage
+### SKILL.md 用法
 
 ```markdown
 To generate the visualization:
@@ -223,4 +223,4 @@ To generate the visualization:
 3. The script outputs an HTML file — inform the user of its location
 ```
 
-Visual output generators combine the power of deterministic scripts with Claude's ability to gather context and present results. The script handles rendering while Claude handles data gathering and user interaction.
+Visual output generators 将 deterministic scripts 的能力与 Claude 收集 context 和呈现结果的能力结合起来。脚本负责渲染，Claude 负责数据收集和用户交互。

@@ -1,39 +1,39 @@
-# Commands vs Skills: When to Use Each
+# Commands vs Skills：何时使用哪一种
 
-## Same Mechanism, Different Complexity
+## 相同机制，不同复杂度
 
-Both commands and skills:
+command 和 skill 都：
 
-- Are invoked via the Skill tool
-- Support $ARGUMENTS and literal `!` before backticks for bash execution
-- Support frontmatter (description, allowed-tools, model)
-- Can control invocability (disable-model-invocation)
+- 通过 Skill tool 调用
+- 支持 $ARGUMENTS，以及在反引号前使用字面量 `!` 执行 bash
+- 支持 frontmatter（description、allowed-tools、model）
+- 可以控制可调用性（disable-model-invocation）
 
-## Decision Matrix
+## 决策矩阵
 
-| Need                    | Use     | Location               |
+| 需求                    | 使用    | 位置                   |
 | ----------------------- | ------- | ---------------------- |
-| Simple reusable prompt  | Command | commands/foo.md        |
-| Dynamic arguments only  | Command | commands/foo.md        |
-| Scripts for validation  | Skill   | skills/foo/            |
-| Reference documentation | Skill   | skills/foo/references/ |
-| Working examples        | Skill   | skills/foo/examples/   |
+| 简单可复用 prompt       | Command | commands/foo.md        |
+| 仅动态参数              | Command | commands/foo.md        |
+| validation 脚本         | Skill   | skills/foo/            |
+| 参考文档                | Skill   | skills/foo/references/ |
+| 可运行示例              | Skill   | skills/foo/examples/   |
 | Progressive disclosure  | Skill   | skills/foo/            |
 
-## Invocation Control
+## 调用控制
 
-| Setting                             | User (/) | Claude (Skill tool) |
+| 设置                                | 用户 (/) | Claude (Skill tool) |
 | ----------------------------------- | -------- | ------------------- |
-| Default                             | Yes      | Yes                 |
+| 默认                                | Yes      | Yes                 |
 | disable-model-invocation: true      | Yes      | No                  |
-| user-invocable: false (skills only) | No       | Yes                 |
+| user-invocable: false（仅 skills）  | No       | Yes                 |
 
-## Migration: Command to Skill
+## 迁移：Command 到 Skill
 
-When a command grows complex:
+当 command 变得复杂时：
 
-1. Create `skills/name/SKILL.md`
-2. Move command content to SKILL.md body (frontmatter fields like `description`, `allowed-tools`, `model` work identically)
-3. Add `references/` for detailed docs
-4. Add `scripts/` for utilities
-5. Delete original command file
+1. 创建 `skills/name/SKILL.md`
+2. 将 command 内容移动到 SKILL.md 正文（`description`、`allowed-tools`、`model` 等 frontmatter 字段的行为完全相同）
+3. 添加 `references/` 存放详细文档
+4. 添加 `scripts/` 存放工具脚本
+5. 删除原 command 文件
