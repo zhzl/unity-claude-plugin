@@ -1,4 +1,4 @@
-# Minimal Plugin 示例
+# 最小插件示例
 
 一个只有单个 command 的最简插件。
 

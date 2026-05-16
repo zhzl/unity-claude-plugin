@@ -1,4 +1,4 @@
-# Standard Plugin 示例
+# 标准插件示例
 
 一个结构良好的插件，包含 commands、agents 和 skills。
 

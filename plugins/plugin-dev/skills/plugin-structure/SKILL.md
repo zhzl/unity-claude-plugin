@@ -416,7 +416,7 @@ source "${CLAUDE_PLUGIN_ROOT}/lib/common.sh"
 - `database-migrations/`
 - `error-handling/`
 
-### Supporting Files
+### 支持文件
 
 **Scripts**：使用带合适扩展名、语义清晰的 kebab-case 名称
 
@@ -504,7 +504,7 @@ Claude Code 会自动发现并加载组件：
 
 ## 常见模式
 
-### Minimal Plugin
+### 最小插件
 
 只有一个 command、没有依赖：
 
@@ -516,7 +516,7 @@ my-plugin/
     └── hello.md       # Single command
 ```
 
-### Full-Featured Plugin
+### 全功能插件
 
 包含所有组件类型的完整插件：
 
@@ -534,7 +534,7 @@ my-plugin/
 └── scripts/           # Shared utilities
 ```
 
-### Skill-Focused Plugin
+### 以技能为核心的插件
 
 只提供 skills 的插件：
 
@@ -601,7 +601,7 @@ claude --plugin-dir /path/to/plugin
 
 - **Headless/CI mode:** 参见 `references/headless-ci-mode.md`，了解如何设计能在 `claude -p` 和 CI 流水线中工作的插件
 - **GitHub Actions:** 参见 `references/github-actions.md`，了解如何将插件集成到 `claude-code-action@v1`
-- **Advanced topics:** 参见 `references/advanced-topics.md`，了解缓存行为、installation scopes、CLI 管理、keybindings、status line 和 auto-update 行为
+- **高级主题：** 参见 `references/advanced-topics.md`，了解缓存行为、installation scopes、CLI 管理、keybindings、status line 和 auto-update 行为
 
 ## 插件校验
 
@@ -654,7 +654,7 @@ Claude Code 提供了内建的校验工具：
 
 ## 附加资源
 
-### Reference Files
+### 参考文件
 
 - **`references/component-patterns.md`** - 每种组件类型的详细模式
 - **`references/manifest-reference.md`** - 完整的 plugin.json 字段参考
@@ -663,7 +663,7 @@ Claude Code 提供了内建的校验工具：
 - **`references/advanced-topics.md`** - 缓存、installation scopes、CLI commands 等更多主题
 - **`references/output-styles.md`** - Output style frontmatter schema、文件位置和使用指导
 
-### Example Files
+### 示例文件
 
 `examples/` 中的可工作示例：
 

@@ -1,4 +1,4 @@
-# Advanced Plugin 示例
+# 高级插件示例
 
 一个复杂的企业级插件，包含 MCP 集成和高级组织结构。
 
@@ -745,8 +745,8 @@ bash ${CLAUDE_PLUGIN_ROOT}/skills/kubernetes-ops/scripts/validate-manifest.sh de
 
 ## 扩展性考量
 
-- **Performance**：拆分 MCP servers 以支持并行操作
-- **Organization**：多层级目录便于扩展
-- **Maintainability**：共享库减少重复
-- **Flexibility**：环境配置支持定制化
-- **Security**：分层的安全 hooks 与校验
+- **性能**：拆分 MCP servers 以支持并行操作
+- **组织结构**：多层级目录便于扩展
+- **可维护性**：共享库减少重复
+- **灵活性**：环境配置支持定制化
+- **安全性**：分层的安全 hooks 与校验
