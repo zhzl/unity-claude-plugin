@@ -30,7 +30,7 @@ Slash command 是包含 prompt 的 Markdown 文件，被调用时由 Claude 执�
 
 ### 关键规则：Commands are Instructions FOR Claude
 
-**Command 是写给 agent 消费的，不是写给人读的。**
+**Command 是供 agent 消费的，不是写给人读的。**
 
 当用户调用 `/command-name` 时，command 内容会成为 Claude 的指令。请把 command 写成给 Claude 的行动指令，说明要做什么；不要写成给用户看的说明消息。
 
@@ -122,7 +122,7 @@ Review this code for security vulnerabilities including:
 
 基础 command 不需要 frontmatter。
 
-### 使用 YAML Frontmatter
+### 使用 YAML frontmatter
 
 使用 YAML frontmatter 添加配置：
 
@@ -136,7 +136,7 @@ model: sonnet
 Review this code for security vulnerabilities...
 ```
 
-## YAML Frontmatter 字段
+## YAML frontmatter 字段
 
 ### description
 
@@ -372,8 +372,8 @@ Environment: [BANG]`echo $NODE_ENV`
 
 **工作方式：**
 
-1. Claude 看到 command 前，Claude Code 会执行字面量 `!`command`` 块
-2. bash 输出会替换整个 `!`command`` 表达式
+1. Claude 看到 command 前，Claude Code 会执行形如 ``!`command` `` 的预执行表达式
+2. bash 输出会替换整个 ``!`command` `` 表达式
 3. Claude 收到包含实际值的展开后 prompt
 
 **展开示例：**
@@ -404,8 +404,7 @@ Skill 文档使用 `[BANG]` 作为 command 文件预执行前缀的占位符。�
 
 字面量 `!` 预执行会执行**加载时上下文注入**：command 加载时执行命令，其输出成为 Claude 收到的 prompt 中的静态文本。这不同于 Claude 在运行时选择通过 Bash tool 执行命令。预执行应用于收集上下文（git status、环境变量、配置文件），让 Claude 获得起始状态；不要把它用于 Claude 应在任务期间执行的动作。
 
-**实现细节：**
-高级模式、环境特定配置和 plugin 集成见 `references/plugin-features-reference.md`
+**实现细节：** 高级模式、环境特定配置和 plugin 集成见 `references/plugin-features-reference.md`
 
 ## Command 组织
 
