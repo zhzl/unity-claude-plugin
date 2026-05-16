@@ -1,27 +1,27 @@
-# Plugin Command Examples
+# Plugin Command 示例
 
-Practical examples of commands designed for Claude Code plugins, demonstrating plugin-specific patterns and features.
+面向 Claude Code plugin 设计的 command 实用示例，展示 plugin 特定模式与功能。
 
-## Table of Contents
+## 目录
 
-1. [Simple Plugin Command](#1-simple-plugin-command)
-2. [Script-Based Analysis](#2-script-based-analysis)
-3. [Template-Based Generation](#3-template-based-generation)
-4. [Multi-Script Workflow](#4-multi-script-workflow)
-5. [Configuration-Driven Deployment](#5-configuration-driven-deployment)
-6. [Agent Integration](#6-agent-integration)
-7. [Skill Integration](#7-skill-integration)
-8. [Multi-Component Workflow](#8-multi-component-workflow)
-9. [Validated Input Command](#9-validated-input-command)
-10. [Environment-Aware Command](#10-environment-aware-command)
+1. [简单 Plugin Command](#1-简单-plugin-command)
+2. [基于脚本的分析](#2-基于脚本的分析)
+3. [基于模板的生成](#3-基于模板的生成)
+4. [多脚本 Workflow](#4-多脚本-workflow)
+5. [配置驱动的部署](#5-配置驱动的部署)
+6. [Agent 集成](#6-agent-集成)
+7. [Skill 集成](#7-skill-集成)
+8. [多组件 Workflow](#8-多组件-workflow)
+9. [带 Validation 的输入 Command](#9-带-validation-的输入-command)
+10. [环境感知 Command](#10-环境感知-command)
 
 ---
 
-## 1. Simple Plugin Command
+## 1. 简单 Plugin Command
 
-**Use case:** Basic command that uses plugin script
+**使用场景：** 使用 plugin 脚本的基础 command
 
-**File:** `commands/analyze.md`
+**文件：** `commands/analyze.md`
 
 ```markdown
 ---
@@ -42,19 +42,19 @@ Review the analysis output and provide:
 4. Code quality score interpretation
 ```
 
-**Key features:**
+**关键特性：**
 
-- Uses `${CLAUDE_PLUGIN_ROOT}` for portable path
-- Combines file reference with script execution
-- Simple single-purpose command
+- 使用 `${CLAUDE_PLUGIN_ROOT}` 实现可移植路径
+- 将文件引用与脚本执行结合
+- 简单的单一用途 command
 
 ---
 
-## 2. Script-Based Analysis
+## 2. 基于脚本的分析
 
-**Use case:** Run comprehensive analysis using multiple plugin scripts
+**使用场景：** 使用多个 plugin 脚本运行全面分析
 
-**File:** `commands/full-audit.md`
+**文件：** `commands/full-audit.md`
 
 ```markdown
 ---
@@ -80,20 +80,20 @@ Analyze all results and create comprehensive report including:
 - Overall health score and recommendations
 ```
 
-**Key features:**
+**关键特性：**
 
-- Multiple script executions
-- Organized output sections
-- Comprehensive workflow
-- Clear reporting structure
+- 多次脚本执行
+- 结构化输出章节
+- 全面的 workflow
+- 清晰的报告结构
 
 ---
 
-## 3. Template-Based Generation
+## 3. 基于模板的生成
 
-**Use case:** Generate documentation following plugin template
+**使用场景：** 按 plugin 模板生成文档
 
-**File:** `commands/gen-api-docs.md`
+**文件：** `commands/gen-api-docs.md`
 
 ```markdown
 ---
@@ -119,20 +119,20 @@ Ensure documentation includes:
 Format output as markdown suitable for README or docs site.
 ```
 
-**Key features:**
+**关键特性：**
 
-- Uses plugin template
-- Combines template with source file
-- Standardized output format
-- Clear documentation structure
+- 使用 plugin 模板
+- 将模板与源文件结合
+- 标准化输出格式
+- 清晰的文档结构
 
 ---
 
-## 4. Multi-Script Workflow
+## 4. 多脚本 Workflow
 
-**Use case:** Orchestrate build, test, and deploy workflow
+**使用场景：** 编排构建、测试和部署 workflow
 
-**File:** `commands/release.md`
+**文件：** `commands/release.md`
 
 ```markdown
 ---
@@ -160,20 +160,20 @@ Review all step outputs and report:
 5. Rollback plan if needed
 ```
 
-**Key features:**
+**关键特性：**
 
-- Multi-step workflow
-- Sequential script execution
-- Clear step numbering
-- Comprehensive reporting
+- 多步骤 workflow
+- 顺序脚本执行
+- 清晰的步骤编号
+- 全面的报告
 
 ---
 
-## 5. Configuration-Driven Deployment
+## 5. 配置驱动的部署
 
-**Use case:** Deploy using environment-specific plugin configuration
+**使用场景：** 使用特定环境的 plugin 配置进行部署
 
-**File:** `commands/deploy.md`
+**文件：** `commands/deploy.md`
 
 ```markdown
 ---
@@ -203,20 +203,20 @@ Deployment checklist:
 Report deployment status and any issues encountered.
 ```
 
-**Key features:**
+**关键特性：**
 
-- Environment-specific configuration
-- Dynamic config file loading
-- Pre-deployment validation
-- Structured checklist
+- 环境特定配置
+- 动态加载配置文件
+- 部署前 validation
+- 结构化 checklist
 
 ---
 
-## 6. Agent Integration
+## 6. Agent 集成
 
-**Use case:** Command that launches plugin agent for complex task
+**使用场景：** 为复杂任务启动 plugin agent 的 command
 
-**File:** `commands/deep-review.md`
+**文件：** `commands/deep-review.md`
 
 ```markdown
 ---
@@ -243,20 +243,20 @@ The agent has access to:
 Note: This uses the Agent tool to launch the plugin's code-reviewer agent for thorough analysis.
 ```
 
-**Key features:**
+**关键特性：**
 
-- Delegates to plugin agent
-- Documents agent capabilities
-- References plugin resources
-- Clear scope definition
+- 委派给 plugin agent
+- 记录 agent 能力
+- 引用 plugin 资源
+- 明确范围定义
 
 ---
 
-## 7. Skill Integration
+## 7. Skill 集成
 
-**Use case:** Command that leverages plugin skill for specialized knowledge
+**使用场景：** 利用 plugin skill 专业知识的 command
 
-**File:** `commands/document-api.md`
+**文件：** `commands/document-api.md`
 
 ```markdown
 ---
@@ -286,20 +286,20 @@ The skill provides:
 Generate production-ready API documentation.
 ```
 
-**Key features:**
+**关键特性：**
 
-- Invokes plugin skill by name
-- Documents skill purpose
-- Clear expectations
-- Leverages skill knowledge
+- 按名称调用 plugin skill
+- 记录 skill 目的
+- 明确预期
+- 利用 skill 知识
 
 ---
 
-## 8. Multi-Component Workflow
+## 8. 多组件 Workflow
 
-**Use case:** Complex workflow using agents, skills, and scripts
+**使用场景：** 使用 agent、skill 和脚本的复杂 workflow
 
-**File:** `commands/complete-review.md`
+**文件：** `commands/complete-review.md`
 
 ```markdown
 ---
@@ -347,20 +347,20 @@ Generate prioritized action items:
 Include specific file locations and suggested changes for each item.
 ```
 
-**Key features:**
+**关键特性：**
 
-- Multi-phase workflow
-- Combines scripts, agents, skills
-- Template-based reporting
-- Prioritized outputs
+- 多阶段 workflow
+- 组合脚本、agent、skill
+- 基于模板的报告
+- 优先级化输出
 
 ---
 
-## 9. Validated Input Command
+## 9. 带 Validation 的输入 Command
 
-**Use case:** Command with input validation and error handling
+**使用场景：** 带输入 validation 和错误处理的 command
 
-**File:** `commands/build-env.md`
+**文件：** `commands/build-env.md`
 
 ```markdown
 ---
@@ -393,21 +393,21 @@ If validations fail:
 - Document troubleshooting steps
 ```
 
-**Key features:**
+**关键特性：**
 
-- Input validation
-- Resource existence checks
-- Error handling
-- Helpful error messages
-- Graceful failure handling
+- 输入 validation
+- 资源存在性检查
+- 错误处理
+- 有帮助的错误消息
+- 优雅失败处理
 
 ---
 
-## 10. Environment-Aware Command
+## 10. 环境感知 Command
 
-**Use case:** Command that adapts behavior based on environment
+**使用场景：** 根据环境调整行为的 command
 
-**File:** `commands/run-checks.md`
+**文件：** `commands/run-checks.md`
 
 ```markdown
 ---
@@ -443,110 +443,110 @@ Analyze results based on environment requirements:
 Report status and recommend proceed/block decision.
 ```
 
-**Key features:**
+**关键特性：**
 
-- Environment-aware logic
-- Conditional execution
-- Different validation levels
-- Appropriate reporting per environment
+- 环境感知逻辑
+- 条件执行
+- 不同 validation 级别
+- 按环境给出合适报告
 
 ---
 
-## Common Patterns Summary
+## 常见模式摘要
 
-### Pattern: Plugin Script Execution
+### 模式：Plugin 脚本执行
 
 ```markdown
 Run the plugin script with the Bash tool during the task.
 ```
 
-Use for: Running plugin-provided Node.js scripts
+适用于：运行 plugin 提供的 Node.js 脚本
 
-### Pattern: Plugin Configuration Loading
+### 模式：Plugin 配置加载
 
 ```markdown
 @${CLAUDE_PLUGIN_ROOT}/config/config-name.json
 ```
 
-Use for: Loading plugin configuration files
+适用于：加载 plugin 配置文件
 
-### Pattern: Plugin Template Usage
+### 模式：Plugin 模板使用
 
 ```markdown
 @${CLAUDE_PLUGIN_ROOT}/templates/template-name.md
 ```
 
-Use for: Using plugin templates for generation
+适用于：使用 plugin 模板进行生成
 
-### Pattern: Agent Invocation
+### 模式：Agent 调用
 
 ```markdown
 Launch the [agent-name] agent for [task description].
 ```
 
-Use for: Delegating complex tasks to plugin agents
+适用于：将复杂任务委派给 plugin agent
 
-### Pattern: Skill Reference
+### 模式：Skill 引用
 
 ```markdown
 Use the [skill-name] skill to ensure [requirements].
 ```
 
-Use for: Leveraging plugin skills for specialized knowledge
+适用于：利用 plugin skill 的专业知识
 
-### Pattern: Input Validation
+### 模式：输入 Validation
 
 ```markdown
 Validate input: !`echo "$1" | grep -E "^pattern$" && echo "OK" || echo "ERROR"`
 ```
 
-Use for: Validating command arguments
+适用于：验证 command 参数
 
-### Pattern: Resource Validation
+### 模式：资源 Validation
 
 ```markdown
 Check exists: !`test -f ${CLAUDE_PLUGIN_ROOT}/path/file && echo "YES" || echo "NO"`
 ```
 
-Use for: Verifying required plugin files exist
+适用于：验证所需 plugin 文件是否存在
 
 ---
 
-## Development Tips
+## 开发提示
 
-### Testing Plugin Commands
+### 测试 Plugin Command
 
-1. **Test with plugin installed:**
+1. **在已安装 plugin 的情况下测试：**
 
    ```bash
    cd /path/to/plugin
    claude /command-name args
    ```
 
-2. **Verify ${CLAUDE_PLUGIN_ROOT} expansion:**
+2. **验证 ${CLAUDE_PLUGIN_ROOT} 展开：**
 
    ```bash
    # Add debug output to command
    !`echo "Plugin root: ${CLAUDE_PLUGIN_ROOT}"`
    ```
 
-3. **Test across different working directories:**
+3. **在不同工作目录中测试：**
 
    ```bash
    cd /tmp && claude /command-name
    cd /other/project && claude /command-name
    ```
 
-4. **Validate resource availability:**
+4. **验证资源可用性：**
    ```bash
    # Check all plugin resources exist
    !`test -d ${CLAUDE_PLUGIN_ROOT}/scripts && echo "scripts ok" || echo "missing scripts"`
    !`test -d ${CLAUDE_PLUGIN_ROOT}/config && echo "config ok" || echo "missing config"`
    ```
 
-### Common Mistakes to Avoid
+### 要避免的常见错误
 
-1. **Using relative paths instead of ${CLAUDE_PLUGIN_ROOT}:**
+1. **使用相对路径而不是 ${CLAUDE_PLUGIN_ROOT}：**
 
    ```markdown
    # Wrong
@@ -558,7 +558,7 @@ Use for: Verifying required plugin files exist
    Run ${CLAUDE_PLUGIN_ROOT}/scripts/analyze.js with the Bash tool.
    ```
 
-2. **Forgetting to allow required tools:**
+2. **忘记允许所需工具：**
 
    ```markdown
    # Missing allowed-tools
@@ -574,7 +574,7 @@ Use for: Verifying required plugin files exist
    Run ${CLAUDE_PLUGIN_ROOT}/scripts/script.sh with the Bash tool.
    ```
 
-3. **Not validating inputs:**
+3. **未验证输入：**
 
    ```markdown
    # Risky - no validation
@@ -587,7 +587,7 @@ Use for: Verifying required plugin files exist
    Deploy to $1 environment (if valid)
    ```
 
-4. **Hardcoding plugin paths:**
+4. **硬编码 plugin 路径：**
 
    ```markdown
    # Wrong - breaks on different installations
@@ -601,5 +601,5 @@ Use for: Verifying required plugin files exist
 
 ---
 
-For detailed plugin-specific features, see `references/plugin-features-reference.md`.
-For general command development, see main `SKILL.md`.
+关于 plugin 特定功能的详细信息，见 `references/plugin-features-reference.md`。
+关于通用 command 开发，见主 `SKILL.md`。

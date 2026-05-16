@@ -1,40 +1,40 @@
 ---
 name: command-development
-description: This skill should be used when the user asks to "create a slash command", "add a command", "write a custom command", "define command arguments", "use command frontmatter", "organize commands", "create command with file references", "interactive command", "use AskUserQuestion in command", "Skill tool", "programmatic command invocation", "disable-model-invocation", "prevent Claude from running command", "debug command", "command debugging", "troubleshoot command", or needs guidance on slash command structure, YAML frontmatter fields, dynamic arguments, bash execution in commands, user interaction patterns, programmatic invocation control, debugging commands, or command development best practices for Claude Code.
+description: 当用户请求 "create a slash command"、添加 command、编写自定义 command、定义 command 参数、使用 "command frontmatter"、组织 command、创建带文件引用的 command、"interactive command"、在 command 中使用 "AskUserQuestion"、"Skill tool"、程序化 command 调用、"disable-model-invocation"、阻止 Claude 运行 command、"debug command"、command debugging、troubleshoot command，或需要 Claude Code 中 slash command 结构、YAML frontmatter 字段、动态参数、command 内 bash 执行、用户交互模式、程序化调用控制、调试 command、command 开发最佳实践指导时使用。
 ---
 
-# Command Development for Claude Code
+# Claude Code Command 开发
 
-## Overview
+## 概览
 
-Slash commands are frequently-used prompts defined as Markdown files that Claude executes during interactive sessions. Master command structure, frontmatter options, and dynamic features to create powerful, reusable workflows.
+Slash command 是定义为 Markdown 文件的常用 prompt，Claude 会在交互式会话中执行它。掌握 command 结构、frontmatter 选项和动态功能，可以创建强大、可复用的 workflow。
 
-**Key concepts:**
+**关键概念：**
 
-- Markdown file format for commands
-- YAML frontmatter for configuration
-- Dynamic arguments and file references
-- Bash execution for context
-- Command organization and namespacing
+- command 的 Markdown 文件格式
+- 用于配置的 YAML frontmatter
+- 动态参数和文件引用
+- 用于上下文的 Bash 执行
+- command 组织和命名空间
 
-## Command Basics
+## Command 基础
 
-### What is a Slash Command?
+### 什么是 Slash Command？
 
-A slash command is a Markdown file containing a prompt that Claude executes when invoked. Commands provide:
+Slash command 是包含 prompt 的 Markdown 文件，被调用时由 Claude 执行。Command 提供：
 
-- **Reusability**: Define once, use repeatedly
-- **Consistency**: Standardize common workflows
-- **Sharing**: Distribute across team or projects
-- **Efficiency**: Quick access to complex prompts
+- **可复用性**：定义一次，重复使用
+- **一致性**：标准化常见 workflow
+- **共享性**：跨团队或项目分发
+- **效率**：快速访问复杂 prompt
 
-### Critical: Commands are Instructions FOR Claude
+### 关键规则：Commands are Instructions FOR Claude
 
-**Commands are written for agent consumption, not human consumption.**
+**Command 是写给 agent 消费的，不是写给人读的。**
 
-When a user invokes `/command-name`, the command content becomes Claude's instructions. Write commands as directives TO Claude about what to do, not as messages TO the user.
+当用户调用 `/command-name` 时，command 内容会成为 Claude 的指令。请把 command 写成给 Claude 的行动指令，说明要做什么；不要写成给用户看的说明消息。
 
-**Correct approach (instructions for Claude):**
+**正确方式（给 Claude 的指令）：**
 
 ```markdown
 Review this code for security vulnerabilities including:
@@ -46,61 +46,61 @@ Review this code for security vulnerabilities including:
 Provide specific line numbers and severity ratings.
 ```
 
-**Incorrect approach (messages to user):**
+**错误方式（给用户的消息）：**
 
 ```markdown
 This command will review your code for security issues.
 You'll receive a report with vulnerability details.
 ```
 
-The first example tells Claude what to do. The second tells the user what will happen but doesn't instruct Claude. Always use the first approach.
+第一个示例告诉 Claude 要做什么。第二个示例告诉用户将发生什么，但没有指示 Claude。始终使用第一种方式。
 
-### Commands and Skills: Same Mechanism, Different Complexity
+### Commands 与 Skills：相同机制，不同复杂度
 
-Commands and skills are both invoked via the same **Skill tool**. The difference is organizational complexity:
+Command 和 skill 都通过同一个 **Skill tool** 调用。区别在于组织复杂度：
 
-| Aspect    | Commands                        | Skills                            |
-| --------- | ------------------------------- | --------------------------------- |
-| Location  | `commands/`                     | `skills/name/`                    |
-| Format    | Single `.md` file               | `SKILL.md` + optional resources   |
-| Resources | None                            | scripts/, references/, examples/  |
-| Best for  | Quick prompts, simple workflows | Complex knowledge, bundled assets |
+| 方面 | Commands | Skills |
+| ---- | -------- | ------ |
+| 位置 | `commands/` | `skills/name/` |
+| 格式 | 单个 `.md` 文件 | `SKILL.md` + 可选资源 |
+| 资源 | 无 | scripts/, references/, examples/ |
+| 最适合 | 快速 prompt、简单 workflow | 复杂知识、打包资产 |
 
-**Invocation control** (works for both):
+**调用控制**（两者都适用）：
 
-- `disable-model-invocation: true` → User-only (for side effects: deploy, commit)
-- Default → Both Claude and user can invoke
+- `disable-model-invocation: true` → 仅用户可调用（用于有副作用的操作：deploy、commit）
+- 默认 → Claude 和用户都可调用
 
-**When to graduate a command to a skill**: If you need scripts, reference files, or progressive disclosure, convert the command to a skill. See the `skill-development` skill for guidance.
+**何时将 command 升级为 skill**：如果需要脚本、参考文件或渐进式披露，请将 command 转换为 skill。指导见 `skill-development` skill。
 
-### Command Locations
+### Command 位置
 
-**Project commands** (shared with team):
+**项目 command**（与团队共享）：
 
-- Location: `.claude/commands/`
-- Scope: Available in specific project
-- Label: Shown as "(project)" in `/help`
-- Use for: Team workflows, project-specific tasks
+- 位置：`.claude/commands/`
+- 范围：仅在特定项目中可用
+- 标签：在 `/help` 中显示为 “(project)”
+- 用于：团队 workflow、项目特定任务
 
-**Personal commands** (available everywhere):
+**个人 command**（到处可用）：
 
-- Location: `~/.claude/commands/`
-- Scope: Available in all projects
-- Label: Shown as "(user)" in `/help`
-- Use for: Personal workflows, cross-project utilities
+- 位置：`~/.claude/commands/`
+- 范围：所有项目可用
+- 标签：在 `/help` 中显示为 “(user)”
+- 用于：个人 workflow、跨项目工具
 
-**Plugin commands** (bundled with plugins):
+**Plugin command**（随 plugin 打包）：
 
-- Location: `plugin-name/commands/`
-- Scope: Available when plugin installed
-- Label: Shown as "(plugin-name)" in `/help`
-- Use for: Plugin-specific functionality
+- 位置：`plugin-name/commands/`
+- 范围：安装 plugin 后可用
+- 标签：在 `/help` 中显示为 “(plugin-name)”
+- 用于：plugin 特定功能
 
-## File Format
+## 文件格式
 
-### Basic Structure
+### 基本结构
 
-Commands are Markdown files with `.md` extension:
+Command 是扩展名为 `.md` 的 Markdown 文件：
 
 ```
 .claude/commands/
@@ -109,7 +109,7 @@ Commands are Markdown files with `.md` extension:
 └── deploy.md           # /deploy command
 ```
 
-**Simple command:**
+**简单 command：**
 
 ```markdown
 Review this code for security vulnerabilities including:
@@ -120,11 +120,11 @@ Review this code for security vulnerabilities including:
 - Insecure data handling
 ```
 
-No frontmatter needed for basic commands.
+基础 command 不需要 frontmatter。
 
-### With YAML Frontmatter
+### 使用 YAML Frontmatter
 
-Add configuration using YAML frontmatter:
+使用 YAML frontmatter 添加配置：
 
 ```markdown
 ---
@@ -136,13 +136,13 @@ model: sonnet
 Review this code for security vulnerabilities...
 ```
 
-## YAML Frontmatter Fields
+## YAML Frontmatter 字段
 
 ### description
 
-**Purpose:** Brief description shown in `/help`
-**Type:** String
-**Default:** First line of command prompt
+**用途：** 显示在 `/help` 中的简短描述
+**类型：** 字符串
+**默认：** command prompt 的第一行
 
 ```yaml
 ---
@@ -150,13 +150,13 @@ description: Review pull request for code quality
 ---
 ```
 
-**Best practice:** Clear, actionable description (under 60 characters)
+**最佳实践：** 清晰、可行动的描述（少于 60 个字符）
 
 ### allowed-tools
 
-**Purpose:** Specify which tools command can use
-**Type:** Comma-separated string
-**Default:** Inherits from conversation
+**用途：** 指定 command 可以使用哪些工具
+**类型：** 逗号分隔的字符串
+**默认：** 继承当前 conversation
 
 ```yaml
 ---
@@ -164,20 +164,20 @@ allowed-tools: Read, Write, Edit, Bash(git *)
 ---
 ```
 
-**Patterns:**
+**模式：**
 
-- `Read, Write, Edit` - Specific tools
-- `Bash(git *)` - Bash with git commands only
-- `*` - All tools (rarely needed)
+- `Read, Write, Edit` - 指定工具
+- `Bash(git *)` - 仅允许 Bash 运行 git command
+- `*` - 所有工具（很少需要）
 
-**Use when:** Command requires specific tool access
+**使用时机：** command 需要特定工具访问权限
 
 ### model
 
-**Purpose:** Specify model for command execution
-**Type:** String
-**Values:** `sonnet`, `opus`, `haiku`, or `inherit`
-**Default:** Inherits from conversation
+**用途：** 指定 command 执行使用的 model
+**类型：** 字符串
+**取值：** `sonnet`、`opus`、`haiku` 或 `inherit`
+**默认：** 继承当前 conversation
 
 ```yaml
 ---
@@ -185,19 +185,19 @@ model: haiku
 ---
 ```
 
-**Use cases:**
+**使用场景：**
 
-- `haiku` - Fast, simple commands
-- `sonnet` - Standard workflows
-- `opus` - Complex analysis
+- `haiku` - 快速、简单的 command
+- `sonnet` - 标准 workflow
+- `opus` - 复杂分析
 
-Shorthand names use the current default version of each model family.
+短名称使用每个 model family 的当前默认版本。
 
 ### argument-hint
 
-**Purpose:** Document expected arguments for autocomplete
-**Type:** String
-**Default:** None
+**用途：** 为自动补全记录预期参数
+**类型：** 字符串
+**默认：** 无
 
 ```yaml
 ---
@@ -205,17 +205,17 @@ argument-hint: "[pr-number] [priority] [assignee]"
 ---
 ```
 
-**Benefits:**
+**收益：**
 
-- Helps users understand command arguments
-- Improves command discovery
-- Documents command interface
+- 帮助用户理解 command 参数
+- 改善 command discovery
+- 记录 command 接口
 
 ### disable-model-invocation
 
-**Purpose:** Prevent Skill tool from programmatically calling command
-**Type:** Boolean
-**Default:** false
+**用途：** 阻止 Skill tool 以程序方式调用 command
+**类型：** 布尔值
+**默认：** false
 
 ```yaml
 ---
@@ -223,13 +223,13 @@ disable-model-invocation: true
 ---
 ```
 
-**Use when:** Command should only be manually invoked
+**使用时机：** command 应只能由用户手动调用
 
-## Dynamic Arguments
+## 动态参数
 
-### Using $ARGUMENTS
+### 使用 $ARGUMENTS
 
-Capture all arguments as single string:
+将所有参数捕获为单个字符串：
 
 ```markdown
 ---
@@ -240,23 +240,23 @@ argument-hint: "[issue-number]"
 Fix issue #$ARGUMENTS following our coding standards and best practices.
 ```
 
-**Usage:**
+**用法：**
 
 ```
 > /fix-issue 123
 > /fix-issue 456
 ```
 
-**Expands to:**
+**展开为：**
 
 ```
 Fix issue #123 following our coding standards...
 Fix issue #456 following our coding standards...
 ```
 
-### Using Positional Arguments
+### 使用位置参数
 
-Capture individual arguments with `$1`, `$2`, `$3`, etc.:
+使用 `$1`、`$2`、`$3` 等捕获单个参数：
 
 ```markdown
 ---
@@ -268,44 +268,44 @@ Review pull request #$1 with priority level $2.
 After review, assign to $3 for follow-up.
 ```
 
-**Usage:**
+**用法：**
 
 ```
 > /review-pr 123 high alice
 ```
 
-**Expands to:**
+**展开为：**
 
 ```
 Review pull request #123 with priority level high.
 After review, assign to alice for follow-up.
 ```
 
-### Combining Arguments
+### 组合参数
 
-Mix positional and remaining arguments:
+混合使用位置参数和剩余参数：
 
 ```markdown
 Deploy $1 to $2 environment with options: $3
 ```
 
-**Usage:**
+**用法：**
 
 ```
 > /deploy api staging --force --skip-tests
 ```
 
-**Expands to:**
+**展开为：**
 
 ```
 Deploy api to staging environment with options: --force --skip-tests
 ```
 
-## File References
+## 文件引用
 
-### Using @ Syntax
+### 使用 @ 语法
 
-Include file contents in command:
+在 command 中包含文件内容：
 
 ```markdown
 ---
@@ -320,17 +320,17 @@ Review @$1 for:
 - Potential bugs
 ```
 
-**Usage:**
+**用法：**
 
 ```
 > /review-file src/api/users.ts
 ```
 
-**Effect:** Claude reads `src/api/users.ts` before processing command
+**效果：** Claude 会在处理 command 前读取 `src/api/users.ts`
 
-### Multiple File References
+### 多个文件引用
 
-Reference multiple files:
+引用多个文件：
 
 ```markdown
 Compare @src/old-version.js with @src/new-version.js
@@ -342,9 +342,9 @@ Identify:
 - Bug fixes
 ```
 
-### Static File References
+### 静态文件引用
 
-Reference known files without arguments:
+引用没有参数的已知文件：
 
 ```markdown
 Review @package.json and @tsconfig.json for consistency
@@ -356,13 +356,13 @@ Ensure:
 - Build configuration is correct
 ```
 
-## Bash Execution in Commands
+## Command 中的 Bash 执行
 
-Commands can execute bash commands inline to dynamically gather context before Claude processes the command. This is useful for including repository state, environment information, or project-specific context.
+Command 可以内联执行 bash command，在 Claude 处理 command 前动态收集上下文。这适合包含仓库状态、环境信息或项目特定上下文。
 
-### Syntax: The `!` Prefix
+### 语法：`!` 前缀
 
-In actual command files, use a literal `!` before backticks for pre-execution. In this skill documentation, `[BANG]` is used as a placeholder for that literal `!` so examples do not execute while the skill loads:
+在实际 command 文件中，在反引号前使用字面量 `!` 进行预执行。在本 skill 文档中，`[BANG]` 用作该字面量 `!` 的占位符，避免示例在 skill 加载时执行：
 
 ```markdown
 Current branch: [BANG]`git branch --show-current`
@@ -370,48 +370,48 @@ Files changed: [BANG]`git diff --name-only`
 Environment: [BANG]`echo $NODE_ENV`
 ```
 
-**How it works:**
+**工作方式：**
 
-1. Before Claude sees the command, Claude Code executes literal `!`command`` blocks
-2. The bash output replaces the entire `!`command`` expression
-3. Claude receives the expanded prompt with actual values
+1. Claude 看到 command 前，Claude Code 会执行字面量 `!`command`` 块
+2. bash 输出会替换整个 `!`command`` 表达式
+3. Claude 收到包含实际值的展开后 prompt
 
-**Example expansion:**
+**展开示例：**
 
-Command file contains:
+Command 文件包含：
 
 ```markdown
 Review the [BANG]`git diff --name-only | wc -l | tr -d ' '` changed files on branch [BANG]`git branch --show-current`.
 ```
 
-Claude receives (after pre-execution):
+Claude 收到（预执行后）：
 
 ```markdown
 Review the 3 changed files on branch feature/add-auth.
 ```
 
-### Documentation Placeholder Convention
+### 文档占位符约定
 
-Skill documentation uses `[BANG]` as a placeholder for the command-file pre-execution prefix. Keep examples read-only and avoid using the actual prefix in skill docs, because skill content is loaded into Claude's context.
+Skill 文档使用 `[BANG]` 作为 command 文件预执行前缀的占位符。示例应保持只读，并避免在 skill 文档中使用实际前缀，因为 skill 内容会加载到 Claude 上下文中。
 
-**When to use:**
+**使用时机：**
 
-- Include dynamic context (git status, environment vars, etc.)
-- Gather project/repository state
-- Build context-aware workflows
+- 包含动态上下文（git status、环境变量等）
+- 收集项目/仓库状态
+- 构建上下文感知的 workflow
 
-### Load-Time Injection vs Runtime Execution
+### 加载时注入 vs 运行时执行
 
-Literal `!` pre-execution performs **load-time context injection**: commands execute when the command is loaded, and their output becomes static text in the prompt Claude receives. This is different from Claude choosing to run commands at runtime via the Bash tool. Use pre-execution for gathering context (git status, environment variables, config files) that informs Claude's starting state, not for actions Claude should perform during the task.
+字面量 `!` 预执行会执行**加载时上下文注入**：command 加载时执行命令，其输出成为 Claude 收到的 prompt 中的静态文本。这不同于 Claude 在运行时选择通过 Bash tool 执行命令。预执行应用于收集上下文（git status、环境变量、配置文件），让 Claude 获得起始状态；不要把它用于 Claude 应在任务期间执行的动作。
 
-**Implementation details:**
-For advanced patterns, environment-specific configurations, and plugin integration, see `references/plugin-features-reference.md`
+**实现细节：**
+高级模式、环境特定配置和 plugin 集成见 `references/plugin-features-reference.md`
 
-## Command Organization
+## Command 组织
 
-### Flat Structure
+### 扁平结构
 
-Simple organization for small command sets:
+适合小型 command 集的简单组织方式：
 
 ```
 .claude/commands/
@@ -422,11 +422,11 @@ Simple organization for small command sets:
 └── docs.md
 ```
 
-**Use when:** 5-15 commands, no clear categories
+**使用时机：** 5-15 个 command，且没有明确分类
 
-### Namespaced Structure
+### 命名空间结构
 
-Organize commands in subdirectories:
+将 command 组织到子目录中：
 
 ```
 .claude/commands/
@@ -442,30 +442,30 @@ Organize commands in subdirectories:
     └── publish.md      # /publish (project:docs)
 ```
 
-**Benefits:**
+**收益：**
 
-- Logical grouping by category
-- Namespace shown in `/help`
-- Easier to find related commands
+- 按类别进行逻辑分组
+- 命名空间显示在 `/help` 中
+- 更容易找到相关 command
 
-**Use when:** 15+ commands, clear categories
+**使用时机：** 15 个以上 command，且分类清晰
 
-## Best Practices
+## 最佳实践
 
-### Command Design
+### Command 设计
 
-1. **Single responsibility:** One command, one task
-2. **Clear descriptions:** Self-explanatory in `/help`
-3. **Explicit dependencies:** Use `allowed-tools` when needed
-4. **Document arguments:** Always provide `argument-hint`
-5. **Consistent naming:** Use verb-noun pattern (review-pr, fix-issue)
+1. **单一职责：** 一个 command，一个任务
+2. **清晰描述：** 在 `/help` 中能自解释
+3. **显式依赖：** 需要时使用 `allowed-tools`
+4. **记录参数：** 始终提供 `argument-hint`
+5. **一致命名：** 使用动词-名词模式（review-pr、fix-issue）
 
-### Argument Handling
+### 参数处理
 
-1. **Validate arguments:** Check for required arguments in prompt
-2. **Provide defaults:** Suggest defaults when arguments missing
-3. **Document format:** Explain expected argument format
-4. **Handle edge cases:** Consider missing or invalid arguments
+1. **验证参数：** 在 prompt 中检查必需参数
+2. **提供默认值：** 参数缺失时建议默认值
+3. **记录格式：** 说明预期参数格式
+4. **处理边界情况：** 考虑缺失或无效参数
 
 ```markdown
 ---
@@ -475,30 +475,30 @@ argument-hint: "[pr-number]"
 If $1 is provided, review PR #$1. Otherwise, ask the user to provide a PR number and show: /review-pr [number]
 ```
 
-### File References
+### 文件引用
 
-1. **Explicit paths:** Use clear file paths
-2. **Check existence:** Handle missing files gracefully
-3. **Relative paths:** Use project-relative paths
-4. **Glob support:** Consider using Glob tool for patterns
+1. **显式路径：** 使用清晰的文件路径
+2. **检查存在性：** 优雅处理缺失文件
+3. **相对路径：** 使用项目相对路径
+4. **Glob 支持：** 对模式匹配考虑使用 Glob tool
 
-### Bash Commands
+### Bash Command
 
-1. **Limit scope:** Use `Bash(git *)` not `Bash(*)`
-2. **Safe commands:** Avoid destructive operations
-3. **Handle errors:** Consider command failures
-4. **Keep fast:** Long-running commands slow invocation
+1. **限制范围：** 使用 `Bash(git *)`，不要用 `Bash(*)`
+2. **安全命令：** 避免破坏性操作
+3. **处理错误：** 考虑 command 失败
+4. **保持快速：** 长时间运行的 command 会拖慢调用
 
-### Documentation
+### 文档
 
-1. **Add comments:** Explain complex logic
-2. **Provide examples:** Show usage in comments
-3. **List requirements:** Document dependencies
-4. **Version commands:** Note breaking changes
+1. **添加注释：** 解释复杂逻辑
+2. **提供示例：** 在注释中展示用法
+3. **列出要求：** 记录依赖项
+4. **版本化 command：** 说明破坏性变更
 
-## Common Patterns
+## 常见模式
 
-### Review Pattern
+### 审查模式
 
 ```markdown
 ---
@@ -511,7 +511,7 @@ Files changed: [BANG]`git diff --name-only`
 Review each file for code quality, bugs, test coverage, documentation needs.
 ```
 
-### Testing Pattern
+### 测试模式
 
 ```markdown
 ---
@@ -524,7 +524,7 @@ Run tests for $1 with the Bash tool.
 Analyze results and suggest fixes for failures.
 ```
 
-### Workflow Pattern
+### Workflow 模式
 
 ```markdown
 ---
@@ -541,49 +541,49 @@ PR #$1 Workflow:
 4. Approve or request changes
 ```
 
-## Troubleshooting
+## 故障排查
 
-**Command not appearing:**
+**Command 未出现：**
 
-- Check file is in correct directory
-- Verify `.md` extension present
-- Ensure valid Markdown format
-- Restart Claude Code
+- 检查文件是否在正确目录
+- 验证是否存在 `.md` 扩展名
+- 确保 Markdown 格式有效
+- 重启 Claude Code
 
-**Arguments not working:**
+**参数不工作：**
 
-- Verify `$1`, `$2` syntax correct
-- Check `argument-hint` matches usage
-- Ensure no extra spaces
+- 验证 `$1`、`$2` 语法正确
+- 检查 `argument-hint` 是否匹配用法
+- 确保没有多余空格
 
-**Bash execution failing:**
+**Bash 执行失败：**
 
-- Check `allowed-tools` includes Bash
-- Verify command syntax in backticks
-- Test command in terminal first
-- Check for required permissions
+- 检查 `allowed-tools` 是否包含 Bash
+- 验证反引号中的 command 语法
+- 先在终端中测试 command
+- 检查所需权限
 
-**File references not working:**
+**文件引用不工作：**
 
-- Verify `@` syntax correct
-- Check file path is valid
-- Ensure Read tool allowed
-- Use absolute or project-relative paths
+- 验证 `@` 语法正确
+- 检查文件路径有效
+- 确保允许 Read tool
+- 使用绝对路径或项目相对路径
 
-## Plugin-Specific Features
+## Plugin 特定功能
 
-### CLAUDE_PLUGIN_ROOT Variable
+### CLAUDE_PLUGIN_ROOT 变量
 
-Plugin commands have access to `${CLAUDE_PLUGIN_ROOT}`, an environment variable that resolves to the plugin's absolute path.
+Plugin command 可以访问 `${CLAUDE_PLUGIN_ROOT}`，这是一个解析为 plugin 绝对路径的环境变量。
 
-**Purpose:**
+**用途：**
 
-- Reference plugin files portably
-- Execute plugin scripts
-- Load plugin configuration
-- Access plugin templates
+- 可移植地引用 plugin 文件
+- 执行 plugin 脚本
+- 加载 plugin 配置
+- 访问 plugin 模板
 
-**Basic usage:**
+**基础用法：**
 
 ```markdown
 ---
@@ -596,7 +596,7 @@ Run the plugin analysis script with the Bash tool.
 Review results and report findings.
 ```
 
-**Common patterns:**
+**常见模式：**
 
 ```markdown
 # Execute plugin script during the task with the Bash tool
@@ -616,16 +616,16 @@ Run ${CLAUDE_PLUGIN_ROOT}/scripts/script.sh when needed.
 @${CLAUDE_PLUGIN_ROOT}/docs/reference.md
 ```
 
-**Why use it:**
+**为什么使用它：**
 
-- Works across all installations
-- Portable between systems
-- No hardcoded paths needed
-- Essential for multi-file plugins
+- 适用于所有安装位置
+- 可在系统之间移植
+- 不需要硬编码路径
+- 对多文件 plugin 必不可少
 
-### Plugin Command Organization
+### Plugin Command 组织
 
-Plugin commands discovered automatically from `commands/` directory:
+Plugin command 会从 `commands/` 目录自动发现：
 
 ```
 plugin-name/
@@ -637,23 +637,23 @@ plugin-name/
 └── plugin.json
 ```
 
-**Namespace benefits:**
+**命名空间收益：**
 
-- Logical command grouping
-- Shown in `/help` output
-- Avoid name conflicts
-- Organize related commands
+- 逻辑分组 command
+- 显示在 `/help` 输出中
+- 避免名称冲突
+- 组织相关 command
 
-**Naming conventions:**
+**命名约定：**
 
-- Use descriptive action names
-- Avoid generic names (test, run)
-- Consider plugin-specific prefix
-- Use hyphens for multi-word names
+- 使用描述性动作名称
+- 避免通用名称（test、run）
+- 考虑 plugin 特定前缀
+- 多词名称使用连字符
 
-### Plugin Command Patterns
+### Plugin Command 模式
 
-**Configuration-based pattern:**
+**基于配置的模式：**
 
 ```markdown
 ---
@@ -668,7 +668,7 @@ Deploy to $1 using configuration settings.
 Monitor deployment and report status.
 ```
 
-**Template-based pattern:**
+**基于模板的模式：**
 
 ```markdown
 ---
@@ -681,7 +681,7 @@ Template: @${CLAUDE_PLUGIN_ROOT}/templates/docs.md
 Generate documentation for $1 following template structure.
 ```
 
-**Multi-script pattern:**
+**多脚本模式：**
 
 ```markdown
 ---
@@ -694,50 +694,50 @@ Run the build, test, and package scripts with the Bash tool during the workflow.
 Review outputs and report workflow status.
 ```
 
-**See `references/plugin-features-reference.md` for detailed patterns.**
+**详细模式见 `references/plugin-features-reference.md`。**
 
-## Integration with Plugin Components
+## 与 Plugin 组件集成
 
-Commands integrate with other plugin components for powerful workflows:
+Command 可与其他 plugin 组件集成，形成强大的 workflow：
 
-- **Agents**: Launch plugin agents for complex tasks (agent must exist in `plugin/agents/`)
-- **Skills**: Leverage plugin skills for specialized knowledge (mention skill name to trigger)
-- **Hooks**: Coordinate with hooks that execute on tool events
-- **Multi-component**: Combine agents, skills, and scripts in phased workflows
+- **Agents**：为复杂任务启动 plugin agent（agent 必须存在于 `plugin/agents/`）
+- **Skills**：利用 plugin skill 的专业知识（提及 skill 名称以触发）
+- **Hooks**：与在 tool 事件上执行的 hook 协调
+- **Multi-component**：在分阶段 workflow 中组合 agent、skill 和脚本
 
-**See `references/plugin-integration.md` for detailed patterns and examples.**
+**详细模式和示例见 `references/plugin-integration.md`。**
 
-## Validation Patterns
+## Validation 模式
 
-Commands should validate inputs and resources before processing:
+Command 应在处理前验证输入和资源：
 
-- **Argument validation**: Check required arguments match expected values
-- **File existence**: Verify files exist before processing
-- **Plugin resources**: Validate scripts and configs are present
-- **Error handling**: Capture failures and provide helpful messages
+- **参数 validation**：检查必需参数是否匹配预期值
+- **文件存在性**：处理前验证文件存在
+- **Plugin 资源**：验证脚本和配置存在
+- **错误处理**：捕获失败并提供有帮助的消息
 
-**Best practices:** Validate early, provide helpful errors, suggest corrections.
+**最佳实践：** 尽早 validation，提供有帮助的错误，并建议修正方式。
 
-**See `references/plugin-integration.md` for validation examples.**
+**Validation 示例见 `references/plugin-integration.md`。**
 
 ---
 
-## Additional Resources
+## 其他资源
 
-For detailed frontmatter field specifications, see `references/frontmatter-reference.md`.
-For Skill tool, programmatic invocation, and permission configuration, see `references/skill-tool.md`.
-For plugin-specific features and patterns, see `references/plugin-features-reference.md`.
-For plugin integration and validation patterns, see `references/plugin-integration.md`.
-For interactive user input patterns using AskUserQuestion, see `references/interactive-commands.md`.
-For multi-step command sequences and state management, see `references/advanced-workflows.md`.
-For self-documenting command patterns and maintenance docs, see `references/documentation-patterns.md`.
-For testing approaches from syntax validation to user acceptance, see `references/testing-strategies.md`.
-For distribution guidelines and quality standards, see `references/marketplace-considerations.md`.
-For command pattern examples, see `examples/` directory.
+详细 frontmatter 字段规范见 `references/frontmatter-reference.md`。
+Skill tool、程序化调用和权限配置见 `references/skill-tool.md`。
+Plugin 特定功能和模式见 `references/plugin-features-reference.md`。
+Plugin 集成和 validation 模式见 `references/plugin-integration.md`。
+使用 AskUserQuestion 的交互式用户输入模式见 `references/interactive-commands.md`。
+多步骤 command 序列和状态管理见 `references/advanced-workflows.md`。
+自文档化 command 模式和维护文档见 `references/documentation-patterns.md`。
+从语法 validation 到用户验收的测试方法见 `references/testing-strategies.md`。
+分发指南和质量标准见 `references/marketplace-considerations.md`。
+Command 模式示例见 `examples/` 目录。
 
-## Validation Scripts
+## Validation 脚本
 
-Utility scripts for validating commands (execute without loading into context). They assume a shell environment with `bash` 3.2+ and standard POSIX userland utilities (`grep`, `sed`, `awk`, `cut`, `tr`, `head`, `tail`, `basename`, `mktemp`):
+用于 validation command 的实用脚本（执行时不加载到上下文）。它们假设 shell 环境包含 `bash` 3.2+ 和标准 POSIX userland 工具（`grep`、`sed`、`awk`、`cut`、`tr`、`head`、`tail`、`basename`、`mktemp`）：
 
 ```bash
 # Validate command file structure
