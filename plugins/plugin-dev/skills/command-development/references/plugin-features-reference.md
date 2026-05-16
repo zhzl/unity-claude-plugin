@@ -4,11 +4,11 @@
 
 ## 目录
 
-- [Plugin Command 发现](#plugin-command-discovery)
-- [CLAUDE_PLUGIN_ROOT 环境变量](#claude_plugin_root-environment-variable)
-- [Plugin Command 模式](#plugin-command-patterns)
-- [与 Plugin 组件集成](#integration-with-plugin-components)
-- [Validation 模式](#validation-patterns)
+- [Plugin Command 发现](#plugin-command-发现)
+- [CLAUDE_PLUGIN_ROOT 环境变量](#claude_plugin_root-环境变量)
+- [Plugin Command 模式](#plugin-command-模式)
+- [与 Plugin 组件集成](#与-plugin-组件集成)
+- [Validation 模式](#validation-模式)
 
 ## Plugin Command 发现
 
@@ -581,7 +581,7 @@ If processing failed:
 2. **尽早验证输入**
    - 检查必填 arguments
    - 验证文件存在
-   - validation arguments 的格式
+   - 验证 arguments 的格式
 
 3. **文档化 plugin 结构**
    - 说明所需文件
@@ -616,5 +616,5 @@ If processing failed:
 
 ---
 
-一般 command development 请参见主 SKILL.md。
-command 示例请参见 examples/ 目录。
+通用 command development 内容请参见主 `SKILL.md`。
+command 示例请参见 `examples/` 目录。
