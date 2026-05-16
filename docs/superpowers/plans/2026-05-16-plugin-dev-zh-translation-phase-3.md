@@ -674,7 +674,7 @@ git commit -m "docs: translate command development skill examples"
 - 修改：`plugins/plugin-dev/skills/command-development/references/plugin-features-reference.md`
 - 修改：`plugins/plugin-dev/skills/command-development/references/skill-tool.md`
 
-- [ ] **步骤 1：翻译 4 个 reference 文件的代码块外自然语言**
+- [x] **步骤 1：翻译 4 个 reference 文件的代码块外自然语言**
 
 编辑本任务列出的 4 个 reference 文件：
 
@@ -683,7 +683,7 @@ git commit -m "docs: translate command development skill examples"
 - 工具名和字段名不翻译；字段用途和注意事项中文化。
 - 若发现同文件内示例解释和字段说明不一致，可修正解释文字；不得改 YAML/JSON/Markdown 示例代码块。
 
-- [ ] **步骤 2：验证本组 reference 代码块未改变**
+- [x] **步骤 2：验证本组 reference 代码块未改变**
 
 运行：
 
@@ -731,7 +731,7 @@ PY
 
 预期：输出 `code blocks unchanged: 4 files`。
 
-- [ ] **步骤 3：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 3：提交检查点（仅用户明确授权时执行）**
 
 运行：
 
