@@ -299,7 +299,7 @@ user-invocable: false
 | `user-invocable: false`          | 隐藏       | 允许       | 是             |
 | `disable-model-invocation: true` | 可见       | 阻止       | 是             |
 
-`user-invocable` 字段只控制用户是否能在 `/` menu 中看到该 skill。它**不会**阻止 Claude 通过 Skill tool 或 auto-discovery 使用该 skill。
+`user-invocable` 字段只控制用户是否能在 `/` 菜单中看到该 skill。它**不会**阻止 Claude 通过 Skill tool 或 auto-discovery 使用该 skill。
 
 ## 集成模式
 

@@ -11,7 +11,7 @@
 - 作出需要解释的决策
 - 以交互方式收集偏好或配置
 
-对于这些情况，在 command 执行期间使用 **AskUserQuestion tool**，而不是依赖 command arguments。交互式 prompts 需要实时用户；在 headless 或 CI workflows 中，应改为提供 command arguments 或 config file fallback。
+对于这些情况，在 command 执行期间使用 **AskUserQuestion tool**，而不是依赖 command arguments。交互式 prompts 需要实时用户；在 headless 或 CI workflows 中，应改为提供 command arguments 或配置文件 fallback（回退方案）。
 
 ## 何时使用 AskUserQuestion
 
@@ -65,7 +65,7 @@
 - 用户始终可以选择 “Other” 来提供自定义输入（自动提供）
 - `multiSelect: true` 允许选择多个 options
 - options 应为 2-4 个选择（不要更多）
-- 每次 tool call 可询问 1-4 个 questions
+- 每次 tool call 可询问 1-4 个 question
 
 ## 用户交互的 Command 模式
 

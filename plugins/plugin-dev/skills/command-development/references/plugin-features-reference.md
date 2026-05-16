@@ -451,7 +451,7 @@ Generate final report combining all outputs.
 
 ### 输入 Validation
 
-commands 应在处理前 validation 输入：
+commands 应在处理前验证输入：
 
 ```markdown
 ---
@@ -578,10 +578,10 @@ If processing failed:
 1. **对所有 plugin 内部路径使用 ${CLAUDE_PLUGIN_ROOT}**
    - scripts、templates、configuration、resources
 
-2. **尽早 validation 输入**
+2. **尽早验证输入**
    - 检查必填 arguments
    - 验证文件存在
-   - validation argument 格式
+   - validation arguments 的格式
 
 3. **文档化 plugin 结构**
    - 说明所需文件
@@ -612,7 +612,7 @@ If processing failed:
 8. **跨安装位置测试**
    - 验证路径在各处都可工作
    - 使用不同 arguments 测试
-   - validation 错误场景
+   - validation（验证）错误场景
 
 ---
 

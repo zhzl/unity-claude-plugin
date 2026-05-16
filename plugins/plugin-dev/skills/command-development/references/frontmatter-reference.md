@@ -481,7 +481,7 @@ model: gpt4 # ❌ Not a valid Claude model
 
 **修复：** 使用 `sonnet`、`opus`、`haiku` 或 `inherit`
 
-### Validation（验证） 检查清单
+### Validation（验证）检查清单
 
 提交 command 前：
 
