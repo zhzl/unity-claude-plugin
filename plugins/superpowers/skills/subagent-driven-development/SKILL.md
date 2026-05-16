@@ -55,12 +55,16 @@ digraph process {
         "分派代码质量审查子智能体 (./code-quality-reviewer-prompt.md)" [shape=box];
         "代码质量审查子智能体通过?" [shape=diamond];
         "实现子智能体修复质量问题" [shape=box];
+        "分派文档同步子智能体更新 plan checkbox" [shape=box];
+        "主会话检查 VCS diff" [shape=box];
         "在 TodoWrite 中标记任务完成" [shape=box];
     }
 
     "读取计划，提取所有任务的完整文本，记录上下文，创建 TodoWrite" [shape=box];
     "还有剩余任务?" [shape=diamond];
     "分派最终代码审查子智能体审查整体实现" [shape=box];
+    "分派 roadmap 同步子智能体更新 ROADMAP.md" [shape=box];
+    "主会话检查 roadmap VCS diff" [shape=box];
     "使用 superpowers:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
 
     "读取计划，提取所有任务的完整文本，记录上下文，创建 TodoWrite" -> "分派实现子智能体 (./implementer-prompt.md)";
@@ -76,13 +80,50 @@ digraph process {
     "分派代码质量审查子智能体 (./code-quality-reviewer-prompt.md)" -> "代码质量审查子智能体通过?";
     "代码质量审查子智能体通过?" -> "实现子智能体修复质量问题" [label="否"];
     "实现子智能体修复质量问题" -> "分派代码质量审查子智能体 (./code-quality-reviewer-prompt.md)" [label="重新审查"];
-    "代码质量审查子智能体通过?" -> "在 TodoWrite 中标记任务完成" [label="是"];
+    "代码质量审查子智能体通过?" -> "分派文档同步子智能体更新 plan checkbox" [label="是"];
+    "分派文档同步子智能体更新 plan checkbox" -> "主会话检查 VCS diff";
+    "主会话检查 VCS diff" -> "在 TodoWrite 中标记任务完成";
     "在 TodoWrite 中标记任务完成" -> "还有剩余任务?";
     "还有剩余任务?" -> "分派实现子智能体 (./implementer-prompt.md)" [label="是"];
     "还有剩余任务?" -> "分派最终代码审查子智能体审查整体实现" [label="否"];
-    "分派最终代码审查子智能体审查整体实现" -> "使用 superpowers:finishing-a-development-branch";
+    "分派最终代码审查子智能体审查整体实现" -> "分派 roadmap 同步子智能体更新 ROADMAP.md";
+    "分派 roadmap 同步子智能体更新 ROADMAP.md" -> "主会话检查 roadmap VCS diff";
+    "主会话检查 roadmap VCS diff" -> "使用 superpowers:finishing-a-development-branch";
 }
 ```
+
+## 文档同步关卡
+
+文档同步是验收流程的一部分，由子智能体执行，主会话只检查 VCS diff 并协调下一步。主会话不把整份 plan 或 roadmap 复制进上下文手动整理。
+
+### 任务级 plan checkbox 同步
+
+每个任务只有在规格合规审查和代码质量审查都通过后，才分派文档同步子代理更新 plan checkbox。
+
+文档同步子代理必须遵守：
+
+- 只勾选已经通过两阶段审查的当前任务。
+- 不提前勾选后续任务。
+- 不改写任务正文、代码块、命令、预期输出或验收标准。
+- 如果任务标题、编号或步骤无法唯一匹配，停止并报告，不猜测。
+
+主会话只检查 VCS diff，确认只勾选了正确任务，然后再在 TodoWrite 中标记任务完成。
+
+### 最终 roadmap 同步
+
+所有任务完成并通过最终代码审查后，分派 roadmap 同步子代理更新 `ROADMAP.md`。
+
+roadmap 同步子代理必须遵守：
+
+- 读取 plan 头部的 `Roadmap` 和 `Phase` 字段。
+- 只在 plan 明确包含 `Roadmap` 和 `Phase` 时同步 roadmap。
+- 没有 roadmap 上下文时，不主动查找 roadmap，不猜测所属 phase。
+- 基于最终审查结果、验证命令输出、提交引用或 diff 摘要提炼 `Implementation Summary` 和 `Verification Evidence`。
+- 只更新 `roadmap-management` 允许的事实性进度字段。
+- 证据不足时不得标记 completed。
+- 如果需要结构性 roadmap 变更，停止并报告。
+
+主会话只检查 VCS diff 是否符合允许字段，不承担 roadmap 内容整理。
 
 ## 模型选择
 
@@ -246,6 +287,10 @@ digraph process {
 - 让实现者的自审替代正式审查（两者都需要）
 - **在规格合规性审查通过之前开始代码质量审查**（顺序错误）
 - 在任一审查有未解决问题时就进入下一个任务
+- 在审查通过前勾选 plan checkbox
+- 由主会话手动整理大段 plan 或 roadmap 同步内容
+- 没有 `Roadmap` 和 `Phase` 上下文时主动查找 roadmap
+- 在 roadmap 证据不足时标记 phase completed
 
 **如果子智能体提问：**
 - 清晰完整地回答

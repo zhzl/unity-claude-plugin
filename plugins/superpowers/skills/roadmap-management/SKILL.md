@@ -129,6 +129,40 @@ Phase status：
 
 不要从聊天记忆推断完成度。
 
+## 验收同步规则
+
+最终验收通过后的事实性 roadmap 同步可以由 `subagent-driven-development` 的 roadmap 同步子代理执行。同步是执行验收的一部分，不是独立 action，不新增后台同步机制。
+
+验收同步允许更新的字段：
+
+- 当前 phase 的 `Status`
+- Phase Summary 中对应 phase 的 status 和 artifact 摘要
+- Phase Details 中对应 phase 的 `Implementation Summary`
+- Phase Details 中对应 phase 的 `Verification Evidence`
+- `Current State`
+- `Last Sync`
+- `Next Manual Action`
+- `Change Log`
+
+这些更新属于事实更新，不需要 `Proposal Brief`。
+
+验收同步不得修改以下字段和结构：
+
+- 不得修改 `Goal`
+- 不得修改 `Non-goals`
+- 不得修改 `Shared Constraints`
+- 不得修改整体 `Success Criteria`
+- 不得修改 phase scope
+- 不得修改 phase out-of-scope
+- 不得修改 phase success criteria
+- 不得修改 phase 顺序
+- 不得新增、删除、合并或拆分 phase
+- 不得修改 `Proposal Rules`、`Sync Rules` 或 `Handoff Rules`
+
+同步前必须有具体 `Verification Evidence`，并确认 phase success criteria 已被证据覆盖。证据不足以覆盖 phase success criteria 时，不得将 phase 标记为 `completed`。
+
+如果验收结果显示需要结构性 roadmap 变更，同步子代理只报告问题并停止；后续必须通过 `change-roadmap` 流程处理。
+
 ## Proposal Rules
 
 需要 `Proposal Brief` 的变更：
@@ -149,6 +183,7 @@ Phase status：
 - 添加 blocker
 - 记录 `Verification Evidence`
 - 追加 `Change Log`
+- 最终验收通过后的事实性 roadmap 同步，仅限“验收同步规则”允许的字段
 
 默认流程：
 
@@ -188,6 +223,14 @@ Discovery Brief → phase strategy 选项 → 用户确认策略 → ROADMAP.md 
 
 - 中文 roadmap 中，除路径、命令、状态枚举、API 字段和代码标识符外，正文统一中文。
 - 长草案直接用正文或分节展示；不要把完整草案塞进选择题 preview。
+
+### Discovery 技能边界
+
+Roadmap discovery 是本技能内置的 brainstorming-lite，不是 `superpowers:brainstorming` 的前置步骤。
+
+当当前对话正在执行 `new-roadmap` 或结构性 `change-roadmap` 的 discovery、参考输入映射、phase strategy 讨论、或用户在确认策略前追问目标/架构/工具面/API 边界时，继续使用本技能回答、提问或调整 phase strategy。不要因为这些追问看起来像创造性设计工作而自动调用 `superpowers:brainstorming`。
+
+只有 `write-spec` action 可以建议用户手动调用 `superpowers:brainstorming`，且仍然不能自动调用。
 
 ## Action: new-roadmap
 
@@ -315,9 +358,10 @@ Discovery Brief → phase strategy 选项 → 用户确认策略 → ROADMAP.md 
 - 因普通长期任务措辞自然触发本技能。
 - 不要新增 natural trigger tests。
 - 自动调用其他 Superpowers 技能。
+- 在 `new-roadmap` / 结构性 `change-roadmap` 的 discovery 或 phase strategy 讨论中自动调用 `superpowers:brainstorming`。
 - 不要创建 CLI 命令。
 - 不要创建 schema validators。
-- 不要创建后台同步。
+- 不要创建后台同步；验收同步只能由执行验收流程中的子代理显式完成，不新增后台同步机制。
 - 不要新增 worktree guidance。
 - 复制 OpenSpec 的完整 `changes/` lifecycle。
 - 不要复制 GSD 的完整 `.planning/PROJECT.md`、`STATE.md`、`CONTEXT.md` artifact set。
@@ -335,6 +379,7 @@ Discovery Brief → phase strategy 选项 → 用户确认策略 → ROADMAP.md 
 |---|---|
 | 用户说继续 roadmap 后自动调用 writing-plans | 输出建议的手动命令 |
 | 用户要求创建 roadmap 后直接给完整模板 | 先生成 `Roadmap Discovery Brief`，再确认 phase strategy |
+| `new-roadmap` discovery 中用户追问架构/API/工具面后自动调用 `brainstorming` | 留在 roadmap discovery 内回答或调整 phase strategy；`write-spec` 时才建议用户手动调用 |
 | 用户要求结合多个参考项目但 phase 只写抽象目标 | 为每个 phase 写参考输入映射 |
 | 用户要求重排 phase 后立即编辑 ROADMAP.md | 结构性变更先生成 `Roadmap Change Discovery Brief`，确认策略后再生成 `Proposal Brief` |
 | 链接 spec 路径缺失但 phase 被标记为 designed | 标记 artifact missing，不推进状态 |
