@@ -132,7 +132,7 @@ PY
 **文件：**
 - 读取：31 个 Phase 3 目标 Markdown 文件
 
-- [ ] **步骤 1：确认目标文件存在、frontmatter 和代码块数量符合基线**
+- [x] **步骤 1：确认目标文件存在、frontmatter 和代码块数量符合基线**
 
 运行：
 
@@ -192,7 +192,7 @@ PY
 
 预期：输出 `baseline ok: 31 target files, expected frontmatter flags, expected code block counts`。
 
-- [ ] **步骤 2：确认执行开始前没有 Phase 3 目标文件的既有修改**
+- [x] **步骤 2：确认执行开始前没有 Phase 3 目标文件的既有修改**
 
 运行：
 
@@ -243,7 +243,7 @@ PY
 
 预期：输出 `target worktree clean before Phase 3 implementation`。如果失败，停止并向用户确认是否基于现有修改继续。
 
-- [ ] **步骤 3：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 3：提交检查点（仅用户明确授权时执行）**
 
 运行：
 
@@ -260,7 +260,7 @@ git status --short
 **文件：**
 - 修改：`plugins/plugin-dev/skills/plugin-dev-guide/SKILL.md`
 
-- [ ] **步骤 1：翻译 `plugin-dev-guide/SKILL.md` 的代码块外自然语言**
+- [x] **步骤 1：翻译 `plugin-dev-guide/SKILL.md` 的代码块外自然语言**
 
 编辑 `plugins/plugin-dev/skills/plugin-dev-guide/SKILL.md`：
 
@@ -271,7 +271,7 @@ git status --short
 - 9 个技能名、3 个 agent 名、4 个 slash command 名、`$ARGUMENTS` 保持原文。
 - 决策树代码块保持逐字原文。
 
-- [ ] **步骤 2：验证 guide 代码块未改变**
+- [x] **步骤 2：验证 guide 代码块未改变**
 
 运行：
 
@@ -314,7 +314,7 @@ PY
 
 预期：输出 `code blocks unchanged: 1 files`。
 
-- [ ] **步骤 3：验证 guide frontmatter protected fields 和触发词**
+- [x] **步骤 3：验证 guide frontmatter protected fields 和触发词**
 
 运行：
 
@@ -338,7 +338,7 @@ PY
 
 预期：输出 `guide frontmatter ok: protected name and trigger tokens present`。
 
-- [ ] **步骤 4：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 4：提交检查点（仅用户明确授权时执行）**
 
 运行：
 
@@ -359,7 +359,7 @@ git commit -m "docs: translate plugin-dev guide skill"
 - 修改：`plugins/plugin-dev/skills/plugin-structure/examples/minimal-plugin.md`
 - 修改：`plugins/plugin-dev/skills/plugin-structure/examples/standard-plugin.md`
 
-- [ ] **步骤 1：翻译 `plugin-structure/SKILL.md` 的代码块外自然语言**
+- [x] **步骤 1：翻译 `plugin-structure/SKILL.md` 的代码块外自然语言**
 
 编辑 `plugins/plugin-dev/skills/plugin-structure/SKILL.md`：
 
@@ -368,7 +368,7 @@ git commit -m "docs: translate plugin-dev guide skill"
 - 正文中的目录结构、manifest、组件说明、portable path、auto-discovery、best practices、troubleshooting、additional resources 等解释性文字中文化。
 - 所有代码块、JSON 字段名、路径、命令、组件目录名和 `Claude Code` 保持原文。
 
-- [ ] **步骤 2：翻译 `plugin-structure/examples/*.md` 的代码块外自然语言**
+- [x] **步骤 2：翻译 `plugin-structure/examples/*.md` 的代码块外自然语言**
 
 编辑以下文件：
 
@@ -382,7 +382,7 @@ git commit -m "docs: translate plugin-dev guide skill"
 - 示例文件树、manifest 字段、命令、路径、组件名和代码块保持原文。
 - 若表格中同一行同时包含字段名和解释，字段名保持原文，解释中文化。
 
-- [ ] **步骤 3：验证 plugin-structure 入口和示例代码块未改变**
+- [x] **步骤 3：验证 plugin-structure 入口和示例代码块未改变**
 
 运行：
 
@@ -430,7 +430,7 @@ PY
 
 预期：输出 `code blocks unchanged: 4 files`。
 
-- [ ] **步骤 4：验证 `plugin-structure/SKILL.md` frontmatter protected fields 和触发词**
+- [x] **步骤 4：验证 `plugin-structure/SKILL.md` frontmatter protected fields 和触发词**
 
 运行：
 
@@ -452,7 +452,7 @@ PY
 
 预期：输出 `plugin-structure frontmatter ok`。
 
-- [ ] **步骤 5：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 5：提交检查点（仅用户明确授权时执行）**
 
 运行：
 
