@@ -14,7 +14,7 @@
 | `sonnet`      | Claude Sonnet — 性能与成本均衡                        |
 | `opus`        | Claude Opus — 能力最强，成本最高                      |
 | `haiku`       | Claude Haiku — 速度最快，成本最低                     |
-| Full model ID | 指定版本（例如 `claude-sonnet-4-5-20250929`）         |
+| 完整 model ID | 指定版本（例如 `claude-sonnet-4-5-20250929`）         |
 
 ### 何时使用各取值
 
@@ -22,7 +22,7 @@
 - **`haiku`：** 快速且成本敏感的操作 — linting、格式检查、简单查找。适合频繁运行的 skills。
 - **`sonnet`：** 标准 workflow — code review、生成、分析。均衡的默认选择。
 - **`opus`：** 复杂推理 — 架构决策、安全审计、需要最高能力的详细分析。
-- **Full model ID：** 当 skill 行为依赖精确 model 能力时，固定到特定版本。
+- **完整 model ID：** 当 skill 行为依赖精确 model 能力时，固定到特定版本。
 
 ### 示例
 
@@ -194,12 +194,12 @@ Skills 可以使用 `Skill()` 语法在 settings.json allow rules 中引用：
 
 ## 视觉输出生成器（Visual Output Generators）
 
-Skills 可以打包生成视觉输出（HTML files、图表、交互式可视化）的 scripts，为用户提供丰富体验。
+Skills 可以打包生成视觉输出（HTML 文件、图表、交互式可视化）的 scripts，为用户提供丰富体验。
 
 ### 模式
 
 1. 在 skill 的 `scripts/` 目录中打包脚本（Python、Node.js 等）
-2. 脚本生成 HTML file 或其他视觉输出
+2. 脚本生成 HTML 文件或其他视觉输出
 3. Claude 负责协调：读取数据、运行脚本、呈现结果
 
 ### 示例结构

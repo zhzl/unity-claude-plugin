@@ -46,7 +46,7 @@ skill-name/
 
 ##### 脚本（Scripts，`scripts/`）
 
-用于需要 deterministic reliability 或会被反复重写任务的可执行代码（Python/Bash 等）。
+用于需要 deterministic reliability 或会被反复重写的任务的可执行代码（Python/Bash 等）。
 
 - **何时包含**：当相同代码被反复重写，或需要 deterministic reliability 时
 - **示例**：用于 PDF 旋转任务的 `scripts/rotate_pdf.py`
@@ -62,7 +62,7 @@ skill-name/
 - **用例**：Database schemas、API documentation、domain knowledge、company policies、detailed workflow guides
 - **收益**：保持 SKILL.md 精简，仅在 Claude 判断需要时加载
 - **最佳实践**：如果文件较大（>10k words），在 SKILL.md 中包含 grep search patterns
-- **避免重复**：信息应只存在于 SKILL.md 或 references files 之一，不要两边重复。除非内容确实是 skill 的核心，否则优先放入 references files；这样能保持 SKILL.md 精简，同时让信息可发现，避免占用 context window。SKILL.md 只保留必要 procedural instructions 和 workflow guidance；将详细 reference material、schemas 和 examples 移到 references files。
+- **避免重复**：信息应只存在于 SKILL.md 或 references files 之一，不要两边重复。除非内容确实是 skill 的核心，否则优先放入 references files；这样能保持 SKILL.md 精简，同时让信息可发现，避免占用 context window。SKILL.md 只保留必要的流程性指令和 workflow 指引；将详细参考材料、schemas 和 examples 移到 references files。
 
 ##### 资源文件（Assets，`assets/`）
 
@@ -79,7 +79,7 @@ Skills 使用三级加载系统来高效管理 context：
 
 1. **Metadata（name + description）** - 始终在 context 中（约 100 词）
 2. **SKILL.md body** - skill 触发时加载（<5k words）
-3. **Bundled resources** - Claude 按需加载（Unlimited\*）
+3. **Bundled resources** - Claude 按需加载（无限制\*）
 
 \*无限制，是因为 scripts 可以在不读入 context window 的情况下执行。
 
