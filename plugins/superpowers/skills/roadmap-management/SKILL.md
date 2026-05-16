@@ -35,7 +35,7 @@ description: 当用户明确点名 roadmap-management、显式调用 /superpower
 - `docs/superpowers/specs/` 保存阶段设计和规格。
 - `docs/superpowers/plans/` 保存阶段实现计划。
 
-完整模板和示例片段见 `references/roadmap-format.md`。
+完整模板和示例片段见 `references/roadmap-format.md`。Roadmap discovery、change discovery、phase strategy 和参考输入映射模板见 `references/roadmap-discovery.md`。
 
 ## OpenSpec 文档治理原则
 
@@ -158,21 +158,55 @@ Phase status：
 
 未批准但需要保留的 proposal 可以写入 `Pending Proposals`。
 
+## Roadmap Discovery Rules
+
+在写完整 `ROADMAP.md` 草案或结构性 `Proposal Brief` 之前，先完成轻量 discovery；模板见 `references/roadmap-discovery.md`。
+
+必须 discovery 的情况：
+
+- `new-roadmap` 总是先生成 `Roadmap Discovery Brief`。
+- 结构性 `change-roadmap` 先生成 `Roadmap Change Discovery Brief`，再生成 `Proposal Brief`。
+- 用户要求结合多个参考项目、文档或方案时，discovery 和后续 phase 必须包含参考输入映射。
+- phase 拆分存在多种合理方式时，先给出 2-3 个 `phase strategy` 选项、权衡和推荐。
+
+不需要 discovery 的事实更新：
+
+- 回填 artifact 路径。
+- 标记 artifact missing。
+- 更新 `Last Sync`。
+- 添加 blocker。
+- 记录 `Verification Evidence`。
+- 追加 `Change Log`。
+
+确认顺序：
+
+```text
+Discovery Brief → phase strategy 选项 → 用户确认策略 → ROADMAP.md 草案或 Proposal Brief → 用户批准 → 写入 current truth
+```
+
+展示规则：
+
+- 中文 roadmap 中，除路径、命令、状态枚举、API 字段和代码标识符外，正文统一中文。
+- 长草案直接用正文或分节展示；不要把完整草案塞进选择题 preview。
+
 ## Action: new-roadmap
 
 用于创建一个大功能的路线图。
 
 步骤：
 
-1. 确认 title 和 slug。
-2. 确认 `Goal`。
-3. 确认 `Non-goals`。
-4. 确认 `Shared Constraints`。
-5. 起草 phases。
-6. 请求用户批准 phase 拆分。
-7. 创建 `docs/superpowers/roadmaps/YYYY-MM-DD-<slug>/ROADMAP.md`。
+1. 确认 title、slug 和 roadmap 主题。
+2. 收集输入材料：用户描述、引用路径、现有 docs/specs/plans。
+3. 生成 `Roadmap Discovery Brief`，提炼目标理解、参考输入摘要、初步范围和未决问题。
+4. 如果有未决问题，先提问；不要直接写完整草案。
+5. 提出 2-3 个 `phase strategy` 选项，说明权衡并给出推荐。
+6. 请求用户确认 phase strategy。
+7. 用户确认后，再起草完整 `ROADMAP.md`。
+8. 如果用户要求结合多个参考项目、文档或方案，每个 phase 必须写出参考输入映射。
+9. 请求用户批准完整草案。
+10. 创建 `docs/superpowers/roadmaps/YYYY-MM-DD-<slug>/ROADMAP.md`。
 
-不要写 spec、plan 或实现代码。
+不要写 spec、plan 或实现代码。不要自动调用 `superpowers:brainstorming`；`new-roadmap` 内置的是只服务于 roadmap 的轻量 discovery。
 
 ## Action: progress
 
@@ -252,10 +286,14 @@ Phase status：
 步骤：
 
 1. 读取 `ROADMAP.md`。
-2. 生成 `Proposal Brief`。
-3. 请求用户批准。
-4. 只在批准后更新 current truth。
-5. 更新 `Decisions` 和 `Change Log`。
+2. 判断变更类型：事实更新或结构性变更。
+3. 事实更新不需要 discovery，也不需要 `Proposal Brief`；按对应状态规则保守更新。
+4. 结构性变更先生成 `Roadmap Change Discovery Brief`，说明当前状态、变更动因、参考输入映射和可选策略。
+5. 如果影响 phase 结构或 phase scope，先提出 2-3 个 `phase strategy` 选项并请求用户确认。
+6. 用户确认策略后，再生成 `Proposal Brief`。
+7. 请求用户批准 `Proposal Brief`。
+8. 只在批准后更新 current truth。
+9. 更新 `Decisions` 和 `Change Log`。
 
 ## 手动交接规则
 
@@ -283,6 +321,10 @@ Phase status：
 - 不要新增 worktree guidance。
 - 复制 OpenSpec 的完整 `changes/` lifecycle。
 - 不要复制 GSD 的完整 `.planning/PROJECT.md`、`STATE.md`、`CONTEXT.md` artifact set。
+- 跳过 `new-roadmap` 的 `Roadmap Discovery Brief`。
+- 跳过结构性 `change-roadmap` 的 `Roadmap Change Discovery Brief`。
+- 在用户确认 phase strategy 前生成完整 `ROADMAP.md` 草案。
+- 用户要求结合多个参考输入时，写出无法追溯到参考输入的抽象 phase。
 - 把详细 spec 内容写进 `ROADMAP.md`。
 - 把详细实现步骤写进 `ROADMAP.md`。
 - 从聊天记忆推断完成度。
@@ -292,7 +334,9 @@ Phase status：
 | 错误 | 正确行为 |
 |---|---|
 | 用户说继续 roadmap 后自动调用 writing-plans | 输出建议的手动命令 |
-| 用户要求重排 phase 后立即编辑 ROADMAP.md | 先生成 `Proposal Brief` |
+| 用户要求创建 roadmap 后直接给完整模板 | 先生成 `Roadmap Discovery Brief`，再确认 phase strategy |
+| 用户要求结合多个参考项目但 phase 只写抽象目标 | 为每个 phase 写参考输入映射 |
+| 用户要求重排 phase 后立即编辑 ROADMAP.md | 结构性变更先生成 `Roadmap Change Discovery Brief`，确认策略后再生成 `Proposal Brief` |
 | 链接 spec 路径缺失但 phase 被标记为 designed | 标记 artifact missing，不推进状态 |
 | ROADMAP.md 写入详细实现步骤 | 将实现细节移到 plans |
 | spec brief 忽略 Shared Constraints | 在 brief 中完整带入共享约束 |

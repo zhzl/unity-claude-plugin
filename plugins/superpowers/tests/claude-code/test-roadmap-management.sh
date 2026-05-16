@@ -8,6 +8,7 @@ PLUGIN_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 SKILL="$PLUGIN_ROOT/skills/roadmap-management/SKILL.md"
 REFERENCE="$PLUGIN_ROOT/skills/roadmap-management/references/roadmap-format.md"
+DISCOVERY_REFERENCE="$PLUGIN_ROOT/skills/roadmap-management/references/roadmap-discovery.md"
 WRITING_PLANS="$PLUGIN_ROOT/skills/writing-plans/SKILL.md"
 NATURAL_TRIGGER_PROMPT="$PLUGIN_ROOT/tests/skill-triggering/prompts/roadmap-management.txt"
 
@@ -57,6 +58,7 @@ assert_file_contains() {
 
 assert_file_exists "$SKILL" "Skill file exists"
 assert_file_exists "$REFERENCE" "Reference file exists"
+assert_file_exists "$DISCOVERY_REFERENCE" "Roadmap discovery reference exists"
 assert_file_exists "$WRITING_PLANS" "writing-plans skill exists"
 assert_file_missing "$NATURAL_TRIGGER_PROMPT" "No natural trigger prompt is added"
 
@@ -87,6 +89,21 @@ assert_file_contains "$SKILL" "write-plan" "write-plan action documented"
 assert_file_contains "$SKILL" "implement-plan" "implement-plan action documented"
 assert_file_contains "$SKILL" "complete-phase" "complete-phase action documented"
 assert_file_contains "$SKILL" "change-roadmap" "change-roadmap action documented"
+
+echo ""
+echo "Test 2b: Roadmap discovery before drafting..."
+assert_file_contains "$SKILL" "Roadmap Discovery Brief" "new-roadmap requires a discovery brief"
+assert_file_contains "$SKILL" "phase strategy" "new-roadmap requires phase strategy confirmation"
+assert_file_contains "$SKILL" "参考输入映射" "Reference input mapping is required"
+assert_file_contains "$SKILL" "结构性" "Structural change-roadmap discovery is documented"
+assert_file_contains "$SKILL" "Roadmap Change Discovery Brief" "change-roadmap discovery brief is documented"
+assert_file_contains "$SKILL" "不要把完整草案塞进选择题 preview" "Long draft preview anti-pattern is forbidden"
+assert_file_contains "$SKILL" "正文统一中文" "Chinese document language consistency is documented"
+assert_file_contains "$DISCOVERY_REFERENCE" "Roadmap Discovery Brief Template" "Roadmap discovery template exists"
+assert_file_contains "$DISCOVERY_REFERENCE" "Roadmap Change Discovery Brief Template" "Roadmap change discovery template exists"
+assert_file_contains "$DISCOVERY_REFERENCE" "Phase Strategy Options Template" "Phase strategy options template exists"
+assert_file_contains "$DISCOVERY_REFERENCE" "Reference Input Mapping Template" "Reference input mapping template exists"
+
 
 echo ""
 echo "Test 3: Handoff skills..."
