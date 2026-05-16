@@ -1,90 +1,90 @@
-# Plugin Manifest Reference
+# Plugin Manifest 参考
 
-Complete reference for `plugin.json` configuration.
+`plugin.json` configuration 的完整参考。
 
 ## File Location
 
-**Optional path**: `.claude-plugin/plugin.json`
+**Optional path**：`.claude-plugin/plugin.json`
 
-The manifest is optional for convention-only plugins. When metadata, custom component paths, or configuration are needed, place `plugin.json` in the `.claude-plugin/` directory at the plugin root. If the file is present, `name` is required.
+对于只依赖 conventions 的 plugins，manifest 是可选的。当需要 metadata、custom component paths 或 configuration 时，请将 `plugin.json` 放在 plugin root 的 `.claude-plugin/` directory 中。如果该文件存在，则必须提供 `name`。
 
 ## Complete Field Reference
 
 ### Core Fields
 
-#### name (required)
+#### name（required）
 
-**Type**: String
-**Format**: kebab-case
-**Example**: `"test-automation-suite"`
+**Type**：String
+**Format**：kebab-case
+**Example**：`"test-automation-suite"`
 
-The unique identifier for the plugin. Used for:
+Plugin 的唯一 identifier。用于：
 
-- Plugin identification in Claude Code
-- Conflict detection with other plugins
-- Command namespacing (optional)
+- Claude Code 中的 plugin identification
+- 与其他 plugins 的 conflict detection
+- Command namespacing（可选）
 
-**Requirements**:
+**Requirements**：
 
-- Must be unique across all installed plugins
-- Use only lowercase letters, numbers, and hyphens
-- No spaces or special characters
-- Start with a letter
-- End with a letter or number
+- 必须在所有已安装 plugins 中唯一
+- 只能使用 lowercase letters、numbers 和 hyphens
+- 不能包含 spaces 或 special characters
+- 以 letter 开头
+- 以 letter 或 number 结尾
 
-**Validation**:
+**Validation**：
 
 ```javascript
 /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 ```
 
-**Examples**:
+**Examples**：
 
-- ✅ Good: `api-tester`, `code-review`, `git-workflow-automation`
-- ❌ Bad: `API Tester`, `code_review`, `-git-workflow`, `test-`
+- ✅ Good：`api-tester`、`code-review`、`git-workflow-automation`
+- ❌ Bad：`API Tester`、`code_review`、`-git-workflow`、`test-`
 
 #### version
 
-**Type**: String
-**Format**: Semantic versioning (MAJOR.MINOR.PATCH)
-**Example**: `"2.1.0"`
-**Default**: `"0.1.0"` if not specified
+**Type**：String
+**Format**：Semantic versioning（MAJOR.MINOR.PATCH）
+**Example**：`"2.1.0"`
+**Default**：未指定时为 `"0.1.0"`
 
-Semantic versioning guidelines:
+Semantic versioning 指南：
 
-- **MAJOR**: Incompatible API changes, breaking changes
-- **MINOR**: New functionality, backward-compatible
-- **PATCH**: Bug fixes, backward-compatible
+- **MAJOR**：不兼容 API changes、breaking changes
+- **MINOR**：新 functionality，backward-compatible
+- **PATCH**：Bug fixes，backward-compatible
 
-**Pre-release versions**:
+**Pre-release versions**：
 
 - `"1.0.0-alpha.1"` - Alpha release
 - `"1.0.0-beta.2"` - Beta release
 - `"1.0.0-rc.1"` - Release candidate
 
-**Examples**:
+**Examples**：
 
 - `"0.1.0"` - Initial development
 - `"1.0.0"` - First stable release
 - `"1.2.3"` - Patch update to 1.2
-- `"2.0.0"` - Major version with breaking changes
+- `"2.0.0"` - 包含 breaking changes 的 major version
 
 #### description
 
-**Type**: String
-**Length**: 50-200 characters recommended
-**Example**: `"Automates code review workflows with style checks and automated feedback"`
+**Type**：String
+**Length**：建议 50-200 characters
+**Example**：`"Automates code review workflows with style checks and automated feedback"`
 
-Brief explanation of plugin purpose and functionality.
+简要说明 plugin purpose 和 functionality。
 
-**Best practices**:
+**Best practices**：
 
-- Focus on what the plugin does, not how
-- Use active voice
-- Mention key features or benefits
-- Keep under 200 characters for marketplace display
+- 聚焦 plugin 做什么，而不是怎么做
+- 使用 active voice
+- 提及 key features 或 benefits
+- 控制在 200 characters 以下，便于 marketplace display
 
-**Examples**:
+**Examples**：
 
 - ✅ "Generates comprehensive test suites from code analysis and coverage reports"
 - ✅ "Integrates with Jira for automatic issue tracking and sprint management"
@@ -95,8 +95,8 @@ Brief explanation of plugin purpose and functionality.
 
 #### author
 
-**Type**: Object
-**Fields**: name (required), email (optional), url (optional)
+**Type**：Object
+**Fields**：name（required）、email（optional）、url（optional）
 
 ```json
 {
@@ -108,7 +108,7 @@ Brief explanation of plugin purpose and functionality.
 }
 ```
 
-**Alternative format** (string only):
+**Alternative format**（仅 string）：
 
 ```json
 {
@@ -116,41 +116,41 @@ Brief explanation of plugin purpose and functionality.
 }
 ```
 
-**Use cases**:
+**Use cases**：
 
-- Credit and attribution
-- Contact for support or questions
+- Credit 和 attribution
+- Support 或问题联系
 - Marketplace display
 - Community recognition
 
 #### homepage
 
-**Type**: String (URL)
-**Example**: `"https://docs.example.com/plugins/my-plugin"`
+**Type**：String（URL）
+**Example**：`"https://docs.example.com/plugins/my-plugin"`
 
-Link to plugin documentation or landing page.
+指向 plugin documentation 或 landing page 的链接。
 
-**Should point to**:
+**Should point to**：
 
 - Plugin documentation site
 - Project homepage
 - Detailed usage guide
 - Installation instructions
 
-**Not for**:
+**Not for**：
 
-- Source code (use `repository` field)
-- Issue tracker (include in documentation)
-- Personal websites (use `author.url`)
+- Source code（使用 `repository` field）
+- Issue tracker（包含在 documentation 中）
+- Personal websites（使用 `author.url`）
 
 #### repository
 
-**Type**: String (URL) or Object
-**Example**: `"https://github.com/user/plugin-name"`
+**Type**：String（URL）或 Object
+**Example**：`"https://github.com/user/plugin-name"`
 
-Source code repository location.
+Source code repository 位置。
 
-**String format**:
+**String format**：
 
 ```json
 {
@@ -158,7 +158,7 @@ Source code repository location.
 }
 ```
 
-**Object format** (detailed):
+**Object format**（详细）：
 
 ```json
 {
@@ -170,7 +170,7 @@ Source code repository location.
 }
 ```
 
-**Use cases**:
+**Use cases**：
 
 - Source code access
 - Issue reporting
@@ -179,24 +179,24 @@ Source code repository location.
 
 #### license
 
-**Type**: String
-**Format**: SPDX identifier
-**Example**: `"MIT"`
+**Type**：String
+**Format**：SPDX identifier
+**Example**：`"MIT"`
 
-Software license identifier.
+Software license identifier。
 
-**Common licenses**:
+**Common licenses**：
 
-- `"MIT"` - Permissive, popular choice
-- `"Apache-2.0"` - Permissive with patent grant
+- `"MIT"` - Permissive，popular choice
+- `"Apache-2.0"` - Permissive，带 patent grant
 - `"GPL-3.0"` - Copyleft
 - `"BSD-3-Clause"` - Permissive
-- `"ISC"` - Permissive, similar to MIT
-- `"UNLICENSED"` - Proprietary, not open source
+- `"ISC"` - Permissive，类似 MIT
+- `"UNLICENSED"` - Proprietary，非 open source
 
-**Full list**: <https://spdx.org/licenses/>
+**Full list**：<https://spdx.org/licenses/>
 
-**Multiple licenses**:
+**Multiple licenses**：
 
 ```json
 {
@@ -206,37 +206,37 @@ Software license identifier.
 
 #### keywords
 
-**Type**: Array of strings
-**Example**: `["testing", "automation", "ci-cd", "quality-assurance"]`
+**Type**：Array of strings
+**Example**：`["testing", "automation", "ci-cd", "quality-assurance"]`
 
-Tags for plugin discovery and categorization.
+用于 plugin discovery 和 categorization 的 tags。
 
-**Best practices**:
+**Best practices**：
 
-- Use 5-10 keywords
-- Include functionality categories
-- Add technology names
-- Use common search terms
-- Avoid duplicating plugin name
+- 使用 5-10 个 keywords
+- 包含 functionality categories
+- 添加 technology names
+- 使用常见 search terms
+- 避免重复 plugin name
 
-**Categories to consider**:
+**Categories to consider**：
 
-- Functionality: `testing`, `debugging`, `documentation`, `deployment`
-- Technologies: `typescript`, `python`, `docker`, `aws`
-- Workflows: `ci-cd`, `code-review`, `git-workflow`
-- Domains: `web-development`, `data-science`, `devops`
+- Functionality：`testing`、`debugging`、`documentation`、`deployment`
+- Technologies：`typescript`、`python`、`docker`、`aws`
+- Workflows：`ci-cd`、`code-review`、`git-workflow`
+- Domains：`web-development`、`data-science`、`devops`
 
 ### Component Path Fields
 
 #### commands
 
-**Type**: String or Array of strings
-**Default**: `["./commands"]`
-**Example**: `"./cli-commands"`
+**Type**：String 或 Array of strings
+**Default**：`["./commands"]`
+**Example**：`"./cli-commands"`
 
-Directories or files containing command definitions. Custom paths replace the default `./commands` directory unless you include `./commands` explicitly.
+包含 command definitions 的 directories 或 files。Custom paths 会替换默认 `./commands` directory，除非你显式包含 `./commands`。
 
-**Single path**:
+**Single path**：
 
 ```json
 {
@@ -244,7 +244,7 @@ Directories or files containing command definitions. Custom paths replace the de
 }
 ```
 
-**Multiple paths**:
+**Multiple paths**：
 
 ```json
 {
@@ -252,38 +252,38 @@ Directories or files containing command definitions. Custom paths replace the de
 }
 ```
 
-**Behavior**: Replaces default `commands/` directory unless `./commands` is explicitly included
+**Behavior**：替换默认 `commands/` directory，除非显式包含 `./commands`
 
-**Use cases**:
+**Use cases**：
 
-- Organizing commands by category
-- Separating stable from experimental commands
-- Loading commands from shared locations
+- 按 category 组织 commands
+- 将 stable commands 与 experimental commands 分离
+- 从 shared locations 加载 commands
 
 #### agents
 
-**Type**: String or Array of strings
-**Default**: `["./agents"]`
-**Example**: `"./specialized-agents"`
+**Type**：String 或 Array of strings
+**Default**：`["./agents"]`
+**Example**：`"./specialized-agents"`
 
-Directories or files containing agent definitions. Custom paths replace the default `./agents` directory unless you include `./agents` explicitly.
+包含 agent definitions 的 directories 或 files。Custom paths 会替换默认 `./agents` directory，除非你显式包含 `./agents`。
 
-**Format**: Same as `commands` field
+**Format**：与 `commands` field 相同
 
-**Use cases**:
+**Use cases**：
 
-- Grouping agents by specialization
-- Separating general-purpose from task-specific agents
-- Loading agents from plugin dependencies
+- 按 specialization 分组 agents
+- 分离 general-purpose 和 task-specific agents
+- 从 plugin dependencies 加载 agents
 
 #### hooks
 
-**Type**: String (path to JSON file) or Object (inline configuration)
-**Default**: `"./hooks/hooks.json"`
+**Type**：String（JSON file path）或 Object（inline configuration）
+**Default**：`"./hooks/hooks.json"`
 
-Hook configuration location or inline definition.
+Hook configuration 位置或 inline definition。
 
-**File path**:
+**File path**：
 
 ```json
 {
@@ -291,7 +291,7 @@ Hook configuration location or inline definition.
 }
 ```
 
-**Inline configuration**:
+**Inline configuration**：
 
 ```json
 {
@@ -312,20 +312,20 @@ Hook configuration location or inline definition.
 }
 ```
 
-**Use cases**:
+**Use cases**：
 
-- Simple plugins: Inline configuration (< 50 lines)
-- Complex plugins: External JSON file
-- Multiple hook sets: Separate files for different contexts
+- 简单 plugins：Inline configuration（< 50 lines）
+- 复杂 plugins：External JSON file
+- 多个 hook sets：为不同 contexts 使用单独文件
 
 #### mcpServers
 
-**Type**: String (path to JSON file) or Object (inline configuration)
-**Default**: `./.mcp.json`
+**Type**：String（JSON file path）或 Object（inline configuration）
+**Default**：`./.mcp.json`
 
-MCP server configuration location or inline definition.
+MCP server configuration 位置或 inline definition。
 
-**File path**:
+**File path**：
 
 ```json
 {
@@ -333,7 +333,7 @@ MCP server configuration location or inline definition.
 }
 ```
 
-**Inline configuration**:
+**Inline configuration**：
 
 ```json
 {
@@ -349,21 +349,21 @@ MCP server configuration location or inline definition.
 }
 ```
 
-**Use cases**:
+**Use cases**：
 
-- Simple plugins: Single inline server (< 20 lines)
-- Complex plugins: External `.mcp.json` file
-- Multiple servers: Always use external file
+- 简单 plugins：单个 inline server（< 20 lines）
+- 复杂 plugins：External `.mcp.json` file
+- 多个 servers：始终使用 external file
 
 #### outputStyles
 
-**Type**: String or Array of strings
-**Default**: `["./output-styles"]`
-**Example**: `"./styles"`
+**Type**：String 或 Array of strings
+**Default**：`["./output-styles"]`
+**Example**：`"./styles"`
 
-Path(s) to output style definition files or directories. Custom paths replace the default `./output-styles` directory unless you include `./output-styles` explicitly.
+指向 output style definition files 或 directories 的 path(s)。Custom paths 会替换默认 `./output-styles` directory，除非你显式包含 `./output-styles`。
 
-**Single path**:
+**Single path**：
 
 ```json
 {
@@ -371,7 +371,7 @@ Path(s) to output style definition files or directories. Custom paths replace th
 }
 ```
 
-**Multiple paths**:
+**Multiple paths**：
 
 ```json
 {
@@ -379,83 +379,83 @@ Path(s) to output style definition files or directories. Custom paths replace th
 }
 ```
 
-**Behavior**: Replaces default `output-styles/` directory unless `./output-styles` is explicitly included
+**Behavior**：替换默认 `output-styles/` directory，除非显式包含 `./output-styles`
 
-Output style files are markdown with YAML frontmatter (`name`, `description`, `keep-coding-instructions`). See the plugin-structure skill's `references/output-styles.md` for the complete frontmatter schema.
+Output style files 是带 YAML frontmatter（`name`、`description`、`keep-coding-instructions`）的 markdown。完整 frontmatter schema 见 plugin-structure skill 的 `references/output-styles.md`。
 
-**Use cases**:
+**Use cases**：
 
-- Providing domain-specific formatting (e.g., concise code review output)
-- Bundling multiple style options for users to choose from
-- Offering specialized output modes for different workflows
+- 提供 domain-specific formatting（例如简洁 code review output）
+- 打包多个 style options 供用户选择
+- 为不同 workflows 提供 specialized output modes
 
 ## Path Resolution
 
 ### Relative Path Rules
 
-All paths in component fields must follow these rules:
+Component fields 中的所有 paths 必须遵循这些规则：
 
-1. **Must be relative**: No absolute paths
-2. **Must start with `./`**: Indicates relative to plugin root
-3. **Cannot use `../`**: No parent directory navigation
-4. **Forward slashes only**: Even on Windows
+1. **必须是 relative**：不能使用 absolute paths
+2. **必须以 `./` 开头**：表示相对于 plugin root
+3. **不能使用 `../`**：不能导航到 parent directory
+4. **只使用 forward slashes**：即使在 Windows 上也是如此
 
-**Examples**:
+**Examples**：
 
 - ✅ `"./commands"`
 - ✅ `"./src/commands"`
 - ✅ `"./configs/hooks.json"`
 - ❌ `"/Users/name/plugin/commands"`
-- ❌ `"commands"` (missing `./`)
+- ❌ `"commands"`（缺少 `./`）
 - ❌ `"../shared/commands"`
-- ❌ `".\\commands"` (backslash)
+- ❌ `".\\commands"`（backslash）
 
 ### Path Behavior
 
-When Claude Code loads components:
+Claude Code 加载 components 时：
 
-1. **Default paths**: Standard locations are used when no custom path is configured.
+1. **Default paths**：未配置 custom path 时使用 standard locations。
    - `./commands/`
    - `./agents/`
    - `./skills/`
    - `./hooks/hooks.json`
    - `./.mcp.json`
 
-2. **Custom paths**: Behavior depends on the field.
-   - `skills` supplements `./skills`
-   - `commands`, `agents`, and `outputStyles` replace defaults unless the default path is explicitly listed
-   - `hooks`, `mcpServers`, and LSP settings have their own file/merge behavior
+2. **Custom paths**：Behavior 取决于 field。
+   - `skills` 补充 `./skills`
+   - `commands`、`agents` 和 `outputStyles` 会替换 defaults，除非显式列出 default path
+   - `hooks`、`mcpServers` 和 LSP settings 有各自的 file/merge behavior
 
-3. **Conflicts**: Name conflicts between loaded components cause errors
+3. **Conflicts**：Loaded components 之间的 name conflicts 会导致 errors
 
 ## Validation
 
 ### Manifest Validation
 
-Claude Code validates the manifest on plugin load:
+Claude Code 会在 plugin load 时验证 manifest：
 
-**Syntax validation**:
+**Syntax validation**：
 
-- Valid JSON format
-- No syntax errors
-- Correct field types
+- 有效 JSON format
+- 无 syntax errors
+- Field types 正确
 
-**Field validation**:
+**Field validation**：
 
-- `name` field present and valid format
-- `version` follows semantic versioning (if present)
-- Paths are relative with `./` prefix
-- URLs are valid (if present)
+- `name` field 存在且 format 有效
+- `version` 遵循 semantic versioning（如果存在）
+- Paths 是带 `./` prefix 的 relative paths
+- URLs 有效（如果存在）
 
-**Component validation**:
+**Component validation**：
 
-- Referenced paths exist
-- Hook and MCP configurations are valid
-- No circular dependencies
+- Referenced paths 存在
+- Hook 和 MCP configurations 有效
+- 无 circular dependencies
 
 ### Common Validation Errors
 
-**Invalid name format**:
+**Invalid name format**：
 
 ```jsonc
 {
@@ -463,7 +463,7 @@ Claude Code validates the manifest on plugin load:
 }
 ```
 
-Fix: Use kebab-case
+修复：使用 kebab-case
 
 ```jsonc
 {
@@ -471,7 +471,7 @@ Fix: Use kebab-case
 }
 ```
 
-**Absolute path**:
+**Absolute path**：
 
 ```jsonc
 {
@@ -479,7 +479,7 @@ Fix: Use kebab-case
 }
 ```
 
-Fix: Use relative path
+修复：使用 relative path
 
 ```jsonc
 {
@@ -487,7 +487,7 @@ Fix: Use relative path
 }
 ```
 
-**Missing ./ prefix**:
+**Missing ./ prefix**：
 
 ```jsonc
 {
@@ -495,7 +495,7 @@ Fix: Use relative path
 }
 ```
 
-Fix: Add ./ prefix
+修复：添加 ./ prefix
 
 ```jsonc
 {
@@ -503,7 +503,7 @@ Fix: Add ./ prefix
 }
 ```
 
-**Invalid version**:
+**Invalid version**：
 
 ```jsonc
 {
@@ -511,7 +511,7 @@ Fix: Add ./ prefix
 }
 ```
 
-Fix: Use MAJOR.MINOR.PATCH
+修复：使用 MAJOR.MINOR.PATCH
 
 ```jsonc
 {
@@ -523,7 +523,7 @@ Fix: Use MAJOR.MINOR.PATCH
 
 ### Minimal Manifest
 
-Bare minimum when a manifest is needed:
+需要 manifest 时的最低配置：
 
 ```json
 {
@@ -531,11 +531,11 @@ Bare minimum when a manifest is needed:
 }
 ```
 
-Relies entirely on default directory discovery.
+完全依赖默认 directory discovery。
 
 ### Recommended Plugin
 
-Good metadata for distribution:
+用于 distribution 的良好 metadata：
 
 ```json
 {
@@ -555,7 +555,7 @@ Good metadata for distribution:
 
 ### Complete Plugin
 
-Full configuration with all features:
+包含所有 features 的完整 configuration：
 
 ```json
 {
@@ -592,31 +592,31 @@ Full configuration with all features:
 
 ### Metadata
 
-1. **Always include version**: Track changes and updates
-2. **Write clear descriptions**: Help users understand plugin purpose
-3. **Provide contact information**: Enable user support
-4. **Link to documentation**: Reduce support burden
-5. **Choose appropriate license**: Match project goals
+1. **Always include version**：跟踪 changes 和 updates
+2. **Write clear descriptions**：帮助用户理解 plugin purpose
+3. **Provide contact information**：支持 user support
+4. **Link to documentation**：降低 support burden
+5. **Choose appropriate license**：匹配 project goals
 
 ### Paths
 
-1. **Use defaults when possible**: Minimize configuration
-2. **Organize logically**: Group related components
-3. **Document custom paths**: Explain why non-standard layout used
-4. **Test path resolution**: Verify on multiple systems
+1. **Use defaults when possible**：最小化 configuration
+2. **Organize logically**：将相关 components 分组
+3. **Document custom paths**：说明为什么使用 non-standard layout
+4. **Test path resolution**：在多个 systems 上验证
 
 ### Maintenance
 
-1. **Bump version on changes**: Follow semantic versioning
-2. **Update keywords**: Reflect new functionality
-3. **Keep description current**: Match actual capabilities
-4. **Maintain changelog**: Track version history
-5. **Update repository links**: Keep URLs current
+1. **Bump version on changes**：遵循 semantic versioning
+2. **Update keywords**：反映 new functionality
+3. **Keep description current**：匹配 actual capabilities
+4. **Maintain changelog**：跟踪 version history
+5. **Update repository links**：保持 URLs 当前有效
 
 ### Distribution
 
-1. **Complete metadata before publishing**: All fields filled
-2. **Test on clean install**: Verify plugin works without dev environment
-3. **Validate manifest**: Use validation tools
-4. **Include README**: Document installation and usage
-5. **Specify license file**: Include LICENSE file in plugin root
+1. **Complete metadata before publishing**：填写所有 fields
+2. **Test on clean install**：验证 plugin 无需 dev environment 也能工作
+3. **Validate manifest**：使用 validation tools
+4. **Include README**：记录 installation 和 usage
+5. **Specify license file**：在 plugin root 中包含 LICENSE file

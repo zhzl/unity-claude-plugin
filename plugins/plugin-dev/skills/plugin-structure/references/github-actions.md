@@ -1,33 +1,33 @@
-# GitHub Actions Integration for Plugins
+# Plugins 的 GitHub Actions Integration
 
-Plugins interact with GitHub Actions through `claude-code-action`, Anthropic's official action for running Claude Code in CI workflows. Understanding this integration helps plugin developers ensure their plugins work seamlessly in automated pipelines.
+Plugins 通过 `claude-code-action` 与 GitHub Actions 交互；这是 Anthropic 官方用于在 CI workflows 中运行 Claude Code 的 action。理解这种集成有助于 plugin developers 确保 plugins 在 automated pipelines 中顺畅工作。
 
 ## Overview
 
-The `claude-code-action@v1` runs Claude Code inside GitHub Actions, enabling:
+`claude-code-action@v1` 会在 GitHub Actions 内运行 Claude Code，从而支持：
 
-- Automated code review on PRs
-- Issue implementation from comments
-- Custom automation triggered by @claude mentions
-- Scheduled analysis and reporting
+- PRs 的 automated code review
+- 通过 comments 实现 issues
+- 由 @claude mentions 触发的 custom automation
+- Scheduled analysis 和 reporting
 
 ## Setup
 
 ### Quick Setup
 
-From inside Claude Code:
+在 Claude Code 内运行：
 
 ```bash
 /install-github-app
 ```
 
-This guides through installing the Claude GitHub app and configuring workflows.
+这会引导安装 Claude GitHub app 并配置 workflows。
 
 ### Manual Setup
 
-1. Install the Claude GitHub App: `https://github.com/apps/claude`
-2. Add `ANTHROPIC_API_KEY` to repository secrets
-3. Create workflow file at `.github/workflows/claude.yml`
+1. 安装 Claude GitHub App：`https://github.com/apps/claude`
+2. 将 `ANTHROPIC_API_KEY` 添加到 repository secrets
+3. 在 `.github/workflows/claude.yml` 创建 workflow file
 
 ### Basic Workflow
 
@@ -48,27 +48,27 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
-## How Plugins Work in Actions
+## Actions 中的 Plugins 工作方式
 
 ### CLAUDE.md Integration
 
-The most direct way plugins interact with CI is through CLAUDE.md. Project-level instructions (`.claude/CLAUDE.md`) load automatically in CI runs, providing:
+Plugins 与 CI 交互最直接的方式是通过 CLAUDE.md。Project-level instructions（`.claude/CLAUDE.md`）会在 CI runs 中自动加载，提供：
 
 - Code style requirements
 - Review criteria
 - Project-specific rules
 - Plugin references
 
-### Hooks in CI
+### CI 中的 Hooks
 
-Plugin hooks execute in the CI environment:
+Plugin hooks 在 CI environment 中执行：
 
-- **Command hooks:** Run normally (ensure scripts are executable and dependencies available)
-- **Prompt hooks:** Work as expected
-- **SessionStart hooks:** Fire at the beginning of each CI run
-- **Environment:** `$CI=true` is set, use for conditional logic
+- **Command hooks：** 正常运行（确保 scripts 可执行且 dependencies 可用）
+- **Prompt hooks：** 按预期工作
+- **SessionStart hooks：** 在每次 CI run 开始时触发
+- **Environment：** 会设置 `$CI=true`，可用于 conditional logic
 
-**CI-aware hook example:**
+**CI-aware hook 示例：**
 
 ```bash
 #!/bin/bash
@@ -81,9 +81,9 @@ fi
 # ...
 ```
 
-### Skills via prompt Parameter
+### 通过 prompt Parameter 使用 Skills
 
-Reference plugin skills in the workflow's `prompt` parameter:
+在 workflow 的 `prompt` parameter 中引用 plugin skills：
 
 ```yaml
 - uses: anthropics/claude-code-action@v1
@@ -93,23 +93,23 @@ Reference plugin skills in the workflow's `prompt` parameter:
     claude_args: "--max-turns 15"
 ```
 
-Since slash commands don't work in headless mode, describe the task instead. Claude can discover installed skills from their descriptions and may invoke a matching skill based on context, but the full `SKILL.md` body loads only if Claude actually invokes that skill.
+由于 slash commands 在 headless mode 中不可用，请改为描述任务。Claude 可以从已安装 skills 的 descriptions 中发现它们，并可能基于上下文调用匹配的 skill；但完整的 `SKILL.md` body 只有在 Claude 实际调用该 skill 时才会加载。
 
 ## Configuration Options
 
 ### Key Parameters
 
-| Parameter           | Purpose                 | Example                                |
+| Parameter | Purpose | Example |
 | ------------------- | ----------------------- | -------------------------------------- |
-| `prompt`            | Instructions for Claude | `"Review this PR"`                     |
-| `claude_args`       | CLI arguments           | `"--max-turns 10 --model haiku"`       |
-| `anthropic_api_key` | API key secret          | `${{ secrets.ANTHROPIC_API_KEY }}`     |
-| `github_token`      | GitHub API access       | `${{ secrets.GITHUB_TOKEN }}`          |
-| `trigger_phrase`    | Custom trigger          | `"@review-bot"` (default: `"@claude"`) |
+| `prompt` | 给 Claude 的 instructions | `"Review this PR"` |
+| `claude_args` | CLI arguments | `"--max-turns 10 --model haiku"` |
+| `anthropic_api_key` | API key secret | `${{ secrets.ANTHROPIC_API_KEY }}` |
+| `github_token` | GitHub API access | `${{ secrets.GITHUB_TOKEN }}` |
+| `trigger_phrase` | Custom trigger | `"@review-bot"`（默认：`"@claude"`） |
 
-### claude_args for Plugin Control
+### 用于 Plugin Control 的 claude_args
 
-Pass CLI flags through `claude_args`:
+通过 `claude_args` 传递 CLI flags：
 
 ```yaml
 claude_args: >-
@@ -120,13 +120,13 @@ claude_args: >-
 
 ### Custom Trigger Phrases
 
-Change the default `@claude` trigger:
+更改默认 `@claude` trigger：
 
 ```yaml
 trigger_phrase: "@security-review"
 ```
 
-Users then mention `@security-review` in PR comments to trigger the workflow.
+随后用户在 PR comments 中提及 `@security-review` 即可触发 workflow。
 
 ## Provider Configurations
 
@@ -142,7 +142,7 @@ Users then mention `@security-review` in PR comments to trigger the workflow.
     AWS_REGION: us-east-1
 ```
 
-Requires AWS OIDC configuration with Bedrock permissions.
+需要带 Bedrock permissions 的 AWS OIDC configuration。
 
 ### Google Vertex AI
 
@@ -156,7 +156,7 @@ Requires AWS OIDC configuration with Bedrock permissions.
     CLOUD_ML_REGION: us-east5
 ```
 
-Requires GCP Workload Identity Federation.
+需要 GCP Workload Identity Federation。
 
 ## Cost Management
 
@@ -166,7 +166,7 @@ Requires GCP Workload Identity Federation.
 claude_args: "--max-turns 10"
 ```
 
-Each tool call is one turn. Start low and increase as needed.
+每个 tool call 都是一个 turn。先从较低值开始，再按需增加。
 
 ### Use Cheaper Models
 
@@ -174,7 +174,7 @@ Each tool call is one turn. Start low and increase as needed.
 claude_args: "--model haiku"
 ```
 
-Use Haiku for routine checks, Sonnet for standard reviews, Opus for complex analysis.
+日常检查使用 Haiku，标准 reviews 使用 Sonnet，复杂 analysis 使用 Opus。
 
 ### Set Workflow Timeouts
 
@@ -194,13 +194,13 @@ jobs:
 claude_args: "--allowedTools 'Read,Grep,Glob'"
 ```
 
-Read-only tools prevent expensive write/execute loops.
+Read-only tools 可防止昂贵的 write/execute loops。
 
-## Plugin Design for CI
+## CI 的 Plugin Design
 
 ### Document CI Workflows
 
-Include example workflow snippets in your plugin README:
+在你的 plugin README 中包含示例 workflow snippets：
 
 ```markdown
 ## GitHub Actions Usage
@@ -218,15 +218,15 @@ Add to `.github/workflows/claude.yml`:
 
 ### Ensure CI Compatibility
 
-- Test hooks with `CI=true` environment variable
-- Ensure scripts don't require interactive input
-- Handle missing dependencies gracefully (not all CI images have `jq`, etc.)
-- Use `${CLAUDE_PLUGIN_ROOT}` for all paths (cache directories differ in CI)
+- 使用 `CI=true` environment variable 测试 hooks
+- 确保 scripts 不需要 interactive input
+- 优雅处理缺失 dependencies（并非所有 CI images 都有 `jq` 等）
+- 所有 paths 都使用 `${CLAUDE_PLUGIN_ROOT}`（cache directories 在 CI 中不同）
 
-### MCP Servers in CI
+### CI 中的 MCP Servers
 
-MCP servers bundled with plugins start in CI, but:
+随 plugins 打包的 MCP servers 会在 CI 中启动，但：
 
-- OAuth-based servers won't have tokens (configure environment variables instead)
-- Local stdio servers need their dependencies installed in the CI image
-- Document required CI setup in README
+- OAuth-based servers 不会有 tokens（请改为配置 environment variables）
+- Local stdio servers 需要其 dependencies 已安装在 CI image 中
+- 在 README 中记录必需的 CI setup
