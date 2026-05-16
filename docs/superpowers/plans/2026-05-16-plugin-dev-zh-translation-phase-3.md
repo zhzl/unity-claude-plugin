@@ -558,7 +558,7 @@ git commit -m "docs: translate plugin structure references"
 - 修改：`plugins/plugin-dev/skills/command-development/examples/plugin-commands.md`
 - 修改：`plugins/plugin-dev/skills/command-development/examples/simple-commands.md`
 
-- [ ] **步骤 1：翻译 `command-development/SKILL.md` 的代码块外自然语言**
+- [x] **步骤 1：翻译 `command-development/SKILL.md` 的代码块外自然语言**
 
 编辑 `plugins/plugin-dev/skills/command-development/SKILL.md`：
 
@@ -568,7 +568,7 @@ git commit -m "docs: translate plugin structure references"
 - “Commands are Instructions FOR Claude” 的规则翻译后必须仍表达为强约束：命令内容是给 Claude 的执行指令，不是给用户的说明。
 - `[BANG]`、`$ARGUMENTS`、`$1`、`$2`、`@file`、`${CLAUDE_PLUGIN_ROOT}`、`AskUserQuestion`、`Skill`、工具名、frontmatter 字段名、路径、slash command 和代码块保持原文。
 
-- [ ] **步骤 2：翻译 command examples 的代码块外自然语言**
+- [x] **步骤 2：翻译 command examples 的代码块外自然语言**
 
 编辑：
 
@@ -581,7 +581,7 @@ git commit -m "docs: translate plugin structure references"
 - 命令文件示例、frontmatter 示例、bash 示例、路径、argument token 和代码块保持原文。
 - 如果示例说明中出现 `command`、`skill`、`workflow`、`frontmatter`，按 Phase 1 术语规则保留英文关键词。
 
-- [ ] **步骤 3：验证 command-development 入口和示例代码块未改变**
+- [x] **步骤 3：验证 command-development 入口和示例代码块未改变**
 
 运行：
 
@@ -628,7 +628,7 @@ PY
 
 预期：输出 `code blocks unchanged: 3 files`。
 
-- [ ] **步骤 4：验证 `command-development/SKILL.md` frontmatter protected fields 和触发词**
+- [x] **步骤 4：验证 `command-development/SKILL.md` frontmatter protected fields 和触发词**
 
 运行：
 
@@ -650,7 +650,7 @@ PY
 
 预期：输出 `command-development frontmatter ok`。
 
-- [ ] **步骤 5：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 5：提交检查点（仅用户明确授权时执行）**
 
 运行：
 
