@@ -141,7 +141,9 @@ Review this code for security vulnerabilities...
 ### description
 
 **用途：** 显示在 `/help` 中的简短描述
+
 **类型：** 字符串
+
 **默认：** command prompt 的第一行
 
 ```yaml
@@ -155,7 +157,9 @@ description: Review pull request for code quality
 ### allowed-tools
 
 **用途：** 指定 command 可以使用哪些工具
+
 **类型：** 逗号分隔的字符串
+
 **默认：** 继承当前 conversation
 
 ```yaml
@@ -175,8 +179,11 @@ allowed-tools: Read, Write, Edit, Bash(git *)
 ### model
 
 **用途：** 指定 command 执行使用的 model
+
 **类型：** 字符串
+
 **取值：** `sonnet`、`opus`、`haiku` 或 `inherit`
+
 **默认：** 继承当前 conversation
 
 ```yaml
@@ -196,7 +203,9 @@ model: haiku
 ### argument-hint
 
 **用途：** 为自动补全记录预期参数
+
 **类型：** 字符串
+
 **默认：** 无
 
 ```yaml
@@ -214,7 +223,9 @@ argument-hint: "[pr-number] [priority] [assignee]"
 ### disable-model-invocation
 
 **用途：** 阻止 Skill tool 以程序方式调用 command
+
 **类型：** 布尔值
+
 **默认：** false
 
 ```yaml
