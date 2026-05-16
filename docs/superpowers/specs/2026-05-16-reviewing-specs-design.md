@@ -1,4 +1,4 @@
-# Reviewing Superpowers Artifacts Skill 设计规格
+# Reviewing Specs Skill 设计规格
 
 ## 背景
 
@@ -12,7 +12,7 @@
 
 ## 目标
 
-创建一个新的纯手动 skill：`reviewing-superpowers-artifacts`，用于在用户明确请求时审查 superpowers 设计讨论、设计规格、实现计划及 spec/plan 一致性。
+创建一个新的纯手动 skill：`reviewing-specs`，用于在用户明确请求时审查 superpowers 设计讨论、设计规格、实现计划及 spec/plan 一致性。
 
 该 skill 应满足：
 
@@ -40,14 +40,14 @@
 新增文件：
 
 ```text
-plugins/superpowers/skills/reviewing-superpowers-artifacts/SKILL.md
+plugins/superpowers/skills/reviewing-specs/SKILL.md
 ```
 
 Frontmatter：
 
 ```yaml
 ---
-name: reviewing-superpowers-artifacts
+name: reviewing-specs
 description: Use only when the user explicitly requests a manual review of superpowers design discussions, design specs, implementation plans, or spec/plan consistency.
 ---
 ```
@@ -248,7 +248,7 @@ skill 必须遵守：
 ## 与现有工作流关系
 
 - `superpowers:brainstorming` 仍负责需求探索和设计规格产出。
-- `reviewing-superpowers-artifacts` 可在用户明确要求时插入到写 spec 前或写 plan 后。
+- `reviewing-specs` 可在用户明确要求时插入到写 spec 前或写 plan 后。
 - `superpowers:writing-plans` 仍负责从已批准 spec 生成实现计划。
 - `superpowers:subagent-driven-development` 和 `superpowers:executing-plans` 仍负责实现计划执行。
 - `superpowers:requesting-code-review` 仍负责代码审查。
@@ -286,7 +286,7 @@ skill 通过标准：输出 blocking consistency issues，明确定位遗漏和�
 
 实现完成后应满足：
 
-1. 新 skill 位于 `plugins/superpowers/skills/reviewing-superpowers-artifacts/SKILL.md`。
+1. 新 skill 位于 `plugins/superpowers/skills/reviewing-specs/SKILL.md`。
 2. skill 只在用户明确手动请求审查时触发。
 3. skill 对外提供 `pre-spec review` 和 `spec/plan consistency review` 两个入口。
 4. skill 内部保留需求质疑、架构/性能、文档一致性三组检查清单。
