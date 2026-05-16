@@ -179,19 +179,19 @@ User wants to...
 2. **技能**：加载 `skill-development` 以创建专业技能
 3. **验证**：使用 skill-reviewer agent 验证技能质量
 
-## 可用代理（Agents）
+## 可用代理
 
-plugin-dev 插件还提供 3 个代理（agents）：
+plugin-dev 插件还提供 3 个代理：
 
 | 代理 | 用途 |
 | ---- | ---- |
 | **plugin-validator** | 验证插件结构和 manifests         |
 | **skill-reviewer**   | 审查技能质量和触发方式           |
-| **agent-creator**    | 根据描述生成新的 agents          |
+| **agent-creator**    | 根据描述生成新的代理          |
 
-在创建组件后应主动使用 agents 以确保质量。
+在创建组件后应主动使用代理以确保质量。
 
-## 可用命令（Commands）
+## 可用命令
 
 | 命令 | 用途 |
 | ---- | ---- |
