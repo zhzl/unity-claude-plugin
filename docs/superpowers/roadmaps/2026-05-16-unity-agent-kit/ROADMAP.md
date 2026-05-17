@@ -537,9 +537,10 @@ Phase 9 至少实现半自动一致性检查，覆盖：
   - Resources 和 artifact model 范围；
   - safety model；
   - skill/schema 防漂移机制。
-- 当前阶段：Phase 2 需要编写 spec。
+- 当前阶段：Phase 3 需要编写 spec。
 - Phase 1 已完成架构与边界蓝图规格验证，并记录 completion evidence。
-- **Next Manual Action:** `/superpowers:roadmap-management write-spec docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md Phase 2`
+- Phase 2 已完成 Unity Agent Skill 体系设计规格和计划，并记录 completion evidence。
+- **Next Manual Action:** `/superpowers:roadmap-management write-spec docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md Phase 3`
 - 当前不实现代码。
 
 ## Blockers
@@ -553,8 +554,8 @@ Phase 9 至少实现半自动一致性检查，覆盖：
 | Phase | Status | Goal | Spec | Plan | Verification | Next |
 |-------|--------|------|------|------|--------------|------|
 | Phase 1 — 架构与边界蓝图 | completed | 定义 Unity Agent Kit 总体结构和硬约束 | `docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md` | `docs/superpowers/plans/2026-05-16-unity-agent-kit-phase-1-architecture-boundary.md` | recorded | completed |
-| Phase 2 — Unity Agent Skill 体系设计 | needs-spec | 设计 skill 架构、/unity 路由、P0 daily loop recipe contract 和跨 phase handoff | pending | pending | pending | write-spec |
-| Phase 3 — Public MCP Tool Action Design | not-started | 逐个设计 public tool、action、参数、异步语义、safety、验证路径 | pending | pending | pending | after Phase 2 |
+| Phase 2 — Unity Agent Skill 体系设计 | completed | 设计 skill 架构、/unity 路由、P0 daily loop recipe contract 和跨 phase handoff | `docs/superpowers/specs/2026-05-17-unity-agent-kit-phase-2-skill-architecture-design.md` | `docs/superpowers/plans/2026-05-17-unity-agent-kit-phase-2-skill-architecture.md` | recorded | completed |
+| Phase 3 — Public MCP Tool Action Design | needs-spec | 逐个设计 public tool、action、参数、异步语义、safety、验证路径 | pending | pending | pending | write-spec |
 | Phase 4 — Async / Job / Workflow / Artifact Semantics | not-started | 明确 TS 与 Unity C# 的异步职责、job 协议、diagnostics 和 artifact model | pending | pending | pending | after Phase 3 |
 | Phase 5 — 高频日常闭环基础设施 | not-started | 实现 editor/compile/console/test/playmode/screenshot 的核心闭环 | pending | pending | pending | after Phase 4 |
 | Phase 6 — Project Editor Command Registry 增强 | not-started | 强化项目自定义命令发现、schema、安全和验证 | pending | pending | pending | after Phase 5 |
@@ -615,13 +616,13 @@ Phase 9 至少实现半自动一致性检查，覆盖：
 - **Verification Evidence:** 2026-05-17：`docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md` 和 `docs/superpowers/plans/2026-05-16-unity-agent-kit-phase-1-architecture-boundary.md` 已验证。规格自检通过：TODO/FIXME/TBD 检查通过、裸延后表述检查通过、legacy compatibility 正向表述检查通过；关键内容存在性检查覆盖 `developmentRepoRoot`、`pluginRoot`、`unityProjectRoot`、`Transport Security 与 Host 最低校验`、`Contract Kernel 与 C# host 的关系`、`默认持久化与保存范围`、`Phase Handoff Table`。Success criteria 覆盖证据：规格明确 Unity Agent Kit 不是单纯 MCP server；public/internal/host 边界明确；Public MCP tools 与 Internal operations 分离；Unity C# 不读取 public metadata；Resources 首版只用于 tool-generated artifacts/reports；Phase Handoff Table 明确 Phase 2-9 交接输入。计划执行证据：Phase 1 plan 中任务 1-5 关键步骤均已勾选，包含新版 roadmap 表格检查、Current State/Blockers 检查、pending completion evidence 检查、规格自检、completion evidence 交接和最终工作区检查。
 
 **Next Manual Action:**
-Phase 1 已完成；下一步手动命令见 Current State 中的 Phase 2 `write-spec`。
+Phase 1 已完成；下一步手动命令见 Current State 中的 Phase 3 `write-spec`。
 
 ---
 
 ### Phase 2：Unity Agent Skill 体系设计
 
-**Status:** `needs-spec`
+**Status:** `completed`
 
 **Goal:**
 设计 Unity Agent Kit 的 skill 架构、`/unity` 路由规则、P0 高频日常闭环 recipe contract、机器可检查 recipe block、安全/验证规则，以及 Phase 6/7/8 的 skill handoff。
@@ -745,16 +746,16 @@ unity_screenshot.capture_game_view
 - Skill 结构以 P0 任务闭环为主，以能力域 handoff 为辅。
 
 **Artifacts:**
-- **Spec:** pending
-- **Plan:** pending
-- **Implementation Summary:** pending
-- **Verification Evidence:** pending
+- **Spec:** `docs/superpowers/specs/2026-05-17-unity-agent-kit-phase-2-skill-architecture-design.md`
+- **Plan:** `docs/superpowers/plans/2026-05-17-unity-agent-kit-phase-2-skill-architecture.md`
+- **Implementation Summary:** Phase 2 完成 Unity Agent Skill 体系设计规格和计划，明确 `/unity` 单入口路由、P0 daily loop recipe contract、机器可检查 recipe block、轻量结构化 `verificationPath`、每步必填 `onFailure`、skill safety 与 public handler safety gate 分工、project command explicit / strict fallback，以及 Phase 6/7/8 handoff category 边界。
+- **Verification Evidence:** 2026-05-17：`docs/superpowers/specs/2026-05-17-unity-agent-kit-phase-2-skill-architecture-design.md` 和 `docs/superpowers/plans/2026-05-17-unity-agent-kit-phase-2-skill-architecture.md` 已验证。Roadmap artifact 同步验证通过，输出 `PASS Phase 2 roadmap planned state and artifact links are present`，确认 Phase 2 Spec/Plan artifact 已链接。Phase 2 规格自检通过，覆盖占位符、裸延后表述、禁止预留后续 slash command 名称、handoff category、candidate tool/action、`verificationPath`、`onFailure`、`daily_health_check` default/full mode、Phase 9 audit handoff，以及 `recipe.mode` / `recipe.optionalModes` 静态 contract 标记边界。Phase 2 计划自检通过，success-criteria coverage 全部 PASS，checklist 结构检查输出 `PASS checklist step count: 21`，计划头部、roadmap/spec 路径、任务结构和禁止范围完整。最终整体审查子代理返回 PASS；roadmap 同步子代理返回 NO_CHANGE_NEEDED。Success criteria 覆盖证据：规格明确 `/unity` routing；P0 daily loop 覆盖 6 个基础 recipe 和 `daily_health_check` default/full mode；recipe block 可供 Phase 9 半自动审计；skill safety 与 public tool handler safety gate 分工明确；project command fallback 不是万能后门；Phase 6/7/8 handoff category 明确；未定义实际 skill 文件、MCP tools、Unity C# host 或 audit 脚本。
 
 ---
 
 ### Phase 3：Public MCP Tool Action Design
 
-**Status:** `not-started`
+**Status:** `needs-spec`
 
 **Goal:**
 逐个设计 public MCP tools 的 action、参数、完成语义、异步语义、safety metadata 和验证路径。
@@ -1542,6 +1543,8 @@ Skill/schema consistency audit：
 
 ## Change Log
 
+- 2026-05-17：完成 Phase 2 Unity Agent Skill 体系设计，记录 verification evidence，并将当前阶段推进到 Phase 3 `needs-spec`。
+- 2026-05-17：完成 Phase 2 Skill 体系设计 spec 和 plan artifact 接入；Phase 2 进入 `planned`，下一步为 `implement-plan`。
 - 2026-05-17：批准 Phase 2 skill 类型和批次划分修正 proposal；Phase 2 聚焦 P0 daily loop recipe contract，并将 project command、creation、UI/extension recipe 责任分别交接给 Phase 6、Phase 7、Phase 8。
 - 2026-05-17：完成 Phase 1 架构与边界蓝图，记录规格验证证据，并将当前阶段推进到 Phase 2 `needs-spec`。
 - 2026-05-16：创建 Unity Agent Kit roadmap。
