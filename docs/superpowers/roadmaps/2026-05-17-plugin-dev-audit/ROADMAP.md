@@ -6,6 +6,8 @@
 - **Status:** active
 - **Created:** 2026-05-17
 - **Last Sync:** 2026-05-17
+- **Current Phase:** Phase 1 — 审计标准与文件矩阵
+- **Next Action:** write-spec
 - **Owner:** user
 - **Roadmap Path:** `docs/superpowers/roadmaps/2026-05-17-plugin-dev-audit/ROADMAP.md`
 - **Target:** `plugins/plugin-dev/`
@@ -65,20 +67,28 @@
 
 ## Decisions
 
-- 2026-05-17: Roadmap 目标选择“审计 + 修复”，不是只产出报告。
-- 2026-05-17: “逐文档校验”覆盖所有 Markdown；shell/json 只做引用、安全和示例可运行性抽查。
-- 2026-05-17: 英文处理标准采用“中文主体 + 关键触发区双语化”。
-- 2026-05-17: Phase strategy 采用“先建立审计矩阵，再按风险修复”。
+| Date | Decision | Reason |
+|------|----------|--------|
+| 2026-05-17 | Roadmap 目标选择“审计 + 修复” | 用户确认不只产出报告，还要规划修复与验证 |
+| 2026-05-17 | “逐文档校验”覆盖所有 Markdown；shell/json 只做引用、安全和示例可运行性抽查 | 覆盖 reference/example 文档，同时避免把范围扩大为完整代码审计 |
+| 2026-05-17 | 英文处理标准采用“中文主体 + 关键触发区双语化” | 同时保留自动触发覆盖和中文文档一致性 |
+| 2026-05-17 | Phase strategy 采用“先建立审计矩阵，再按风险修复” | 让逐文档校验可验证、可交接 |
 
 ## Current State
 
+- **Overall Status:** active
 - **Current Phase:** Phase 1 — 审计标准与文件矩阵
-- **Next Manual Action:** `/superpowers:roadmap-management progress docs/superpowers/roadmaps/2026-05-17-plugin-dev-audit/ROADMAP.md`
+- **Current Phase Status:** needs-spec
+- **Next Manual Action:** `/superpowers:roadmap-management write-spec docs/superpowers/roadmaps/2026-05-17-plugin-dev-audit/ROADMAP.md Phase 1`
+- **Last Sync:** 2026-05-17
+- **Last Sync Evidence:** Initial roadmap
 - **Summary:** 已通过 discovery 确认目标、范围、英文保留标准和 phase strategy；roadmap 已创建，下一步进入 Phase 1 spec discussion。
 
 ## Blockers
 
-- 无。
+| Blocker | Affects | Status | Resolution |
+|---------|---------|--------|------------|
+| None | None | clear | No active blockers |
 
 ## Phase Summary
 
@@ -95,6 +105,12 @@
 ### Phase 1 — 审计标准与文件矩阵
 
 **Status:** needs-spec
+
+**Goal:**  
+定义校验标准并建立全量 Markdown 文件矩阵。
+
+**Depends on:**  
+None
 
 **Scope:**
 
@@ -130,9 +146,18 @@
 - **Implementation Summary:** pending
 - **Verification Evidence:** pending
 
+**Next Manual Action:**  
+`/superpowers:roadmap-management write-spec docs/superpowers/roadmaps/2026-05-17-plugin-dev-audit/ROADMAP.md Phase 1`
+
 ### Phase 2 — 组件入口审计
 
 **Status:** not-started
+
+**Goal:**  
+审计 manifest、commands、agents、skills 入口文件。
+
+**Depends on:**  
+Phase 1
 
 **Scope:**
 
@@ -176,9 +201,18 @@
 - **Implementation Summary:** pending
 - **Verification Evidence:** pending
 
+**Next Manual Action:**  
+`/superpowers:roadmap-management write-spec docs/superpowers/roadmaps/2026-05-17-plugin-dev-audit/ROADMAP.md Phase 2`
+
 ### Phase 3 — 支撑文档审计
 
 **Status:** not-started
+
+**Goal:**  
+逐文档审计 docs、references、examples、scripts README。
+
+**Depends on:**  
+Phase 2
 
 **Scope:**
 
@@ -221,9 +255,18 @@
 - **Implementation Summary:** pending
 - **Verification Evidence:** pending
 
+**Next Manual Action:**  
+`/superpowers:roadmap-management write-spec docs/superpowers/roadmaps/2026-05-17-plugin-dev-audit/ROADMAP.md Phase 3`
+
 ### Phase 4 — 优先级修复
 
 **Status:** not-started
+
+**Goal:**  
+按 critical / major / minor 修复审计发现。
+
+**Depends on:**  
+Phase 3
 
 **Scope:**
 
@@ -261,9 +304,18 @@
 - **Implementation Summary:** pending
 - **Verification Evidence:** pending
 
+**Next Manual Action:**  
+`/superpowers:roadmap-management write-spec docs/superpowers/roadmaps/2026-05-17-plugin-dev-audit/ROADMAP.md Phase 4`
+
 ### Phase 5 — 验证与完成证据
 
 **Status:** not-started
+
+**Goal:**  
+运行验证、记录 evidence、确认 plugin-dev 质量门通过。
+
+**Depends on:**  
+Phase 4
 
 **Scope:**
 
@@ -300,6 +352,9 @@
 - **Plan:** pending
 - **Implementation Summary:** pending
 - **Verification Evidence:** pending
+
+**Next Manual Action:**  
+`/superpowers:roadmap-management write-spec docs/superpowers/roadmaps/2026-05-17-plugin-dev-audit/ROADMAP.md Phase 5`
 
 ## Pending Proposals
 
@@ -373,4 +428,6 @@
 
 ## Change Log
 
-- 2026-05-17: Created roadmap from roadmap-management discovery for `plugins/plugin-dev` audit and repair initiative.
+| Date | Change | Evidence |
+|------|--------|----------|
+| 2026-05-17 | Created roadmap from roadmap-management discovery for `plugins/plugin-dev` audit and repair initiative | Initial roadmap |
