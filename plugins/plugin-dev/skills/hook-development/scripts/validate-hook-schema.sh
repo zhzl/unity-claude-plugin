@@ -1,10 +1,10 @@
 #!/bin/bash
-# Hook Schema Validator
-# Validates hooks.json structure and checks for common issues
+# Hook Schema 校验器
+# 校验 hooks.json 结构并检查常见问题
 
 set -euo pipefail
 
-# Usage
+# 用法
 if [ $# -eq 0 ]; then
   echo "Usage: $0 <path/to/hooks.json>"
   echo ""
@@ -27,7 +27,7 @@ fi
 echo "🔍 Validating hooks configuration: $HOOKS_FILE"
 echo ""
 
-# Check 1: Valid JSON
+# 检查 1：有效 JSON
 echo "Checking JSON syntax..."
 if ! jq empty "$HOOKS_FILE" 2>/dev/null; then
   echo "❌ Invalid JSON syntax"
@@ -35,7 +35,7 @@ if ! jq empty "$HOOKS_FILE" 2>/dev/null; then
 fi
 echo "✅ Valid JSON"
 
-# Check 2: Root structure
+# 检查 2：根结构
 echo ""
 echo "Checking root structure..."
 HOOKS_QUERY='.hooks'
@@ -65,7 +65,7 @@ for event in $(jq -r "$HOOKS_QUERY | keys[]" "$HOOKS_FILE"); do
 done
 echo "✅ Root structure valid"
 
-# Check 3: Validate each hook
+# 检查 3：校验每个 hook
 echo ""
 echo "Validating individual hooks..."
 
@@ -82,7 +82,7 @@ for event in $(jq -r "$HOOKS_QUERY | keys[]" "$HOOKS_FILE"); do
   hook_count=$(jq -r "$HOOKS_QUERY | .\"$event\" | length" "$HOOKS_FILE")
 
   for ((i=0; i<hook_count; i++)); do
-    # Check matcher exists
+    # 检查 matcher 是否存在
     matcher=$(jq -r "$HOOKS_QUERY | .\"$event\"[$i].matcher // empty" "$HOOKS_FILE")
     if [ -z "$matcher" ]; then
       echo "❌ ${event}[$i]: Missing 'matcher' field"
@@ -90,7 +90,7 @@ for event in $(jq -r "$HOOKS_QUERY | keys[]" "$HOOKS_FILE"); do
       continue
     fi
 
-    # Check hooks array exists
+    # 检查 hooks 数组是否存在
     hooks=$(jq -r "$HOOKS_QUERY | .\"$event\"[$i].hooks // empty" "$HOOKS_FILE")
     if [ -z "$hooks" ] || [ "$hooks" = "null" ]; then
       echo "❌ ${event}[$i]: Missing 'hooks' array"
@@ -98,7 +98,7 @@ for event in $(jq -r "$HOOKS_QUERY | keys[]" "$HOOKS_FILE"); do
       continue
     fi
 
-    # Validate each hook in the array
+    # 校验数组中的每个 hook
     hook_array_count=$(jq -r "$HOOKS_QUERY | .\"$event\"[$i].hooks | length" "$HOOKS_FILE")
 
     for ((j=0; j<hook_array_count; j++)); do
@@ -116,14 +116,14 @@ for event in $(jq -r "$HOOKS_QUERY | keys[]" "$HOOKS_FILE"); do
         continue
       fi
 
-      # Check type-specific fields
+      # 检查特定类型字段
       if [ "$hook_type" = "command" ]; then
         command=$(jq -r "$HOOKS_QUERY | .\"$event\"[$i].hooks[$j].command // empty" "$HOOKS_FILE")
         if [ -z "$command" ]; then
           echo "❌ ${event}[$i].hooks[$j]: Command hooks must have 'command' field"
           error_count=$((error_count + 1))
         else
-          # Check for hardcoded paths
+          # 检查硬编码路径
           if [[ "$command" == /* ]] && [[ "$command" != *'${CLAUDE_PLUGIN_ROOT}'* ]]; then
             echo "⚠️  ${event}[$i].hooks[$j]: Hardcoded absolute path detected. Consider using \${CLAUDE_PLUGIN_ROOT}"
             warning_count=$((warning_count + 1))
@@ -136,14 +136,14 @@ for event in $(jq -r "$HOOKS_QUERY | keys[]" "$HOOKS_FILE"); do
           error_count=$((error_count + 1))
         fi
 
-        # Check if prompt-based hooks are used on supported events
+        # 检查基于 prompt 的 hook 是否用于受支持事件
         if [ "$hook_type" = "prompt" ] && [ "$event" != "Stop" ] && [ "$event" != "SubagentStop" ] && [ "$event" != "UserPromptSubmit" ] && [ "$event" != "PreToolUse" ]; then
           echo "⚠️  ${event}[$i].hooks[$j]: Prompt hooks may not be fully supported on $event (best on Stop, SubagentStop, UserPromptSubmit, PreToolUse)"
           warning_count=$((warning_count + 1))
         fi
       fi
 
-      # Check timeout
+      # 检查 timeout
       timeout=$(jq -r "$HOOKS_QUERY | .\"$event\"[$i].hooks[$j].timeout // empty" "$HOOKS_FILE")
       if [ -n "$timeout" ] && [ "$timeout" != "null" ]; then
         if ! [[ "$timeout" =~ ^[0-9]+$ ]]; then

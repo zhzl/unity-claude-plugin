@@ -1,10 +1,10 @@
 #!/bin/bash
-# Hook Testing Helper
-# Tests a hook with sample input and shows output
+# Hook 测试辅助脚本
+# 使用示例输入测试 hook 并展示输出
 
 set -euo pipefail
 
-# Usage
+# 用法
 show_usage() {
   echo "Usage: $0 [options] <hook-script> <test-input.json>"
   echo ""
@@ -21,7 +21,7 @@ show_usage() {
   echo "  $0 --create-sample <event-type>"
 }
 
-# Create sample input
+# 创建示例输入
 create_sample() {
   event_type="$1"
 
@@ -209,7 +209,7 @@ EOF
   esac
 }
 
-# Parse arguments
+# 解析参数
 VERBOSE=false
 TIMEOUT=60
 
@@ -260,21 +260,21 @@ fi
 HOOK_SCRIPT="$1"
 TEST_INPUT="$2"
 
-# Validate inputs
+# 校验输入
 if [ ! -f "$HOOK_SCRIPT" ]; then
   echo "❌ Error: Hook script not found: $HOOK_SCRIPT"
   exit 1
 fi
 
-# Security: Validate hook script path doesn't contain dangerous characters
-# This prevents potential command injection through maliciously crafted paths
+# 安全性：校验 hook 脚本路径不包含危险字符
+# 这可防止通过恶意构造的路径触发潜在命令注入
 if [[ "$HOOK_SCRIPT" =~ [\;\|\&\`\$\(\)\{\}\<\>] ]]; then
   echo "❌ Error: Hook script path contains invalid characters"
   echo "   Path must not contain: ; | & \` \$ ( ) { } < >"
   exit 1
 fi
 
-# Track if we need to invoke with bash explicitly
+# 记录是否需要显式用 bash 调用
 HOOK_IS_EXECUTABLE=true
 if [ ! -x "$HOOK_SCRIPT" ]; then
   echo "⚠️  Warning: Hook script is not executable. Attempting to run with bash..."
@@ -286,15 +286,15 @@ if [ ! -f "$TEST_INPUT" ]; then
   exit 1
 fi
 
-# Security: Validate test input path doesn't contain dangerous characters
-# This mirrors the HOOK_SCRIPT validation for defense-in-depth
+# 安全性：校验测试输入路径不包含危险字符
+# 这里复用了 HOOK_SCRIPT 的校验思路，以实现纵深防御
 if [[ "$TEST_INPUT" =~ [\;\|\&\`\$\(\)\{\}\<\>] ]]; then
   echo "❌ Error: Test input path contains invalid characters"
   echo "   Path must not contain: ; | & \` \$ ( ) { } < >"
   exit 1
 fi
 
-# Validate test input JSON (with timeout for defensive consistency)
+# 校验测试输入 JSON（为保持防御一致性，带超时）
 if ! timeout 5 jq empty "$TEST_INPUT" 2>/dev/null; then
   echo "❌ Error: Test input is not valid JSON"
   exit 1
@@ -310,7 +310,7 @@ if [ "$VERBOSE" = true ]; then
   echo ""
 fi
 
-# Set up environment
+# 设置环境
 export CLAUDE_PROJECT_DIR="${CLAUDE_PROJECT_DIR:-/tmp/test-project}"
 export CLAUDE_PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(pwd)}"
 export CLAUDE_ENV_FILE="${CLAUDE_ENV_FILE:-/tmp/test-env-$$}"
@@ -323,15 +323,15 @@ if [ "$VERBOSE" = true ]; then
   echo ""
 fi
 
-# Run the hook
+# 运行 hook
 echo "▶️  Running hook (timeout: ${TIMEOUT}s)..."
 echo ""
 
 start_time=$(date +%s)
 
 set +e
-# Use proper argument passing to prevent command injection
-# Arguments are passed safely via bash -c's positional parameters
+# 使用正确的参数传递方式以防止命令注入
+# 参数会通过 bash -c 的位置参数安全传递
 if [ "$HOOK_IS_EXECUTABLE" = true ]; then
   output=$(timeout "$TIMEOUT" bash -c 'cat "$1" | "$2"' -- "$TEST_INPUT" "$HOOK_SCRIPT" 2>&1)
 else
@@ -343,7 +343,7 @@ set -e
 end_time=$(date +%s)
 duration=$((end_time - start_time))
 
-# Analyze results
+# 分析结果
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "Results:"
 echo ""
@@ -372,7 +372,7 @@ if [ -n "$output" ]; then
   echo "$output"
   echo ""
 
-  # Try to parse as JSON
+  # 尝试按 JSON 解析
   if echo "$output" | jq empty 2>/dev/null; then
     echo "Parsed JSON output:"
     echo "$output" | jq .
@@ -381,7 +381,7 @@ else
   echo "(no output)"
 fi
 
-# Check for environment file
+# 检查环境文件
 if [ -f "$CLAUDE_ENV_FILE" ]; then
   echo ""
   echo "Environment file created:"

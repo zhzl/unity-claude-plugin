@@ -1,10 +1,10 @@
 #!/bin/bash
-# Settings File Validator
-# Validates .claude/plugin-name.local.md structure
+# Settings 文件校验器
+# 校验 .claude/plugin-name.local.md 结构
 
 set -euo pipefail
 
-# Usage
+# 用法
 if [ $# -eq 0 ]; then
   echo "Usage: $0 <path/to/settings.local.md>"
   echo ""
@@ -23,21 +23,21 @@ SETTINGS_FILE="$1"
 echo "🔍 Validating settings file: $SETTINGS_FILE"
 echo ""
 
-# Check 1: File exists
+# 检查 1：文件存在
 if [ ! -f "$SETTINGS_FILE" ]; then
   echo "❌ File not found: $SETTINGS_FILE"
   exit 1
 fi
 echo "✅ File exists"
 
-# Check 2: File is readable
+# 检查 2：文件可读
 if [ ! -r "$SETTINGS_FILE" ]; then
   echo "❌ File is not readable"
   exit 1
 fi
 echo "✅ File is readable"
 
-# Check 3: Has valid opening frontmatter markers
+# 检查 3：具有有效的 frontmatter 起始标记
 FIRST_LINE=$(head -n 1 "$SETTINGS_FILE")
 if [ "$FIRST_LINE" != "---" ]; then
   echo "❌ Invalid frontmatter: line 1 must be ---"
@@ -56,7 +56,7 @@ fi
 
 echo "✅ Frontmatter markers present"
 
-# Check 4: Extract and validate frontmatter
+# 检查 4：提取并校验 frontmatter
 FRONTMATTER=$(awk '
   NR == 1 { next }
   /^---$/ { exit }
@@ -69,19 +69,19 @@ if [ -z "$FRONTMATTER" ]; then
 fi
 echo "✅ Frontmatter not empty"
 
-# Check 5: Frontmatter has valid YAML-like structure
+# 检查 5：frontmatter 具有有效的类 YAML 结构
 if ! printf '%s\n' "$FRONTMATTER" | grep -q ':'; then
   echo "⚠️  Warning: Frontmatter has no key:value pairs"
 fi
 
-# Check 6: Look for common fields
+# 检查 6：查找常见字段
 echo ""
 echo "Detected fields:"
 while IFS=':' read -r key value; do
   echo "  - $key: ${value:0:50}"
 done < <(printf '%s\n' "$FRONTMATTER" | grep '^[a-z_][a-z0-9_]*:' || true)
 
-# Check 7: Validate common fields
+# 检查 7：校验常见字段
 VALUE=$(printf '%s\n' "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//' || true)
 if [ -n "$VALUE" ] && [ "$VALUE" != "true" ] && [ "$VALUE" != "false" ]; then
   echo "⚠️  Field 'enabled' should be boolean (true/false), got: $VALUE"
@@ -92,7 +92,7 @@ if [ -n "$VALIDATION_MODE" ] && [ "$VALIDATION_MODE" != "strict" ] && [ "$VALIDA
   echo "⚠️  Field 'validation_mode' should be strict, standard, or lenient, got: $VALIDATION_MODE"
 fi
 
-# Check 8: Check body exists
+# 检查 8：检查正文是否存在
 BODY=$(awk '
   NR == 1 {
     if ($0 == "---") {

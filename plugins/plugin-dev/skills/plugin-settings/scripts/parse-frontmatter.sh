@@ -1,14 +1,14 @@
 #!/bin/bash
-# Frontmatter Parser Utility
-# Extracts YAML frontmatter from .local.md files
+# Frontmatter 解析工具
+# 从 .local.md 文件中提取 YAML frontmatter
 #
-# Note: This script assumes the settings file is stable (not being written to).
-# Settings values are read at hook/command execution time; restart Claude Code only
-# after changing hook registration or plugin configuration.
+# 注意：此脚本假设 settings 文件处于稳定状态（未被写入中）。
+# settings 值会在 hook/command 执行时读取；仅在修改 hook 注册或 plugin 配置后
+# 才需要重启 Claude Code。
 
 set -euo pipefail
 
-# Usage
+# 用法
 show_usage() {
   echo "Usage: $0 <settings-file.md> [field-name]"
   echo ""
@@ -31,13 +31,13 @@ fi
 FILE="$1"
 FIELD="${2:-}"
 
-# Validate file
+# 校验文件
 if [ ! -f "$FILE" ]; then
   echo "Error: File not found: $FILE" >&2
   exit 1
 fi
 
-# Extract frontmatter from the first YAML block only
+# 仅从首个 YAML 块中提取 frontmatter
 if [ "$(head -n 1 "$FILE")" != "---" ]; then
   echo "Error: File must start with frontmatter marker ---" >&2
   exit 1
@@ -59,13 +59,13 @@ if [ -z "$FRONTMATTER" ]; then
   exit 1
 fi
 
-# If no field specified, output all frontmatter
+# 如果未指定字段，则输出全部 frontmatter
 if [ -z "$FIELD" ]; then
   echo "$FRONTMATTER"
   exit 0
 fi
 
-# Extract specific field
+# 提取指定字段
 if [[ ! "$FIELD" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
   echo "Error: Invalid field name '$FIELD'" >&2
   exit 1

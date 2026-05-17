@@ -1,20 +1,20 @@
 #!/bin/bash
-# Example SessionStart hook for loading project context
-# This script detects project type and sets environment variables
+# 用于加载项目上下文的 SessionStart hook 示例
+# 此脚本会检测项目类型并设置环境变量
 
 set -euo pipefail
 
-# Navigate to project directory
+# 切换到项目目录
 cd "$CLAUDE_PROJECT_DIR" || exit 1
 
 echo "Loading project context..."
 
-# Detect project type and set environment
+# 检测项目类型并设置环境
 if [ -f "package.json" ]; then
   echo "📦 Node.js project detected"
   echo "export PROJECT_TYPE=nodejs" >> "$CLAUDE_ENV_FILE"
 
-  # Check if TypeScript
+  # 检查是否使用 TypeScript
   if [ -f "tsconfig.json" ]; then
     echo "export USES_TYPESCRIPT=true" >> "$CLAUDE_ENV_FILE"
   fi
@@ -46,7 +46,7 @@ else
   echo "export PROJECT_TYPE=unknown" >> "$CLAUDE_ENV_FILE"
 fi
 
-# Check for CI configuration
+# 检查是否存在 CI 配置
 if [ -d ".github/workflows" ] || [ -f ".gitlab-ci.yml" ] || [ -f ".circleci/config.yml" ]; then
   echo "export HAS_CI=true" >> "$CLAUDE_ENV_FILE"
 fi
