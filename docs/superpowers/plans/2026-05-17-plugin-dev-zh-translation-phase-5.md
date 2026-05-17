@@ -24,6 +24,7 @@
 - 主范围外只允许修复最终一致性扫描发现的 code fence 外明显用户可读英文，并必须记录路径、原因和边界判断。
 - 不新增测试框架、校验器、CLI 命令或自动同步机制。
 - 不触碰当前工作区中与 `plugins/plugin-dev` 中文化无关的 Unity Agent Kit 变更。
+- 后续所有累计验证都使用任务 1 记录的 `PHASE5_BASE`，不要在中途创建检查点提交后改用新的 `HEAD` 作为基线。
 
 ## 提交策略
 
@@ -118,15 +119,17 @@ all_targets = json_files + shell_files
 missing = [p for p in all_targets if not Path(p).exists()]
 if missing:
     raise SystemExit('missing Phase 5 target files: ' + ', '.join(missing))
-changed = subprocess.check_output(['git', 'diff', '--name-only', '--', 'plugins/plugin-dev'], text=True).splitlines()
+changed = subprocess.check_output(['git', 'diff', '--name-only', 'HEAD', '--', 'plugins/plugin-dev'], text=True).splitlines()
 prechanged = [p for p in changed if p in all_targets]
 if prechanged:
     raise SystemExit('Phase 5 target files already modified before implementation: ' + ', '.join(prechanged))
+base = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
 print('baseline ok: 5 JSON targets, 14 shell targets, no pre-existing Phase 5 target diffs')
+print(f'Phase 5 base commit: {base}')
 PY
 ```
 
-预期：输出 `baseline ok: 5 JSON targets, 14 shell targets, no pre-existing Phase 5 target diffs`。如果失败，停止并向用户确认是否基于现有修改继续。
+预期：先输出 `baseline ok: 5 JSON targets, 14 shell targets, no pre-existing Phase 5 target diffs`，再输出 `Phase 5 base commit: <sha>`。记录该 SHA 并在后续步骤中设为 `PHASE5_BASE` 供累计验证使用。如果失败，停止并向用户确认是否基于现有修改继续。
 
 - [ ] **步骤 2：更新 roadmap 的 Phase 5 spec/plan artifact 和 planned 状态**
 
@@ -258,16 +261,20 @@ def compare(base, cur, path, key_path=()):
         return
     raise SystemExit(f'unexpected JSON value change at {path}:{".".join(key_path)}')
 
+phase5_base = subprocess.check_output(['bash', '-lc', 'printf "%s" "$PHASE5_BASE"'], text=True, encoding='utf-8').strip()
+if not phase5_base:
+    raise SystemExit('PHASE5_BASE is required; set it to the SHA recorded in 任务 1 步骤 1')
+
 for path in paths:
     current = json.loads(Path(path).read_text(encoding='utf-8'))
-    base_text = subprocess.check_output(['git', 'show', f'HEAD:{path}'], text=True, encoding='utf-8')
+    base_text = subprocess.check_output(['git', 'show', f'{phase5_base}:{path}'], text=True, encoding='utf-8')
     base = json.loads(base_text)
     compare(base, current, path)
 print('json ok: 5 files parse and only allowed _comment/description values changed')
 PY
 ```
 
-预期：输出 `json ok: 5 files parse and only allowed _comment/description values changed`。
+预期：先用任务 1 记录的 SHA 设置 `PHASE5_BASE=<sha>`，再输出 `json ok: 5 files parse and only allowed _comment/description values changed`。
 
 - [ ] **步骤 3：提交检查点（仅用户明确授权时执行）**
 
@@ -348,9 +355,13 @@ paths = [
     'plugins/plugin-dev/skills/command-development/scripts/check-frontmatter.sh',
     'plugins/plugin-dev/skills/command-development/scripts/validate-command.sh',
 ]
+phase5_base = subprocess.check_output(['bash', '-lc', 'printf "%s" "$PHASE5_BASE"'], text=True, encoding='utf-8').strip()
+if not phase5_base:
+    raise SystemExit('PHASE5_BASE is required; set it to the SHA recorded in 任务 1 步骤 1')
+
 for path in paths:
     subprocess.check_call(['bash', '-n', path])
-    diff = subprocess.check_output(['git', 'diff', '--', path], text=True, encoding='utf-8')
+    diff = subprocess.check_output(['git', 'diff', phase5_base, '--', path], text=True, encoding='utf-8')
     for line in diff.splitlines():
         if line.startswith(('+++', '---', '@@')):
             continue
@@ -363,7 +374,7 @@ print('agent/command shell ok: syntax valid and only comments changed')
 PY
 ```
 
-预期：输出 `agent/command shell ok: syntax valid and only comments changed`。
+预期：先用任务 1 记录的 SHA 设置 `PHASE5_BASE=<sha>`，再输出 `agent/command shell ok: syntax valid and only comments changed`。
 
 - [ ] **步骤 4：提交检查点（仅用户明确授权时执行）**
 
@@ -456,9 +467,13 @@ paths = [
     'plugins/plugin-dev/skills/plugin-settings/scripts/parse-frontmatter.sh',
     'plugins/plugin-dev/skills/plugin-settings/scripts/validate-settings.sh',
 ]
+phase5_base = subprocess.check_output(['bash', '-lc', 'printf "%s" "$PHASE5_BASE"'], text=True, encoding='utf-8').strip()
+if not phase5_base:
+    raise SystemExit('PHASE5_BASE is required; set it to the SHA recorded in 任务 1 步骤 1')
+
 for path in paths:
     subprocess.check_call(['bash', '-n', path])
-    diff = subprocess.check_output(['git', 'diff', '--', path], text=True, encoding='utf-8')
+    diff = subprocess.check_output(['git', 'diff', phase5_base, '--', path], text=True, encoding='utf-8')
     for line in diff.splitlines():
         if line.startswith(('+++', '---', '@@')):
             continue
@@ -471,7 +486,7 @@ print('hook/plugin-settings shell ok: syntax valid and only comments changed')
 PY
 ```
 
-预期：输出 `hook/plugin-settings shell ok: syntax valid and only comments changed`。
+预期：先用任务 1 记录的 SHA 设置 `PHASE5_BASE=<sha>`，再输出 `hook/plugin-settings shell ok: syntax valid and only comments changed`。
 
 - [ ] **步骤 4：提交检查点（仅用户明确授权时执行）**
 
@@ -655,7 +670,10 @@ main_scope = {
     'plugins/plugin-dev/skills/plugin-settings/scripts/parse-frontmatter.sh',
     'plugins/plugin-dev/skills/plugin-settings/scripts/validate-settings.sh',
 }
-changed = subprocess.check_output(['git', 'diff', '--name-status', '--', 'plugins/plugin-dev'], text=True).splitlines()
+phase5_base = subprocess.check_output(['bash', '-lc', 'printf "%s" "$PHASE5_BASE"'], text=True, encoding='utf-8').strip()
+if not phase5_base:
+    raise SystemExit('PHASE5_BASE is required; set it to the SHA recorded in 任务 1 步骤 1')
+changed = subprocess.check_output(['git', 'diff', '--name-status', phase5_base, '--', 'plugins/plugin-dev'], text=True).splitlines()
 plugin_paths = []
 non_modify_statuses = []
 for row in changed:
@@ -675,7 +693,7 @@ for path in outside_main:
 PY
 ```
 
-预期：输出主范围修改数量和主范围外漏网修复数量；若出现主范围外路径，必须与任务 5 的 `Leak repair record` 一一对应。
+预期：输出 against `PHASE5_BASE` 的主范围修改数量和主范围外漏网修复数量；若出现主范围外路径，必须与任务 5 的 `Leak repair record` 一一对应。
 
 - [ ] **步骤 2：验证 5 个 JSON 文件 parse 和结构保护**
 
@@ -709,9 +727,12 @@ paths = [
 ]
 modified = []
 checked_clean = []
+phase5_base = subprocess.check_output(['bash', '-lc', 'printf "%s" "$PHASE5_BASE"'], text=True, encoding='utf-8').strip()
+if not phase5_base:
+    raise SystemExit('PHASE5_BASE is required; set it to the SHA recorded in 任务 1 步骤 1')
 for path in paths:
     subprocess.check_call(['bash', '-n', path])
-    diff = subprocess.check_output(['git', 'diff', '--', path], text=True, encoding='utf-8')
+    diff = subprocess.check_output(['git', 'diff', phase5_base, '--', path], text=True, encoding='utf-8')
     if diff.strip():
         modified.append(path)
     else:
@@ -728,7 +749,7 @@ print(f'shell ok: 14 files syntax valid; {len(modified)} modified comment-only; 
 PY
 ```
 
-预期：输出 `shell ok: 14 files syntax valid; ... modified comment-only; ... checked unchanged`。
+预期：先用任务 1 记录的 SHA 设置 `PHASE5_BASE=<sha>`，再输出 `shell ok: 14 files syntax valid; ... modified comment-only; ... checked unchanged`。
 
 - [ ] **步骤 4：验证 shell 输出文本保持原文**
 
@@ -756,18 +777,21 @@ paths = [
     'plugins/plugin-dev/skills/plugin-settings/scripts/validate-settings.sh',
 ]
 keywords = ('echo', 'printf', 'Usage', 'usage', 'Error', 'ERROR', 'Warning', 'WARNING', 'Success', 'Failed', 'failed', 'passed', 'cat <<')
+phase5_base = subprocess.check_output(['bash', '-lc', 'printf "%s" "$PHASE5_BASE"'], text=True, encoding='utf-8').strip()
+if not phase5_base:
+    raise SystemExit('PHASE5_BASE is required; set it to the SHA recorded in 任务 1 步骤 1')
 for path in paths:
-    base = subprocess.check_output(['git', 'show', f'HEAD:{path}'], text=True, encoding='utf-8').splitlines()
+    base = subprocess.check_output(['git', 'show', f'{phase5_base}:{path}'], text=True, encoding='utf-8').splitlines()
     cur = Path(path).read_text(encoding='utf-8').splitlines()
     base_outputs = [line for line in base if any(k in line for k in keywords)]
     cur_outputs = [line for line in cur if any(k in line for k in keywords)]
     if base_outputs != cur_outputs:
         raise SystemExit(f'shell output-like lines changed: {path}')
-print('shell output text ok: echo/printf/usage/error/status-like lines match HEAD')
+print('shell output text ok: echo/printf/usage/error/status-like lines match PHASE5_BASE')
 PY
 ```
 
-预期：输出 `shell output text ok: echo/printf/usage/error/status-like lines match HEAD`。
+预期：先用任务 1 记录的 SHA 设置 `PHASE5_BASE=<sha>`，再输出 `shell output text ok: echo/printf/usage/error/status-like lines match PHASE5_BASE`。
 
 - [ ] **步骤 5：验证格式没有 whitespace error**
 
@@ -785,10 +809,10 @@ git diff --check
 
 ```text
 Phase 5 evidence draft:
-- Scope: <任务 6 步骤 1 输出摘要；主范围修改数量；漏网修复数量和路径>
+- Scope: <任务 6 步骤 1 输出摘要；against PHASE5_BASE 的主范围修改数量；漏网修复数量和路径>
 - JSON: json ok: 5 files parse and only allowed _comment/description values changed
 - Shell syntax/comment guard: shell ok: 14 files syntax valid; <N> modified comment-only; <M> checked unchanged
-- Shell output guard: shell output text ok: echo/printf/usage/error/status-like lines match HEAD
+- Shell output guard: shell output text ok: echo/printf/usage/error/status-like lines match PHASE5_BASE
 - Final natural-language scan: <任务 5 最终扫描结论；合理保留英文分类；已修复漏网项或需另行决策项>
 - Format: git diff --check passed; <如有 LF/CRLF 警告则说明无 whitespace error>
 ```
