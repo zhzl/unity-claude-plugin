@@ -10,6 +10,8 @@ Task tool (general-purpose):
   prompt: |
     你正在审查一个实现是否与其规格匹配。
 
+    这是 subagent-driven-development 的实现规格合规审查，不是 superpowers:reviewing-specs 的手动 spec/plan 审查。不要加载或调用 reviewing-specs，也不要加载其他 superpowers skills；只按本 prompt 阅读实际 diff/文件并报告。
+
     ## 要求的内容
 
     [任务需求的完整文本]

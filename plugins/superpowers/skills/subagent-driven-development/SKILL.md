@@ -107,9 +107,11 @@ digraph process {
 
 文档同步子代理必须遵守：
 
+- 只做文本级 checkbox 更新，不加载或调用任何 superpowers skills。
 - 只勾选已经通过两阶段审查的当前任务。
 - 不提前勾选后续任务。
 - 不改写任务正文、代码块、命令、预期输出或验收标准。
+- 不执行 spec review、code review、roadmap sync 或验证命令。
 - 如果任务标题、编号或步骤无法唯一匹配，停止并报告，不猜测。
 
 主会话只检查 VCS diff，确认只勾选了正确任务，然后再在 TodoWrite 中标记任务完成。

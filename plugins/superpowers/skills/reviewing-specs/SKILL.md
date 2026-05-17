@@ -1,6 +1,6 @@
 ---
 name: reviewing-specs
-description: Use only when the user explicitly requests a manual review of superpowers design discussions, design specs, implementation plans, or spec/plan consistency.
+description: Use only when the user explicitly invokes /superpowers:reviewing-specs or asks to use reviewing-specs for manual pre-spec review or spec/plan consistency review of superpowers artifacts. Do not use for ordinary code review, subagent-driven spec compliance review, roadmap sync validation, implementation verification, or checkbox/documentation sync.
 ---
 
 # 审查 Superpowers 规格
@@ -15,16 +15,14 @@ description: Use only when the user explicitly requests a manual review of super
 
 ## 手动触发要求
 
-只有用户明确要求使用本 skill 或明确要求以下审查时才使用：
+这是显式调用型 skill。只有用户明确写出以下意图时才使用：
 
-- pre-spec review
-- 写 spec 前审查
-- 需求质疑
-- 架构/性能审查
-- spec/plan consistency review
-- 检查 spec 和 plan 是否一致
+- `/superpowers:reviewing-specs`
+- `use reviewing-specs` / `使用 reviewing-specs`
+- “按 reviewing-specs 流程做手动审查”
+- 明确要求 `pre-spec review` 或 `spec/plan consistency review`，且上下文是 superpowers 设计/spec/plan artifact 的人工审查
 
-如果用户只是普通讨论 roadmap、spec、plan、实现或代码，不要自动使用本 skill。
+如果用户只是普通讨论 roadmap、spec、plan、实现或代码，不要自动使用本 skill。不要因为 subagent prompt 中出现“规格审查”“spec review”“plan”“roadmap”“consistency”等词就触发本 skill。
 
 ## 强制 subagent 规则
 
@@ -58,6 +56,8 @@ description: Use only when the user explicitly requests a manual review of super
 | 设计已收敛，spec 尚未写 | 派发 subagent 执行 Pre-spec review |
 | spec 和 plan 都已完成 | 派发 subagent 执行 Spec/plan consistency review |
 | 已进入代码实现或代码已完成 | 不使用本 skill；改用代码审查或完成前验证流程 |
+| subagent-driven-development 的规格合规审查 | 不使用本 skill；按实现计划的规格合规审查 prompt 执行 |
+| roadmap 同步、completion evidence、plan checkbox 或文档同步检查 | 不使用本 skill；只做对应文本/状态验证 |
 | 用户要求润色文档 | 不使用本 skill |
 | subagent 派发工具不可用 | 停止；不内联审查 |
 

@@ -25,12 +25,14 @@
 - `docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md` — Phase 1 架构与边界蓝图规格。
 - `docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md` — Unity Agent Kit 长期 roadmap current truth。
 
-### 本计划执行时修改
+### 本计划执行时验证
 
-- `docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md` — 回填 Phase 1 Spec/Plan artifact，更新 Phase 1 状态为 `planned`，并更新 current state / blocker / next manual action。
+- `docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md` — 验证 Phase 1 已按当前新版 roadmap 表格记录 `planned`、Spec/Plan artifact、pending verification 和下一步 action。
+- `docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md` — 验证 Phase 1 架构与边界蓝图规格质量。
 
 ### 本计划执行时不修改
 
+- 不修改 `docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md`，除非新版表格检查发现具体缺失并经主会话确认。
 - 不修改 `docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md`，除非验证命令发现具体缺陷并经主会话确认。
 - 不修改 `references/unity-mcp-v2` 或 `references/Unity-Skills`。
 - 不创建 `plugins/unity-agent-kit/` 或 `unity/Assets/UnityAgentKit/`。
@@ -39,12 +41,12 @@
 
 ---
 
-## 任务 1：用失败检查确认 roadmap 尚未链接 Phase 1 artifacts
+## 任务 1：验证 roadmap 已按新版表格链接 Phase 1 artifacts
 
 **文件：**
 - 读取：`docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md`
 
-- [ ] **步骤 1：运行 artifact 链接检查并确认当前失败**
+- [x] **步骤 1：运行新版 artifact 链接检查并确认通过**
 
 运行：
 
@@ -54,170 +56,133 @@ from pathlib import Path
 roadmap = Path('docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md')
 text = roadmap.read_text(encoding='utf-8')
 required = [
-    '| 1 | 架构与边界蓝图 | `planned` |',
+    '| Phase | Status | Goal | Spec | Plan | Verification | Next |',
+    '| Phase 1 — 架构与边界蓝图 | planned | 定义 Unity Agent Kit 总体结构和硬约束 | `docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md` | `docs/superpowers/plans/2026-05-16-unity-agent-kit-phase-1-architecture-boundary.md` | pending | implement-plan |',
     '**Status:** `planned`',
     '- **Spec:** `docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md`',
     '- **Plan:** `docs/superpowers/plans/2026-05-16-unity-agent-kit-phase-1-architecture-boundary.md`',
+    '`/superpowers:roadmap-management implement-plan docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md Phase 1`',
 ]
 missing = [item for item in required if item not in text]
 if missing:
-    print('FAIL Phase 1 roadmap artifacts/status not linked:')
+    print('FAIL Phase 1 roadmap artifacts/status not linked in current table format:')
     for item in missing:
         print('-', item)
     raise SystemExit(1)
-print('PASS Phase 1 roadmap artifacts/status linked')
-PY
-```
-
-预期：FAIL，输出包含：
-
-```text
-FAIL Phase 1 roadmap artifacts/status not linked:
-```
-
-- [ ] **步骤 2：记录失败原因**
-
-确认失败原因只来自 Phase 1 roadmap artifact/status 尚未回填。如果失败原因是文件不存在或编码错误，停止并报告主会话，不继续编辑 roadmap。
-
----
-
-## 任务 2：回填 Phase 1 roadmap artifact 并推进到 planned
-
-**文件：**
-- 修改：`docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md`
-- 验证：`docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md`
-
-- [ ] **步骤 1：更新 Phase Summary 中 Phase 1 状态**
-
-在 `docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md` 中替换：
-
-```markdown
-| 1 | 架构与边界蓝图 | `needs-spec` | 定义 Unity Agent Kit 总体结构和硬约束 |
-```
-
-为：
-
-```markdown
-| 1 | 架构与边界蓝图 | `planned` | 定义 Unity Agent Kit 总体结构和硬约束 |
-```
-
-- [ ] **步骤 2：更新 Phase 1 detail 状态**
-
-在 Phase 1 detail 中替换：
-
-```markdown
-**Status:** `needs-spec`
-```
-
-为：
-
-```markdown
-**Status:** `planned`
-```
-
-- [ ] **步骤 3：回填 Phase 1 artifact 路径**
-
-在 Phase 1 的 `Artifacts` 列表中替换：
-
-```markdown
-- **Spec:** pending
-- **Plan:** pending
-- **Implementation Summary:** pending
-- **Verification Evidence:** pending
-```
-
-为：
-
-```markdown
-- **Spec:** `docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md`
-- **Plan:** `docs/superpowers/plans/2026-05-16-unity-agent-kit-phase-1-architecture-boundary.md`
-- **Implementation Summary:** pending
-- **Verification Evidence:** pending
-```
-
-- [ ] **步骤 4：更新 Current State 和 Next Manual Action**
-
-在 `Current State` 中替换：
-
-```markdown
-- 当前阶段：Phase 1 需要编写 spec。
-- **Next Manual Action:** `/superpowers:roadmap-management write-spec docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md Phase 1`
-- 当前不实现代码。
-```
-
-为：
-
-```markdown
-- 当前阶段：Phase 1 已完成 spec 和 plan，等待按 plan 执行验证与完成证据交接。
-- **Next Manual Action:** `/superpowers:roadmap-management implement-plan docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md Phase 1`
-- 当前不实现代码；Phase 1 plan 只用于文档验证与交接。
-```
-
-- [ ] **步骤 5：更新 Phase 1 blocker**
-
-在 `Blockers` 中替换：
-
-```markdown
-- 尚未为 Phase 1 编写 spec。
-```
-
-为：
-
-```markdown
-- Phase 1 尚未完成 plan 执行和 Verification Evidence 记录。
-```
-
-- [ ] **步骤 6：追加 Change Log**
-
-在 `Change Log` 末尾追加：
-
-```markdown
-- 2026-05-16：回填 Phase 1 spec 和 plan artifact，Phase 1 进入 `planned` 状态。
-```
-
-- [ ] **步骤 7：重新运行 artifact 链接检查并确认通过**
-
-运行：
-
-```bash
-PYTHONIOENCODING=utf-8 python - <<'PY'
-from pathlib import Path
-roadmap = Path('docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md')
-text = roadmap.read_text(encoding='utf-8')
-required = [
-    '| 1 | 架构与边界蓝图 | `planned` |',
-    '**Status:** `planned`',
-    '- **Spec:** `docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md`',
-    '- **Plan:** `docs/superpowers/plans/2026-05-16-unity-agent-kit-phase-1-architecture-boundary.md`',
-    '- Phase 1 尚未完成 plan 执行和 Verification Evidence 记录。',
-    '- 2026-05-16：回填 Phase 1 spec 和 plan artifact，Phase 1 进入 `planned` 状态。',
-]
-missing = [item for item in required if item not in text]
-if missing:
-    print('FAIL Phase 1 roadmap artifacts/status not linked:')
-    for item in missing:
-        print('-', item)
-    raise SystemExit(1)
-print('PASS Phase 1 roadmap artifacts/status linked')
+print('PASS Phase 1 roadmap artifacts/status linked in current table format')
 PY
 ```
 
 预期：PASS，输出：
 
 ```text
-PASS Phase 1 roadmap artifacts/status linked
+PASS Phase 1 roadmap artifacts/status linked in current table format
 ```
 
-- [ ] **步骤 8：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 2：记录新版表格检查结论**
+
+确认检查覆盖当前 `Phase Summary` 表格格式、Phase 1 detail 状态、Spec/Plan artifact 和 `implement-plan` 下一步命令。若失败原因是文件不存在、编码错误或任一 required 项缺失，停止并报告主会话；不要回退到旧版 `| 1 | 架构与边界蓝图 | ... |` 表格格式。
+
+---
+
+## 任务 2：确认 Phase 1 planned 状态无需重复回填
+
+**文件：**
+- 读取：`docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md`
+- 验证：`docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md`
+
+- [ ] **步骤 1：验证 Current State 和 Blockers 使用新版状态**
 
 运行：
 
 ```bash
-git add docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md
-git commit -m "docs: link unity agent kit phase 1 artifacts"
+PYTHONIOENCODING=utf-8 python - <<'PY'
+from pathlib import Path
+roadmap = Path('docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md')
+text = roadmap.read_text(encoding='utf-8')
+required = [
+    '- 当前阶段：Phase 1 已完成 spec 和 plan，等待执行 plan。',
+    '- **Next Manual Action:** `/superpowers:roadmap-management implement-plan docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md Phase 1`',
+    '- 当前不实现代码。',
+    '| Blocker | Affects | Status | Resolution |',
+    '| None | None | clear | No active blockers |',
+]
+missing = [item for item in required if item not in text]
+if missing:
+    print('FAIL Phase 1 roadmap current state/blockers not in current format:')
+    for item in missing:
+        print('-', item)
+    raise SystemExit(1)
+print('PASS Phase 1 roadmap current state/blockers use current format')
+PY
 ```
 
-预期：只有用户明确授权提交时才执行；否则跳过。
+预期：PASS，输出：
+
+```text
+PASS Phase 1 roadmap current state/blockers use current format
+```
+
+- [ ] **步骤 2：验证 Phase 1 completion 字段仍保持 pending**
+
+运行：
+
+```bash
+PYTHONIOENCODING=utf-8 python - <<'PY'
+from pathlib import Path
+roadmap = Path('docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md')
+text = roadmap.read_text(encoding='utf-8')
+required = [
+    '| Phase 1 — 架构与边界蓝图 | planned | 定义 Unity Agent Kit 总体结构和硬约束 | `docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md` | `docs/superpowers/plans/2026-05-16-unity-agent-kit-phase-1-architecture-boundary.md` | pending | implement-plan |',
+    '- **Implementation Summary:** pending',
+    '- **Verification Evidence:** pending',
+]
+forbidden = [
+    '| Phase 1 — 架构与边界蓝图 | completed |',
+    '**Status:** `completed`',
+]
+missing = [item for item in required if item not in text]
+forbidden_hits = [item for item in forbidden if item in text]
+if missing or forbidden_hits:
+    if missing:
+        print('FAIL missing pending completion fields:')
+        for item in missing:
+            print('-', item)
+    if forbidden_hits:
+        print('FAIL Phase 1 was marked completed during plan execution:')
+        for item in forbidden_hits:
+            print('-', item)
+    raise SystemExit(1)
+print('PASS Phase 1 remains planned with pending completion evidence')
+PY
+```
+
+预期：PASS，输出：
+
+```text
+PASS Phase 1 remains planned with pending completion evidence
+```
+
+- [ ] **步骤 3：确认不编辑 roadmap**
+
+运行：
+
+```bash
+git diff -- docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md
+```
+
+预期：无输出。若出现 diff，确认它是否由主会话明确批准；未批准时停止并报告，不要提交。
+
+- [ ] **步骤 4：提交检查点（仅用户明确授权时执行）**
+
+本任务默认不修改文件。如果主会话明确批准并修改了 roadmap，运行：
+
+```bash
+git add docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md
+git commit -m "docs: sync unity agent kit phase 1 roadmap state"
+```
+
+预期：只有用户明确授权提交且 roadmap 有实际修改时才执行；否则跳过。
 
 ---
 
@@ -226,7 +191,7 @@ git commit -m "docs: link unity agent kit phase 1 artifacts"
 **文件：**
 - 读取：`docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md`
 
-- [ ] **步骤 1：运行规格自检命令**
+- [x] **步骤 1：运行规格自检命令**
 
 运行：
 
@@ -300,11 +265,11 @@ PASS contains: 默认持久化与保存范围
 PASS contains: Phase Handoff Table
 ```
 
-- [ ] **步骤 2：如果规格自检失败，停止执行**
+- [x] **步骤 2：如果规格自检失败，停止执行**
 
 如果步骤 1 输出任何 `FAIL`，不要继续记录 completion evidence。将失败输出交给主会话，由主会话决定是否修改 spec。
 
-- [ ] **步骤 3：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 3：提交检查点（仅用户明确授权时执行）**
 
 本任务默认不修改文件。如果步骤 1 通过且没有文件变化，不执行 commit。如果主会话批准了修复并修改了 spec，运行：
 
@@ -323,7 +288,7 @@ git commit -m "docs: refine unity agent kit phase 1 spec"
 - 读取：`docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md`
 - 读取：`docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md`
 
-- [ ] **步骤 1：整理 Implementation Summary**
+- [x] **步骤 1：整理 Implementation Summary**
 
 向主会话报告以下 Implementation Summary 文本，不直接写入 roadmap completed 字段：
 
@@ -331,7 +296,7 @@ git commit -m "docs: refine unity agent kit phase 1 spec"
 Phase 1 完成 Unity Agent Kit 架构与边界蓝图规格，明确新插件 identity、四层主干、Contract Kernel、public/internal/host 边界、v2 candidate baseline 采纳规则、安全/完成语义/持久化/target/artifact/result/error 边界，以及 Phase 2-9 的交接输入。
 ```
 
-- [ ] **步骤 2：整理 Verification Evidence**
+- [x] **步骤 2：整理 Verification Evidence**
 
 向主会话报告以下 Verification Evidence 模板，并填入任务 3 的实际命令输出摘要：
 
@@ -343,7 +308,7 @@ Phase 1 完成 Unity Agent Kit 架构与边界蓝图规格，明确新插件 ide
 - 覆盖 Phase 1 success criteria：规格明确 Unity Agent Kit 不是单纯 MCP 工具；明确不采用“一 operation 一 MCP tool”；明确 TS 与 Unity C# 职责；明确 Resources、artifacts、skills、public tools 和 internal operations 边界；明确 Phase 2-9 设计输入。
 ```
 
-- [ ] **步骤 3：生成下一条手动命令建议**
+- [x] **步骤 3：生成下一条手动命令建议**
 
 向主会话报告：
 
@@ -353,7 +318,7 @@ Phase 1 完成 Unity Agent Kit 架构与边界蓝图规格，明确新插件 ide
 
 并说明需要把步骤 1 和步骤 2 的具体 evidence 交给 `complete-phase`。
 
-- [ ] **步骤 4：确认不直接完成 phase**
+- [x] **步骤 4：确认不直接完成 phase**
 
 确认本计划执行阶段不直接把 Phase 1 标记为 `completed`。Phase completion 必须由 `roadmap-management complete-phase` 基于具体 Verification Evidence 完成。
 
@@ -364,7 +329,7 @@ Phase 1 完成 Unity Agent Kit 架构与边界蓝图规格，明确新插件 ide
 **文件：**
 - 读取：Git 工作区状态
 
-- [ ] **步骤 1：查看工作区状态**
+- [x] **步骤 1：查看工作区状态**
 
 运行：
 
@@ -374,7 +339,7 @@ git status --short
 
 预期：至少能看到本计划相关文件变更；如果出现无关文件变更，不要删除或覆盖，向主会话报告。
 
-- [ ] **步骤 2：查看相关 diff 摘要**
+- [x] **步骤 2：查看相关 diff 摘要**
 
 运行：
 
@@ -384,7 +349,7 @@ git diff -- docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md docs
 
 预期：diff 只包含 Phase 1 spec、Phase 1 plan 和 roadmap Phase 1 artifact/status 同步相关变化。
 
-- [ ] **步骤 3：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 3：提交检查点（仅用户明确授权时执行）**
 
 如果用户明确授权提交，并且前面任务已经通过验证，运行：
 

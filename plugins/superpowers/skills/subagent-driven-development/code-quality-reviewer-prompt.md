@@ -6,6 +6,8 @@
 
 **仅在规格合规性审查通过后才分派。**
 
+这是普通代码质量审查，不是 superpowers:reviewing-specs 的手动 spec/plan 审查。审查子智能体不应加载 reviewing-specs；除非 prompt 明确要求某个技能，否则按审查模板直接检查 diff/文件。
+
 ```
 Task tool (superpowers:code-reviewer):
   使用模板 requesting-code-review/code-reviewer.md
