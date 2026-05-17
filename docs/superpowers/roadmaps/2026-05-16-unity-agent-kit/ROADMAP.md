@@ -400,7 +400,41 @@ Skills 是调用指导层。
 
 不照搬 Unity-Skills，而是以 **用户任务优先，Unity API 领域辅助** 设计。
 
-### 16. Editor Command Registry 是项目扩展层
+### 16. Actual skill materialization 与上下文预算
+
+Actual skill 文件与 MCP public tools 不是一一对应关系：
+
+```text
+用户任务
+→ skill routing / recipe
+→ 一个或多个 public tool/action
+→ verification path
+```
+
+首版只保证一个 actual skill 入口：
+
+```text
+/unity
+```
+
+规则：
+
+- Phase 2 只定义 skill architecture、recipe contract 和 handoff category，不创建实际 skill 文件。
+- Phase 5 首次创建最小 actual `/unity` skill 文件。
+- `/unity` 是薄路由入口，不是完整 Unity 操作手册。
+- `/unity` 只内联短 P0 recipe、通用 safety / confirmation / dryRun / verification 规则、stable tool/action 引用和 handoff category。
+- Actual skill 的 executable recipe steps 只能引用 stable public tool/action。
+- Handoff / `requiredCapabilities` 可以引用 candidate public tool/action，但不得作为执行步骤。
+- Phase 6/7/8 默认扩展 `/unity`；复杂 domain 由对应 phase spec 决定 `extend_unity_entry`、`create_domain_skill`、`defer` 或 `reject`。
+- Phase 9 审计已有 actual skill files 与 public tool/action catalog、schema 和 docs 的一致性，不负责首次创建核心 `/unity` skill。
+
+Context budget 规则：
+
+- 不把完整 public schema、完整 result/error schema、大段 JSON 示例、长篇 Unity 教程或复杂 domain 手册塞进 `/unity`。
+- 若 domain recipe 需要独立背景、长参数示例、长故障处理或大量专有词表，对应 phase 必须选择 `create_domain_skill` 或 `defer`。
+- Public MCP tools 默认返回短摘要、状态、关键 diagnostics、验证信号和 artifact/report URI；完整 reports、snapshots 和 artifacts 通过 Resources 读取。
+
+### 17. Editor Command Registry 是项目扩展层
 
 保留并强化：
 
@@ -427,7 +461,7 @@ verificationHint
 
 标准 tools 能表达的任务，优先标准 tools；只有项目特定能力才走 registry。
 
-### 17. Skill/schema 防漂移
+### 18. Skill/schema 防漂移
 
 Skills、public MCP schema、tool descriptions 和 docs 必须保持一致。
 
@@ -449,7 +483,7 @@ Phase 9 至少实现半自动一致性检查，覆盖：
 - public tool 文档与实际注册一致；
 - action 完成语义在 tool description 与 skill 中不冲突。
 
-### 18. 验证闭环
+### 19. 验证闭环
 
 写操作不能只返回 `ok=true`。
 
@@ -498,9 +532,10 @@ Phase 9 至少实现半自动一致性检查，覆盖：
 
 ## Decisions
 
+- 2026-05-17：批准 actual skill materialization 与 skill/tool context budget 澄清；Phase 5 首次创建最小 actual `/unity` skill，actual executable recipe 只引用 stable tool/action，Phase 6/7/8 默认扩展 `/unity` 或按 spec 拆 domain skill，Phase 9 只审计已有 skill。
+- 2026-05-17：Phase 2 保持 completed；Phase 2 的 `/unity` 是 architecture-level actual entry decision，不是实际 skill 文件创建动作。
+- 2026-05-17：Phase 6/7/8 的 recipe 不预先承诺 slash command 名；各 phase 必须决定 `extend_unity_entry`、`create_domain_skill`、`defer` 或 `reject`。
 - 2026-05-17：Phase 2 skill 设计改为 skill architecture + P0 daily loop recipe contract，不再使用“首批任务型 / 后续能力型”批次划分。
-- 2026-05-17：`/unity-prototype` 详细 recipe 责任归 Phase 7；`/unity-ui` 和扩展能力域 recipe 责任归 Phase 8。
-- 2026-05-17：Phase 2 只定义 project command fallback contract；`/unity-project-command` 详细 recipe 责任归 Phase 6。
 - 2026-05-16：新体系命名为 **Unity Agent Kit**。
 - 2026-05-16：整体不是单纯 MCP 工具，而是 skills + MCP tools + host + project commands + resources 的 Agent 操作体系。
 - 2026-05-16：基于 `unity-mcp-v2` 架构演进，不全新重写。
@@ -536,7 +571,8 @@ Phase 9 至少实现半自动一致性检查，覆盖：
   - compiler messages 与 console diagnostics 分工；
   - Resources 和 artifact model 范围；
   - safety model；
-  - skill/schema 防漂移机制。
+  - skill/schema 防漂移机制；
+  - actual `/unity` skill materialization 与 skill/tool context budget 边界。
 - 当前阶段：Phase 3 需要编写 spec。
 - Phase 1 已完成架构与边界蓝图规格验证，并记录 completion evidence。
 - Phase 2 已完成 Unity Agent Skill 体系设计规格和计划，并记录 completion evidence。
@@ -555,13 +591,13 @@ Phase 9 至少实现半自动一致性检查，覆盖：
 |-------|--------|------|------|------|--------------|------|
 | Phase 1 — 架构与边界蓝图 | completed | 定义 Unity Agent Kit 总体结构和硬约束 | `docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md` | `docs/superpowers/plans/2026-05-16-unity-agent-kit-phase-1-architecture-boundary.md` | recorded | completed |
 | Phase 2 — Unity Agent Skill 体系设计 | completed | 设计 skill 架构、/unity 路由、P0 daily loop recipe contract 和跨 phase handoff | `docs/superpowers/specs/2026-05-17-unity-agent-kit-phase-2-skill-architecture-design.md` | `docs/superpowers/plans/2026-05-17-unity-agent-kit-phase-2-skill-architecture.md` | recorded | completed |
-| Phase 3 — Public MCP Tool Action Design | needs-spec | 逐个设计 public tool、action、参数、异步语义、safety、验证路径 | pending | pending | pending | write-spec |
+| Phase 3 — Public MCP Tool Action Design | needs-spec | 逐个设计 public tool、action、参数、异步语义、safety、验证路径和 action catalog | pending | pending | pending | write-spec |
 | Phase 4 — Async / Job / Workflow / Artifact Semantics | not-started | 明确 TS 与 Unity C# 的异步职责、job 协议、diagnostics 和 artifact model | pending | pending | pending | after Phase 3 |
-| Phase 5 — 高频日常闭环基础设施 | not-started | 实现 editor/compile/console/test/playmode/screenshot 的核心闭环 | pending | pending | pending | after Phase 4 |
-| Phase 6 — Project Editor Command Registry 增强 | not-started | 强化项目自定义命令发现、schema、安全和验证 | pending | pending | pending | after Phase 5 |
-| Phase 7 — 简单创作 vertical slice | not-started | object/component/material/screenshot/validation 创作闭环 | pending | pending | pending | after Phase 6 |
-| Phase 8 — 扩展能力池 | not-started | 将 asset、prefab、ui、animation、validation 等作为可独立推进的扩展池 | pending | pending | pending | after Phase 7 |
-| Phase 9 — 验证、文档与迁移收口 | not-started | 收口测试、文档、skills、命名、resource 和迁移策略 | pending | pending | pending | after Phase 8 |
+| Phase 5 — 高频日常闭环基础设施 | not-started | 实现 editor/compile/console/test/playmode/screenshot 的核心闭环，并创建最小 actual `/unity` skill | pending | pending | pending | after Phase 4 |
+| Phase 6 — Project Editor Command Registry 增强 | not-started | 强化项目自定义命令发现、schema、安全、验证和 recipe landing strategy | pending | pending | pending | after Phase 5 |
+| Phase 7 — 简单创作 vertical slice | not-started | object/component/material/screenshot/validation 创作闭环和 recipe landing strategy | pending | pending | pending | after Phase 6 |
+| Phase 8 — 扩展能力池 | not-started | 将 asset、prefab、ui、animation、validation 等作为可独立推进的扩展池，并为选定域决定 recipe landing strategy | pending | pending | pending | after Phase 7 |
+| Phase 9 — 验证、文档与迁移收口 | not-started | 收口测试、文档、已有 skills、命名、resource 和迁移策略 | pending | pending | pending | after Phase 8 |
 
 ## Phase Details
 
@@ -700,16 +736,16 @@ unity_screenshot.capture_game_view
 - invoke 后按 `verificationHint` 验证；
 - fallback 必须记录 `fallbackReason`。
 
-`/unity-project-command` 的详细 recipe 由 Phase 6 设计。
+Project command recipe landing strategy 与详细 recipe 由 Phase 6 设计；Phase 2 不预留 actual slash command 名。
 
 定义 P1 creation handoff：
 
-- `/unity-prototype` 的详细 recipe 由 Phase 7 设计；
+- creation vertical slice recipe landing strategy 与详细 recipe 由 Phase 7 设计；
 - Phase 2 只定义 handoff 规则，不设计 object/component/material 创作 recipe 细节。
 
 定义 extension domain handoff：
 
-- `/unity-ui`、prefab、asset、animation、validation expansion 的详细 task/domain recipe 由 Phase 8 按被选扩展域设计。
+- `unity_ui`、prefab、asset、animation、validation expansion 的 recipe landing strategy 与详细 task/domain recipe 由 Phase 8 按被选扩展域设计。
 
 **Out of Scope:**
 
@@ -717,8 +753,8 @@ unity_screenshot.capture_game_view
 - 不写文件队列 JSON。
 - 不一次性创建所有 skills。
 - 不把所有 skill recipe 做成 MCP workflow。
-- 不设计 `/unity-prototype` 的详细创作 recipe；该责任属于 Phase 7。
-- 不设计 `/unity-ui` 的详细 UI recipe；该责任属于 Phase 8。
+- 不设计 creation vertical slice 的详细 recipe；该责任属于 Phase 7。
+- 不设计 `unity_ui` 或扩展域的详细 recipe；该责任属于 Phase 8。
 - 不把能力型 skill 列表当作 Phase 2 实现批次。
 - 不创建实际 skill 文件。
 - 不锁死 Phase 3 public tool/action 完整 schema。
@@ -758,7 +794,7 @@ unity_screenshot.capture_game_view
 **Status:** `needs-spec`
 
 **Goal:**
-逐个设计 public MCP tools 的 action、参数、完成语义、异步语义、safety metadata 和验证路径。
+逐个设计 public MCP tools 的 action、参数、完成语义、异步语义、safety metadata、验证路径和可供 actual skill / audit 使用的 public tool/action catalog。
 
 **Scope:**
 
@@ -807,16 +843,24 @@ unity_animation
 - 验证路径；
 - 最小 tool/action description。
 
-需要导出的 action metadata：
+需要导出的 public tool/action catalog metadata：
 
 ```text
 toolName
 actionName
+referenceStatus: candidate | stable | deprecated
+owningPhase
 inputSchema
 sideEffectLevel
 completionSemantics
 verificationMeaning
 ```
+
+Catalog 规则：
+
+- actual skill executable recipe steps 只能引用 `referenceStatus: stable` 的 public tool/action；
+- handoff / `requiredCapabilities` 可以引用 `referenceStatus: candidate` 的 public tool/action，但不得作为执行步骤；
+- Phase 9 audit 以 catalog 判断 skill/schema/docs 是否漂移。
 
 MCP Resources 设计范围：
 
@@ -892,6 +936,7 @@ MCP Resources 设计范围：
 - 每个写 action 有验证路径。
 - Public schema 与 internal schema 的边界明确。
 - Resources 首版范围与 artifact model 对齐。
+- Public tool/action catalog 可供 actual skill 和 Phase 9 audit 判断 stable/candidate 引用。
 - Action metadata 可供 skill/schema consistency audit 使用。
 
 **Artifacts:**
@@ -1012,7 +1057,7 @@ metadata
 **Status:** `not-started`
 
 **Goal:**
-优先实现 Unity Agent 最常用的日常闭环，而不是先做所有创作工具。
+优先实现 Unity Agent 最常用的日常闭环，并首次创建最小 actual `/unity` skill，而不是先做所有创作工具。
 
 **Scope:**
 
@@ -1056,6 +1101,22 @@ Editor status
 → capture screenshot
 ```
 
+同步创建最小 actual `/unity` skill 文件：
+
+```text
+plugins/unity-agent-kit/skills/unity.md
+```
+
+`/unity` 只包含：
+
+- thin routing；
+- P0 stable daily loop executable recipes；
+- 通用 safety / confirmation / dryRun / verification 规则；
+- Resource 读取纪律；
+- Phase 6/7/8 handoff category。
+
+Actual `/unity` executable recipe steps 只允许引用 Phase 3 catalog 中已标记为 stable、并由 Phase 5 实现和验证的 P0 public tool/action。
+
 优先实现 artifact 类型：
 
 ```text
@@ -1067,10 +1128,13 @@ console_snapshot
 **Out of Scope:**
 
 - 不实现 object/component/material 创作工具。
+- 不实现 Phase 6/7/8 domain recipe。
 - 不实现所有 test runner 高级参数。
 - 不实现 Scene View 或 EditorWindow 截图。
 - 不实现全量 workflow 大杂烩。
 - 不实现完整 artifact store、retention 或 cleanup。
+- 不把 candidate tool/action 写成 actual skill executable recipe step。
+- 不把 `/unity` 写成大型 Unity 操作手册。
 
 **Reference Input Mapping:**
 
@@ -1085,6 +1149,9 @@ console_snapshot
 - 截图返回真实有效 artifact。
 - 测试能区分 report collected 与 verified pass。
 - Console snapshot 可作为 artifact/resource 读取。
+- 最小 actual `/unity` skill 已创建，并能通过 P0 stable recipes 指导 daily loop。
+- `/unity` executable recipe steps 只引用 stable P0 public tool/action。
+- `/unity` 符合 context budget，不内联完整 schema、长示例或大型结果。
 - TS/MCP tests 与至少一轮 E2E 验证通过。
 
 **Artifacts:**
@@ -1127,9 +1194,20 @@ supportsDryRun
 verificationHint
 ```
 
-Skill recipe responsibility：
+Skill recipe landing strategy：
 
-Phase 6 负责详细设计 `/unity-project-command` 的 recipe，包括：
+Phase 6 负责为 project command recipe 决定 landing strategy：
+
+```text
+extend_unity_entry
+create_domain_skill
+defer
+reject
+```
+
+默认选择 `extend_unity_entry`；只有当 project command 生态需要独立上下文、长示例或复杂风险规则时，Phase 6 spec 才能选择 `create_domain_skill`。
+
+若 Phase 6 决定实现 project command recipe，必须详细设计：
 
 - command discovery；
 - metadata 检查；
@@ -1169,7 +1247,8 @@ project_command_report
 - Claude 可以根据 metadata 判断风险。
 - Project command 不导致 public tool surface 膨胀。
 - Project command metadata 可参与 skill/schema consistency audit。
-- `/unity-project-command` recipe 与 project command metadata、safety 和 `verificationHint` 对齐。
+- Project command recipe landing strategy 已明确为 `extend_unity_entry`、`create_domain_skill`、`defer` 或 `reject`。
+- 若实现 project command recipe，其内容与 project command metadata、safety 和 `verificationHint` 对齐。
 - Project command recipe 不绕过标准 public tool safety。
 
 **Artifacts:**
@@ -1200,9 +1279,20 @@ P1 创作闭环：
 → 验证对象状态
 ```
 
-Skill recipe responsibility：
+Skill recipe landing strategy：
 
-Phase 7 负责详细设计 `/unity-prototype` 的创作 vertical slice recipe。Recipe 必须引用 Phase 7 已设计或实现的 public tool/action，并包含验证路径。
+Phase 7 负责为创作 vertical slice recipe 决定 landing strategy：
+
+```text
+extend_unity_entry
+create_domain_skill
+defer
+reject
+```
+
+默认选择 `extend_unity_entry`；只有当创作 recipe 需要独立上下文、长示例或复杂风险规则时，Phase 7 spec 才能选择 `create_domain_skill`。
+
+若 Phase 7 决定实现创作 recipe，recipe 必须引用 Phase 7 已设计或实现的 stable public tool/action，并包含验证路径。
 
 涉及 tools/actions：
 
@@ -1270,7 +1360,8 @@ compile_report
 - 截图或 snapshot 能证明 Unity 状态变化。
 - 失败场景不会假成功。
 - Safety model 中的 `targetStrictness` / `overwritePolicy` 已按本 phase 需要补充。
-- `/unity-prototype` recipe 能指导 Claude 完成简单创作 vertical slice。
+- 创作 recipe landing strategy 已明确为 `extend_unity_entry`、`create_domain_skill`、`defer` 或 `reject`。
+- 若实现创作 recipe，该 recipe 能指导 Claude 完成简单创作 vertical slice。
 - 创作 recipe 与 object/component/material/screenshot/validation public schema 和验证路径对齐。
 
 **Artifacts:**
@@ -1292,17 +1383,20 @@ compile_report
 
 Phase 8 不是一次性实现所有候选工具域。每个候选域进入实现前必须有独立 spec、plan 和验证策略。
 
-Skill recipe responsibility：
+Skill recipe landing strategy：
 
-Phase 8 中每个被选扩展域进入 spec 时，必须同时决定对应 skill recipe 去向：
+Phase 8 中每个被选扩展域进入 spec 时，必须同时决定对应 recipe landing strategy：
 
-- 标准 task recipe；
-- domain guide recipe；
-- project command recipe；
-- deferred；
-- rejected。
+```text
+extend_unity_entry
+create_domain_skill
+defer
+reject
+```
 
-`/unity-ui` 的详细 recipe 责任属于 Phase 8；不得在 Phase 2 承诺 `unity_ui` public actions 已存在。
+若选择 project command 路径，必须在 recipe 中以 explicit entry 或 strict fallback 表达，不得作为绕过 standard public tools 的入口。
+
+`unity_ui` 的详细 recipe landing strategy 和 recipe 细节属于 Phase 8；不得在 Phase 2 承诺 `unity_ui` public actions 已存在。
 
 候选域：
 
@@ -1402,8 +1496,8 @@ Phase 8 的完成条件不是完成所有候选能力域，而是：
 1. 根据用户确认选择至少一个扩展域 vertical slice；
 2. 为该扩展域完成独立 spec、plan、implementation 和 verification；
 3. 为剩余候选域记录去向：pending、deferred、project command、standard public tool 或 rejected。
-4. 每个被选扩展域都有对应 skill recipe 决策：implemented、project command、deferred 或 rejected。
-5. 若选择 UI 扩展域，`/unity-ui` recipe 与 `unity_ui` public schema、verification path 和 safety metadata 对齐。
+4. 每个被选扩展域都有对应 recipe landing strategy 决策：`extend_unity_entry`、`create_domain_skill`、`defer` 或 `reject`。
+5. 若选择 UI 扩展域并实现 recipe，该 recipe 与 `unity_ui` public schema、verification path 和 safety metadata 对齐。
 
 **Artifacts:**
 - **Spec:** pending
@@ -1421,6 +1515,14 @@ Phase 8 的完成条件不是完成所有候选能力域，而是：
 收口 Unity Agent Kit 的测试、文档、skills、public schema、Resources 和命名迁移策略。
 
 **Scope:**
+
+Actual skill files：
+
+- 审计已有 actual skill files，不负责首次创建核心 `/unity` skill；
+- 验证核心 `/unity` actual skill 已由早期 phase 创建；
+- 验证 actual skill executable recipe steps 只引用 stable public tool/action；
+- 验证 handoff / `requiredCapabilities` 中的 candidate 引用不会作为执行步骤；
+- 验证 skill 文件符合 context budget，不内联完整 schema、长示例或大型结果。
 
 测试：
 
@@ -1450,10 +1552,12 @@ Skill/schema consistency audit：
 - 扫描 skill Markdown 文件中的 `yaml` fenced block；
 - 解析顶层 `recipe:` block；
 - recipe 中引用的 `tool` / `action` 存在；
+- executable recipe step 引用的 `tool` / `action` 在 catalog 中为 `stable`；
+- handoff / `requiredCapabilities` 中的 candidate 引用格式正确，且不作为执行步骤；
 - recipe 中的 `paramsExample` 通过 public schema；
 - recipe 中的 `verificationPath` 存在且语义匹配；
 - recipe safety 描述与 `sideEffectLevel`、`confirmationPolicy`、`dryRunMode` 不冲突；
-- public tool 文档与实际注册一致；
+- public tool/action catalog、public tool 文档与实际注册一致；
 - action 完成语义在 tool description 与 skill 中不冲突。
 
 迁移：
@@ -1466,6 +1570,7 @@ Skill/schema consistency audit：
 **Out of Scope:**
 
 - 不新增大型能力域。
+- 不负责首次创建核心 `/unity` actual skill。
 - 不做无关重构。
 - 不在验证证据不足时标记 roadmap completed。
 
@@ -1481,6 +1586,8 @@ Skill/schema consistency audit：
 - 每个 skill recipe 至少有一个验证路径。
 - Project command metadata 有校验。
 - Artifact/resource 语义有测试和文档。
+- 已有 actual skill files 与 public tool/action catalog、schema、docs 不漂移。
+- 核心 `/unity` actual skill 已由早期 phase 创建并通过 audit。
 - schema、skills、文档不漂移。
 - 命名和迁移策略明确。
 
@@ -1543,6 +1650,7 @@ Skill/schema consistency audit：
 
 ## Change Log
 
+- 2026-05-17：批准并同步 actual skill materialization 与 skill/tool context budget roadmap 澄清；Phase 5 首次创建最小 actual `/unity` skill，Phase 9 只审计已有 skill。
 - 2026-05-17：完成 Phase 2 Unity Agent Skill 体系设计，记录 verification evidence，并将当前阶段推进到 Phase 3 `needs-spec`。
 - 2026-05-17：完成 Phase 2 Skill 体系设计 spec 和 plan artifact 接入；Phase 2 进入 `planned`，下一步为 `implement-plan`。
 - 2026-05-17：批准 Phase 2 skill 类型和批次划分修正 proposal；Phase 2 聚焦 P0 daily loop recipe contract，并将 project command、creation、UI/extension recipe 责任分别交接给 Phase 6、Phase 7、Phase 8。
