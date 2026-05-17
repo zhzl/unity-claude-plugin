@@ -75,6 +75,7 @@ done
 tests=(
     "test-subagent-driven-development.sh"
     "test-roadmap-management.sh"
+    "test-brainstorming.sh"
 )
 
 # Integration tests (slow, full execution)
