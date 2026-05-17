@@ -216,7 +216,7 @@ Phase status：
 确认顺序：
 
 ```text
-Discovery Brief → phase strategy 选项 → 用户确认策略 → ROADMAP.md 草案或 Proposal Brief → 用户批准 → 写入 current truth
+Discovery Brief → 主动挑战扫描 → 逐条确认必须先确认的问题 → phase strategy 选项 → 用户确认策略 → ROADMAP.md 草案或 Proposal Brief → 用户批准 → 写入 current truth
 ```
 
 展示规则：
@@ -224,15 +224,42 @@ Discovery Brief → phase strategy 选项 → 用户确认策略 → ROADMAP.md 
 - 中文 roadmap 中，除路径、命令、状态枚举、API 字段和代码标识符外，正文统一中文。
 - 长草案直接用正文或分节展示；不要把完整草案塞进选择题 preview。
 
-### 主动澄清纪律
+### 主动挑战扫描
 
-在 roadmap discovery、结构性 `change-roadmap`、`write-spec` brief 或 `phase strategy` 讨论中，不要只顺着用户已提出的问题推进。对会影响目标、范围、phase 切分、artifact、验证或后续 phase 的隐藏假设，必须主动提出并等待确认。
+在生成 phase strategy、完整 `ROADMAP.md` 草案、结构性 `Proposal Brief` 或 `Spec Discussion Brief` 前，必须执行主动挑战扫描；不要只顺着用户已提出的问题推进。
 
-每条澄清按固定格式表达：
+主动挑战扫描不设固定上限。如果存在更多会影响 `Goal`、`Non-goals`、`Shared Constraints`、phase 切分、phase scope、success criteria、artifact、验证方式或后续 phase handoff 的高影响问题，必须继续列出。不要为了简短省略关键问题，也不要为了凑数列低价值问题。
 
-1. **问题是什么：** 用用户容易理解的语言说明当前设计或 roadmap 决策里的歧义、隐藏假设、风险或范围边界。
-2. **需要用户确认什么：** 给出用户需要确认的具体选择或决策；尽量提供 2-3 个具体选项，并标出推荐选项和推荐理由，不要只问是否确认。
-3. **逐条确认：** 每次只推进一个关键问题；用户确认后再进入下一条或汇总设计。
+扫描结果按优先级分组：
+
+1. **必须先确认**
+   - 不确认就会改变 roadmap 目标、范围、共享约束、phase 结构、phase scope、success criteria、artifact 边界或验证方式的问题。
+2. **建议确认**
+   - 不确认也能继续，但后续可能导致 phase 返工、artifact 漂移、计划不稳定或 handoff 失真的问题。
+3. **可作为 roadmap 假设**
+   - 当前可以先采用默认假设，但必须写明假设、风险和后续验证点。
+
+展示完整清单后，只展开“必须先确认”中的第一条，按逐条确认格式推进。用户确认后再进入下一条；不要一次要求用户回答整份清单。
+
+高影响 roadmap 问题不能只通过 `AskUserQuestion` 选择题呈现。必须先用 Markdown 展示完整说明、为什么重要、选项和推荐理由；`AskUserQuestion` 只能作为辅助收集选择，不能替代问题解释。
+
+### 主动澄清格式
+
+每条关键问题按固定格式展开：
+
+1. **问题是什么：**
+   - **问题类型：** 歧义 / 隐藏假设 / 风险 / 范围边界
+   - **用户容易理解的说明：** 用具体场景说明这个 roadmap 或 phase 决策影响什么。
+   - **为什么重要：** 如果不确认，会导致什么错误 roadmap、phase 返工、artifact 漂移或边界漂移。
+2. **需要用户确认什么：**
+   - **具体选项：** 提供 2-3 个可选决策，不要只问是否确认。
+   - **选项 A：** ...
+   - **选项 B：** ...
+   - **选项 C：** ...
+   - **推荐选项：** ...
+   - **推荐理由：** ...
+3. **逐条确认：**
+   - 请先确认这一条；确认后再进入下一条。
 
 不要把多个高影响决策一次性塞进完整草案；不要因为用户没有主动提出风险就跳过。
 
@@ -253,13 +280,14 @@ Roadmap discovery 是本技能内置的 brainstorming-lite，不是 `superpowers
 1. 确认 title、slug 和 roadmap 主题。
 2. 收集输入材料：用户描述、引用路径、现有 docs/specs/plans。
 3. 生成 `Roadmap Discovery Brief`，提炼目标理解、参考输入摘要、初步范围和未决问题。
-4. 如果有未决问题，先提问；不要直接写完整草案。
-5. 提出 2-3 个 `phase strategy` 选项，说明权衡并给出推荐。
-6. 请求用户确认 phase strategy。
-7. 用户确认后，再起草完整 `ROADMAP.md`。
-8. 如果用户要求结合多个参考项目、文档或方案，每个 phase 必须写出参考输入映射。
-9. 请求用户批准完整草案。
-10. 创建 `docs/superpowers/roadmaps/YYYY-MM-DD-<slug>/ROADMAP.md`。
+4. 执行主动挑战扫描，按“必须先确认 / 建议确认 / 可作为 roadmap 假设”分组展示完整清单。
+5. 展开第一条“必须先确认”的问题并等待用户确认；不要直接写完整草案。
+6. 所有必须先确认的问题已确认或明确记录为 roadmap 假设后，再提出 2-3 个 `phase strategy` 选项，说明权衡并给出推荐。
+7. 请求用户确认 phase strategy。
+8. 用户确认后，再起草完整 `ROADMAP.md`。
+9. 如果用户要求结合多个参考项目、文档或方案，每个 phase 必须写出参考输入映射。
+10. 请求用户批准完整草案。
+11. 创建 `docs/superpowers/roadmaps/YYYY-MM-DD-<slug>/ROADMAP.md`。
 
 不要写 spec、plan 或实现代码。不要自动调用 `superpowers:brainstorming`；`new-roadmap` 内置的是只服务于 roadmap 的轻量 discovery。
 
@@ -286,8 +314,9 @@ Roadmap discovery 是本技能内置的 brainstorming-lite，不是 `superpowers
 1. 读取 `ROADMAP.md`。
 2. 定位目标 phase。
 3. 提取 `Goal`、`Shared Constraints`、phase scope、out of scope 和 success criteria。
-4. 生成 `Spec Discussion Brief`。
-5. 建议用户手动调用 `superpowers:brainstorming`。
+4. 生成 `Spec Discussion Brief`，其中必须包含 Roadmap / Phase 摘要、`Shared Constraints`、phase scope、out of scope、success criteria、reference input mapping（如适用）、主动挑战扫描清单、第一条“必须先确认”的问题和未确认挑战清单。
+5. 只有在必须先确认的问题已确认或明确记录为 roadmap 假设后，才建议用户手动调用 `superpowers:brainstorming`。
+6. handoff 给 brainstorming 时必须带上已确认结论和未确认挑战清单。
 
 不要自动调用 `superpowers:brainstorming`。
 
@@ -344,11 +373,13 @@ Roadmap discovery 是本技能内置的 brainstorming-lite，不是 `superpowers
 2. 判断变更类型：事实更新或结构性变更。
 3. 事实更新不需要 discovery，也不需要 `Proposal Brief`；按对应状态规则保守更新。
 4. 结构性变更先生成 `Roadmap Change Discovery Brief`，说明当前状态、变更动因、参考输入映射和可选策略。
-5. 如果影响 phase 结构或 phase scope，先提出 2-3 个 `phase strategy` 选项并请求用户确认。
-6. 用户确认策略后，再生成 `Proposal Brief`。
-7. 请求用户批准 `Proposal Brief`。
-8. 只在批准后更新 current truth。
-9. 更新 `Decisions` 和 `Change Log`。
+5. 执行主动挑战扫描，按“必须先确认 / 建议确认 / 可作为 roadmap 假设”分组展示完整清单。
+6. 展开第一条“必须先确认”的结构性风险并等待用户确认。
+7. 所有必须先确认的问题已确认或明确记录为 roadmap 假设后，再提出 2-3 个 `phase strategy` 选项。
+8. 用户确认策略后，再生成 `Proposal Brief`。
+9. 请求用户批准 `Proposal Brief`。
+10. 只在批准后更新 current truth。
+11. 更新 `Decisions` 和 `Change Log`。
 
 ## 手动交接规则
 
