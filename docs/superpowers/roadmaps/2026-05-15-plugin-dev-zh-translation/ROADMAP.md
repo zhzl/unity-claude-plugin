@@ -47,7 +47,7 @@
 - **Roadmap Status:** active
 - **Current Phase:** Phase 4 — Integration and tooling skills
 - **Last Sync:** 2026-05-17
-- **Next Manual Action:** `/superpowers:roadmap-management write-spec docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md Phase 4`
+- **Next Manual Action:** `/superpowers:roadmap-management write-plan docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md Phase 4`
 
 ## Blockers
 
@@ -60,7 +60,7 @@
 | Phase 1 — Inventory and glossary | completed | 盘点文件、定义术语表和保留规则 | Spec `docs/superpowers/specs/2026-05-15-plugin-dev-zh-translation-phase-1-design.md`; Plan `docs/superpowers/plans/2026-05-15-plugin-dev-zh-translation-phase-1.md`; Implementation Summary recorded; Verification Evidence recorded |
 | Phase 2 — Core plugin content | completed | 翻译 `.claude-plugin`、`commands`、`agents`、`docs`，并校验矫正同范围 commands/agents | Spec `docs/superpowers/specs/2026-05-16-plugin-dev-zh-translation-phase-2-design.md`; Plan `docs/superpowers/plans/2026-05-16-plugin-dev-zh-translation-phase-2.md`; Implementation Summary recorded; Verification Evidence recorded |
 | Phase 3 — Core development skills | completed | 翻译 `plugin-dev-guide`、`plugin-structure`、`command-development`、`skill-development` | Spec `docs/superpowers/specs/2026-05-16-plugin-dev-zh-translation-phase-3-design.md`; Plan `docs/superpowers/plans/2026-05-16-plugin-dev-zh-translation-phase-3.md`; Implementation Summary recorded; Verification Evidence recorded |
-| Phase 4 — Integration and tooling skills | needs-spec | 翻译 `agent-development`、`hook-development`、`mcp-integration`、`lsp-integration`、`plugin-settings`、`marketplace-structure` | Spec pending; Plan pending; Implementation Summary pending; Verification Evidence pending |
+| Phase 4 — Integration and tooling skills | designed | 翻译 `agent-development`、`hook-development`、`mcp-integration`、`lsp-integration`、`plugin-settings`、`marketplace-structure` | Spec `docs/superpowers/specs/2026-05-17-plugin-dev-zh-translation-phase-4-design.md`; Plan pending; Implementation Summary pending; Verification Evidence pending |
 | Phase 5 — Examples, scripts, and final consistency | needs-spec | 处理 JSON/shell 示例可读文本并做整体一致性验证 | Spec pending; Plan pending; Implementation Summary pending; Verification Evidence pending |
 
 ## Phase Details
@@ -113,7 +113,7 @@
 
 ### Phase 4 — Integration and tooling skills
 
-- **Status:** needs-spec
+- **Status:** designed
 - **Scope:** 翻译 `skills/agent-development`、`skills/hook-development`、`skills/mcp-integration`、`skills/lsp-integration`、`skills/plugin-settings` 和 `skills/marketplace-structure` 的 Markdown 用户可读内容。
 - **Out of scope:** 前面阶段已处理的核心技能；最终全局一致性验证；修改脚本行为。
 - **Success Criteria:**
@@ -121,7 +121,7 @@
   - MCP、LSP、hook、settings、marketplace 等术语保持一致。
   - frontmatter、代码块、命令示例、路径和字段名保持语义和格式正确。
 - **Artifacts:**
-  - **Spec:** pending
+  - **Spec:** `docs/superpowers/specs/2026-05-17-plugin-dev-zh-translation-phase-4-design.md`
   - **Plan:** pending
   - **Implementation Summary:** pending
   - **Verification Evidence:** pending
@@ -185,6 +185,7 @@
 
 ## Change Log
 
+- 2026-05-17: Added Phase 4 spec artifact and marked Phase 4 as designed.
 - 2026-05-17: Completed Phase 3, cleared blockers, recorded final nested-fence-aware validation evidence, and advanced the current phase to Phase 4 with the next manual action set to `write-spec`.
 - 2026-05-16: Added Phase 3 implementation plan artifact and marked Phase 3 as planned.
 - 2026-05-16: Added Phase 3 spec artifact and marked Phase 3 as designed.
