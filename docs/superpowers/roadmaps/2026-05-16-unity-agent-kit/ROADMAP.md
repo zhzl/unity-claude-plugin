@@ -498,6 +498,9 @@ Phase 9 至少实现半自动一致性检查，覆盖：
 
 ## Decisions
 
+- 2026-05-17：Phase 2 skill 设计改为 skill architecture + P0 daily loop recipe contract，不再使用“首批任务型 / 后续能力型”批次划分。
+- 2026-05-17：`/unity-prototype` 详细 recipe 责任归 Phase 7；`/unity-ui` 和扩展能力域 recipe 责任归 Phase 8。
+- 2026-05-17：Phase 2 只定义 project command fallback contract；`/unity-project-command` 详细 recipe 责任归 Phase 6。
 - 2026-05-16：新体系命名为 **Unity Agent Kit**。
 - 2026-05-16：整体不是单纯 MCP 工具，而是 skills + MCP tools + host + project commands + resources 的 Agent 操作体系。
 - 2026-05-16：基于 `unity-mcp-v2` 架构演进，不全新重写。
@@ -550,7 +553,7 @@ Phase 9 至少实现半自动一致性检查，覆盖：
 | Phase | Status | Goal | Spec | Plan | Verification | Next |
 |-------|--------|------|------|------|--------------|------|
 | Phase 1 — 架构与边界蓝图 | completed | 定义 Unity Agent Kit 总体结构和硬约束 | `docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md` | `docs/superpowers/plans/2026-05-16-unity-agent-kit-phase-1-architecture-boundary.md` | recorded | completed |
-| Phase 2 — Unity Agent Skill 体系设计 | needs-spec | 设计任务型/能力型 skills，不照搬 Unity-Skills | pending | pending | pending | write-spec |
+| Phase 2 — Unity Agent Skill 体系设计 | needs-spec | 设计 skill 架构、/unity 路由、P0 daily loop recipe contract 和跨 phase handoff | pending | pending | pending | write-spec |
 | Phase 3 — Public MCP Tool Action Design | not-started | 逐个设计 public tool、action、参数、异步语义、safety、验证路径 | pending | pending | pending | after Phase 2 |
 | Phase 4 — Async / Job / Workflow / Artifact Semantics | not-started | 明确 TS 与 Unity C# 的异步职责、job 协议、diagnostics 和 artifact model | pending | pending | pending | after Phase 3 |
 | Phase 5 — 高频日常闭环基础设施 | not-started | 实现 editor/compile/console/test/playmode/screenshot 的核心闭环 | pending | pending | pending | after Phase 4 |
@@ -621,13 +624,11 @@ Phase 1 已完成；下一步手动命令见 Current State 中的 Phase 2 `write
 **Status:** `needs-spec`
 
 **Goal:**
-设计新的 skill 调用指导体系，借鉴但不照搬 Unity-Skills。
+设计 Unity Agent Kit 的 skill 架构、`/unity` 路由规则、P0 高频日常闭环 recipe contract、机器可检查 recipe block、安全/验证规则，以及 Phase 6/7/8 的 skill handoff。
 
 **Scope:**
 
-设计三类 skill。
-
-入口/路由 skill：
+设计入口 skill：
 
 ```text
 /unity
@@ -636,51 +637,78 @@ Phase 1 已完成；下一步手动命令见 Current State 中的 Phase 2 `write
 职责：
 
 - 判断用户意图；
-- 路由到任务型 skill、能力型 skill 或 project command；
-- 避免 Claude 直接面对过多 tools。
+- 路由到 P0 daily loop recipe、project command fallback、Phase 7 creation handoff 或 Phase 8 extension handoff；
+- 避免 Claude 直接面对过多 public tools；
+- 不把能力域列表当作实现批次。
 
-首批任务型 skills：
-
-```text
-/unity-prototype
-/unity-ui
-/unity-diagnose
-/unity-project-command
-/unity-test
-```
-
-职责：
-
-- 面向用户任务；
-- 组织跨 tool recipe；
-- 包含安全规则和验证闭环。
-
-后续能力型 skills：
+P0 daily loop recipe contracts 对齐 Phase 5 的高频闭环：
 
 ```text
-/unity-scene
-/unity-object
-/unity-component
-/unity-material
-/unity-prefab
-/unity-assets
-/unity-animation
-/unity-validate
+editor readiness
+compile check
+console diagnostics
+test verify
+playmode verify
+screenshot artifact
+daily health check
 ```
 
-职责：
-
-- 为某个能力域提供调用细节；
-- 辅助任务型 skill，不作为唯一入口。
-
-定义 skill recipe 的可检查引用格式：
+候选 public tool/action 引用来自 Phase 5 P0 tools/actions：
 
 ```text
-tool: unity_compile
-action: compile_and_check
+unity_editor.get_status
+unity_editor.wait_ready
+unity_compile.get_state
+unity_compile.request
+unity_compile.wait_for_idle
+unity_compile.compile_and_check
+unity_console.snapshot
+unity_console.count
+unity_console.clear
+unity_test.list
+unity_test.start
+unity_test.get_status
+unity_test.get_result
+unity_test.run_and_collect
+unity_test.run_and_verify
+unity_playmode.get_state
+unity_playmode.enter_and_verify
+unity_playmode.exit_and_verify
+unity_screenshot.capture_game_view
 ```
 
-定义参数示例格式，使其可被 schema 校验。
+定义 recipe block contract：
+
+- Phase 2 spec 必须定义 Markdown 中的 `yaml` fenced block 格式；
+- 顶层字段为 `recipe:`；
+- block 必须能表达 `id`、`intent`、`steps`、每个 step 的 `tool` 和 `action`、`paramsExample`、`expects`、`verificationPath`、safety / confirmation / dryRun 相关提示，以及 fallback 规则；
+- `paramsExample` 只作为最小示例，不代表 Phase 3 完整 schema。
+
+定义 safety / verification rules：
+
+- Skill 负责指导 Claude 识别风险、请求用户确认、选择 dryRun、避免模糊 target，并执行验证闭环；
+- public tool metadata 和 handler 负责强制 safety gate；
+- skill 不是唯一安全来源。
+
+定义 project command fallback contract：
+
+- 标准 public tools 优先；
+- project command 允许显式入口和严格 fallback；
+- metadata 不足不得调用；
+- destructive command 必须 confirmation 或 dryRun；
+- invoke 后按 `verificationHint` 验证；
+- fallback 必须记录 `fallbackReason`。
+
+`/unity-project-command` 的详细 recipe 由 Phase 6 设计。
+
+定义 P1 creation handoff：
+
+- `/unity-prototype` 的详细 recipe 由 Phase 7 设计；
+- Phase 2 只定义 handoff 规则，不设计 object/component/material 创作 recipe 细节。
+
+定义 extension domain handoff：
+
+- `/unity-ui`、prefab、asset、animation、validation expansion 的详细 task/domain recipe 由 Phase 8 按被选扩展域设计。
 
 **Out of Scope:**
 
@@ -688,22 +716,33 @@ action: compile_and_check
 - 不写文件队列 JSON。
 - 不一次性创建所有 skills。
 - 不把所有 skill recipe 做成 MCP workflow。
+- 不设计 `/unity-prototype` 的详细创作 recipe；该责任属于 Phase 7。
+- 不设计 `/unity-ui` 的详细 UI recipe；该责任属于 Phase 8。
+- 不把能力型 skill 列表当作 Phase 2 实现批次。
+- 不创建实际 skill 文件。
+- 不锁死 Phase 3 public tool/action 完整 schema。
+- 不把 project command 当作标准 public tools 的替代入口。
 
 **Reference Input Mapping:**
 
 - `Unity-Skills`：领域分类、命令示例、自然语言任务拆解。
 - `unity-mcp-v2`：实际执行能力和 envelope 参考。
+- Phase 5：P0 高频日常闭环 tools/actions。
+- Phase 6/7/8：project command、creation 和 extension domain skill handoff 接收方。
 
 **Success Criteria:**
 
-- 首批 skills 能覆盖高频日常与基础创作任务。
+- `/unity` routing 规则明确。
+- P0 daily loop recipe contracts 覆盖 Phase 5 高频闭环。
+- Recipe block 使用可机器检查格式，可供 Phase 9 audit 解析。
 - Skills 明确：
   - 何时用标准 public tools；
-  - 何时用 project command registry；
+  - 何时允许 project command fallback；
   - 何时需要确认；
   - 如何验证结果。
-- Skill 结构以任务为主、领域为辅。
-- Skill recipe 引用格式可被 Phase 9 半自动检查。
+- Skill safety 规则与 public tool metadata / handler 的强制 safety gate 边界明确。
+- Phase 6/7/8 的 skill handoff 明确。
+- Skill 结构以 P0 任务闭环为主，以能力域 handoff 为辅。
 
 **Artifacts:**
 - **Spec:** pending
@@ -1087,6 +1126,17 @@ supportsDryRun
 verificationHint
 ```
 
+Skill recipe responsibility：
+
+Phase 6 负责详细设计 `/unity-project-command` 的 recipe，包括：
+
+- command discovery；
+- metadata 检查；
+- `list` / `invoke` / `get_status` / `get_result` 调用顺序；
+- destructive command 的 confirmation / dryRun 规则；
+- `verificationHint` 执行规则；
+- project command report 或 diagnostics 的返回规则。
+
 Skill 调用规则：
 
 - 标准 tool 可完成时，优先标准 tool。
@@ -1118,6 +1168,8 @@ project_command_report
 - Claude 可以根据 metadata 判断风险。
 - Project command 不导致 public tool surface 膨胀。
 - Project command metadata 可参与 skill/schema consistency audit。
+- `/unity-project-command` recipe 与 project command metadata、safety 和 `verificationHint` 对齐。
+- Project command recipe 不绕过标准 public tool safety。
 
 **Artifacts:**
 - **Spec:** pending
@@ -1146,6 +1198,10 @@ P1 创作闭环：
 → 截图
 → 验证对象状态
 ```
+
+Skill recipe responsibility：
+
+Phase 7 负责详细设计 `/unity-prototype` 的创作 vertical slice recipe。Recipe 必须引用 Phase 7 已设计或实现的 public tool/action，并包含验证路径。
 
 涉及 tools/actions：
 
@@ -1213,6 +1269,8 @@ compile_report
 - 截图或 snapshot 能证明 Unity 状态变化。
 - 失败场景不会假成功。
 - Safety model 中的 `targetStrictness` / `overwritePolicy` 已按本 phase 需要补充。
+- `/unity-prototype` recipe 能指导 Claude 完成简单创作 vertical slice。
+- 创作 recipe 与 object/component/material/screenshot/validation public schema 和验证路径对齐。
 
 **Artifacts:**
 - **Spec:** pending
@@ -1232,6 +1290,18 @@ compile_report
 **Scope:**
 
 Phase 8 不是一次性实现所有候选工具域。每个候选域进入实现前必须有独立 spec、plan 和验证策略。
+
+Skill recipe responsibility：
+
+Phase 8 中每个被选扩展域进入 spec 时，必须同时决定对应 skill recipe 去向：
+
+- 标准 task recipe；
+- domain guide recipe；
+- project command recipe；
+- deferred；
+- rejected。
+
+`/unity-ui` 的详细 recipe 责任属于 Phase 8；不得在 Phase 2 承诺 `unity_ui` public actions 已存在。
 
 候选域：
 
@@ -1331,6 +1401,8 @@ Phase 8 的完成条件不是完成所有候选能力域，而是：
 1. 根据用户确认选择至少一个扩展域 vertical slice；
 2. 为该扩展域完成独立 spec、plan、implementation 和 verification；
 3. 为剩余候选域记录去向：pending、deferred、project command、standard public tool 或 rejected。
+4. 每个被选扩展域都有对应 skill recipe 决策：implemented、project command、deferred 或 rejected。
+5. 若选择 UI 扩展域，`/unity-ui` recipe 与 `unity_ui` public schema、verification path 和 safety metadata 对齐。
 
 **Artifacts:**
 - **Spec:** pending
@@ -1374,10 +1446,12 @@ Phase 8 的完成条件不是完成所有候选能力域，而是：
 
 Skill/schema consistency audit：
 
-- skill 引用的 tool/action 存在；
-- skill 中 JSON 参数示例通过 schema；
-- skill 描述的 sideEffectLevel 与 schema metadata 一致；
-- skill 中的 verification path 存在；
+- 扫描 skill Markdown 文件中的 `yaml` fenced block；
+- 解析顶层 `recipe:` block；
+- recipe 中引用的 `tool` / `action` 存在；
+- recipe 中的 `paramsExample` 通过 public schema；
+- recipe 中的 `verificationPath` 存在且语义匹配；
+- recipe safety 描述与 `sideEffectLevel`、`confirmationPolicy`、`dryRunMode` 不冲突；
 - public tool 文档与实际注册一致；
 - action 完成语义在 tool description 与 skill 中不冲突。
 
@@ -1468,6 +1542,7 @@ Skill/schema consistency audit：
 
 ## Change Log
 
+- 2026-05-17：批准 Phase 2 skill 类型和批次划分修正 proposal；Phase 2 聚焦 P0 daily loop recipe contract，并将 project command、creation、UI/extension recipe 责任分别交接给 Phase 6、Phase 7、Phase 8。
 - 2026-05-17：完成 Phase 1 架构与边界蓝图，记录规格验证证据，并将当前阶段推进到 Phase 2 `needs-spec`。
 - 2026-05-16：创建 Unity Agent Kit roadmap。
 - 2026-05-16：确认基于 `unity-mcp-v2` 演进，不全新重写。
