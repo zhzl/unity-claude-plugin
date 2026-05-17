@@ -224,6 +224,18 @@ Discovery Brief → phase strategy 选项 → 用户确认策略 → ROADMAP.md 
 - 中文 roadmap 中，除路径、命令、状态枚举、API 字段和代码标识符外，正文统一中文。
 - 长草案直接用正文或分节展示；不要把完整草案塞进选择题 preview。
 
+### 主动澄清纪律
+
+在 roadmap discovery、结构性 `change-roadmap`、`write-spec` brief 或 `phase strategy` 讨论中，不要只顺着用户已提出的问题推进。对会影响目标、范围、phase 切分、artifact、验证或后续 phase 的隐藏假设，必须主动提出并等待确认。
+
+每条澄清按固定格式表达：
+
+1. **问题是什么：** 说明当前设计或 roadmap 决策里的歧义、隐藏假设、风险或范围边界。
+2. **需要用户确认什么：** 给出用户需要确认的具体选择或决策。
+3. **逐条确认：** 每次只推进一个关键问题；用户确认后再进入下一条或汇总设计。
+
+不要把多个高影响决策一次性塞进完整草案；不要因为用户没有主动提出风险就跳过。
+
 ### Discovery 技能边界
 
 Roadmap discovery 是本技能内置的 brainstorming-lite，不是 `superpowers:brainstorming` 的前置步骤。

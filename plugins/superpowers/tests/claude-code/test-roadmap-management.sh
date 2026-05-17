@@ -132,6 +132,14 @@ assert_section_contains "$SKILL" "## 验收同步规则" "不新增后台同步�
 assert_section_contains "$SKILL" "## 验收同步规则" "只报告问题并停止" "Structural changes stop sync"
 
 echo ""
+echo "Test 2d: Active clarification discipline..."
+assert_file_contains "$SKILL" "问题是什么" "Roadmap discussion must explain the problem before asking for confirmation"
+assert_file_contains "$SKILL" "需要用户确认什么" "Roadmap discussion must state what the user needs to confirm"
+assert_file_contains "$SKILL" "逐条确认" "Roadmap discussion must confirm decisions one at a time"
+assert_file_contains "$SKILL" "不要只顺着用户已提出的问题推进" "Roadmap discussion must proactively surface hidden issues"
+
+
+echo ""
 echo "Test 2b: Roadmap discovery before drafting..."
 assert_file_contains "$SKILL" "Roadmap Discovery Brief" "new-roadmap requires a discovery brief"
 assert_file_contains "$SKILL" "phase strategy" "new-roadmap requires phase strategy confirmation"
