@@ -4,7 +4,7 @@
 
 - **Title:** plugin-dev 中文化路线图
 - **Slug:** plugin-dev-zh-translation
-- **Status:** active
+- **Status:** completed
 - **Created:** 2026-05-15
 - **Last Sync:** 2026-05-17
 - **Roadmap Path:** `docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md`
@@ -139,7 +139,7 @@
   - **Spec:** `docs/superpowers/specs/2026-05-17-plugin-dev-zh-translation-phase-5-design.md`
   - **Plan:** `docs/superpowers/plans/2026-05-17-plugin-dev-zh-translation-phase-5.md`
   - **Implementation Summary:** Phase 5 translated the allowed JSON `description`/`_comment` values, translated comments in all 14 scoped shell scripts without changing shell behavior or outputs, and repaired 9 out-of-main-scope residual natural-language items found by the final scan.
-  - **Verification Evidence:** 2026-05-17: Phase 5 evidence draft:
+  - **Verification Evidence:** 2026-05-17: Phase 5 evidence:
     - Scope: scope check: 19 main Phase 5 files modified; leak repair files outside main scope: 9; leak repair paths: plugins/plugin-dev/.claude-plugin/plugin.json, plugins/plugin-dev/agents/agent-creator.md, plugins/plugin-dev/commands/create-marketplace.md, plugins/plugin-dev/commands/create-plugin.md, plugins/plugin-dev/skills/agent-development/SKILL.md, plugins/plugin-dev/skills/hook-development/SKILL.md, plugins/plugin-dev/skills/lsp-integration/references/popular-lsp-servers.md, plugins/plugin-dev/skills/plugin-structure/references/github-actions.md, plugins/plugin-dev/skills/skill-development/SKILL.md
     - JSON: json ok: 5 files parse and only allowed _comment/description values changed
     - Shell syntax/comment guard: shell ok: 14 files syntax valid; 14 modified comment-only; 0 checked unchanged
