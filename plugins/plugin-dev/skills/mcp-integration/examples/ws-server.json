@@ -1,4 +1,4 @@
 {
-  "_comment": "WebSocket/ws is not a documented Claude Code MCP transport. Use stdio-server.json, sse-server.json, or http-server.json instead.",
+  "_comment": "WebSocket/ws 不是 Claude Code 文档化的 MCP transport。请改用 stdio-server.json、sse-server.json 或 http-server.json。",
   "unsupported": true
 }

@@ -1,7 +1,7 @@
 {
   "name": "go-lsp",
   "version": "1.0.0",
-  "description": "Go language server integration for Claude Code",
+  "description": "Claude Code 的 Go language server 集成",
   "lspServers": {
     "go": {
       "command": "gopls",

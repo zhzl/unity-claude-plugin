@@ -1,5 +1,5 @@
 {
-  "_comment": "Example HTTP MCP server configuration for hosted MCP endpoints",
+  "_comment": "托管 MCP endpoints 的 HTTP MCP server 配置示例",
   "mcpServers": {
     "api-service": {
       "type": "http",

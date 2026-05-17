@@ -1,5 +1,5 @@
 {
-  "_comment": "Example stdio MCP server configuration for local file system access",
+  "_comment": "本地文件系统访问的 stdio MCP server 配置示例",
   "mcpServers": {
     "filesystem": {
       "command": "npx",
