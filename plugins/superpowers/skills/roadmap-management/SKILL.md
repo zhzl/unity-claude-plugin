@@ -87,6 +87,18 @@ progress → write-spec → write-plan → implement-plan → complete-phase →
 14. `Handoff Rules`
 15. `Change Log`
 
+格式锁定规则：
+
+- 起草完整 `ROADMAP.md` 或结构性 `Proposal Brief` 前，必须读取 `references/roadmap-format.md` 并按其中模板套用结构。
+- 不要自造 section/table 结构；不要凭记忆、主文摘要或相邻 roadmap 替代模板。
+- `Phase Summary` 必须使用 `roadmap-format.md` 的表头：
+
+  ```markdown
+  | Phase | Status | Goal | Spec | Plan | Verification | Next |
+  ```
+
+- `Phase Summary` 不得压缩 artifact 状态到一列，不得使用 `Purpose / Key Artifacts` 等自造列。
+
 每个 phase 必须包含 `Artifacts`：
 
 ```markdown
@@ -286,7 +298,7 @@ Roadmap discovery 是本技能内置的 brainstorming-lite，不是 `superpowers
 5. 展开第一条“必须先确认”的问题并等待用户确认；不要直接写完整草案。
 6. 所有必须先确认的问题已确认或明确记录为 roadmap 假设后，再提出 2-3 个 `phase strategy` 选项，说明权衡并给出推荐。
 7. 请求用户确认 phase strategy。
-8. 用户确认后，再起草完整 `ROADMAP.md`。
+8. 用户确认后，读取 `references/roadmap-format.md`，再按模板起草完整 `ROADMAP.md`。
 9. 如果用户要求结合多个参考项目、文档或方案，每个 phase 必须写出参考输入映射。
 10. 请求用户批准完整草案。
 11. 创建 `docs/superpowers/roadmaps/YYYY-MM-DD-<slug>/ROADMAP.md`。
@@ -378,7 +390,7 @@ Roadmap discovery 是本技能内置的 brainstorming-lite，不是 `superpowers
 5. 执行主动挑战扫描，按“必须先确认 / 建议确认 / 可作为 roadmap 假设”分组展示完整清单。
 6. 展开第一条“必须先确认”的结构性风险并等待用户确认。
 7. 所有必须先确认的问题已确认或明确记录为 roadmap 假设后，再提出 2-3 个 `phase strategy` 选项。
-8. 用户确认策略后，再生成 `Proposal Brief`。
+8. 用户确认策略后，读取 `references/roadmap-format.md`，再生成 `Proposal Brief`。
 9. 请求用户批准 `Proposal Brief`。
 10. 只在批准后更新 current truth。
 11. 更新 `Decisions` 和 `Change Log`。
@@ -413,6 +425,8 @@ Roadmap discovery 是本技能内置的 brainstorming-lite，不是 `superpowers
 - 跳过 `new-roadmap` 的 `Roadmap Discovery Brief`。
 - 跳过结构性 `change-roadmap` 的 `Roadmap Change Discovery Brief`。
 - 在用户确认 phase strategy 前生成完整 `ROADMAP.md` 草案。
+- 起草或更新 roadmap 时不读取 `references/roadmap-format.md`。
+- 自造 `Phase Summary`、`Blockers`、`Decisions`、`Change Log` 等表格结构。
 - 用户要求结合多个参考输入时，写出无法追溯到参考输入的抽象 phase。
 - 把详细 spec 内容写进 `ROADMAP.md`。
 - 把详细实现步骤写进 `ROADMAP.md`。
