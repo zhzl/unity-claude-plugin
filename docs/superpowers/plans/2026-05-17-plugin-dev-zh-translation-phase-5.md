@@ -835,7 +835,7 @@ Phase 5 evidence draft:
 **文件：**
 - 修改：`docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md`
 
-- [ ] **步骤 1：只在任务 6 全部验证通过后更新 Phase 5 completion 状态**
+- [x] **步骤 1：只在任务 6 全部验证通过后更新 Phase 5 completion 状态**
 
 编辑 `docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md`，按当前新版表格格式更新：
 
@@ -852,7 +852,7 @@ Phase 5 evidence draft:
 
 如果任一验证未通过，不更新为 `completed`；保留当前状态并记录实际缺口或 blocker。
 
-- [ ] **步骤 2：验证 roadmap completion 同步成功**
+- [x] **步骤 2：验证 roadmap completion 同步成功**
 
 运行：
 
@@ -882,7 +882,7 @@ PY
 
 预期：输出 `roadmap completion sync ok: Phase 5 completed and roadmap marked completed`。
 
-- [ ] **步骤 3：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 3：提交检查点（仅用户明确授权时执行）**
 
 运行：
 
