@@ -51,6 +51,39 @@ Status meanings:
 
 Phase 3's result envelope text must be updated to use this enum so Phase 3 and Phase 4 do not diverge.
 
+### Timeout result signals
+
+`status: timeout` means the TS workflow wait expired. It does not prove the Unity operation failed, rolled back, or stopped.
+
+P0 workflow timeout results must include these minimum signals:
+
+```text
+mayStillBeRunning: true | false | unknown
+jobId?
+nextStatusAction?
+safeToRetry: true | false | unknown
+diagnostics
+nextStep
+```
+
+Rules:
+
+- If a `jobId` exists, `nextStep` should point to the corresponding status/result read action.
+- For non-job workflows, `nextStep` should point to a relevant state read such as compile state, PlayMode state, or console snapshot.
+- `safeToRetry` must not be `true` unless duplicate side effects are ruled out.
+- Claude must not blindly retry after timeout.
+
+### Timeout duration policy
+
+Timeouts are not fixed long waits by default. The AI/TS workflow must choose timeout values from action type, task complexity, current Unity state, and user intent.
+
+Rules:
+
+- Lightweight reads and short workflows should use short timeouts.
+- Compile and test workflows can use longer timeouts when project scale, prior state, or user instruction justifies it.
+- Long waits must be justified by the task; do not default to arbitrary 3-minute or 5-minute waits.
+- If a workflow needs a clearly long wait, the timeout should be explicit in tool parameters, recipe guidance, or user confirmation rather than hidden as a broad default.
+
 ## Ownership Contract
 
 TS MCP layer owns workflow orchestration:
@@ -142,6 +175,37 @@ lost
 unknown
 ```
 
+### Minimum job record signals
+
+Job records must expose enough identity and continuity signals for Phase 5 status/result actions without becoming a durable request queue.
+
+Minimum record shape:
+
+```text
+jobId
+tool
+action
+originatingRequestId?
+hostId
+hostEpoch?
+createdAt
+updatedAt
+state
+stateReason?
+reportId?
+artifactIds?
+lastKnownContinuity: current | recovered | lost | unknown
+diagnostics?
+```
+
+Rules:
+
+- `requestId` does not replace `jobId`.
+- `reportId` and `artifactId` identify job output evidence, not the job itself.
+- A job record is not a durable queued command and does not imply replay or strong recovery.
+- After host rebind, if continuity cannot be proven, `lastKnownContinuity` becomes `lost` or `unknown`.
+- Public job-specific calls map broken continuity to `status: lost`; aggregate workflows may use `status: uncertain` when the final state cannot be proven.
+
 Examples:
 
 - `unity_test.start` can return `status: succeeded` with `job.state: accepted` or `running` because starting the job succeeded.
@@ -180,16 +244,18 @@ If the window is incomplete, the result is `status: uncertain`.
 
 ### No-new-compile path
 
-If no new compile window occurs, `compile_and_check` may use the most recent complete compile report only if its validity is provable:
+If no new compile window occurs, `compile_and_check` may use the most recent complete compile report only when bounded validity proof exists.
+
+Minimum validity rules:
 
 - The report came from a complete compiler messages window.
-- No script, asmdef, package, or project setting change that can affect compilation happened after the report.
+- A trusted change token or compile report invalidation signal proves no script, asmdef, package, or project setting change that can affect compilation happened after the report.
 - Unity is currently idle.
 - Host rebind did not break report metadata trust.
 
-If recent report validity cannot be proven, the result is `status: uncertain`.
+Phase 5 does not need to implement full project-wide change tracking for this path. If no bounded validity proof is available, the result is `status: uncertain`.
 
-This path still must not use Console-clean or editor-idle as a standalone success proof.
+This path still must not use Console-clean, editor-idle, or weak file timestamp heuristics as standalone success proof.
 
 ### Minimum result signals
 
@@ -221,7 +287,7 @@ cursor:
   createdAt
 ```
 
-`logSequence` is a Unity C# host-maintained monotonic sequence. If a sequence cannot be implemented, an alternative cursor such as `timestamp + counter + hostId` must prove ordering. A loose timestamp window is not precise attribution.
+`logSequence` is a Unity C# host-maintained monotonic sequence for logs captured after cursor creation. Phase 5 does not need to rebuild a total order for existing Console history or maintain a long-term log index. If a sequence cannot be implemented for new logs, an alternative cursor such as `timestamp + counter + hostId` must prove ordering. A loose timestamp window is not precise attribution.
 
 ### `sinceCursor`
 
@@ -232,7 +298,7 @@ cursor:
 
 ### Diagnostics shape
 
-Diagnostics entries should use one shared shape:
+P0 public result diagnostics must use this minimum shared shape:
 
 ```text
 source: compiler | console | workflow | host | artifact | job | validation
@@ -242,6 +308,8 @@ message
 details?
 attribution: attributed | unattributed | uncertain
 ```
+
+`details` may carry action-specific extensions. P0 actions must not replace this minimum shape with unrelated diagnostics structures.
 
 Usage boundaries:
 
@@ -276,6 +344,32 @@ type
 validationStatus
 summary
 ```
+
+Identity rules:
+
+- `artifactId` and `reportId` are generated by the plugin.
+- IDs do not come from user-provided paths and are not local file paths.
+- Resource URIs are derived from IDs.
+- Metadata is the trusted binding between an ID and the actual file or report locator.
+- Console snapshot uses `artifactId`; any earlier `{snapshotId}` wording should converge to `artifactId` for this resource type.
+
+Minimum metadata fields:
+
+```text
+id
+type
+uri
+relativePath? / reportLocator
+createdAt
+validationStatus
+hostId?
+producerTool
+producerAction
+producerJobId?
+diagnostics?
+```
+
+For P0 reports, `reportLocator` must be resolvable by the Resource layer within the artifact root or a controlled report store. It must not be a user-provided arbitrary absolute path.
 
 Initial resource URI patterns:
 
@@ -404,11 +498,13 @@ Phase 5 receives these stable inputs:
 - Unified public result `status` enum.
 - P0 daily loop action semantics matrix.
 - TS / Unity C# ownership boundary.
-- Job lifecycle state contract.
-- Compile diagnostics contract, including valid recent compile report behavior.
-- Strict Console cursor contract.
-- Artifact/report root, Resource URI, `validationStatus`, and Resource read failure rules.
-- Shared diagnostics shape.
+- Job lifecycle state and minimum job record contract.
+- Compile diagnostics contract, including bounded recent compile report validity proof.
+- Strict Console cursor contract for new-log attribution.
+- Artifact/report root, ID metadata binding, Resource URI, `validationStatus`, and Resource read failure rules.
+- Shared diagnostics minimum shape.
+- Timeout result signals and timeout duration policy.
+- Requirement for Phase 5 plan to define bounded timeout/polling policies by P0 waiting workflow category, including lightweight reads, compile/test workflows, and PlayMode transitions.
 - Limited host rebind recovery contract.
 - Requirement to keep Phase 3 result envelope text synchronized with Phase 4.
 
@@ -424,7 +520,11 @@ Phase 5 must not mark P0 public actions as `referenceStatus: stable` until imple
 - Phase 6/7/8 candidate models are not locked by Phase 4.
 - `status` enum is synchronized with Phase 3 result envelope text.
 - P0 matrix covers 23 stable-ready actions from Phase 3.
-- `compile_and_check` handles no-new-compile through a valid recent compile report, not Console/editor-idle fallback.
+- `compile_and_check` handles no-new-compile through bounded recent compile report validity proof, not Console/editor-idle fallback.
+- Job-backed actions have a minimum job record identity contract.
+- Artifact/report IDs are plugin-generated identities bound to metadata, not paths.
+- Timeout results include continuation/retry guidance and do not use arbitrary long default waits.
+- Phase 5 plan must define bounded timeout/polling policy categories for P0 waiting workflows and include checks for timeout result signals.
 - `unity_console.snapshot`, `unity_console.clear`, and `unity_test.get_result` use the user-confirmed mappings.
 
 ## Success Criteria Coverage
