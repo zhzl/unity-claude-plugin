@@ -59,7 +59,7 @@ Phase 3 继承 Phase 1、Phase 2 和 roadmap 的约束：
 - Public tool 使用 `unity_` 前缀；tool 内 action 使用 `snake_case`。
 - Public schema 必须明确，禁止自由形态 `{ action: string, params: object }` 作为主接口。
 - Public action 必须声明完成语义、安全 metadata 和验证路径。
-- 写操作不能只返回 `ok=true`；必须能表达 `changed`、`persisted`、验证结果和失败/不确定原因。
+- 写操作不能只返回 `ok=true`；必须能表达对应的 state/effect/artifact/report 信号、验证结果和失败/不确定原因。
 - `uncertain` 是一等结果；无法证明 `successMeans` 时不得返回 verified success。
 - 首版 Resources 只用于 tool-generated artifacts/reports；editor status、scene hierarchy、asset search、object snapshot 等保持 tool result。
 - Actual skill executable recipe steps 只能引用 `referenceStatus: stable` 的 public tool/action。
@@ -192,8 +192,8 @@ nextStep?
 | `status` | action 结果：`success`、`failed` 或 `uncertain`。 |
 | `tool` / `action` | 机器可检查引用。 |
 | `summary` | 面向 Claude 和用户的短摘要。 |
-| `changed?` | 是否修改 Unity project/editor state。 |
-| `persisted?` | 写操作是否已保存直接受影响 persistence unit。 |
+| `changed?` | 是否修改 Unity project/editor state、transient editor state、job state 或 artifact/report state。 |
+| `persisted?` | 仅用于修改并保存 Unity project/editor persistence unit 的 effect actions；request、transient editor state、diagnostic view mutation 和 artifact/report-producing actions 可省略或返回 `false`。 |
 | `dryRun?` | 本次是否为 dryRun。 |
 | `validationStatus?` | artifact 或 effect verification 的 `valid`、`invalid`、`uncertain`。 |
 | `artifacts?` | screenshot、console snapshot 等 artifact references。 |
@@ -205,10 +205,12 @@ nextStep?
 ### 规则
 
 - 只读 action 至少返回 `status`、`summary` 和对应 snapshot/count/state。
-- 写操作 success 必须表达 `changed=true`、`persisted=true` 和验证信号。
+- 修改并保存 Unity project/editor persistence unit 的 effect action，success 必须表达 `changed=true`、`persisted=true` 和验证信号。
+- `request_accepted` action success 必须表达请求已接受的信号；不得伪装成最终 effect verified。
+- Transient editor state 或 diagnostic view mutation success 必须表达对应 readback 信号；`persisted` 可省略或为 `false`。
+- 产出 artifact 的 action 必须返回 artifact reference、`validationStatus` 和 artifact verification signals；`persisted` 可省略或为 `false`。
+- 产出 report 的 action 必须返回 report reference 和 report collection / verification signals；`persisted` 可省略或为 `false`。
 - `dryRun` success 必须表达 `changed=false`、`persisted=false`。
-- 产出 artifact 的 action 必须返回 artifact reference。
-- 产出 report 的 action 必须返回 report reference。
 - `uncertain` 必须包含 `diagnostics` 和 `nextStep`。
 - 部分生效必须显式表达，不能伪装成 clean success。
 
@@ -506,6 +508,30 @@ description
 - Phase 9 audit 以 catalog 校验 skill/schema/docs 是否漂移。
 - Catalog 中的 `description` 是最小 tool/action description，不包含多步骤 recipe、长示例或 troubleshooting。
 
+### `inputSchemaRef` 命名规则
+
+P0 `stable_ready` action 必须有稳定的 `inputSchemaRef`，格式为：
+
+```text
+<toolName>.<PascalCaseActionName>Input
+```
+
+示例：
+
+```text
+unity_compile.CompileAndCheckInput
+unity_test.RunAndVerifyInput
+unity_screenshot.CaptureGameViewInput
+```
+
+规则：
+
+- Phase 3 的 `inputSchemaRef` 是稳定引用名，不是完整 JSON/Zod schema。
+- Phase 3 只定义 bounded fields / hints，例如 timeout、polling、diagnostic collection、target selector。
+- Phase 5 materialize 具体 schema 时，必须使用这些 refs 对齐 catalog。
+- 对没有 action-specific payload 的 action，也必须保留 zero-payload input schema ref。
+- 仍未锁定的字段必须在对应 action 的输入 schema 说明中标为 Phase 5-owned bounded hint，不能留成自由 `params`。
+
 ### Catalog entry 形状示例
 
 ```yaml
@@ -548,7 +574,7 @@ owningPhase: Phase 3
 implementationOwner: Phase 5
 ```
 
-P0 compact mapping records use:
+P0 compact mapping records 使用：
 
 ```text
 internal operations / workflow owner
@@ -556,6 +582,36 @@ v2 source reference
 known semantic gap
 Phase 5 implementation note
 ```
+
+### P0 `inputSchemaRef` 清单
+
+这些 refs 是 Phase 3 的稳定 schema 引用名。Phase 5 负责 materialize 具体 JSON/Zod/schema，并保持 refs 与 catalog 对齐。
+
+| Tool | Action | inputSchemaRef | Phase 3 bounded fields / hints |
+|---|---|---|---|
+| `unity_editor` | `get_status` | `unity_editor.GetStatusInput` | zero-payload |
+| `unity_editor` | `wait_ready` | `unity_editor.WaitReadyInput` | timeout / polling hints |
+| `unity_editor` | `get_current_host` | `unity_editor.GetCurrentHostInput` | zero-payload |
+| `unity_compile` | `get_state` | `unity_compile.GetStateInput` | zero-payload |
+| `unity_compile` | `request` | `unity_compile.RequestInput` | optional compile trigger hint if Phase 5 proves it is bounded |
+| `unity_compile` | `wait_for_idle` | `unity_compile.WaitForIdleInput` | timeout / polling hints |
+| `unity_compile` | `compile_and_check` | `unity_compile.CompileAndCheckInput` | timeout / diagnostic collection hints |
+| `unity_console` | `snapshot` | `unity_console.SnapshotInput` | severity / since-cursor hints after Phase 4 defines cursor |
+| `unity_console` | `count` | `unity_console.CountInput` | optional severity filter |
+| `unity_console` | `clear` | `unity_console.ClearInput` | explicit clear request; no hidden cleanup |
+| `unity_test` | `list` | `unity_test.ListInput` | `test_selector` |
+| `unity_test` | `start` | `unity_test.StartInput` | `test_selector`, timeout hints |
+| `unity_test` | `get_status` | `unity_test.GetStatusInput` | test job/report identity |
+| `unity_test` | `get_result` | `unity_test.GetResultInput` | test report identity |
+| `unity_test` | `run_and_collect` | `unity_test.RunAndCollectInput` | `test_selector`, timeout hints |
+| `unity_test` | `run_and_verify` | `unity_test.RunAndVerifyInput` | `test_selector`, timeout hints, pass criteria bounded by Phase 5 |
+| `unity_playmode` | `get_state` | `unity_playmode.GetStateInput` | zero-payload |
+| `unity_playmode` | `enter` | `unity_playmode.EnterInput` | timeout / diagnostic hints only if Phase 5 uses helper action |
+| `unity_playmode` | `exit` | `unity_playmode.ExitInput` | timeout / diagnostic hints only if Phase 5 uses helper action |
+| `unity_playmode` | `wait_for_state` | `unity_playmode.WaitForStateInput` | target state, timeout / polling hints |
+| `unity_playmode` | `enter_and_verify` | `unity_playmode.EnterAndVerifyInput` | timeout / diagnostic collection hints |
+| `unity_playmode` | `exit_and_verify` | `unity_playmode.ExitAndVerifyInput` | timeout / diagnostic collection hints |
+| `unity_screenshot` | `capture_game_view` | `unity_screenshot.CaptureGameViewInput` | safe output naming / capture hints bounded by Phase 5 |
 
 P0 mapping 的参考输入来源：
 
@@ -1174,12 +1230,15 @@ Phase 4 must not change Phase 3 action user-visible `successMeans` / `doesNotMea
 
 ### Phase 5 handoff
 
-Phase 5 receives P0 stable-ready action specs for:
+Phase 5 接收 P0 `stable_ready` catalog，但这不自动表示同一个 Phase 5 plan 必须一次性实现全部 schema-ready surface。
+
+#### Phase 5 required P0 executable subset
+
+以下 actions 是 roadmap Phase 5 明确列出的 P0 executable subset。Phase 5 spec/plan 必须覆盖这些 actions；如果为控制首个 executable stable subset 而暂缓其中某项，必须说明如何仍满足 roadmap success criteria。
 
 ```text
 unity_editor.get_status
 unity_editor.wait_ready
-unity_editor.get_current_host
 unity_compile.get_state
 unity_compile.request
 unity_compile.wait_for_idle
@@ -1194,15 +1253,27 @@ unity_test.get_result
 unity_test.run_and_collect
 unity_test.run_and_verify
 unity_playmode.get_state
-unity_playmode.enter
-unity_playmode.exit
-unity_playmode.wait_for_state
 unity_playmode.enter_and_verify
 unity_playmode.exit_and_verify
 unity_screenshot.capture_game_view
 ```
 
-只有当 Phase 5 spec 在保持 roadmap success criteria 的前提下收窄 P0 slice 时，Phase 5 才能实现子集。已实现且完成验证的 actions，可在 roadmap completion sync 中从 `referenceStatus: candidate` 提升为 `referenceStatus: stable`。
+#### Stable-ready helper actions
+
+以下 helper actions 保持 `specStatus: stable_ready`，但不自动构成 Phase 5 必做范围。Phase 5 spec/plan 只有在需要支撑 verified workflow、host binding readback 或内部编排边界时才选择实现。
+
+```text
+unity_editor.get_current_host
+unity_playmode.enter
+unity_playmode.exit
+unity_playmode.wait_for_state
+```
+
+#### Schema-ready backlog rule
+
+P0 `stable_ready` catalog 是 schema-ready / design-ready surface。Phase 5 spec/plan 可以按 roadmap success criteria 定义首个 executable stable subset；未进入该 subset 的 P0 `stable_ready` actions 保留为 schema-ready backlog，不得自动提升为 `referenceStatus: stable`。
+
+已实现且完成验证的 actions，可在 roadmap completion sync 中从 `referenceStatus: candidate` 提升为 `referenceStatus: stable`。
 
 ### Phase 6 handoff
 
