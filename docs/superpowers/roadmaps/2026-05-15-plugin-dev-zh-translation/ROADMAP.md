@@ -47,7 +47,7 @@
 - **Roadmap Status:** active
 - **Current Phase:** Phase 5 — Examples, scripts, and final consistency
 - **Last Sync:** 2026-05-17
-- **Next Manual Action:** `/superpowers:roadmap-management write-spec docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md Phase 5`
+- **Next Manual Action:** `/superpowers:roadmap-management implement-plan docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md Phase 5`
 
 ## Blockers
 
@@ -61,7 +61,7 @@
 | Phase 2 — Core plugin content | completed | 翻译 `.claude-plugin`、`commands`、`agents`、`docs`，并校验矫正同范围 commands/agents | Spec `docs/superpowers/specs/2026-05-16-plugin-dev-zh-translation-phase-2-design.md`; Plan `docs/superpowers/plans/2026-05-16-plugin-dev-zh-translation-phase-2.md`; Implementation Summary recorded; Verification Evidence recorded |
 | Phase 3 — Core development skills | completed | 翻译 `plugin-dev-guide`、`plugin-structure`、`command-development`、`skill-development` | Spec `docs/superpowers/specs/2026-05-16-plugin-dev-zh-translation-phase-3-design.md`; Plan `docs/superpowers/plans/2026-05-16-plugin-dev-zh-translation-phase-3.md`; Implementation Summary recorded; Verification Evidence recorded |
 | Phase 4 — Integration and tooling skills | completed | 翻译 `agent-development`、`hook-development`、`mcp-integration`、`lsp-integration`、`plugin-settings`、`marketplace-structure` | Spec `docs/superpowers/specs/2026-05-17-plugin-dev-zh-translation-phase-4-design.md`; Plan `docs/superpowers/plans/2026-05-17-plugin-dev-zh-translation-phase-4.md`; Implementation Summary recorded; Verification Evidence recorded |
-| Phase 5 — Examples, scripts, and final consistency | needs-spec | 处理 JSON/shell 示例可读文本并做整体一致性验证 | Spec pending; Plan pending; Implementation Summary pending; Verification Evidence pending |
+| Phase 5 — Examples, scripts, and final consistency | planned | 处理 JSON/shell 示例可读文本并做整体一致性验证 | Spec `docs/superpowers/specs/2026-05-17-plugin-dev-zh-translation-phase-5-design.md`; Plan `docs/superpowers/plans/2026-05-17-plugin-dev-zh-translation-phase-5.md`; Implementation Summary pending; Verification Evidence pending |
 
 ## Phase Details
 
@@ -128,7 +128,7 @@
 
 ### Phase 5 — Examples, scripts, and final consistency
 
-- **Status:** needs-spec
+- **Status:** planned
 - **Scope:** 处理 JSON 示例、shell 脚本中的用户可读文本、剩余示例内容，并执行最终术语、格式和行为一致性验证。
 - **Out of scope:** 新增测试框架；新增校验器；重新拆分前面阶段范围。
 - **Success Criteria:**
@@ -136,8 +136,8 @@
   - 用户可读示例文本、脚本输出或注释按规则中文化。
   - 完成全局抽查，确认术语一致、格式有效、机器可读内容未被误译。
 - **Artifacts:**
-  - **Spec:** pending
-  - **Plan:** pending
+  - **Spec:** `docs/superpowers/specs/2026-05-17-plugin-dev-zh-translation-phase-5-design.md`
+  - **Plan:** `docs/superpowers/plans/2026-05-17-plugin-dev-zh-translation-phase-5.md`
   - **Implementation Summary:** pending
   - **Verification Evidence:** pending
 
@@ -185,6 +185,7 @@
 
 ## Change Log
 
+- 2026-05-17: Added Phase 5 spec and plan artifacts, marked Phase 5 as planned, and updated the next manual action to `implement-plan`.
 - 2026-05-17: Completed Phase 4 with verified Chinese localization for 36 integration/tooling skill Markdown files, recorded final scope/frontmatter/code-block/token/quality evidence, and advanced the current phase to Phase 5 with the next manual action set to `write-spec`.
 - 2026-05-17: Added Phase 4 implementation plan artifact and marked Phase 4 as planned.
 - 2026-05-17: Added Phase 4 spec artifact and marked Phase 4 as designed.
