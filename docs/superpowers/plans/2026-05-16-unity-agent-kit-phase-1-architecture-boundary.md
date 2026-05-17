@@ -91,7 +91,7 @@ PASS Phase 1 roadmap artifacts/status linked in current table format
 - 读取：`docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md`
 - 验证：`docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md`
 
-- [ ] **步骤 1：验证 Current State 和 Blockers 使用新版状态**
+- [x] **步骤 1：验证 Current State 和 Blockers 使用新版状态**
 
 运行：
 
@@ -123,7 +123,7 @@ PY
 PASS Phase 1 roadmap current state/blockers use current format
 ```
 
-- [ ] **步骤 2：验证 Phase 1 completion 字段仍保持 pending**
+- [x] **步骤 2：验证 Phase 1 completion 字段仍保持 pending**
 
 运行：
 
@@ -163,7 +163,7 @@ PY
 PASS Phase 1 remains planned with pending completion evidence
 ```
 
-- [ ] **步骤 3：确认不编辑 roadmap**
+- [x] **步骤 3：确认不编辑 roadmap**
 
 运行：
 
@@ -173,7 +173,7 @@ git diff -- docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md
 
 预期：无输出。若出现 diff，确认它是否由主会话明确批准；未批准时停止并报告，不要提交。
 
-- [ ] **步骤 4：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 4：提交检查点（仅用户明确授权时执行）**
 
 本任务默认不修改文件。如果主会话明确批准并修改了 roadmap，运行：
 
