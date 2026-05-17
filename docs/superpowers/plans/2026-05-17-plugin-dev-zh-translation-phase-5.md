@@ -793,15 +793,19 @@ PY
 
 预期：先用任务 1 记录的 SHA 设置 `PHASE5_BASE=<sha>`，再输出 `shell output text ok: echo/printf/usage/error/status-like lines match PHASE5_BASE`。
 
-- [ ] **步骤 5：验证格式没有 whitespace error**
+- [ ] **步骤 5：验证 against `PHASE5_BASE` 的累计格式检查没有 whitespace error**
 
 运行：
 
 ```bash
-git diff --check
+git diff --check "$PHASE5_BASE" -- \
+  plugins/plugin-dev \
+  docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md \
+  docs/superpowers/specs/2026-05-17-plugin-dev-zh-translation-phase-5-design.md \
+  docs/superpowers/plans/2026-05-17-plugin-dev-zh-translation-phase-5.md
 ```
 
-预期：无 whitespace error；如果只有 LF/CRLF 提示且退出码为 0，在最终证据中说明。
+预期：对任务 1 记录的 `PHASE5_BASE` 到当前状态的累计变更执行格式检查且无 whitespace error；如果只有 LF/CRLF 提示且退出码为 0，在最终证据中说明这是 against `PHASE5_BASE` 的累计检查且无 whitespace error。
 
 - [ ] **步骤 6：整理验收证据摘要**
 
@@ -814,7 +818,7 @@ Phase 5 evidence draft:
 - Shell syntax/comment guard: shell ok: 14 files syntax valid; <N> modified comment-only; <M> checked unchanged
 - Shell output guard: shell output text ok: echo/printf/usage/error/status-like lines match PHASE5_BASE
 - Final natural-language scan: <任务 5 最终扫描结论；合理保留英文分类；已修复漏网项或需另行决策项>
-- Format: git diff --check passed; <如有 LF/CRLF 警告则说明无 whitespace error>
+- Format: git diff --check against PHASE5_BASE passed; <如有 LF/CRLF 警告则说明这是 against PHASE5_BASE 的累计检查且无 whitespace error>
 ```
 
 ---
