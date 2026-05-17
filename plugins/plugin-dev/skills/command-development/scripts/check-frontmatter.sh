@@ -1,10 +1,10 @@
 #!/bin/bash
-# Command Frontmatter Validator
-# Validates YAML frontmatter fields in command files
+# Command Frontmatter 校验器
+# 校验 command 文件中的 YAML frontmatter 字段
 
 set -euo pipefail
 
-# Usage
+# 用法
 if [ $# -eq 0 ]; then
   echo "Usage: $0 <path/to/command.md> [command2.md ...]"
   echo ""
@@ -22,7 +22,7 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
-# Known frontmatter fields for commands
+# commands 已知的 frontmatter 字段
 KNOWN_FIELDS="description model allowed-tools argument-hint disable-model-invocation"
 
 total_errors=0
@@ -36,13 +36,13 @@ check_frontmatter() {
   echo "🔍 Checking frontmatter: $COMMAND_FILE"
   echo ""
 
-  # Check file exists
+  # 检查文件是否存在
   if [ ! -f "$COMMAND_FILE" ]; then
     echo "❌ Error: File not found: $COMMAND_FILE"
     return 1
   fi
 
-  # Check for frontmatter
+  # 检查是否存在 frontmatter
   if ! head -n 1 "$COMMAND_FILE" | grep -q "^---"; then
     echo "ℹ️  No frontmatter found (frontmatter is optional)"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -51,8 +51,8 @@ check_frontmatter() {
     return 0
   fi
 
-  # Extract frontmatter - only the first block between lines 1 and the second ---
-  # Body horizontal rules after the frontmatter block are valid markdown.
+  # 提取 frontmatter - 仅限第 1 行与第二个 --- 之间的第一个区块
+  # frontmatter 区块之后正文中的水平分隔线是有效 Markdown。
   local closing_line
   closing_line=$(awk 'NR > 1 && /^---$/ { print NR; exit }' "$COMMAND_FILE")
   if [ -z "$closing_line" ]; then
@@ -82,12 +82,12 @@ check_frontmatter() {
   echo "Frontmatter found. Validating fields..."
   echo ""
 
-  # Check 'model' field
+  # 检查 'model' 字段
   if echo "$frontmatter" | grep -q "^model:"; then
     local model
     model=$(echo "$frontmatter" | grep "^model:" | cut -d: -f2 | tr -d ' ')
 
-    # Valid values: inherit, sonnet, opus, haiku
+    # 有效取值：inherit、sonnet、opus、haiku
     if [[ "$model" =~ ^(inherit|sonnet|opus|haiku)$ ]]; then
       echo "✅ model: $model"
     else
@@ -97,7 +97,7 @@ check_frontmatter() {
     fi
   fi
 
-  # Check 'description' field
+  # 检查 'description' 字段
   if echo "$frontmatter" | grep -q "^description:"; then
     local desc
     desc=$(echo "$frontmatter" | grep "^description:" | cut -d: -f2- | sed 's/^ *//')
@@ -117,7 +117,7 @@ check_frontmatter() {
     fi
   fi
 
-  # Check 'allowed-tools' field
+  # 检查 'allowed-tools' 字段
   if echo "$frontmatter" | grep -q "^allowed-tools:"; then
     local tools
     tools=$(echo "$frontmatter" | grep "^allowed-tools:" | cut -d: -f2- | sed 's/^ *//')
@@ -126,7 +126,7 @@ check_frontmatter() {
       echo "⚠️  Warning: Empty allowed-tools field"
       warning_count=$((warning_count + 1))
     else
-      # Check for common patterns
+      # 检查常见模式
       if [[ "$tools" == "*" ]]; then
         echo "⚠️  Warning: allowed-tools: * grants all tools (consider restricting)"
         warning_count=$((warning_count + 1))
@@ -139,7 +139,7 @@ check_frontmatter() {
     fi
   fi
 
-  # Check 'argument-hint' field
+  # 检查 'argument-hint' 字段
   if echo "$frontmatter" | grep -q "^argument-hint:"; then
     local hint
     hint=$(echo "$frontmatter" | grep "^argument-hint:" | cut -d: -f2- | sed 's/^ *//')
@@ -148,7 +148,7 @@ check_frontmatter() {
       echo "⚠️  Warning: Empty argument-hint field"
       warning_count=$((warning_count + 1))
     else
-      # Check for bracket convention
+      # 检查方括号约定
       if [[ ! "$hint" =~ \[.*\] ]]; then
         echo "⚠️  Warning: argument-hint missing bracket convention (e.g., [arg-name])"
         warning_count=$((warning_count + 1))
@@ -158,7 +158,7 @@ check_frontmatter() {
     fi
   fi
 
-  # Check 'disable-model-invocation' field
+  # 检查 'disable-model-invocation' 字段
   if echo "$frontmatter" | grep -q "^disable-model-invocation:"; then
     local value
     value=$(echo "$frontmatter" | grep "^disable-model-invocation:" | cut -d: -f2 | tr -d ' ')
@@ -171,16 +171,16 @@ check_frontmatter() {
     fi
   fi
 
-  # Check for unknown fields
+  # 检查未知字段
   echo ""
   echo "Checking for unknown fields..."
   local unknown_found=false
 
   while IFS= read -r line; do
-    # Skip empty lines
+    # 跳过空行
     [ -z "$line" ] && continue
 
-    # Extract field name (everything before the colon)
+    # 提取字段名（冒号前的所有内容）
     local field
     field=$(echo "$line" | grep -oE "^[a-z-]+" || true)
 
@@ -205,7 +205,7 @@ check_frontmatter() {
     echo "✅ No unknown fields"
   fi
 
-  # Summary
+  # 汇总
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   if [ $error_count -eq 0 ] && [ $warning_count -eq 0 ]; then
@@ -223,12 +223,12 @@ check_frontmatter() {
   return $error_count
 }
 
-# Process all provided files
+# 处理所有传入文件
 for file in "$@"; do
   check_frontmatter "$file" || true
 done
 
-# Final summary for multiple files
+# 多文件的最终汇总
 if [ $# -gt 1 ]; then
   echo "═══════════════════════════════════════"
   echo "Total: $# files checked"

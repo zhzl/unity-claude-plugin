@@ -1,10 +1,10 @@
 #!/bin/bash
-# Agent Skeleton Generator
-# Creates a new agent file with correct structure
+# Agent 骨架生成器
+# 创建结构正确的新 agent 文件
 
 set -euo pipefail
 
-# Usage
+# 用法
 if [ $# -eq 0 ]; then
   echo "Usage: $0 <agent-name> [output-dir]"
   echo ""
@@ -37,7 +37,7 @@ OUTPUT_FILE="$OUTPUT_DIR/$AGENT_NAME.md"
 echo "🔍 Creating agent skeleton: $AGENT_NAME"
 echo ""
 
-# Validate name format (lowercase alphanumeric + hyphens, 3-50 chars)
+# 校验名称格式（小写字母数字加连字符，3-50 个字符）
 if ! [[ "$AGENT_NAME" =~ ^[a-z0-9][a-z0-9-]*[a-z0-9]$ ]]; then
   echo "❌ Invalid name: $AGENT_NAME"
   echo ""
@@ -53,7 +53,7 @@ if ! [[ "$AGENT_NAME" =~ ^[a-z0-9][a-z0-9-]*[a-z0-9]$ ]]; then
 fi
 echo "✅ Name format valid"
 
-# Validate name length
+# 校验名称长度
 name_length=${#AGENT_NAME}
 if [ "$name_length" -lt 3 ]; then
   echo "❌ Name too short: $name_length characters (minimum 3)"
@@ -65,7 +65,7 @@ if [ "$name_length" -gt 50 ]; then
 fi
 echo "✅ Name length valid ($name_length characters)"
 
-# Check output directory exists
+# 检查输出目录是否存在
 if [ ! -d "$OUTPUT_DIR" ]; then
   echo "❌ Directory does not exist: $OUTPUT_DIR"
   echo ""
@@ -74,7 +74,7 @@ if [ ! -d "$OUTPUT_DIR" ]; then
 fi
 echo "✅ Output directory exists"
 
-# Check file doesn't already exist
+# 检查文件是否尚不存在
 if [ -f "$OUTPUT_FILE" ]; then
   echo "❌ File already exists: $OUTPUT_FILE"
   echo ""
@@ -92,7 +92,7 @@ echo "📝 Creating agent file..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-# Create the agent skeleton file
+# 创建 agent 骨架文件
 cat > "$OUTPUT_FILE" << EOF
 ---
 name: $AGENT_NAME

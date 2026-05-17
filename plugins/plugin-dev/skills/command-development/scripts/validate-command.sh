@@ -1,10 +1,10 @@
 #!/bin/bash
-# Command File Validator
-# Validates command file structure and syntax
+# Command 文件校验器
+# 校验 command 文件结构和语法
 
 set -euo pipefail
 
-# Usage
+# 用法
 if [ $# -eq 0 ]; then
   echo "Usage: $0 <path/to/command.md> [command2.md ...]"
   echo ""
@@ -31,14 +31,14 @@ validate_command() {
   echo "🔍 Validating command: $COMMAND_FILE"
   echo ""
 
-  # Check 1: File exists
+  # 检查 1：文件是否存在
   if [ ! -f "$COMMAND_FILE" ]; then
     echo "❌ Error: File not found: $COMMAND_FILE"
     return 1
   fi
   echo "✅ File exists"
 
-  # Check 2: .md extension
+  # 检查 2：.md 扩展名
   if [[ ! "$COMMAND_FILE" =~ \.md$ ]]; then
     echo "❌ Error: File must have .md extension"
     error_count=$((error_count + 1))
@@ -46,7 +46,7 @@ validate_command() {
     echo "✅ Has .md extension"
   fi
 
-  # Check 3: Non-empty file
+  # 检查 3：文件非空
   if [ ! -s "$COMMAND_FILE" ]; then
     echo "❌ Error: File is empty"
     error_count=$((error_count + 1))
@@ -54,12 +54,12 @@ validate_command() {
     echo "✅ File is not empty"
   fi
 
-  # Check 4: YAML frontmatter syntax (if present)
+  # 检查 4：YAML frontmatter 语法（如果存在）
   if head -n 1 "$COMMAND_FILE" | grep -q "^---"; then
     echo ""
     echo "Checking YAML frontmatter..."
 
-    # Validate the opening frontmatter block only; body horizontal rules are allowed
+    # 只校验开头的 frontmatter 区块；正文中的水平分隔线是允许的
     CLOSING_LINE=$(awk 'NR > 1 && /^---$/ { print NR; exit }' "$COMMAND_FILE")
     if [ -z "$CLOSING_LINE" ]; then
       echo "❌ Error: Invalid YAML frontmatter (missing closing '---' marker)"
@@ -68,8 +68,8 @@ validate_command() {
       echo "✅ YAML frontmatter delimiters valid"
     fi
 
-    # Check for malformed YAML (basic check)
-    # Extract frontmatter - only between first and second --- markers
+    # 检查 YAML 是否格式错误（基础检查）
+    # 提取 frontmatter - 仅限第一个和第二个 --- 标记之间
     local frontmatter
     frontmatter=$(awk '
       /^---$/ { count++; if (count == 2) exit; next }
@@ -77,13 +77,13 @@ validate_command() {
     ' "$COMMAND_FILE")
 
     if [ -n "$frontmatter" ]; then
-      # Check for tabs (YAML prefers spaces)
+      # 检查是否包含制表符（YAML 更推荐空格）
       if echo "$frontmatter" | grep -q $'\t'; then
         echo "⚠️  Warning: Frontmatter contains tabs (YAML prefers spaces)"
         warning_count=$((warning_count + 1))
       fi
 
-      # Check for common YAML errors - key without value
+      # 检查常见 YAML 错误 - 只有键没有值
       if echo "$frontmatter" | grep -qE "^[a-z-]+:$"; then
         echo "⚠️  Warning: Frontmatter has keys without values"
         warning_count=$((warning_count + 1))
@@ -94,7 +94,7 @@ validate_command() {
     echo "ℹ️  No YAML frontmatter (optional)"
   fi
 
-  # Check 5: Location warning
+  # 检查 5：位置警告
   echo ""
   echo "Checking location..."
   if [[ "$COMMAND_FILE" == *".claude/commands/"* ]] || [[ "$COMMAND_FILE" == *"/commands/"* ]]; then
@@ -104,7 +104,7 @@ validate_command() {
     warning_count=$((warning_count + 1))
   fi
 
-  # Check 6: Filename conventions
+  # 检查 6：文件名约定
   echo ""
   echo "Checking filename..."
   local filename
@@ -120,7 +120,7 @@ validate_command() {
     echo "✅ Filename follows conventions"
   fi
 
-  # Summary
+  # 汇总
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   if [ $error_count -eq 0 ] && [ $warning_count -eq 0 ]; then
@@ -138,12 +138,12 @@ validate_command() {
   return $error_count
 }
 
-# Process all provided files
+# 处理所有传入文件
 for file in "$@"; do
   validate_command "$file" || true
 done
 
-# Final summary for multiple files
+# 多文件的最终汇总
 if [ $# -gt 1 ]; then
   echo "═══════════════════════════════════════"
   echo "Total: $# files validated"
