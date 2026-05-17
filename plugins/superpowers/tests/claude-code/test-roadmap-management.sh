@@ -134,7 +134,11 @@ assert_section_contains "$SKILL" "## 验收同步规则" "只报告问题并停�
 echo ""
 echo "Test 2d: Active clarification discipline..."
 assert_file_contains "$SKILL" "问题是什么" "Roadmap discussion must explain the problem before asking for confirmation"
+assert_file_contains "$SKILL" "用户容易理解" "Roadmap discussion must explain the problem in user-friendly language"
 assert_file_contains "$SKILL" "需要用户确认什么" "Roadmap discussion must state what the user needs to confirm"
+assert_file_contains "$SKILL" "具体选项" "Roadmap discussion must offer concrete options"
+assert_file_contains "$SKILL" "推荐选项" "Roadmap discussion must mark the recommended option"
+assert_file_contains "$SKILL" "不要只问是否确认" "Roadmap discussion must avoid bare yes/no confirmation"
 assert_file_contains "$SKILL" "逐条确认" "Roadmap discussion must confirm decisions one at a time"
 assert_file_contains "$SKILL" "不要只顺着用户已提出的问题推进" "Roadmap discussion must proactively surface hidden issues"
 
