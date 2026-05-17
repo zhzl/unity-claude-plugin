@@ -1,10 +1,10 @@
-# Agent Triggering Examples: Best Practices
+# Agent 触发示例：最佳实践
 
-Complete guide to writing effective `<example>` blocks in agent descriptions for reliable triggering.
+这是为 agent description 编写高质量 `<example>` 块的完整指南，以获得更可靠的 triggering 效果。
 
-## Example Block Format
+## 示例块格式
 
-The standard format for triggering examples (aligned with official Claude Code documentation):
+triggering 示例的标准格式如下（与官方 Claude Code 文档保持一致）：
 
 ```markdown
 <example>
@@ -17,13 +17,13 @@ assistant: "[How Claude invokes the agent - 'I'll use the [agent-name] agent to 
 </example>
 ```
 
-## Anatomy of a Good Example
+## 好示例的结构
 
-### Context
+### 上下文（Context）
 
-**Purpose:** Set the scene - what happened before the user's message
+**目的：** 交代场景，也就是用户这条消息之前发生了什么。
 
-**Good contexts:**
+**好的上下文：**
 
 ```
 Context: User just implemented a new authentication feature
@@ -32,18 +32,18 @@ Context: User is debugging a test failure
 Context: After writing several functions without documentation
 ```
 
-**Bad contexts:**
+**不好的上下文：**
 
 ```
 Context: User needs help (too vague)
 Context: Normal usage (not specific)
 ```
 
-### User Message
+### 用户消息（User Message）
 
-**Purpose:** Show the exact phrasing that should trigger the agent
+**目的：** 展示会触发 agent 的具体用户措辞。
 
-**Good user messages:**
+**好的用户消息：**
 
 ```
 user: "I've added the OAuth flow, can you check it?"
@@ -52,8 +52,8 @@ user: "Why is this test failing?"
 user: "Add docs for these functions"
 ```
 
-**Vary the phrasing:**
-Include multiple examples with different phrasings for the same intent:
+**改变措辞写法：**
+对同一种意图，给出多条不同说法的示例：
 
 ```
 Example 1: user: "Review my code"
@@ -61,11 +61,11 @@ Example 2: user: "Can you check this implementation?"
 Example 3: user: "Look over my changes"
 ```
 
-### Assistant Response
+### 助手响应（Assistant Response）
 
-**Purpose:** Show Claude invoking the agent
+**目的：** 展示 Claude 如何调用 agent。
 
-**Good responses:**
+**好的响应：**
 
 ```
 assistant: "I'll use the code-reviewer agent to analyze your OAuth implementation."
@@ -73,11 +73,11 @@ assistant: "I'll use the pr-analyzer agent to review that PR for you."
 assistant: "I'll use the test-analyzer agent to investigate the test failure."
 ```
 
-### Commentary
+### 说明（Commentary）
 
-**Purpose:** Explain the reasoning - WHY this agent should trigger
+**目的：** 解释触发理由，也就是为什么此时应该触发该 agent。
 
-**Good commentary:**
+**好的说明：**
 
 ```
 <commentary>
@@ -93,7 +93,7 @@ PR analysis request matches pr-analyzer agent's expertise.
 </commentary>
 ```
 
-**Include decision logic:**
+**加入决策逻辑：**
 
 ```
 <commentary>
@@ -102,11 +102,11 @@ test quality and coverage before continuing.
 </commentary>
 ```
 
-## Example Types
+## 示例类型
 
-### Type 1: Explicit Request
+### 类型 1：显式请求
 
-User directly asks for what the agent does:
+用户直接要求 agent 所擅长的事情：
 
 ```markdown
 <example>
@@ -119,9 +119,9 @@ Direct security analysis request triggers the security-analyzer agent.
 </example>
 ```
 
-### Type 2: Proactive Triggering
+### 类型 2：主动触发
 
-Agent triggers after relevant work without explicit request:
+即使用户没有明说，只要做完相关工作也应触发 agent：
 
 ```markdown
 <example>
@@ -135,9 +135,9 @@ for SQL injection and other database security issues.
 </example>
 ```
 
-### Type 3: Implicit Request
+### 类型 3：隐式请求
 
-User implies need without stating it directly:
+用户没有直接说出口，但表达里已经暗示了需求：
 
 ```markdown
 <example>
@@ -150,9 +150,9 @@ User indicates complexity issues. Trigger code-simplifier agent to improve clari
 </example>
 ```
 
-### Type 4: Tool Usage Pattern
+### 类型 4：工具使用模式（Tool Usage Pattern）
 
-Agent triggers based on prior tool usage:
+基于先前的 tool 使用模式来触发 agent：
 
 ```markdown
 <example>
@@ -166,9 +166,9 @@ to ensure tests follow best practices.
 </example>
 ```
 
-## Multiple Examples Strategy
+## 多个示例的策略
 
-### Cover Different Phrasings
+### 覆盖不同措辞
 
 ```markdown
 <example>
@@ -187,7 +187,7 @@ user: "Look over these changes"
 </example>
 ```
 
-### Cover Proactive and Reactive
+### 同时覆盖主动与被动触发
 
 ```markdown
 <example>
@@ -209,7 +209,7 @@ Code written, proactively review for quality and issues.
 </example>
 ```
 
-### Cover Edge Cases
+### 覆盖边界场景
 
 ```markdown
 <example>
@@ -228,9 +228,9 @@ Large PR mentioned, use thorough analysis mode.
 </example>
 ```
 
-## Common Mistakes
+## 常见错误
 
-### ❌ Missing Context
+### ❌ 缺少上下文（Context）
 
 ```markdown
 <example>
@@ -239,9 +239,9 @@ assistant: "I'll use the code-reviewer agent."
 </example>
 ```
 
-**Why bad:** No context about what led to this request.
+**为什么不好：** 没有说明这次请求之前发生了什么。
 
-### ✅ With Context
+### ✅ 带上上下文（Context）
 
 ```markdown
 <example>
@@ -254,7 +254,7 @@ Auth code written. Review for security and best practices.
 </example>
 ```
 
-### ❌ No Commentary
+### ❌ 没有说明（Commentary）
 
 ```markdown
 <example>
@@ -264,9 +264,9 @@ assistant: "I'll use the reviewer agent."
 </example>
 ```
 
-**Why bad:** Doesn't explain WHY agent triggers.
+**为什么不好：** 没解释为什么这里应该触发 agent。
 
-### ✅ With Commentary
+### ✅ 带说明（Commentary）
 
 ```markdown
 <example>
@@ -279,7 +279,7 @@ Code review request triggers agent to check quality, security, and adherence to 
 </example>
 ```
 
-### ❌ Agent Responds Directly
+### ❌ agent 直接回答任务
 
 ```markdown
 <example>
@@ -288,9 +288,9 @@ assistant: "I found the following issues: [lists issues]"
 </example>
 ```
 
-**Why bad:** Shows agent's output, not triggering.
+**为什么不好：** 这展示的是 agent 输出，而不是 triggering。
 
-### ✅ Shows Triggering
+### ✅ 正确展示 triggering
 
 ```markdown
 <example>
@@ -302,31 +302,31 @@ Review request triggers the agent.
 </example>
 ```
 
-## How Many Examples?
+## 需要多少个示例？
 
-### Minimum: 2 Examples
+### 最少：2 个示例
 
-Cover at least:
+至少覆盖：
 
-1. Explicit request
-2. One variation or proactive trigger
+1. 显式请求
+2. 一个变体，或一个主动触发场景
 
-### Recommended: 3-4 Examples
+### 推荐：3-4 个示例
 
-Cover:
+建议覆盖：
 
-1. Explicit request (direct ask)
-2. Implicit request (user implies need)
-3. Proactive trigger (after relevant work)
-4. Edge case or specific scenario
+1. 显式请求（直接发问）
+2. 隐式请求（用户暗示需要）
+3. 主动触发（完成相关工作后）
+4. 边界场景或特定场景
 
-### Maximum: 6 Examples
+### 最多：6 个示例
 
-More than 6 makes description too long. Focus on most important scenarios.
+超过 6 个会让 description 过长。聚焦最重要的场景即可。
 
-## Template Library
+## 模板库
 
-### Code Review Agent
+### 代码复审 Agent
 
 ```markdown
 <example>
@@ -348,7 +348,7 @@ Explicit review request triggers the agent.
 </example>
 ```
 
-### Test Generation Agent
+### 测试生成 Agent
 
 ```markdown
 <example>
@@ -370,7 +370,7 @@ Direct test generation request triggers the agent.
 </example>
 ```
 
-### Documentation Agent
+### 文档 Agent
 
 ```markdown
 <example>
@@ -392,7 +392,7 @@ Documentation request triggers the agent.
 </example>
 ```
 
-### Validation Agent
+### 校验 Agent
 
 ```markdown
 <example>
@@ -414,61 +414,61 @@ Explicit validation request triggers the agent.
 </example>
 ```
 
-## Debugging Triggering Issues
+## 调试 triggering 问题
 
-### Agent Not Triggering
+### agent 没有触发
 
-**Check:**
+**检查：**
 
-1. Examples include relevant keywords from user message
-2. Context matches actual usage scenarios
-3. Commentary explains triggering logic clearly
-4. Assistant shows use of Agent tool in examples
+1. 示例（examples）是否包含用户消息中的相关关键词
+2. 上下文（context）是否匹配真实使用场景
+3. 说明（commentary）是否清楚解释 triggering 逻辑
+4. assistant 是否在示例中展示了 Agent tool 的使用
 
-**Fix:**
-Add more examples covering different phrasings.
+**修复：**
+补充更多覆盖不同措辞的示例。
 
-### Agent Triggers Too Often
+### agent 触发过于频繁
 
-**Check:**
+**检查：**
 
-1. Examples are too broad or generic
-2. Triggering conditions overlap with other agents
-3. Commentary doesn't distinguish when NOT to use
+1. 示例（examples）是否过宽、过泛
+2. triggering conditions 是否与其他 agents 重叠
+3. 说明（commentary）是否没有区分何时**不应**使用
 
-**Fix:**
-Make examples more specific, add negative examples.
+**修复：**
+把示例写得更具体，并补上反例。
 
-### Agent Triggers in Wrong Scenarios
+### agent 在错误场景触发
 
-**Check:**
+**检查：**
 
-1. Examples don't match actual intended use
-2. Commentary suggests inappropriate triggering
+1. 示例（examples）是否没有匹配真实的预期用法
+2. 说明（commentary）是否暗示了不恰当的触发方式
 
-**Fix:**
-Revise examples to show only correct triggering scenarios.
+**修复：**
+修改 examples，只展示正确的 triggering 场景。
 
-## Best Practices Summary
+## 最佳实践总结
 
-✅ **DO:**
+✅ **推荐：**
 
-- Include 2-4 concrete, specific examples
-- Show both explicit and proactive triggering
-- Provide clear context for each example
-- Explain reasoning in commentary
-- Vary user message phrasing
-- Show Claude using Agent tool
+- 包含 2-4 个具体、明确的示例（examples）
+- 同时展示显式触发与主动触发
+- 为每个示例（example）提供清晰上下文（context）
+- 在说明（commentary）中解释推理
+- 变化 user message 的措辞
+- 展示 Claude 使用 Agent tool
 
-❌ **DON'T:**
+❌ **避免：**
 
-- Use generic, vague examples
-- Omit context or commentary
-- Show only one type of triggering
-- Skip the agent invocation step
-- Make examples too similar
-- Forget to explain why agent triggers
+- 使用泛化、模糊的示例（examples）
+- 省略上下文（context）或说明（commentary）
+- 只展示一种 triggering 方式
+- 跳过 agent invocation 这一步
+- 让示例（examples）彼此过于相似
+- 忘记解释为什么 agent 会触发
 
-## Conclusion
+## 结论
 
-Well-crafted examples are crucial for reliable agent triggering. Invest time in creating diverse, specific examples that clearly demonstrate when and why the agent should be used.
+写得好的 examples 对稳定 triggering 至关重要。值得投入时间，去编写多样、具体且能清晰说明“何时触发、为什么触发”的 examples。

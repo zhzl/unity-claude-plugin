@@ -1,18 +1,18 @@
-# Marketplace Schema Reference
+# Marketplace schema 参考说明
 
-Complete field reference for `marketplace.json` and plugin entries.
+`marketplace.json` 与 plugin 条目的完整字段参考。
 
-## Marketplace Root Fields
+## Marketplace 根字段
 
-### Required Fields
+### 必需字段
 
-| Field     | Type   | Constraints            | Description                        |
-| --------- | ------ | ---------------------- | ---------------------------------- |
-| `name`    | string | kebab-case, 3-50 chars | Unique marketplace identifier      |
-| `owner`   | object | See Owner Object       | Marketplace maintainer information |
-| `plugins` | array  | At least 1 entry       | List of available plugins          |
+| 字段 | 类型 | 约束 | 说明 |
+| ---- | ---- | ---- | ---- |
+| `name` | string | kebab-case, 3-50 chars | 唯一的 marketplace 标识符 |
+| `owner` | object | 参见所有者对象（owner） | marketplace 维护者信息 |
+| `plugins` | array | 至少 1 个条目 | 可用 plugin 条目列表 |
 
-### Optional Metadata Object
+### 可选 Metadata 对象
 
 ```json
 {
@@ -24,28 +24,28 @@ Complete field reference for `marketplace.json` and plugin entries.
 }
 ```
 
-| Field         | Type   | Description                                    |
-| ------------- | ------ | ---------------------------------------------- |
-| `description` | string | Brief marketplace description (1-200 chars)    |
-| `version`     | string | Marketplace version (semver X.Y.Z recommended) |
-| `pluginRoot`  | string | Base path for relative plugin sources          |
+| 字段 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| `description` | string | 简短的 marketplace 描述（1-200 chars） |
+| `version` | string | marketplace 版本（建议使用 semver X.Y.Z） |
+| `pluginRoot` | string | 相对 plugin source 的基准路径 |
 
-## Owner Object
+## 所有者对象（owner）
 
-### Required Owner Fields
+### 必需所有者字段
 
-| Field  | Type   | Description                              |
-| ------ | ------ | ---------------------------------------- |
-| `name` | string | Maintainer name (person or organization) |
+| 字段 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| `name` | string | 维护者名称（个人或组织） |
 
-### Optional Owner Fields
+### 可选所有者字段
 
-| Field   | Type   | Description                        |
-| ------- | ------ | ---------------------------------- |
-| `email` | string | Contact email address              |
-| `url`   | string | Maintainer homepage or profile URL |
+| 字段 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| `email` | string | 联系邮箱地址 |
+| `url` | string | 维护者主页或个人资料 URL |
 
-### Example
+### 示例
 
 ```json
 {
@@ -57,51 +57,51 @@ Complete field reference for `marketplace.json` and plugin entries.
 }
 ```
 
-## Plugin Entry Fields
+## Plugin 条目字段
 
-### Required Plugin Fields
+### 必需 Plugin 字段
 
-| Field    | Type             | Description                                               |
-| -------- | ---------------- | --------------------------------------------------------- |
-| `name`   | string           | Plugin identifier (kebab-case, unique within marketplace) |
-| `source` | string or object | Where to fetch the plugin (see Source Types)              |
+| 字段 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| `name` | string | plugin 标识符（kebab-case，且在 marketplace 内唯一） |
+| `source` | string or object | 获取 plugin 的位置（参见 Source 类型） |
 
-### Optional Standard Metadata
+### 可选标准 Metadata
 
-| Field         | Type   | Description                                     |
-| ------------- | ------ | ----------------------------------------------- |
-| `description` | string | Brief plugin description                        |
-| `version`     | string | Plugin version (semver X.Y.Z)                   |
-| `author`      | object | Plugin author (same format as owner)            |
-| `homepage`    | string | Plugin documentation URL                        |
-| `repository`  | string | Source code repository URL                      |
-| `license`     | string | SPDX license identifier (MIT, Apache-2.0, etc.) |
-| `keywords`    | array  | String tags for discovery                       |
-| `category`    | string | Plugin category (productivity, security, etc.)  |
-| `tags`        | array  | Additional searchability tags                   |
+| 字段 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| `description` | string | 简短的 plugin 描述 |
+| `version` | string | plugin 版本（semver X.Y.Z） |
+| `author` | object | plugin 作者（与 owner 相同格式） |
+| `homepage` | string | plugin 文档 URL |
+| `repository` | string | 源码仓库 URL |
+| `license` | string | SPDX license 标识符（MIT、Apache-2.0 等） |
+| `keywords` | array | 用于发现的字符串 tags |
+| `category` | string | plugin 分类（productivity、security 等） |
+| `tags` | array | 额外的可搜索 tags |
 
-### Marketplace-Specific Fields
+### Marketplace 特有字段
 
-| Field    | Type    | Default | Description                            |
-| -------- | ------- | ------- | -------------------------------------- |
-| `strict` | boolean | `true`  | Require `plugin.json` in plugin folder |
+| 字段 | 类型 | 默认值 | 说明 |
+| ---- | ---- | ------ | ---- |
+| `strict` | boolean | `true` | 要求 plugin 文件夹内存在 `plugin.json` |
 
-### Component Configuration Fields
+### 组件配置字段
 
-These fields override or supplement plugin component paths:
+这些字段会覆盖或补充 plugin 组件路径：
 
-| Field        | Type             | Description                                  |
-| ------------ | ---------------- | -------------------------------------------- |
-| `commands`   | string or array  | Custom paths to command files or directories |
-| `agents`     | string or array  | Custom paths to agent files                  |
-| `hooks`      | string or object | Hooks configuration or path to hooks file    |
-| `mcpServers` | string or object | MCP server configurations or path            |
+| 字段 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| `commands` | string or array | command 文件或目录的自定义路径 |
+| `agents` | string or array | agent 文件的自定义路径 |
+| `hooks` | string or object | hooks 配置或 hooks 文件路径 |
+| `mcpServers` | string or object | MCP server 配置或其路径 |
 
-## Source Types
+## Source 类型
 
-### Relative Path (String)
+### 相对路径（String）
 
-For plugins in the same repository:
+适用于同一仓库中的 plugins：
 
 ```json
 {
@@ -109,15 +109,15 @@ For plugins in the same repository:
 }
 ```
 
-Paths are relative to:
+路径相对于以下位置解析：
 
-1. `metadata.pluginRoot` if specified
-2. Repository root otherwise
+1. 若指定，则相对于 `metadata.pluginRoot`
+2. 否则相对于仓库根目录
 
-For example, with `metadata.pluginRoot: "plugins"`, use `"source": "./my-plugin"`; without `pluginRoot`, use `"source": "./plugins/my-plugin"`.
+例如，当 `metadata.pluginRoot: "plugins"` 时，使用 `"source": "./my-plugin"`；未设置 `pluginRoot` 时，则使用 `"source": "./plugins/my-plugin"`。
 
-`../` paths are valid when the schema and repository layout require them, but treat them as a portability tradeoff. They depend more heavily on checkout layout and caller working assumptions than paths kept under `pluginRoot` or another repository-local base, so prefer documenting that expectation clearly when using them.
-### GitHub Repository (Object)
+当 schema 与仓库布局需要时，`../` 路径也是有效的，但应将其视为可移植性权衡。它比放在 `pluginRoot` 或其他仓库内基准路径下的路径更依赖 checkout 布局和调用方的工作假设，因此使用时最好明确记录这一前提。
+### GitHub 仓库（Object）
 
 ```json
 {
@@ -130,16 +130,16 @@ For example, with `metadata.pluginRoot: "plugins"`, use `"source": "./my-plugin"
 }
 ```
 
-| Field    | Type   | Required | Description                              |
-| -------- | ------ | -------- | ---------------------------------------- |
-| `source` | string | Yes      | Must be `"github"`                       |
-| `repo`   | string | Yes      | GitHub repository in `owner/repo` format |
-| `ref`    | string | No       | Branch, tag, or commit reference         |
-| `sha`    | string | No       | Exact commit SHA for integrity pinning   |
+| 字段 | 类型 | 必需 | 说明 |
+| ---- | ---- | ---- | ---- |
+| `source` | string | Yes | 必须为 `"github"` |
+| `repo` | string | Yes | `owner/repo` 格式的 GitHub 仓库 |
+| `ref` | string | No | branch、tag 或 commit 引用 |
+| `sha` | string | No | 用于完整性 pinning 的精确 commit SHA |
 
-### Git URL (Object)
+### Git URL（Object）
 
-For GitLab, Bitbucket, or self-hosted git repositories:
+适用于 GitLab、Bitbucket 或自托管 git 仓库：
 
 ```json
 {
@@ -151,18 +151,18 @@ For GitLab, Bitbucket, or self-hosted git repositories:
 }
 ```
 
-| Field    | Type   | Required | Description                    |
-| -------- | ------ | -------- | ------------------------------ |
-| `source` | string | Yes      | Must be `"url"`                |
-| `url`    | string | Yes      | Full git clone URL             |
-| `ref`    | string | No       | Branch or tag reference        |
-| `sha`    | string | No       | Exact commit SHA for integrity |
+| 字段 | 类型 | 必需 | 说明 |
+| ---- | ---- | ---- | ---- |
+| `source` | string | Yes | 必须为 `"url"` |
+| `url` | string | Yes | 完整 git clone URL |
+| `ref` | string | No | branch 或 tag 引用 |
+| `sha` | string | No | 用于完整性校验的精确 commit SHA |
 
-## Complete Plugin Entry Example
+## 完整 Plugin 条目示例
 
-**Note:** The `${CLAUDE_PLUGIN_ROOT}` variable in the example below resolves to the plugin's absolute installation path. Use this variable for portable paths in hooks and MCP server configurations, ensuring paths work regardless of where the plugin is installed.
+**注意：** 下方示例中的 `${CLAUDE_PLUGIN_ROOT}` 变量会解析为 plugin 的绝对安装路径。对 hooks 和 MCP server 配置中的可移植路径，请使用该变量，以确保无论 plugin 安装到哪里，路径都能正确工作。
 
-Advanced plugin entry with all optional fields:
+包含所有可选字段的高级 plugin 条目：
 
 ```json
 {
@@ -208,56 +208,56 @@ Advanced plugin entry with all optional fields:
 }
 ```
 
-## Strict Mode Details
+## 严格模式（strict mode）细节
 
-### strict: true (Default)
+### strict: true（默认）
 
-- Plugin directory must contain `.claude-plugin/plugin.json`
-- Marketplace entry fields supplement plugin manifest values
-- Plugin manifest takes precedence for conflicting fields
+- plugin 目录必须包含 `.claude-plugin/plugin.json`
+- marketplace 条目会补充 plugin manifest 中的值
+- 若字段冲突，以 plugin manifest 为准
 
 ### strict: false
 
-- `plugin.json` is optional in plugin directory
-- Marketplace entry serves as complete plugin manifest if no `plugin.json` exists
-- Useful for curating external plugins or lightweight plugin directories
+- plugin 目录中的 `plugin.json` 为可选
+- 若不存在 `plugin.json`，marketplace 条目会作为完整 plugin manifest
+- 适合精选外部 plugins，或仅包含轻量目录结构的 plugins
 
-### When to Use strict: false
+### 何时使用 strict: false
 
-| Scenario                   | Reasoning                                                |
-| -------------------------- | -------------------------------------------------------- |
-| External plugins           | Cannot modify external source to add plugin.json         |
-| Minimal plugins            | Plugin has only commands/agents without needing manifest |
-| Complete metadata in entry | All plugin info provided in marketplace entry            |
-| Legacy plugins             | Older plugins without manifest file                      |
+| 场景 | 原因 |
+| ---- | ---- |
+| 外部 plugins | 无法修改外部 source 来添加 plugin.json |
+| 最小 plugins | plugin 仅包含 commands/agents，无需额外 manifest |
+| 条目中提供完整 metadata | 所有 plugin 信息都在 marketplace 条目中提供 |
+| 旧版 plugins | 较旧的 plugin 没有 manifest 文件 |
 
-## Validation Rules
+## 校验规则
 
-### Marketplace Level
+### Marketplace 层级
 
-- `name` must be kebab-case (lowercase letters, numbers, hyphens)
-- `name` must be 3-50 characters
-- `owner.name` is required
-- `plugins` array must have at least one entry
-- No duplicate plugin names in `plugins` array
+- `name` 必须为 kebab-case（小写字母、数字、连字符）
+- `name` 长度必须为 3-50 个字符
+- `owner.name` 为必需字段
+- `plugins` 数组至少要有一个条目
+- `plugins` 数组中不能有重复的 plugin name
 
-### Plugin Entry Level
+### Plugin 条目层级
 
-- `name` must be kebab-case
-- `name` must be unique within the marketplace
-- `source` must be valid (string path or recognized source object)
-- `version` should follow semver if provided
-- `license` should be valid SPDX identifier if provided
+- `name` 必须为 kebab-case
+- `name` 在 marketplace 内必须唯一
+- `source` 必须有效（字符串路径或可识别的 source object）
+- 若提供 `version`，应遵循 semver
+- 若提供 `license`，应为有效的 SPDX 标识符
 
-### Source Validation
+### Source 校验
 
-- Relative paths: Must start with `./` or `../`
-- GitHub sources: `repo` must be `owner/repo` format
-- URL sources: Must be valid git URL
+- 相对路径：必须以 `./` 或 `../` 开头
+- GitHub source：`repo` 必须是 `owner/repo` 格式
+- URL source：必须是有效的 git URL
 
-## Schema Relationship
+## Schema 关系
 
-Plugin entries build on the plugin manifest schema:
+plugin 条目构建在 plugin manifest schema 之上：
 
 ```text
 plugin.json schema (all fields optional in marketplace entry)
@@ -265,19 +265,19 @@ plugin.json schema (all fields optional in marketplace entry)
     = marketplace plugin entry
 ```
 
-This means any field valid in `plugin.json` can also be used in a marketplace entry.
+这意味着任何在 `plugin.json` 中有效的字段，也都可以用于 marketplace 条目。
 
-## Enterprise Settings
+## 企业级 settings
 
-Organizations can control marketplace behavior through managed settings:
+组织可以通过托管 settings 控制 marketplace 行为：
 
-| Setting                   | Type    | Description                                           |
-| ------------------------- | ------- | ----------------------------------------------------- |
-| `strictKnownMarketplaces` | array  | Managed allowlist of approved marketplace sources     |
-| `enabledPlugins`          | object | Boolean map of pre-configured enabled plugins         |
-| `extraKnownMarketplaces`  | object | Additional approved marketplaces beyond built-in ones |
+| 设置项 | 类型 | 说明 |
+| ------ | ---- | ---- |
+| `strictKnownMarketplaces` | array | 已批准 marketplace source 的托管 allowlist |
+| `enabledPlugins` | object | 预配置启用 plugins 的布尔映射 |
+| `extraKnownMarketplaces` | object | 内置 marketplace 之外的额外已批准 marketplaces |
 
-### Example Managed Settings
+### 托管 settings 示例
 
 ```json
 {
@@ -298,6 +298,6 @@ Organizations can control marketplace behavior through managed settings:
 }
 ```
 
-Managed marketplace restrictions may also use host/path patterns, such as `hostPattern`, to constrain approved marketplace locations. Those patterns belong in managed settings, not in marketplace plugin `source` objects.
+托管型 marketplace 限制也可以使用 host/path patterns，例如 `hostPattern`，以约束被批准的 marketplace 位置。这些 patterns 属于托管 settings，而不属于 marketplace plugin 的 `source` objects。
 
-These settings are configured by administrators and cannot be overridden by individual users.
+这些 settings 由管理员配置，个人用户无法覆盖。

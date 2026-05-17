@@ -1,76 +1,76 @@
-# Advanced Agent Fields
+# Agent 高级字段
 
-This reference covers advanced agent configuration beyond the core plugin-agent fields (name, description, model, color, tools, disallowedTools, skills, maxTurns, memory). Some sections below also document project/user subagent features for completeness. When a section is labeled project/user subagent-only, it does not apply to plugin-shipped agents.
+本参考说明核心 plugin-agent 字段（name、description、model、color、tools、disallowedTools、skills、maxTurns、memory）之外的高级 agent 配置。下文部分章节也会为完整性说明 project/user subagent 特性。若章节标注为 project/user subagent-only，则不适用于插件随附的 agent。
 
 ## maxTurns
 
-Limit the maximum number of agentic turns (API round-trips) before the agent stops.
+限制 agent 停止前允许的最大 agentic turn 数（API 往返次数）。
 
 ```yaml
 maxTurns: 50
 ```
 
-### Choosing Values
+### 如何选择数值
 
-| Task Type                     | Suggested Range | Rationale                       |
-| ----------------------------- | --------------- | ------------------------------- |
-| Quick checks, linting         | 5-15            | Focused, fast completion        |
-| Code review, analysis         | 20-40           | Needs to read multiple files    |
-| Complex refactoring, creation | 50-100          | Multi-file changes with testing |
+| 任务类型 | 建议范围 | 原因 |
+| -------- | -------- | ---- |
+| 快速检查、linting | 5-15 | 任务聚焦，通常能较快完成 |
+| 代码审查、分析 | 20-40 | 需要读取多个文件 |
+| 复杂重构、创建工作 | 50-100 | 涉及多文件修改与测试 |
 
-If omitted, the agent runs until it completes or is interrupted. Set `maxTurns` to prevent runaway agents from consuming excessive resources, especially for background agents where there's no user to interrupt.
+如果省略，agent 会一直运行到完成或被中断。设置 `maxTurns` 可防止失控 agent 消耗过多资源，尤其适合后台 agent，因为那种情况下没有用户能中途打断。
 
 ## memory
 
-Enable persistent memory that survives across sessions.
+启用可跨会话保留的持久 memory。
 
 ```yaml
 memory: user
 ```
 
-### Scopes
+### 作用域
 
-| Scope     | Directory                                  | Use When                         |
-| --------- | ------------------------------------------ | -------------------------------- |
-| `user`    | `~/.claude/agent-memory/<agent-name>/`     | Personal preferences, defaults   |
-| `project` | `.claude/agent-memory/<agent-name>/`       | Codebase-specific knowledge      |
-| `local`   | `.claude/agent-memory-local/<agent-name>/` | Gitignored project-specific data |
+| 作用域 | 目录 | 适用场景 |
+| ------ | ---- | -------- |
+| `user` | `~/.claude/agent-memory/<agent-name>/` | 个人偏好、默认设置 |
+| `project` | `.claude/agent-memory/<agent-name>/` | 代码库特定知识 |
+| `local` | `.claude/agent-memory-local/<agent-name>/` | 被 Git 忽略的项目本地数据 |
 
-### How It Works
+### 工作方式
 
-When `memory` is set:
+当设置了 `memory` 时：
 
-1. System prompt includes instructions for reading/writing the memory directory
-2. First 200 lines of `MEMORY.md` are auto-injected into the agent's system prompt
-3. Read, Write, and Edit tools are automatically enabled (even if not in `tools` list)
-4. Agent should curate `MEMORY.md` if it exceeds 200 lines
+1. system prompt 会包含读取/写入 memory 目录的说明
+2. `MEMORY.md` 的前 200 行会自动注入 agent 的 system prompt
+3. Read、Write 和 Edit 工具会自动启用（即使不在 `tools` 列表中）
+4. 如果 `MEMORY.md` 超过 200 行，agent 应主动整理它
 
-### Best Practices
+### 最佳实践
 
-- Use `user` scope as the default for most agents
-- Use `project` or `local` for codebase-specific learning
-- Include memory management instructions in the agent's system prompt (e.g., "After completing a task, update your MEMORY.md with key learnings")
+- 大多数 agent 默认优先使用 `user` 作用域
+- 面向代码库的学习内容使用 `project` 或 `local`
+- 在 agent 的 system prompt 中加入 memory 管理说明（例如 “After completing a task, update your MEMORY.md with key learnings”）
 
 ## mcpServers
 
-Project/user subagent-only field. Claude Code ignores `mcpServers` in plugin-shipped agent frontmatter, so plugin agents should rely on plugin-level MCP configuration instead.
+这是 project/user subagent-only 字段。Claude Code 会忽略插件随附 agent frontmatter 中的 `mcpServers`，因此插件 agent 应改为依赖插件级 MCP 配置。
 
-Scope MCP servers to the agent, controlling which external services it can access.
+将 MCP server 限定到某个 agent，以控制它可访问哪些外部服务。
 
-### Reference by Name
+### 按名称引用
 
-Reference an already-configured MCP server:
+引用已经配置好的 MCP server：
 
 ```yaml
 mcpServers:
   slack:
 ```
 
-The agent inherits the full configuration of the named server from the project/user MCP settings.
+agent 会从 project/user MCP 设置中继承该具名 server 的完整配置。
 
-### Inline Configuration
+### 内联配置
 
-Provide full server config scoped to the agent:
+提供限定到该 agent 的完整 server 配置：
 
 ```yaml
 mcpServers:
@@ -81,19 +81,19 @@ mcpServers:
       API_KEY: "${API_KEY}"
 ```
 
-### Use Cases
+### 使用场景
 
-- Restrict a code review agent to only read-only MCP tools
-- Give a deployment agent access to CI/CD servers but not database servers
-- Provide agent-specific server configuration
+- 将 code review agent 限制为只能使用只读 MCP tools
+- 让 deployment agent 可访问 CI/CD servers，但不能访问 database servers
+- 提供 agent 专属的 server 配置
 
 ## hooks
 
-Project/user subagent-only field. Claude Code ignores `hooks` in plugin-shipped agent frontmatter, so plugin agents should keep lifecycle automation in plugin `hooks/hooks.json` instead.
+这是 project/user subagent-only 字段。Claude Code 会忽略插件随附 agent frontmatter 中的 `hooks`，因此插件 agent 应把生命周期自动化保留在插件 `hooks/hooks.json` 中。
 
-Define lifecycle hooks scoped to the agent. These hooks activate when the agent starts and deactivate when it finishes.
+定义限定到 agent 的生命周期 hooks。这些 hooks 会在 agent 启动时激活，在结束时停用。
 
-### Format
+### 格式
 
 ```yaml
 hooks:
@@ -109,40 +109,40 @@ hooks:
           prompt: "Verify all tasks are complete before stopping."
 ```
 
-### Supported Events
+### 支持的事件
 
-All hook events are supported in agent frontmatter. Key behavior difference:
+agent frontmatter 支持所有 hook 事件。关键行为差异是：
 
-- **`Stop`** hooks are automatically converted to **`SubagentStop`** at runtime, since agents are subprocesses
-- Hooks only run while the agent is active and are cleaned up when the agent finishes
+- **`Stop`** hooks 会在运行时自动转换为 **`SubagentStop`**，因为 agent 本质上是子进程
+- hooks 仅在 agent 活跃期间运行，并会在 agent 结束时清理
 
-### Comparison with hooks.json
+### 与 hooks.json 的对比
 
-| Aspect   | `hooks.json`                               | Agent frontmatter `hooks`                       |
-| -------- | ------------------------------------------ | ----------------------------------------------- |
-| Scope    | Global (always active when plugin enabled) | Agent-specific (active only during agent run)   |
-| Events   | All hook events                            | All events (Stop auto-converts to SubagentStop) |
-| Location | `hooks/hooks.json` file                    | YAML frontmatter in agent .md file              |
-| Use case | Plugin-wide validation                     | Agent-specific safety checks                    |
+| 维度 | `hooks.json` | Agent frontmatter `hooks` |
+| ---- | ------------ | ------------------------- |
+| Scope | 全局生效（插件启用时始终激活） | Agent 专属（仅在 agent 运行期间激活） |
+| Events | 所有 hook 事件 | 所有事件（`Stop` 会自动转成 `SubagentStop`） |
+| Location | `hooks/hooks.json` 文件 | agent `.md` 文件中的 YAML frontmatter |
+| Use case | 插件级校验 | agent 专属安全检查 |
 
-## Execution Modes
+## 执行模式
 
-### Background vs Foreground
+### Background 与 Foreground
 
-- **Foreground** (default): Blocks the main conversation until the agent completes. User can interact if the agent requests permission.
-- **Background**: Runs concurrently with the main conversation. All permissions must be pre-approved at spawn time since the user cannot be prompted.
+- **Foreground**（默认）：阻塞主会话，直到 agent 完成。如果 agent 请求权限，用户仍可交互。
+- **Background**：与主会话并发运行。由于无法向用户弹出权限请求，所有权限都必须在启动时预先批准。
 
-Background agents that encounter an unapproved permission request will fail. Design plugin-shipped agents around explicit tool restrictions (`tools`, `disallowedTools`) and the user's configured permission rules when agents may run in background.
+后台 agent 如果遇到未批准的权限请求会直接失败。当 agent 可能在后台运行时，插件随附 agent 应围绕显式工具限制（`tools`、`disallowedTools`）以及用户已配置的 permission rules 来设计。
 
-### Resuming Agents
+### 恢复 agent
 
-Each Agent tool invocation creates a new agent instance with a fresh context. To continue with the full prior context preserved, ask Claude to "resume that agent" or "continue that subagent" — it will restore the previous transcript.
+每次 Agent tool 调用都会创建一个带有全新上下文的新 agent 实例。若要在保留完整历史上下文的前提下继续，请让 Claude “resume that agent” 或 “continue that subagent”——它会恢复先前的 transcript。
 
-Agent transcripts are stored at `~/.claude/projects/{project}/{sessionId}/subagents/agent-{agentId}.jsonl`.
+agent transcript 存储在 `~/.claude/projects/{project}/{sessionId}/subagents/agent-{agentId}.jsonl`。
 
-### Restricting Spawnable Agent Types
+### 限制可生成的 agent 类型
 
-Use `Agent(agent_type1, agent_type2)` syntax in settings.json allow rules to control which agent types can be spawned:
+在 settings.json 允许规则中使用 `Agent(agent_type1, agent_type2)` 语法，可控制允许生成哪些 agent 类型：
 
 ```json
 {
@@ -152,95 +152,95 @@ Use `Agent(agent_type1, agent_type2)` syntax in settings.json allow rules to con
 }
 ```
 
-- `Agent(type1, type2)` — only these agent types can be spawned
-- `Agent` (no parentheses) — allow any subagent
-- Omitting `Agent` entirely — cannot spawn any subagents
+- `Agent(type1, type2)` — 只允许生成这些 agent type
+- `Agent`（无括号）— 允许任意 subagent
+- 完全省略 `Agent` — 禁止生成任何 subagent
 
-## Built-in Agent Types
+## 内置 Agent 类型
 
-Claude Code includes several built-in agent types that can be referenced in the `agent` field of skills or used as targets for `Agent()` restrictions:
+Claude Code 内置了多种 agent type，可在 skills 的 `agent` 字段中引用，或作为 `Agent()` 限制的目标：
 
-| Agent Type          | Model   | Tools     | Purpose                             |
-| ------------------- | ------- | --------- | ----------------------------------- |
-| `Explore`           | Haiku   | Read-only | Fast codebase exploration/search    |
-| `Plan`              | Inherit | Read-only | Codebase research during planning   |
-| `general-purpose`   | Inherit | All       | Complex multi-step tasks            |
-| `Bash`              | Inherit | Bash      | Terminal commands in isolation      |
-| `statusline-setup`  | Haiku   | Read/Edit | Status line configuration           |
-| `Claude Code Guide` | Haiku   | Read-only | Documentation and feature questions |
+| Agent Type | Model | Tools | 用途 |
+| ---------- | ----- | ----- | ---- |
+| `Explore` | Haiku | Read-only | 快速探索/搜索代码库 |
+| `Plan` | Inherit | Read-only | 规划阶段的代码库调研 |
+| `general-purpose` | Inherit | All | 复杂多步骤任务 |
+| `Bash` | Inherit | Bash | 在隔离环境中执行终端命令 |
+| `statusline-setup` | Haiku | Read/Edit | 状态栏配置 |
+| `Claude Code Guide` | Haiku | Read-only | 文档与功能问答 |
 
-## Agent Teams (Experimental)
+## Agent Teams（实验性）
 
-Agent teams enable multi-agent coordination where a team lead spawns and manages multiple independent Claude Code sessions as teammates. This is an experimental feature requiring `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`.
+Agent teams 支持 multi-agent 协作：一个 team lead 可以生成并管理多个彼此独立的 Claude Code 会话作为 teammate。该特性仍属实验性质，需要设置 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`。
 
-### Key Concepts
+### 关键概念
 
-- **Team lead**: Main session that creates the team, spawns teammates, and coordinates work
-- **Teammates**: Independent Claude Code instances with their own context windows
-- **Shared task list**: Coordinated work items that teammates claim and complete
-- **Messaging**: Direct messages and broadcasts between team members
+- **Team lead**：创建团队、生成 teammate 并协调工作的主会话
+- **Teammates**：拥有各自上下文窗口的独立 Claude Code 实例
+- **Shared task list**：供 teammate 认领和完成的协同任务列表
+- **Messaging**：团队成员之间的定向消息与广播
 
-### Designing Team Lead Agents
+### 设计 Team Lead Agent
 
-Team leads coordinate work across multiple teammates. Key design considerations:
+team lead 负责跨多个 teammate 协调工作。设计时需重点考虑：
 
-- **Constrain by tools and prompt, not a `delegate` permission mode**. Limit implementation tools with `tools`/`disallowedTools`, and explicitly instruct the lead to decompose work, assign tasks, and review results instead of coding directly.
-- **System prompt focus**: Task decomposition, work assignment, progress monitoring, quality review
-- **Tools**: Team leads automatically get access to `TeamCreate`, `TaskCreate`, `TaskUpdate`, `TaskList`, `SendMessage`, and `Task` (for spawning)
-- **Plugin note**: `permissionMode` is ignored for plugin-shipped agents, so coordination-only behavior must come from tool restrictions and prompt guidance
+- **通过 tools 和 prompt 约束，而不是依赖 `delegate` permission mode**。使用 `tools`/`disallowedTools` 限制实现类工具，并明确指示 lead 分解工作、分派任务、审阅结果，而不是亲自编码。
+- **System prompt 重点**：任务拆解、工作分配、进度跟踪、质量审查
+- **Tools**：team lead 会自动获得 `TeamCreate`、`TaskCreate`、`TaskUpdate`、`TaskList`、`SendMessage` 和 `Task`（用于生成 teammate）
+- **插件说明**：插件随附 agent 会忽略 `permissionMode`，因此仅做协同的行为必须通过工具限制和 prompt 引导来实现
 
-### Permission Inheritance
+### 权限继承
 
-Teammates inherit the team lead's permission settings. If the lead runs with `--dangerously-skip-permissions`, all teammates inherit that too. Plan permission modes accordingly — a permissive lead creates permissive teammates.
+teammate 会继承 team lead 的权限设置。如果 lead 使用 `--dangerously-skip-permissions` 运行，所有 teammate 也会继承该设置。规划 permission mode 时要注意：宽松的 lead 会带来宽松的 teammate。
 
-### Context Isolation
+### 上下文隔离
 
-Teammates load CLAUDE.md, MCP servers, and skills from the project, but do NOT inherit the lead's conversation history. Each teammate starts with a fresh context window; the spawn prompt provides initial task context.
+teammate 会从项目中加载 CLAUDE.md、MCP servers 和 skills，但**不会**继承 lead 的对话历史。每个 teammate 都以全新的上下文窗口启动，由生成时的 prompt 提供初始任务背景。
 
-### Token Cost
+### Token 成本
 
-Each teammate is a separate Claude Code session with its own context window. Token costs scale linearly with team size. Worth the extra cost for genuinely parallel work, but avoid spawning teammates for tasks that could be done sequentially.
+每个 teammate 都是独立的 Claude Code 会话，拥有自己的上下文窗口。token 成本会随团队规模线性增长。对于真正可并行的工作，这个成本通常值得；但对于顺序执行即可完成的任务，不应为此生成 teammate。
 
-### Designing Teammate Agents
+### 设计 Teammate Agent
 
-Teammates are spawned by the team lead and work independently on assigned tasks:
+teammate 由 team lead 生成，并独立完成分配给它们的任务：
 
-- **Self-contained context**: Each teammate has its own context window; don't assume shared state
-- **Task-focused prompts**: System prompt should focus on a specific type of work (e.g., "you are a test writer")
-- **Tool restrictions**: Use `tools` to limit what each teammate can do based on their role
-- **Plan mode for review**: Use `permissionMode: plan` for teammates that should propose changes for lead approval
+- **Self-contained context**：每个 teammate 都有自己的上下文窗口，不要假设存在共享状态
+- **Task-focused prompts**：system prompt 应聚焦于特定类型的工作（例如 “you are a test writer”）
+- **Tool restrictions**：使用 `tools` 按角色限制每个 teammate 可执行的操作
+- **Plan mode for review**：对于需要先提方案再由 lead 审批的 teammate，可使用 `permissionMode: plan`
 
-### Display Modes
+### 显示模式
 
-The `teammateMode` setting controls how agent teams display in the terminal:
+`teammateMode` 设置控制 agent teams 在终端中的显示方式：
 
-| Mode         | Behavior                                                  |
-| ------------ | --------------------------------------------------------- |
-| `in-process` | All teammates in main terminal; Shift+Up/Down to navigate |
-| `tmux`       | Split panes, each teammate in its own pane                |
-| `auto`       | Split panes if in tmux, in-process otherwise (default)    |
+| 模式 | 行为 |
+| ---- | ---- |
+| `in-process` | 所有 teammate 都显示在主终端中；可用 Shift+Up/Down 切换 |
+| `tmux` | 分割窗格，每个 teammate 占用自己的 pane |
+| `auto` | 如果运行在 tmux 中则分割窗格，否则使用 in-process（默认） |
 
 ### Team Hooks
 
-Use hook events to enforce quality standards in team workflows:
+可使用 hook 事件在团队工作流中强制执行质量标准：
 
-| Event           | Fires When                   | Use Case                                      |
-| --------------- | ---------------------------- | --------------------------------------------- |
-| `TeammateIdle`  | A teammate finishes its turn | Trigger code review, run tests on changes     |
-| `TaskCompleted` | A task is marked complete    | Validate deliverables, update documentation   |
-| `SubagentStart` | A teammate spawns            | Log team activity, enforce naming conventions |
-| `SubagentStop`  | A teammate finishes          | Clean up resources, collect metrics           |
+| 事件 | 触发时机 | 用途 |
+| ---- | -------- | ---- |
+| `TeammateIdle` | 某个 teammate 完成自己的一个 turn 时 | 触发代码审查、对变更运行测试 |
+| `TaskCompleted` | 某个任务被标记完成时 | 校验交付物、更新文档 |
+| `SubagentStart` | 某个 teammate 启动时 | 记录团队活动、强制命名规范 |
+| `SubagentStop` | 某个 teammate 结束时 | 清理资源、收集指标 |
 
-### Plan Approval Mode
+### Plan 审批模式
 
-Teammates can be configured to require plan approval from the team lead before implementing:
+可以把 teammate 配置为在真正实现前必须先获得 team lead 对 plan 的批准：
 
-1. Teammate uses `permissionMode: plan`
-2. Teammate explores codebase and creates a plan
-3. Teammate calls `ExitPlanMode`, which sends plan to team lead
-4. Team lead reviews and approves/rejects via `SendMessage` with `plan_approval_response`
-5. On approval, teammate exits plan mode and proceeds with implementation
+1. teammate 使用 `permissionMode: plan`
+2. teammate 探索代码库并创建 plan
+3. teammate 调用 `ExitPlanMode`，把 plan 发送给 team lead
+4. team lead 通过带有 `plan_approval_response` 的 `SendMessage` 审核并批准/拒绝
+5. 获批后，teammate 退出 plan mode 并继续实现
 
-This pattern is useful for complex tasks where the lead wants to review approach before execution.
+这种模式适合 lead 希望先审查方案、再允许执行的复杂任务。
 
-For complete documentation, see the [official agent teams guide](https://code.claude.com/docs/en/agent-teams).
+完整文档见[官方 agent teams 指南](https://code.claude.com/docs/en/agent-teams)。

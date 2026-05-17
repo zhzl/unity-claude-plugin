@@ -1,53 +1,53 @@
-# Using MCP Tools in Commands and Agents
+# 在 Commands 和 Agents 中使用 MCP Tools
 
-Complete guide to using MCP tools effectively in Claude Code plugin commands and agents.
+在 Claude Code 插件 command 和 agent 中高效使用 MCP tools 的完整指南。
 
-## Overview
+## 概述
 
-Once an MCP server is configured, its tools become available with the prefix `mcp__<server-name>__<tool-name>`. Use these tools in commands and agents just like built-in Claude Code tools.
+一旦某个 MCP server 配置完成，它的 tools 就会以 `mcp__<server-name>__<tool-name>` 前缀对外可用。你可以像使用 Claude Code 内置工具一样，在 command 和 agent 中使用这些 tools。
 
-## Tool Naming Convention
+## Tool 命名约定
 
-### Format
+### 格式
 
 ```
 mcp__<server-name>__<tool-name>
 ```
 
-### Examples
+### 示例
 
-**Asana server:**
+**Asana server：**
 
 - `mcp__asana__asana_create_task`
 - `mcp__asana__asana_search_tasks`
 - `mcp__asana__asana_get_project`
 
-**Database server:**
+**Database server：**
 
 - `mcp__database__query`
 - `mcp__database__execute`
 - `mcp__database__list_tables`
 
-### Discovering Tool Names
+### 发现 tool 名称
 
-**Use `/mcp` command:**
+**使用 `/mcp` command：**
 
 ```bash
 /mcp
 ```
 
-This shows:
+这里会显示：
 
-- All available MCP servers
-- Tools provided by each server
-- Tool schemas and descriptions
-- Full tool names for use in configuration
+- 所有可用的 MCP server
+- 每个 server 提供的 tools
+- tool schema 和 description
+- 可在配置中使用的完整 tool name
 
-## Using Tools in Commands
+## 在 Commands 中使用 Tools
 
-### Pre-Allowing Tools
+### 预先允许 Tools
 
-Specify MCP tools in command frontmatter:
+在 command frontmatter 中指定 MCP tools：
 
 ```markdown
 ---
@@ -64,7 +64,7 @@ To create a task:
 3. Confirm creation to user
 ```
 
-### Multiple Tools
+### 多个 Tools
 
 ```markdown
 ---
@@ -76,7 +76,7 @@ allowed-tools:
 ---
 ```
 
-### Wildcard (Use Sparingly)
+### Wildcard（谨慎使用）
 
 ```markdown
 ---
@@ -86,11 +86,11 @@ allowed-tools:
 ---
 ```
 
-**Caution:** Only use wildcards if the command truly needs access to all tools from a server.
+**注意：** 只有当 command 确实需要访问某个 server 的全部 tools 时，才使用 wildcard。
 
-### Tool Usage in Command Instructions
+### Command 指令中的 Tool 用法
 
-**Example command:**
+**示例 command：**
 
 ```markdown
 ---
@@ -124,11 +124,11 @@ To create a task:
 3. Show confirmation with task link
 ```
 
-## Using Tools in Agents
+## 在 Agents 中使用 Tools
 
-### Agent Configuration
+### Agent 配置
 
-Agents can use MCP tools autonomously without pre-allowing them:
+agent 可以自主使用 MCP tools，而无需预先 allow：
 
 ```markdown
 ---
@@ -154,19 +154,19 @@ Autonomous agent for generating Asana project status reports.
 The agent has access to all Asana MCP tools without pre-approval.
 ```
 
-### Agent Tool Access
+### Agent 的 Tool 访问权限
 
-Agents have broader tool access than commands:
+agent 的 tool 权限范围通常比 command 更宽：
 
-- Can use any tool Claude determines is necessary
-- Don't need pre-allowed lists
-- Should document which tools they typically use
+- 可以使用 Claude 判定为必要的任意 tool
+- 不需要预先 allow 的列表
+- 但仍应记录它通常会使用哪些 tools
 
-## Tool Call Patterns
+## Tool 调用模式
 
-### Pattern 1: Simple Tool Call
+### 模式 1：简单 Tool 调用
 
-Single tool call with validation:
+带验证的单次 tool 调用：
 
 ```markdown
 Steps:
@@ -177,9 +177,9 @@ Steps:
 4. Display confirmation
 ```
 
-### Pattern 2: Sequential Tools
+### 模式 2：顺序 Tools
 
-Chain multiple tool calls:
+串联多个 tool 调用：
 
 ```markdown
 Steps:
@@ -190,9 +190,9 @@ Steps:
 4. Return final item ID
 ```
 
-### Pattern 3: Batch Operations
+### 模式 3：批量操作
 
-Multiple calls with same tool:
+对同一个 tool 进行多次调用：
 
 ```markdown
 Steps:
@@ -204,9 +204,9 @@ Steps:
 3. Report results summary
 ```
 
-### Pattern 4: Error Handling
+### 模式 4：错误处理
 
-Graceful error handling:
+优雅处理错误：
 
 ```markdown
 Steps:
@@ -219,13 +219,13 @@ Steps:
 3. On success, process data
 ```
 
-## Tool Parameters
+## Tool 参数
 
-### Understanding Tool Schemas
+### 理解 Tool Schema
 
-Each MCP tool has a schema defining its parameters. View with `/mcp`.
+每个 MCP tool 都有一个 schema 来定义其参数。可通过 `/mcp` 查看。
 
-**Example schema:**
+**示例 schema:**
 
 ```json
 {
@@ -252,9 +252,9 @@ Each MCP tool has a schema defining its parameters. View with `/mcp`.
 }
 ```
 
-### Calling Tools with Parameters
+### 带参数调用 Tools
 
-Claude automatically structures tool calls based on schema:
+Claude 会根据 schema 自动组织 tool 调用：
 
 ```typescript
 // Claude generates this internally
@@ -270,9 +270,9 @@ Claude automatically structures tool calls based on schema:
 }
 ```
 
-### Parameter Validation
+### 参数验证
 
-**In commands, validate before calling:**
+**在 commands 中，调用前先验证：**
 
 ```markdown
 Steps:
@@ -286,9 +286,9 @@ Steps:
 4. Handle tool errors gracefully
 ```
 
-## Response Handling
+## 响应处理
 
-### Success Responses
+### 成功响应
 
 ```markdown
 Steps:
@@ -301,7 +301,7 @@ Steps:
    - Include relevant links or IDs
 ```
 
-### Error Responses
+### 错误响应
 
 ```markdown
 Steps:
@@ -314,7 +314,7 @@ Steps:
    - Don't expose internal error details to user
 ```
 
-### Partial Success
+### 部分成功
 
 ```markdown
 Steps:
@@ -327,11 +327,11 @@ Steps:
    - Suggest retry or manual intervention
 ```
 
-## Performance Optimization
+## 性能优化
 
-### Batching Requests
+### 批量请求
 
-#### Good: Single query with filters
+#### 推荐：带过滤条件的单次查询
 
 ```markdown
 Steps:
@@ -343,7 +343,7 @@ Steps:
 2. Process all results
 ```
 
-#### Avoid: Many individual queries
+#### 避免：大量单独查询
 
 ```markdown
 Steps:
@@ -353,7 +353,7 @@ Steps:
    - Process item
 ```
 
-### Caching Results
+### 缓存结果
 
 ```markdown
 Steps:
@@ -364,9 +364,9 @@ Steps:
 4. Only re-fetch if data changes
 ```
 
-### Parallel Tool Calls
+### 并行 Tool 调用
 
-When tools don't depend on each other, call in parallel:
+当 tools 彼此没有依赖时，可并行调用：
 
 ```markdown
 Steps:
@@ -379,11 +379,11 @@ Steps:
 3. Combine results
 ```
 
-## Integration Best Practices
+## 集成最佳实践
 
-### User Experience
+### 用户体验
 
-**Provide feedback:**
+**提供反馈:**
 
 ```markdown
 Steps:
@@ -394,7 +394,7 @@ Steps:
 4. Present results
 ```
 
-**Handle long operations:**
+**处理长时间操作:**
 
 ```markdown
 Steps:
@@ -405,9 +405,9 @@ Steps:
 4. Final summary when complete
 ```
 
-### Error Messages
+### 错误信息
 
-**Good error messages:**
+**好的错误信息:**
 
 ```
 ❌ "Could not create task. Please check:
@@ -416,15 +416,15 @@ Steps:
    3. The project 'Q1 Goals' exists"
 ```
 
-**Poor error messages:**
+**不好的错误信息:**
 
 ```
 ❌ "Error: MCP tool returned 403"
 ```
 
-### Documentation
+### 文档
 
-**Document MCP tool usage in command:**
+**在 command 中记录 MCP tool 用法：**
 
 ```markdown
 ## MCP Tools Used
@@ -438,19 +438,19 @@ This command uses the following Asana MCP tools:
 Ensure authentication to Asana before running this command.
 ```
 
-## Testing Tool Usage
+## 测试 Tool 用法
 
-### Local Testing
+### 本地测试
 
-1. **Configure MCP server** in `.mcp.json`
-2. **Install plugin locally** in `.claude-plugin/`
-3. **Verify tools available** with `/mcp`
-4. **Test command** that uses tools
-5. **Check debug output**: `claude --debug`
+1. **在 `.mcp.json` 中配置 MCP server**
+2. **在 `.claude-plugin/` 中本地安装 plugin**
+3. **用 `/mcp` 验证 tools 可见**
+4. **测试使用这些 tools 的 command**
+5. **检查 debug 输出**：`claude --debug`
 
-### Test Scenarios
+### 测试场景
 
-**Test successful calls:**
+**测试成功调用:**
 
 ```markdown
 Steps:
@@ -460,7 +460,7 @@ Steps:
 3. Verify correct results returned
 ```
 
-**Test error cases:**
+**测试错误场景:**
 
 ```markdown
 Steps:
@@ -471,7 +471,7 @@ Steps:
 4. Verify graceful error handling
 ```
 
-**Test edge cases:**
+**测试边界场景:**
 
 ```markdown
 Steps:
@@ -482,9 +482,9 @@ Steps:
 4. Test with concurrent access
 ```
 
-## Common Patterns
+## 常见模式
 
-### Pattern: CRUD Operations
+### 模式：CRUD 操作
 
 ```markdown
 ---
@@ -516,7 +516,7 @@ Use update_item with item ID and changes...
 Use delete_item with item ID (ask for confirmation first)...
 ```
 
-### Pattern: Search and Process
+### 模式：搜索并处理
 
 ```markdown
 Steps:
@@ -527,7 +527,7 @@ Steps:
 4. **Present**: Format and display to user
 ```
 
-### Pattern: Multi-Step Workflow
+### 模式：多步骤工作流
 
 ```markdown
 Steps:
@@ -543,63 +543,63 @@ Steps:
 5. **Report**: Provide summary to user
 ```
 
-## Troubleshooting
+## 故障排查
 
-### Tools Not Available
+### Tools 不可用
 
-**Check:**
+**检查:**
 
-- MCP server configured correctly
-- Server connected (check `/mcp`)
-- Tool names match exactly (case-sensitive)
-- Restart Claude Code after config changes
+- MCP server 配置正确
+- server 已连接（检查 `/mcp`）
+- tool name 完全匹配（区分大小写）
+- 配置变更后重启 Claude Code
 
-### Tool Calls Failing
+### Tool 调用失败
 
-**Check:**
+**检查:**
 
-- Authentication is valid
-- Parameters match tool schema
-- Required parameters provided
-- Check `claude --debug` logs
+- 认证有效
+- 参数符合 tool schema
+- 必需参数已提供
+- 检查 `claude --debug` 日志
 
-### Performance Issues
+### 性能问题
 
-**Check:**
+**检查:**
 
-- Batching queries instead of individual calls
-- Caching results when appropriate
-- Not making unnecessary tool calls
-- Parallel calls when possible
+- 批量查询，而不是逐条单独调用
+- 在合适时缓存结果
+- 不进行不必要的 tool 调用
+- 能并行时并行调用
 
-## Conclusion
+## 结论
 
-Effective MCP tool usage requires:
+有效的 MCP tool 用法 需要：
 
-1. **Understanding tool schemas** via `/mcp`
-2. **Pre-allowing tools** in commands appropriately
-3. **Handling errors gracefully**
-4. **Optimizing performance** with batching and caching
-5. **Providing good UX** with feedback and clear errors
-6. **Testing thoroughly** before deployment
+1. 通过 `/mcp` **理解 tool schema**
+2. 在 commands 中适当 **预先 allow tools**
+3. **优雅处理错误**
+4. 通过批量与缓存 **优化性能**
+5. 通过反馈与清晰报错 **提供良好 UX**
+6. 部署前 **充分测试**
 
-Follow these patterns for robust MCP tool integration in your plugin commands and agents.
+遵循这些模式，可以在你的 插件 command 和 agent 中实现稳健的 MCP tool 集成。
 
-## MCP Prompts as Commands
+## 将 MCP Prompts 作为 Commands
 
-Beyond tools and resources, MCP servers can expose **prompts** — pre-defined instruction templates that appear as slash commands in Claude Code.
+除了 tools 和 resources 之外，MCP server 还可以暴露 **prompts** —— 它们会在 Claude Code 中显示为 slash commands 的预定义指令模板。
 
-### How Prompts Work
+### Prompts 的工作方式
 
-When an MCP server declares prompts via the MCP protocol, Claude Code automatically registers them as slash commands:
+当某个 MCP server 通过 MCP protocol 声明 prompts 时，Claude Code 会自动把它们注册为 slash commands：
 
-- **Format:** `/mcp__servername__promptname`
-- **Discovery:** Prompts appear in the `/` autocomplete menu alongside regular commands
-- **Arguments:** Prompts can accept arguments defined by the server's prompt schema
+- **格式：** `/mcp__servername__promptname`
+- **发现方式：** prompts 会和普通 commands 一起出现在 `/` 自动补全菜单中
+- **参数：** prompts 可以接收由 server 的 prompt schema 定义的参数
 
-### Integration with Plugin Commands
+### 与 Plugin Commands 的集成
 
-If your plugin bundles an MCP server that exposes prompts, those prompts become available when the plugin is installed. This provides another mechanism for guided workflows:
+如果你的 插件打包了一个会暴露 prompts 的 MCP server，那么当插件安装后，这些 prompts 也会一并可用。这为引导式工作流 提供了另一种机制：
 
 ```markdown
 # Example: Plugin README documenting MCP prompts
@@ -612,11 +612,11 @@ After installing this plugin, the following MCP prompts are available:
 - `/mcp__myserver__analyze-data` - Run data analysis with guided inputs
 ```
 
-### When to Use MCP Prompts vs Plugin Commands
+### 何时使用 MCP Prompts 与 Plugin Commands
 
-| Approach | Best For |
+| 方式 | 更适合 |
 | --- | --- |
-| MCP prompts | Server-defined workflows, dynamic templates from external services |
-| Plugin commands | Static workflows, plugin-specific logic, complex prompt composition |
+| MCP prompts | 由 server 定义的 工作流、来自外部服务的动态模板 |
+| Plugin commands | 静态 工作流、plugin 特定逻辑、复杂 prompt 组合 |
 
-**Tip:** MCP prompts are ideal when the workflow logic lives on the server side and may change independently of the plugin. Plugin commands are better when you want full control over the prompt content.
+**提示：** 当工作流逻辑 位于 server 端，并且可能独立于插件变化时，MCP prompts 很理想。若你希望完全控制 prompt 内容，则插件 commands 更合适。

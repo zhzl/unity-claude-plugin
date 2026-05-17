@@ -1,12 +1,12 @@
-# Real-World Plugin Settings Examples
+# 真实世界的 Plugin Settings 示例
 
-Detailed analysis of how production plugins use the `.claude/plugin-name.local.md` pattern.
+这里详细分析生产级插件如何使用 `.claude/plugin-name.local.md` 模式。
 
 ## multi-agent-swarm Plugin
 
-### Settings File Structure
+### Settings 文件结构
 
-**.claude/multi-agent-swarm.local.md:**
+**.claude/multi-agent-swarm.local.md：**
 
 ```markdown
 ---
@@ -42,13 +42,13 @@ Depends on Task 3.4 (user model).
 Report status to 'team-leader' session.
 ```
 
-### How It's Used
+### 使用方式
 
-**File:** `hooks/agent-stop-notification.sh`
+**文件：** `hooks/agent-stop-notification.sh`
 
-**Purpose:** Send notifications to coordinator when agent becomes idle
+**目的：** 当 agent 进入 idle 时向 coordinator 发送通知
 
-**Implementation:**
+**实现：**
 
 ```bash
 #!/bin/bash
@@ -95,18 +95,18 @@ fi
 exit 0
 ```
 
-**Key patterns:**
+**关键模式：**
 
-1. **Quick exit** (line 7-9): Returns immediately if file doesn't exist
-2. **Field extraction** (lines 11-17): Parses each frontmatter field
-3. **Enabled check** (lines 19-21): Respects enabled flag
-4. **Action based on settings** (lines 23-29): Uses coordinator_session to send notification
+1. **Quick exit**（第 7-9 行）：如果文件不存在则立即返回
+2. **字段提取**（第 11-17 行）：解析每个 frontmatter 字段
+3. **Enabled 检查**（第 19-21 行）：遵循 enabled 开关
+4. **基于 settings 执行动作**（第 23-29 行）：使用 coordinator_session 发送通知
 
-### Creation
+### 创建
 
-**File:** `commands/launch-swarm.md`
+**文件：** `commands/launch-swarm.md`
 
-Settings files are created during swarm launch with:
+在启动 swarm 时，settings 文件通过以下方式创建：
 
 ```bash
 # Validate or escape variable values before writing YAML frontmatter.
@@ -127,9 +127,9 @@ $TASK_DETAILS
 EOF
 ```
 
-### Updates
+### 更新
 
-PR number updated after PR creation:
+PR number 会在创建 PR 后更新：
 
 ```bash
 # Update pr_number field atomically
@@ -141,9 +141,9 @@ mv "$tmp" ".claude/multi-agent-swarm.local.md"
 
 ## ralph-wiggum Plugin
 
-### Settings File Structure
+### Settings 文件结构
 
-**.claude/ralph-loop.local.md:**
+**.claude/ralph-loop.local.md：**
 
 ```markdown
 ---
@@ -158,13 +158,13 @@ Make sure tests pass after each fix.
 Document any changes needed in CLAUDE.md.
 ```
 
-### How It's Used
+### 使用方式
 
-**File:** `hooks/stop-hook.sh`
+**文件：** `hooks/stop-hook.sh`
 
-**Purpose:** Prevent session exit and loop Claude's output back as input
+**目的：** 阻止 session 退出，并把 Claude 的输出回送为下一轮输入
 
-**Implementation:**
+**实现：**
 
 ```bash
 #!/bin/bash
@@ -251,18 +251,18 @@ jq -n \
 exit 0
 ```
 
-**Key patterns:**
+**关键模式：**
 
-1. **Quick exit** (line 7-9): Skip if not active
-2. **Iteration tracking** (lines 11-20): Count and enforce max iterations
-3. **Promise detection** (lines 25-33): Check for completion signal in output
-4. **Prompt extraction** (line 38): Read markdown body as next prompt
-5. **State update** (lines 40-43): Increment iteration atomically
-6. **Loop continuation** (lines 45-53): Block exit and feed prompt back
+1. **Quick exit**（第 7-9 行）：未激活时直接跳过
+2. **Iteration tracking**（第 11-20 行）：计数并强制执行最大迭代次数
+3. **Promise detection**（第 25-33 行）：检查输出中是否出现完成信号
+4. **Prompt extraction**（第 38 行）：把 markdown body 读取为下一轮 prompt
+5. **State update**（第 40-43 行）：原子递增 iteration
+6. **Loop continuation**（第 45-53 行）：阻止退出并回送 prompt
 
-### Creation
+### 创建
 
-**File:** `scripts/setup-ralph-loop.sh`
+**文件：** `scripts/setup-ralph-loop.sh`
 
 ```bash
 #!/bin/bash
@@ -285,7 +285,7 @@ EOF
 echo "Ralph loop initialized: .claude/ralph-loop.local.md"
 ```
 
-## Pattern Comparison
+## 模式对比
 
 | Feature         | multi-agent-swarm                    | ralph-wiggum                  |
 | --------------- | ------------------------------------ | ----------------------------- |
@@ -297,11 +297,11 @@ echo "Ralph loop initialized: .claude/ralph-loop.local.md"
 | **Deletion**    | Manual or on completion              | On loop exit                  |
 | **Hook**        | Stop (notifications)                 | Stop (loop control)           |
 
-## Best Practices from Real Plugins
+## 从真实插件总结出的最佳实践
 
-### 1. Quick Exit Pattern
+### 1. Quick Exit 模式
 
-Both plugins check file existence first:
+两个插件都会先检查文件是否存在：
 
 ```bash
 if [[ ! -f "$STATE_FILE" ]]; then
@@ -309,21 +309,21 @@ if [[ ! -f "$STATE_FILE" ]]; then
 fi
 ```
 
-**Why:** Avoids errors when plugin isn't configured and performs fast.
+**原因：** 当插件未配置时可以避免报错，并保持快速执行。
 
 ### 2. Enabled Flag
 
-Both use an `enabled` field for explicit control:
+两者都使用 `enabled` 字段做显式控制：
 
 ```yaml
 enabled: true
 ```
 
-**Why:** Allows temporary deactivation without deleting file.
+**原因：** 可以临时停用，而不必删除文件。
 
-### 3. Atomic Updates
+### 3. 原子更新
 
-Both use temp file + atomic move:
+两者都使用 temp file + atomic move：
 
 ```bash
 TEMP_FILE=$(mktemp) || exit 1
@@ -331,21 +331,21 @@ sed "s/^field: .*/field: $NEW_VALUE/" "$FILE" > "$TEMP_FILE"
 mv "$TEMP_FILE" "$FILE"
 ```
 
-**Why:** Prevents corruption if process is interrupted. Using `mktemp` creates a secure, unpredictable filename.
+**原因：** 如果进程中断，可避免文件损坏。使用 `mktemp` 还能创建安全、不可预测的文件名。
 
-### 4. Quote Handling
+### 4. 引号处理
 
-Both strip surrounding quotes from YAML values:
+两者都会去掉 YAML 值外围的引号：
 
 ```bash
 sed 's/^"\(.*\)"$/\1/'
 ```
 
-**Why:** YAML allows both `field: value` and `field: "value"`.
+**原因：** YAML 同时允许 `field: value` 和 `field: "value"`。
 
-### 5. Error Handling
+### 5. 错误处理
 
-Both handle missing/corrupt files gracefully:
+两者都能优雅处理缺失或损坏的文件：
 
 ```bash
 if [[ ! -f "$FILE" ]]; then
@@ -359,11 +359,11 @@ if [[ -z "$CRITICAL_FIELD" ]]; then
 fi
 ```
 
-**Why:** Fails gracefully instead of crashing.
+**原因：** 以优雅失败替代直接崩溃。
 
-## Anti-Patterns to Avoid
+## 要避免的反模式
 
-### ❌ Hardcoded Paths
+### ❌ 硬编码路径
 
 ```bash
 # BAD
@@ -373,7 +373,7 @@ FILE="/Users/alice/.claude/my-plugin.local.md"
 FILE=".claude/my-plugin.local.md"
 ```
 
-### ❌ Unquoted Variables
+### ❌ 未加引号的变量
 
 ```bash
 # BAD
@@ -383,7 +383,7 @@ echo $VALUE
 echo "$VALUE"
 ```
 
-### ❌ Non-Atomic Updates
+### ❌ 非原子更新
 
 ```bash
 # BAD: Can corrupt file if interrupted
@@ -395,7 +395,7 @@ sed "s/field: .*/field: $VALUE/" "$FILE" > "$TEMP_FILE"
 mv "$TEMP_FILE" "$FILE"
 ```
 
-### ❌ No Default Values
+### ❌ 没有默认值
 
 ```bash
 # BAD: Fails if field missing
@@ -407,7 +407,7 @@ fi
 MAX=${MAX:-10}
 ```
 
-### ❌ Ignoring Edge Cases
+### ❌ 忽略边界情况
 
 ```bash
 # BAD: Range can reopen and pull body --- sections into "frontmatter"
@@ -440,14 +440,14 @@ BODY=$(awk '
 ' "$FILE")
 ```
 
-## Conclusion
+## 结论
 
-The `.claude/plugin-name.local.md` pattern provides:
+`.claude/plugin-name.local.md` 模式提供了：
 
-- Simple, human-readable configuration
-- Version-control friendly (gitignored)
+- 简单、易读的 configuration
+- 对版本控制友好（通过 gitignore 排除）
 - Per-project settings
-- Easy parsing with standard bash tools
-- Supports both structured config (YAML) and freeform content (markdown)
+- 使用标准 bash 工具即可轻松解析
+- 同时支持结构化 config（YAML）和自由内容（markdown）
 
-Use this pattern for any plugin that needs user-configurable behavior or state persistence.
+对于任何需要 user-configurable behavior 或 state persistence 的插件，都可以使用这个模式。

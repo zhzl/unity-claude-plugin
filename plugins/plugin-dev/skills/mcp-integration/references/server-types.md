@@ -1,16 +1,16 @@
-# MCP Server Types: Deep Dive
+# MCP Server 类型：深入解析
 
-Complete reference for all MCP server types supported in Claude Code plugins.
+Claude Code 插件 支持的所有 MCP server 类型的完整参考。
 
-## stdio (Standard Input/Output)
+## stdio（标准输入/输出）
 
-### Overview
+### 概述
 
-Execute local MCP servers as child processes with communication via stdin/stdout. Best choice for local tools, custom servers, and NPM packages.
+以子进程方式执行本地 MCP server，并通过 stdin/stdout 通信。最适合本地工具、自定义 server 和 NPM 包。
 
-### Configuration
+### 配置
 
-**Basic:**
+**基础：**
 
 ```json
 {
@@ -21,7 +21,7 @@ Execute local MCP servers as child processes with communication via stdin/stdout
 }
 ```
 
-**With environment:**
+**带环境变量：**
 
 ```json
 {
@@ -37,16 +37,16 @@ Execute local MCP servers as child processes with communication via stdin/stdout
 }
 ```
 
-### Process Lifecycle
+### 进程生命周期
 
-1. **Startup**: Claude Code spawns process with `command` and `args`
-2. **Communication**: JSON-RPC messages via stdin/stdout
-3. **Lifecycle**: Process runs for entire Claude Code session
-4. **Shutdown**: Process terminated when Claude Code exits
+1. **启动**：Claude Code 使用 `command` 和 `args` 启动进程
+2. **通信**：通过 stdin/stdout 传递 JSON-RPC 消息
+3. **生命周期**：进程在整个 Claude Code session 期间持续运行
+4. **关闭**：Claude Code 退出时终止该进程
 
-### Use Cases
+### 适用场景
 
-**NPM Packages:**
+**NPM 包：**
 
 ```json
 {
@@ -57,7 +57,7 @@ Execute local MCP servers as child processes with communication via stdin/stdout
 }
 ```
 
-**Custom Scripts:**
+**自定义脚本：**
 
 ```json
 {
@@ -68,7 +68,7 @@ Execute local MCP servers as child processes with communication via stdin/stdout
 }
 ```
 
-**Python Servers:**
+**Python servers：**
 
 ```json
 {
@@ -82,38 +82,38 @@ Execute local MCP servers as child processes with communication via stdin/stdout
 }
 ```
 
-### Best Practices
+### 最佳实践
 
-1. **Use absolute paths or ${CLAUDE_PLUGIN_ROOT}**
-2. **Set PYTHONUNBUFFERED for Python servers**
-3. **Pass configuration via args or env, not stdin**
-4. **Handle server crashes gracefully**
-5. **Log to stderr, not stdout (stdout is for MCP protocol)**
+1. **使用绝对路径或 ${CLAUDE_PLUGIN_ROOT}**
+2. **为 Python server 设置 PYTHONUNBUFFERED**
+3. **通过 args 或 env 传递配置，而不是 stdin**
+4. **优雅处理 server 崩溃**
+5. **记录到 stderr，而不是 stdout（stdout 用于 MCP protocol）**
 
-### Troubleshooting
+### 故障排查
 
-**Server won't start:**
+**Server 无法启动：**
 
-- Check command exists and is executable
-- Verify file paths are correct
-- Check permissions
-- Review `claude --debug` logs
+- 检查 command 是否存在且可执行
+- 确认文件路径正确
+- 检查权限
+- 查看 `claude --debug` 日志
 
-**Communication fails:**
+**通信失败：**
 
-- Ensure server uses stdin/stdout correctly
-- Check for stray print/console.log statements
-- Verify JSON-RPC format
+- 确保 server 正确使用 stdin/stdout
+- 检查是否存在多余的 print/console.log 语句
+- 验证 JSON-RPC 格式
 
-## SSE (Server-Sent Events)
+## SSE（Server-Sent Events）
 
-### Overview
+### 概述
 
-Connect to hosted MCP servers via HTTP with server-sent events for streaming. Best for cloud services and OAuth authentication.
+通过 HTTP 连接托管的 MCP server，并使用 server-sent events 进行流式传输。最适合 云服务和 OAuth 认证。
 
-### Configuration
+### 配置
 
-**Basic:**
+**基础：**
 
 ```json
 {
@@ -124,7 +124,7 @@ Connect to hosted MCP servers via HTTP with server-sent events for streaming. Be
 }
 ```
 
-**With headers:**
+**带 headers：**
 
 ```json
 {
@@ -139,17 +139,17 @@ Connect to hosted MCP servers via HTTP with server-sent events for streaming. Be
 }
 ```
 
-### Connection Lifecycle
+### 连接生命周期
 
-1. **Initialization**: HTTP connection established to URL
-2. **Handshake**: MCP protocol negotiation
-3. **Streaming**: Server sends events via SSE
-4. **Requests**: Client sends HTTP POST for tool calls
-5. **Reconnection**: Automatic reconnection on disconnect
+1. **初始化**：与 URL 建立 HTTP 连接
+2. **握手**：执行 MCP protocol 协商
+3. **流式传输**：server 通过 SSE 发送事件
+4. **请求**：client 通过 HTTP POST 发送 tool calls
+5. **重连**：断开后自动重连
 
-### Authentication
+### 认证
 
-**OAuth (Automatic):**
+**OAuth（自动）：**
 
 ```json
 {
@@ -160,14 +160,14 @@ Connect to hosted MCP servers via HTTP with server-sent events for streaming. Be
 }
 ```
 
-Claude Code handles OAuth flow:
+Claude Code 会处理 OAuth 流程：
 
-1. User prompted to authenticate on first use
-2. Opens browser for OAuth flow
-3. Tokens stored securely
-4. Automatic token refresh
+1. 首次使用时提示用户进行认证
+2. 打开浏览器执行 OAuth 流程
+3. 安全存储 tokens
+4. 自动刷新 token
 
-**Custom Headers:**
+**自定义 headers：**
 
 ```json
 {
@@ -181,52 +181,52 @@ Claude Code handles OAuth flow:
 }
 ```
 
-### Use Cases
+### 适用场景
 
-**Official Services:**
+**官方服务：**
 
-- Asana: check the current hosted MCP endpoint in Asana's docs
-- GitHub: check the current hosted MCP endpoint in GitHub's docs
-- Other hosted MCP servers
+- Asana：请在 Asana 文档中确认当前托管的 MCP endpoint
+- GitHub：请在 GitHub 文档中确认当前托管的 MCP endpoint
+- 其他托管型 MCP server
 
-Hosted MCP URLs can change over time, so treat provider-specific endpoints as examples and verify the exact URL and auth flow in provider documentation before publishing plugin configs.
+托管 MCP URL 可能会随时间变化，因此发布插件配置前，应将各 provider 的 endpoint 仅视为示例，并在 provider 文档中核实准确的 URL 和 认证流程。
 
-**Custom Hosted Servers:**
-Deploy your own MCP server and expose via HTTPS + SSE.
+**自定义托管 server：**
+部署你自己的 MCP server，并通过 HTTPS + SSE 暴露出来。
 
-### Best Practices
+### 最佳实践
 
-1. **Always use HTTPS, never HTTP**
-2. **Let OAuth handle authentication when available**
-3. **Use environment variables for tokens**
-4. **Handle connection failures gracefully**
-5. **Document OAuth scopes required**
+1. **始终使用 HTTPS，不要使用 HTTP**
+2. **在可用时优先让 OAuth 处理认证**
+3. **使用环境变量保存 token**
+4. **优雅处理连接失败**
+5. **记录所需的 OAuth scopes**
 
-### Troubleshooting
+### 故障排查
 
-**Connection refused:**
+**连接被拒绝:**
 
-- Check URL is correct and accessible
-- Verify HTTPS certificate is valid
-- Check network connectivity
-- Review firewall settings
+- 检查 URL 是否正确且可访问
+- 验证 HTTPS 证书有效
+- 检查网络连通性
+- 查看防火墙设置
 
-**OAuth fails:**
+**OAuth 失败:**
 
-- Clear cached tokens
-- Check OAuth scopes
-- Verify redirect URLs
-- Re-authenticate
+- 清除缓存的 tokens
+- 检查 OAuth scopes
+- 验证 redirect URL
+- 重新认证
 
 ## HTTP (MCP over HTTP)
 
-### Overview
+### 概述
 
-Connect to MCP servers over HTTP. Best for hosted MCP endpoints with token-based authentication and stateless interactions. The endpoint must implement MCP over HTTP; arbitrary REST endpoints are not MCP servers.
+通过 HTTP 连接 MCP server。最适合带有 基于 token 的认证 且交互无状态的托管 MCP endpoint。该 endpoint 必须实现 MCP over HTTP；任意 REST endpoint 都不是 MCP server。
 
-### Configuration
+### 配置
 
-**Basic:**
+**基础：**
 
 ```json
 {
@@ -237,7 +237,7 @@ Connect to MCP servers over HTTP. Best for hosted MCP endpoints with token-based
 }
 ```
 
-**With authentication:**
+**带认证：**
 
 ```json
 {
@@ -253,16 +253,16 @@ Connect to MCP servers over HTTP. Best for hosted MCP endpoints with token-based
 }
 ```
 
-### Request/Response Flow
+### 请求/响应流程
 
-1. **Tool Discovery**: Client discovers tools through the MCP endpoint
-2. **Tool Invocation**: Client sends MCP tool calls over HTTP
-3. **Response**: Server returns MCP responses or errors
-4. **Stateless**: Each request is independent unless the server documents session behavior
+1. **Tool 发现**：client 通过 MCP endpoint 发现 tools
+2. **Tool 调用**：client 通过 HTTP 发送 MCP tool calls
+3. **响应**：server 返回 MCP responses 或 errors
+4. **无状态**：除非 server 文档说明 session 行为，否则每个请求彼此独立
 
-### Authentication
+### 认证
 
-**Token-Based:**
+**基于 Token:**
 
 ```json
 {
@@ -282,7 +282,7 @@ Connect to MCP servers over HTTP. Best for hosted MCP endpoints with token-based
 }
 ```
 
-**Custom Auth:**
+**自定义认证:**
 
 ```json
 {
@@ -293,77 +293,77 @@ Connect to MCP servers over HTTP. Best for hosted MCP endpoints with token-based
 }
 ```
 
-### Use Cases
+### 适用场景
 
-- Hosted MCP endpoints
-- Internal MCP services
-- Token-authenticated MCP backends
-- Serverless MCP implementations
+- 托管的 MCP endpoint
+- 内部 MCP 服务
+- 基于 token 认证的 MCP backend
+- 无服务器 MCP 实现
 
-### Best Practices
+### 最佳实践
 
-1. **Use HTTPS for all connections**
-2. **Store tokens in environment variables**
-3. **Implement retry logic for transient failures**
-4. **Handle rate limiting**
-5. **Set appropriate timeouts**
+1. **所有连接都使用 HTTPS**
+2. **将 token 存储在环境变量中**
+3. **为瞬时故障实现重试逻辑**
+4. **处理 rate limiting**
+5. **设置合适的 timeout**
 
-### Troubleshooting
+### 故障排查
 
-**HTTP errors:**
+**HTTP 错误:**
 
-- 401: Check authentication headers
-- 403: Verify permissions
-- 429: Implement rate limiting
-- 500: Check server logs
+- 401: 检查 认证 headers
+- 403: 验证权限
+- 429: 处理 rate limiting
+- 500: 检查 server 日志
 
-**Timeout issues:**
+**超时问题:**
 
-- Increase timeout if needed
-- Check server performance
-- Optimize tool implementations
+- 如有需要，增加 timeout
+- 检查 server 性能
+- 优化 tool 实现
 
-## Comparison Matrix
+## 对比矩阵
 
-| Feature       | stdio           | SSE            | HTTP             |
-| ------------- | --------------- | -------------- | ---------------- |
-| **Transport** | Process         | HTTP/SSE       | MCP over HTTP    |
-| **Direction** | Bidirectional   | Server→Client  | Request/Response |
-| **State**     | Stateful        | Stateful       | Stateless        |
-| **Auth**      | Env vars        | OAuth/Headers  | Headers          |
-| **Use Case**  | Local tools     | Cloud services | Hosted MCP APIs  |
-| **Latency**   | Lowest          | Medium         | Medium           |
-| **Setup**     | Easy            | Medium         | Easy             |
-| **Reconnect** | Process respawn | Automatic      | N/A              |
+| 特性 | stdio | SSE | HTTP |
+| --- | --- | --- | --- |
+| **Transport** | 进程 | HTTP/SSE | MCP over HTTP |
+| **方向** | 双向 | Server→Client | 请求/响应 |
+| **状态** | 有状态 | 有状态 | 无状态 |
+| **认证** | Env vars | OAuth/Headers | Headers |
+| **适用场景** | 本地 tools | 云服务 | 托管 MCP APIs |
+| **延迟** | 最低 | 中等 | 中等 |
+| **配置复杂度** | 简单 | 中等 | 简单 |
+| **重连** | 进程重启 | 自动 | N/A |
 
-## Choosing the Right Type
+## 如何选择合适类型
 
-**Use stdio when:**
+**在以下情况使用 stdio：**
 
-- Running local tools or custom servers
-- Need lowest latency
-- Working with file systems or local databases
-- Distributing server with plugin
+- 运行本地工具或自定义 server
+- 需要最低延迟
+- 处理文件系统或本地数据库
+- 随插件一起分发 server
 
-**Use SSE when:**
+**在以下情况使用 SSE：**
 
-- Connecting to hosted services
-- Need OAuth authentication
-- Using official MCP servers (Asana, GitHub)
-- Want automatic reconnection
+- 连接托管服务
+- 需要 OAuth 认证
+- 使用官方 MCP server（Asana、GitHub）
+- 希望自动重连
 
-**Use HTTP when:**
+**在以下情况使用 HTTP：**
 
-- Connecting to a hosted MCP endpoint over HTTP
-- Need stateless interactions
-- Using token-based auth
-- Simple request/response pattern
+- 通过 HTTP 连接托管的 MCP endpoint
+- 需要无状态交互
+- 使用基于 token 的 auth
+- 交互模式是简单的 请求/响应
 
-## Migration Between Types
+## 不同类型之间的迁移
 
-### From stdio to SSE
+### 从 stdio 迁移到 SSE
 
-**Before (stdio):**
+**变更前（stdio）：**
 
 ```json
 {
@@ -374,7 +374,7 @@ Connect to MCP servers over HTTP. Best for hosted MCP endpoints with token-based
 }
 ```
 
-**After (SSE - deploy server):**
+**变更后（SSE - 部署 server）：**
 
 ```json
 {
@@ -385,11 +385,11 @@ Connect to MCP servers over HTTP. Best for hosted MCP endpoints with token-based
 }
 ```
 
-## Advanced Configuration
+## 高级配置
 
-### Multiple Servers
+### 多个 Server
 
-Combine different types:
+组合不同类型：
 
 ```json
 {
@@ -411,9 +411,9 @@ Combine different types:
 }
 ```
 
-### Conditional Configuration
+### 条件化配置
 
-Use environment variables to switch servers:
+使用环境变量切换 server：
 
 ```json
 {
@@ -427,41 +427,41 @@ Use environment variables to switch servers:
 }
 ```
 
-Set different values for dev/prod:
+为 dev/prod 设置不同值：
 
 - Dev: `API_URL=http://localhost:8080/mcp`
 - Prod: `API_URL=https://api.production.com/mcp`
 
-## Security Considerations
+## 安全注意事项
 
-### Stdio Security
+### Stdio 安全性
 
-- Validate command paths
-- Don't execute user-provided commands
-- Limit environment variable access
-- Restrict file system access
+- 验证 command 路径
+- 不执行用户提供的 command
+- 限制环境变量访问
+- 限制文件系统访问
 
-### Network Security
+### 网络安全
 
-- Always use HTTPS for hosted MCP endpoints
-- Validate SSL certificates
-- Don't skip certificate verification
-- Use secure token storage
+- 对托管的 MCP endpoint 始终使用 HTTPS
+- 验证 SSL 证书
+- 不要跳过证书校验
+- 使用安全的 token 存储
 
-### Token Management
+### Token 管理
 
-- Never hardcode tokens
-- Use environment variables
-- Rotate tokens regularly
-- Implement token refresh
-- Document scopes required
+- 绝不硬编码 token
+- 使用环境变量
+- 定期轮换 token
+- 实现 token refresh
+- 记录所需 scopes
 
-## Conclusion
+## 结论
 
-Choose the MCP server type based on your use case:
+根据你的使用场景 选择 MCP server 类型：
 
-- **stdio** for local, custom, or NPM-packaged servers
-- **SSE** for hosted services with OAuth
-- **HTTP** for hosted MCP endpoints with token auth
+- **stdio** 适用于本地、自定义或以 NPM 打包的 server
+- **SSE** 适用于带 OAuth 的托管服务
+- **HTTP** 适用于带 token auth 的托管 MCP endpoint
 
-Test thoroughly and handle errors gracefully for robust MCP integration.
+请充分测试，并优雅处理错误，以实现稳健的 MCP 集成。

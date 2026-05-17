@@ -1,14 +1,14 @@
-# Minimal Marketplace Example
+# 最小 marketplace 示例
 
-A single-plugin marketplace with only required fields.
+仅包含必需字段的单 plugin marketplace。
 
-## Use Case
+## 使用场景
 
-- Quick setup for distributing one plugin
-- Minimal configuration overhead
-- Local development and testing
+- 快速搭建用于分发单个 plugin 的 marketplace
+- 尽量减少配置负担
+- 用于本地开发与测试
 
-## Directory Structure
+## 目录结构
 
 ```text
 my-marketplace/
@@ -37,9 +37,9 @@ my-marketplace/
 }
 ```
 
-## Plugin's plugin.json
+## Plugin 的 plugin.json
 
-The plugin must have its own manifest since `strict: true` is the default:
+由于默认 `strict: true`，该 plugin 必须拥有自己的 manifest：
 
 ```json
 {
@@ -49,7 +49,7 @@ The plugin must have its own manifest since `strict: true` is the default:
 }
 ```
 
-## Installation
+## 安装
 
 ```text
 # Type in Claude Code
@@ -59,9 +59,9 @@ The plugin must have its own manifest since `strict: true` is the default:
 /plugin marketplace add your-username/my-marketplace
 ```
 
-## Extending to Multiple Plugins
+## 扩展为多个 Plugins
 
-Add more plugins to the array:
+向数组中添加更多 plugin：
 
 ```json
 {

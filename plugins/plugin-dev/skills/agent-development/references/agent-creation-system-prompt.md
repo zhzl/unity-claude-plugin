@@ -1,8 +1,8 @@
-# Agent Creation System Prompt
+# Agent Creation System Prompt 参考
 
-This is the exact system prompt used by Claude Code's agent generation feature, refined through extensive production use.
+这是 Claude Code 的 agent 生成功能实际使用的 system prompt，经过了大量生产环境打磨。
 
-## The Prompt
+## Prompt 正文
 
 ```
 You are an elite AI agent architect specializing in crafting high-performance agent configurations. Your expertise lies in translating user requirements into precisely-tuned agent specifications that maximize effectiveness and reliability.
@@ -70,9 +70,9 @@ Key principles for your system prompts:
 Remember: The agents you create should be autonomous experts capable of handling their designated tasks with minimal additional guidance. Your system prompts are their complete operational manual.
 ```
 
-## Usage Pattern
+## 使用方式
 
-Use this prompt to generate agent configurations:
+使用这个 prompt 来生成 agent 配置：
 
 ```markdown
 **User input:** "I need an agent that reviews pull requests for code quality issues"
@@ -88,11 +88,11 @@ Create an agent configuration based on this request: "I need an agent that revie
 }
 ```
 
-## Converting to Agent File
+## 转换为 Agent 文件
 
-Take the JSON output and create the agent markdown file:
+拿到 JSON 输出后，创建 agent markdown 文件：
 
-**agents/pr-quality-reviewer.md:**
+**agents/pr-quality-reviewer.md：**
 
 ```markdown
 ---
@@ -122,13 +122,13 @@ You are an expert code quality reviewer...
    ...
 ```
 
-## Customization Tips
+## 定制提示
 
-### Adapt the System Prompt
+### 调整 System Prompt
 
-The base prompt is excellent but can be enhanced for specific needs:
+基础 prompt 已经很好，但在某些场景下可以进一步增强：
 
-**For security-focused agents:**
+**面向 security 的 agent：**
 
 ```
 Add after "Architect Comprehensive Instructions":
@@ -137,7 +137,7 @@ Add after "Architect Comprehensive Instructions":
 - Validate input sanitization
 ```
 
-**For test-generation agents:**
+**面向 test-generation 的 agent：**
 
 ```
 Add after "Optimize for Performance":
@@ -146,7 +146,7 @@ Add after "Optimize for Performance":
 - Ensure test isolation and cleanup
 ```
 
-**For documentation agents:**
+**面向 documentation 的 agent：**
 
 ```
 Add after "Design Expert Persona":
@@ -155,19 +155,19 @@ Add after "Design Expert Persona":
 - Follow project documentation standards from CLAUDE.md
 ```
 
-## Best Practices from Internal Implementation
+## 来自内部实现的最佳实践
 
-### 1. Consider Project Context
+### 1. 考虑项目上下文
 
-The prompt specifically mentions using CLAUDE.md context:
+这个 prompt 明确要求使用 CLAUDE.md 上下文：
 
-- Agent should align with project patterns
-- Follow project-specific coding standards
-- Respect established practices
+- agent 应与项目既有模式保持一致
+- 遵循项目特定的编码标准
+- 尊重已建立的实践
 
-### 2. Proactive Agent Design
+### 2. 主动式 Agent 设计
 
-Include examples showing proactive usage:
+加入展示主动使用方式的 examples：
 
 ```
 <example>
@@ -181,18 +181,18 @@ assistant: "Now let me review this code with the code-reviewer agent"
 </example>
 ```
 
-### 3. Scope Assumptions
+### 3. 范围假设
 
-For code review agents, assume "recently written code" not entire codebase:
+对于 code review agent，默认假设其审查对象是“最近编写的代码”，而不是整个代码库：
 
 ```
 For agents that review code, assume recent changes unless explicitly
 stated otherwise.
 ```
 
-### 4. Output Structure
+### 4. 输出结构
 
-Always define clear output format in system prompt:
+始终在 system prompt 中定义清晰的 output format：
 
 ```
 **Output Format:**
@@ -202,16 +202,16 @@ Provide results as:
 3. Recommendations (action items)
 ```
 
-## Integration with Plugin-Dev
+## 与 Plugin-Dev 的集成
 
-Use this system prompt when creating agents for your plugins:
+在为你的插件创建 agent 时，可以这样使用这个 system prompt：
 
-1. Take user request for agent functionality
-2. Feed to Claude with this system prompt
-3. Get JSON output (identifier, whenToUse, systemPrompt)
-4. Convert to agent markdown file with frontmatter
-5. Validate with agent validation rules
-6. Test triggering conditions
-7. Add to plugin's `agents/` directory
+1. 获取用户对 agent 功能的请求
+2. 搭配这个 system prompt 一起发送给 Claude
+3. 获得 JSON 输出（identifier、whenToUse、systemPrompt）
+4. 转换为带 frontmatter 的 agent markdown 文件
+5. 按 agent validation rules 进行验证
+6. 测试 triggering conditions
+7. 放入插件的 `agents/` 目录
 
-This provides AI-assisted agent generation following proven patterns from Claude Code's internal implementation.
+这套方法能让你基于 Claude Code 内部已经验证过的模式，完成 AI 辅助的 agent 生成。

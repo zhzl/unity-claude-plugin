@@ -1,14 +1,14 @@
-# Community Marketplace Example
+# 社区 marketplace 示例
 
-A public multi-plugin marketplace curating plugins from various authors.
+一个公开的多 plugin marketplace，用于汇集不同作者的 plugins。
 
-## Use Case
+## 使用场景
 
-- Curate best-of-breed plugins for a domain
-- Community-driven plugin discovery
-- Mix of local and external plugin sources
+- 为某个领域精选优质 plugins
+- 通过社区驱动 plugin 发现
+- 混合使用本地 plugin 与外部 plugin 来源
 
-## Directory Structure
+## 目录结构
 
 ```text
 awesome-claude-plugins/
@@ -102,7 +102,7 @@ awesome-claude-plugins/
 }
 ```
 
-## README.md Template
+## README.md 模板
 
 ````markdown
 # Awesome Claude Plugins
@@ -135,7 +135,7 @@ MIT
 
 ````
 
-## CONTRIBUTING.md Template
+## CONTRIBUTING.md 模板
 
 ````markdown
 # Contributing
@@ -167,9 +167,9 @@ MIT
 4. Merge and marketplace update
 ````
 
-## CI Validation Workflow
+## CI 校验工作流
 
-`.github/workflows/validate.yml`:
+`.github/workflows/validate.yml`：
 
 ```yaml
 name: Validate Marketplace
@@ -203,7 +203,7 @@ jobs:
           fi
 ```
 
-## Installation
+## 安装
 
 ```text
 # Type in Claude Code: add marketplace

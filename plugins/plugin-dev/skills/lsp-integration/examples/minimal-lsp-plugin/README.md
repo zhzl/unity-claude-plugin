@@ -1,40 +1,40 @@
-# Go LSP Plugin
+# Go LSP 插件示例
 
-Provides Go language server integration for Claude Code.
+为 Claude Code 提供 Go language server 集成。
 
-## Prerequisites
+## 前置条件
 
-Install gopls (the Go language server):
+安装 gopls（Go language server）：
 
 ```bash
 go install golang.org/x/tools/gopls@latest
 ```
 
-Ensure `gopls` is in your PATH:
+确认 `gopls` 在你的 PATH 中：
 
 ```bash
 which gopls
 ```
 
-## Installation
+## 安装
 
 ```bash
 claude --plugin-dir /path/to/go-lsp
 ```
 
-## Features
+## 功能
 
-Once installed, Claude can use supported `gopls` capabilities:
+安装后，Claude 可以使用受支持的 `gopls` capability：
 
-- **Diagnostics** - Type errors and issues when reported by the server
-- **Go to definition** - Jump to where functions and types are defined
-- **Find references** - Locate usages of a symbol
-- **Hover information** - See type info and documentation
+- **诊断** - 服务器报告时提供类型错误和其他问题
+- **跳转到定义** - 跳转到函数和类型的定义位置
+- **查找引用** - 定位符号的使用位置
+- **悬停信息** - 查看类型信息和文档
 
-## Troubleshooting
+## 故障排查
 
-If you see "Executable not found in $PATH":
+如果你看到 "Executable not found in $PATH"：
 
-1. Verify gopls is installed: `which gopls`
-2. Add Go bin to PATH: `export PATH=$PATH:$(go env GOPATH)/bin`
-3. Restart Claude Code
+1. 确认 gopls 已安装：`which gopls`
+2. 将 Go bin 加入 PATH：`export PATH=$PATH:$(go env GOPATH)/bin`
+3. 重启 Claude Code

@@ -1,12 +1,12 @@
-# Distribution Patterns
+# 分发模式
 
-Strategies for hosting, distributing, and managing plugin marketplaces.
+用于托管、分发和管理 plugin marketplace 的策略。
 
-## Hosting Options
+## 托管选项
 
-### GitHub Hosting (Recommended)
+### GitHub 托管（推荐）
 
-The simplest distribution method with built-in version control:
+最简单的 distribution 方式，并自带版本控制：
 
 ```text
 my-marketplace/
@@ -17,39 +17,39 @@ my-marketplace/
 └── README.md
 ```
 
-**Installation:**
+**安装：**
 
 ```text
 # Type in Claude Code
 /plugin marketplace add owner/repo
 ```
 
-**Benefits:**
+**优点：**
 
-- Free hosting for public repositories
-- Built-in issue tracking and collaboration
-- Automatic version history
-- Pull request workflow for plugin additions
-- GitHub Actions for validation
+- 为公共仓库提供免费托管
+- 内置 issue 跟踪与协作
+- 自动保留版本历史
+- 通过 pull request 工作流添加 plugin
+- 使用 GitHub Actions 做校验
 
-### GitLab / Other Git Services
+### GitLab / 其他 Git 服务
 
-Any git hosting service works:
+任何 git 托管服务都可以使用：
 
 ```text
 # Type in Claude Code
 /plugin marketplace add https://gitlab.com/company/plugins.git
 ```
 
-**Use when:**
+**适用场景：**
 
-- Organization uses GitLab, Bitbucket, or self-hosted git
-- Need private repository hosting
-- Integration with existing CI/CD pipelines
+- 组织使用 GitLab、Bitbucket 或自托管 git
+- 需要托管私有仓库
+- 需要与现有 CI/CD 流水线集成
 
-### Local Development
+### 本地开发
 
-Test marketplaces locally before publishing:
+在发布前于本地测试 marketplace：
 
 ```text
 # Type in Claude Code: add local directory
@@ -59,11 +59,11 @@ Test marketplaces locally before publishing:
 /plugin marketplace add ./path/to/marketplace.json
 ```
 
-## Team Distribution Patterns
+## 团队分发模式
 
-### Pattern 1: Shared Repository Settings
+### 模式 1：共享仓库 settings
 
-Configure team marketplaces in `.claude/settings.json` (project or organization level):
+在 `.claude/settings.json` 中配置团队 marketplace（项目级或组织级）：
 
 ```json
 {
@@ -84,11 +84,11 @@ Configure team marketplaces in `.claude/settings.json` (project or organization 
 }
 ```
 
-When team members trust the repository folder, Claude Code automatically installs these marketplaces.
+当团队成员信任该仓库文件夹后，Claude Code 会自动安装这些 marketplaces。
 
-### Pattern 2: Enabled Plugins List
+### 模式 2：启用 plugins 列表
 
-Pre-configure required plugins for a project:
+为项目预先配置必需 plugins：
 
 ```json
 {
@@ -107,9 +107,9 @@ Pre-configure required plugins for a project:
 }
 ```
 
-### Pattern 3: Monorepo Marketplace
+### 模式 3：Monorepo Marketplace
 
-For organizations with many plugins in one repository:
+适用于在单个仓库中维护大量 plugins 的组织：
 
 ```text
 org-plugins/
@@ -141,9 +141,9 @@ org-plugins/
 }
 ```
 
-### Pattern 4: Curated External Plugins
+### 模式 4：精选外部 Plugins
 
-Marketplace that curates plugins from various sources:
+用于汇集来自不同来源 plugins 的 marketplace：
 
 ```json
 {
@@ -169,11 +169,11 @@ Marketplace that curates plugins from various sources:
 }
 ```
 
-## Version Management
+## 版本管理
 
-### Marketplace Versioning
+### Marketplace 版本控制
 
-Track marketplace changes with semantic versioning:
+使用语义化版本跟踪 marketplace 变更：
 
 ```json
 {
@@ -183,15 +183,15 @@ Track marketplace changes with semantic versioning:
 }
 ```
 
-| Change Type | Version Bump  | Examples                            |
-| ----------- | ------------- | ----------------------------------- |
-| Breaking    | Major (X.0.0) | Remove plugins, major restructuring |
-| Feature     | Minor (X.Y.0) | Add new plugins, new categories     |
-| Fix         | Patch (X.Y.Z) | Update versions, fix metadata       |
+| 变更类型 | 版本提升 | 示例 |
+| -------- | -------- | ---- |
+| 破坏性变更 | 主版本（X.0.0） | 移除 plugins、重大结构调整 |
+| 新功能 | 次版本（X.Y.0） | 新增 plugins、新增 categories |
+| 修复 | 补丁版本（X.Y.Z） | 更新版本、修复 metadata |
 
-### Plugin Version Tracking
+### Plugin 版本跟踪
 
-Always include version in plugin entries:
+始终在 plugin 条目中包含 version：
 
 ```json
 {
@@ -201,7 +201,7 @@ Always include version in plugin entries:
 }
 ```
 
-### Update Workflow
+### 更新工作流
 
 ```text
 # Type in Claude Code: refresh marketplace metadata
@@ -211,11 +211,11 @@ Always include version in plugin entries:
 /plugin marketplace list
 ```
 
-## Multi-Environment Distribution
+## 多环境分发
 
-### Development vs. Production
+### 开发环境 vs. 生产环境
 
-Maintain separate marketplaces for environments:
+为不同环境维护独立的 marketplace：
 
 ```text
 plugins-repo/
@@ -229,26 +229,26 @@ plugins-repo/
 
 ### Feature Branches
 
-Use git branches for experimental plugins:
+对实验性 plugins 使用 git branches：
 
 ```text
 # Type in Claude Code: add marketplace from specific branch
 /plugin marketplace add owner/repo#feature-branch
 ```
 
-## Private Repository Authentication
+## 私有仓库认证
 
-For marketplaces and plugins hosted in private repositories, Claude Code uses environment variables for authentication:
+对于托管在私有仓库中的 marketplaces 和 plugins，Claude Code 通过环境变量进行认证：
 
-| Service   | Environment Variable | Format                       |
-| --------- | -------------------- | ---------------------------- |
-| GitHub    | `GITHUB_TOKEN`       | Personal access token or PAT |
-| GitLab    | `GITLAB_TOKEN`       | Personal or project token    |
-| Bitbucket | `BITBUCKET_TOKEN`    | App password or token        |
+| 服务 | 环境变量 | 格式 |
+| ---- | -------- | ---- |
+| GitHub | `GITHUB_TOKEN` | 个人访问令牌（PAT） |
+| GitLab | `GITLAB_TOKEN` | 个人或项目 token |
+| Bitbucket | `BITBUCKET_TOKEN` | 应用密码或 token |
 
-### Configuration
+### 配置
 
-Set the appropriate token before adding private marketplaces:
+在添加私有 marketplace 前，先设置对应 token：
 
 ```text
 # In your shell, set the token first:
@@ -262,11 +262,11 @@ export GITLAB_TOKEN="glpat-xxxxxxxxxxxx"
 /plugin marketplace add https://gitlab.company.com/team/plugins.git
 ```
 
-Tokens are used for cloning and updating marketplace content. Ensure tokens have read access to the repository.
+这些 tokens 会在 clone 和更新 marketplace 内容时使用。请确保 token 具有仓库读取权限。
 
-### Team Distribution with Private Repos
+### 使用私有仓库进行团队分发
 
-For teams, add the marketplace in project settings and document required environment variables:
+对于团队场景，在项目 settings 中添加 marketplace，并记录所需环境变量：
 
 ```json
 {
@@ -281,56 +281,56 @@ For teams, add the marketplace in project settings and document required environ
 }
 ```
 
-Team members must have `GITHUB_TOKEN` set with access to the private repository.
+团队成员必须设置具备私有仓库访问权限的 `GITHUB_TOKEN`。
 
-## Security Considerations
+## 安全注意事项
 
-### Access Control
+### 访问控制
 
-- **Public marketplaces**: Anyone can install plugins
-- **Private repositories**: Only authorized users can access (via env tokens)
-- **Team settings**: Control which marketplaces are auto-installed
+- **公开 marketplaces**：任何人都可以安装 plugins
+- **私有仓库**：只有已授权用户可以访问（通过环境变量 token）
+- **团队 settings**：控制哪些 marketplaces 会被自动安装
 
-### Plugin Verification
+### Plugin 校验
 
-Before adding external plugins to your marketplace:
+在将外部 plugin 添加到你的 marketplace 前：
 
-1. Review source code for security issues
-2. Check for hardcoded credentials
-3. Verify hook commands are safe
-4. Test in isolated environment
+1. 审查源码中的安全问题
+2. 检查是否存在硬编码凭据
+3. 验证 hook 命令是否安全
+4. 在隔离环境中测试
 
-### Secure Distribution Checklist
+### 安全分发检查清单
 
-- [ ] Use HTTPS for all git URLs
-- [ ] Hosted MCP servers use HTTPS, not HTTP
-- [ ] No credentials in marketplace.json
-- [ ] External plugins reviewed before curation
-- [ ] Private repositories for sensitive tools
+- [ ] 所有 git URL 都使用 HTTPS
+- [ ] 托管型 MCP servers 使用 HTTPS，而不是 HTTP
+- [ ] marketplace.json 中不包含凭据
+- [ ] 在精选外部 plugins 前先完成审查
+- [ ] 敏感工具使用私有仓库
 
-## Marketplace Management Commands
+## Marketplace 管理命令
 
-### List Marketplaces
+### 列出 Marketplaces
 
 ```text
 /plugin marketplace list
 ```
 
-### Update Marketplace
+### 更新 Marketplace
 
 ```text
 /plugin marketplace update marketplace-name
 ```
 
-### Remove Marketplace
+### 移除 Marketplace
 
 ```text
 /plugin marketplace remove marketplace-name
 ```
 
-**Note:** Removing a marketplace uninstalls all plugins from it.
+**注意：** 移除 marketplace 会同时卸载其中的所有 plugins。
 
-### Install Plugins
+### 安装 Plugins
 
 ```text
 # Type in Claude Code: install from specific marketplace
@@ -340,23 +340,23 @@ Before adding external plugins to your marketplace:
 /plugin
 ```
 
-## Troubleshooting
+## 故障排查
 
-### Marketplace Not Loading
+### Marketplace 未加载
 
-1. Verify URL/path is accessible
-2. Check `.claude-plugin/marketplace.json` exists at correct path
-3. Validate JSON syntax
-4. Confirm access permissions (for private repos)
+1. 确认 URL/路径可访问
+2. 检查正确路径下是否存在 `.claude-plugin/marketplace.json`
+3. 校验 JSON 语法
+4. 确认访问权限（针对私有仓库）
 
-### Plugin Installation Fails
+### Plugin 安装失败
 
-1. Verify plugin source URL is accessible
-2. Check plugin directory contains required files
-3. For GitHub sources, ensure repository is public or access is available
-4. Test plugin sources manually by cloning
+1. 确认 plugin source URL 可访问
+2. 检查 plugin 目录是否包含所需文件
+3. 对于 GitHub source，确认仓库公开或当前具备访问权限
+4. 通过手动 clone 测试 plugin source
 
-### Validation Commands
+### 校验命令
 
 ```bash
 # Validate JSON syntax
@@ -370,18 +370,18 @@ jq 'has("name") and has("owner") and has("plugins")' \
 claude plugin validate .
 ```
 
-## Migration Patterns
+## 迁移模式
 
-### From Single Plugin to Marketplace
+### 从单个 Plugin 迁移到 Marketplace
 
-1. Create `.claude-plugin/marketplace.json`
-2. Move plugin to `plugins/` subdirectory
-3. Add plugin entry with relative source
-4. Update installation instructions
+1. 创建 `.claude-plugin/marketplace.json`
+2. 将 plugin 移动到 `plugins/` 子目录
+3. 添加带相对 source 的 plugin 条目
+4. 更新安装说明
 
-### Consolidating Multiple Plugins
+### 合并多个 Plugins
 
-1. Create new marketplace repository
-2. Add each plugin as entry (relative or external source)
-3. Test installation of all plugins
-4. Migrate users to marketplace-based installation
+1. 创建新的 marketplace 仓库
+2. 将每个 plugin 添加为条目（相对 source 或外部 source）
+3. 测试所有 plugins 的安装
+4. 将用户迁移到基于 marketplace 的安装方式

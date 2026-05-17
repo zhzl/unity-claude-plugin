@@ -1,10 +1,10 @@
-# Complete Agent Examples
+# 完整 Agent 示例
 
-Full, production-ready agent examples for common use cases. Use these as templates for your own agents.
+这里提供适用于常见场景的完整、可用于生产环境的 agent 示例。你可以把它们当作自己 agent 的模板。
 
-## Example 1: Code Review Agent
+## 示例 1：代码审查 Agent
 
-**File:** `agents/code-reviewer.md`
+**文件：** `agents/code-reviewer.md`
 
 ```markdown
 ---
@@ -123,9 +123,9 @@ You are an expert code quality reviewer specializing in identifying issues, secu
 - Large changeset: Focus on most impactful files first
 ```
 
-## Example 2: Test Generator Agent
+## 示例 2：测试生成 Agent
 
-**File:** `agents/test-generator.md`
+**文件：** `agents/test-generator.md`
 
 ````markdown
 ---
@@ -226,9 +226,9 @@ describe('[module name]', () => {
 - Untestable code: Suggest refactoring for testability
 ````
 
-## Example 3: Documentation Generator
+## 示例 3：文档生成 Agent
 
-**File:** `agents/docs-generator.md`
+**文件：** `agents/docs-generator.md`
 
 ```markdown
 ---
@@ -317,9 +317,9 @@ Create documentation in project's standard format:
 - Unclear behavior: Document observable behavior, note assumptions
 ```
 
-## Example 4: Security Analyzer
+## 示例 4：安全分析 Agent
 
-**File:** `agents/security-analyzer.md`
+**文件：** `agents/security-analyzer.md`
 
 ```markdown
 ---
@@ -420,46 +420,46 @@ You are an expert security analyst specializing in identifying vulnerabilities a
 - Out of scope items: Note but don't deep-dive
 ```
 
-## Customization Tips
+## 定制提示
 
-### Adapt to Your Domain
+### 适配你的领域
 
-Take these templates and customize:
+拿这些模板做定制：
 
-- Change domain expertise (e.g., "Python expert" vs "React expert")
-- Adjust process steps for your specific workflow
-- Modify output format to match your needs
-- Add domain-specific quality standards
-- Include technology-specific checks
+- 修改领域专长（例如 “Python expert” 或 “React expert”）
+- 按你的具体工作流调整 process steps
+- 修改 output format 以匹配你的需要
+- 添加领域特定的 quality standards
+- 加入技术特定的检查项
 
-### Adjust Tool Access
+### 调整工具访问（Tool Access）
 
-Restrict or expand based on agent needs:
+根据 agent 需求缩小或放宽范围：
 
-- **Read-only agents**: `Read, Grep, Glob`
-- **Generator agents**: `Read, Write, Grep`
-- **Executor agents**: `Read, Write, Bash, Grep`
-- **Full access**: Omit tools field
+- **只读 agents**：`Read, Grep, Glob`
+- **生成型 agents**：`Read, Write, Grep`
+- **执行型 agents**：`Read, Write, Bash, Grep`
+- **完全访问**：省略 tools 字段
 
-### Customize Colors
+### 自定义颜色
 
-Choose colors that match agent purpose:
+选择与 agent 目的匹配的颜色：
 
-- **Blue**: Analysis, review, investigation
-- **Cyan**: Documentation, information
-- **Green**: Generation, creation, success-oriented
-- **Yellow**: Validation, warnings, caution
-- **Red**: Security, critical analysis, errors
-- **Magenta**: Refactoring, transformation, creative
+- **蓝色**：分析、审查、调查
+- **青色**：文档、信息整理
+- **绿色**：生成、创建、偏成功导向
+- **黄色**：校验、警告、谨慎
+- **红色**：安全、关键分析、错误
+- **洋红色**：重构、转换、创意型工作
 
-## Using These Templates
+## 如何使用这些模板
 
-1. Copy template that matches your use case
-2. Replace placeholders with your specifics
-3. Customize process steps for your domain
-4. Adjust examples to your triggering scenarios
-5. Validate with `scripts/validate-agent.sh`
-6. Test triggering with real scenarios
-7. Iterate based on agent performance
+1. 复制与你场景最匹配的模板
+2. 用你自己的细节替换占位符
+3. 按领域定制 process steps
+4. 根据触发场景调整 examples
+5. 用 `scripts/validate-agent.sh` 验证
+6. 用真实场景测试 triggering
+7. 根据 agent 表现持续迭代
 
-These templates provide battle-tested starting points. Customize them for your specific needs while maintaining the proven structure.
+这些模板提供的是经实战验证的起点。请按你的实际需求定制，同时保留其中已经证明有效的结构。

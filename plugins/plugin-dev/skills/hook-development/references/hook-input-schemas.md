@@ -1,106 +1,106 @@
-# Hook Input Schemas
+# Hook 输入 Schemas
 
-Comprehensive reference for all hook input schemas. Every hook receives JSON via stdin containing common fields plus event-specific fields.
+这是所有 hook 输入 schema 的完整参考。每个 hook 都会通过 stdin 接收 JSON，其中包含通用字段以及事件专属字段。
 
-## Common Fields (All Hooks)
+## 通用字段（所有 Hooks）
 
-Every hook receives these fields:
+每个 hook 都会接收以下字段：
 
-| Field             | Type   | Description                    |
-| ----------------- | ------ | ------------------------------ |
-| `session_id`      | string | Unique session identifier      |
-| `transcript_path` | string | Path to conversation JSON      |
-| `cwd`             | string | Current working directory      |
-| `permission_mode` | string | Current permission mode        |
-| `hook_event_name` | string | Event that triggered this hook |
+| 字段              | 类型   | 说明                      |
+| ----------------- | ------ | ------------------------- |
+| `session_id`      | string | 唯一的 session 标识符     |
+| `transcript_path` | string | 对话 JSON 的路径          |
+| `cwd`             | string | 当前工作目录              |
+| `permission_mode` | string | 当前权限模式              |
+| `hook_event_name` | string | 触发该 hook 的事件        |
 
-## Event-Specific Input Fields
+## 事件专属输入字段
 
 ### PreToolUse / PostToolUse / PostToolUseFailure / PermissionRequest
 
-| Field                    | Type    | Events             | Description                                   |
-| ------------------------ | ------- | ------------------ | --------------------------------------------- |
-| `tool_name`              | string  | All four           | Name of the tool                              |
-| `tool_input`             | object  | All four           | Arguments sent to the tool (see tool schemas) |
-| `tool_result`            | string  | PostToolUse        | Tool execution result                         |
-| `tool_use_id`            | string  | PostToolUse        | Unique tool use identifier                    |
-| `error`                  | string  | PostToolUseFailure | Error message from the failed tool            |
-| `is_interrupt`           | boolean | PostToolUseFailure | Whether failure was caused by user interrupt  |
-| `permission_suggestions` | array   | PermissionRequest  | Suggested permission decisions                |
+| 字段                     | 类型    | 事件               | 说明                                 |
+| ------------------------ | ------- | ------------------ | ------------------------------------ |
+| `tool_name`              | string  | 全部四个事件       | 工具名称                             |
+| `tool_input`             | object  | 全部四个事件       | 传给工具的参数（见 tool schemas）    |
+| `tool_result`            | string  | PostToolUse        | 工具执行结果                         |
+| `tool_use_id`            | string  | PostToolUse        | 唯一的工具调用标识符                 |
+| `error`                  | string  | PostToolUseFailure | 失败工具返回的错误消息               |
+| `is_interrupt`           | boolean | PostToolUseFailure | 失败是否由用户中断导致               |
+| `permission_suggestions` | array   | PermissionRequest  | 建议的权限决策列表                   |
 
 ### UserPromptSubmit
 
-| Field    | Type   | Description                    |
-| -------- | ------ | ------------------------------ |
-| `prompt` | string | The user-submitted prompt text |
+| 字段     | 类型   | 说明                   |
+| -------- | ------ | ---------------------- |
+| `prompt` | string | 用户提交的 prompt 文本 |
 
 ### Stop / SubagentStop
 
-| Field                   | Type    | Events       | Description                                     |
-| ----------------------- | ------- | ------------ | ----------------------------------------------- |
-| `stop_hook_active`      | boolean | Both         | Whether hook is already continuing (loop guard) |
-| `agent_id`              | string  | SubagentStop | Unique subagent identifier                      |
-| `agent_type`            | string  | SubagentStop | Agent name                                      |
-| `agent_transcript_path` | string  | SubagentStop | Path to subagent transcript                     |
+| 字段                    | 类型    | 事件         | 说明                                     |
+| ----------------------- | ------- | ------------ | ---------------------------------------- |
+| `stop_hook_active`      | boolean | 两个事件     | hook 是否已处于继续执行状态（循环保护）  |
+| `agent_id`              | string  | SubagentStop | 唯一的 subagent 标识符                   |
+| `agent_type`            | string  | SubagentStop | Agent 名称                              |
+| `agent_transcript_path` | string  | SubagentStop | subagent transcript 的路径              |
 
 ### SubagentStart
 
-| Field        | Type   | Description                |
-| ------------ | ------ | -------------------------- |
-| `agent_id`   | string | Unique subagent identifier |
-| `agent_type` | string | Agent name                 |
+| 字段         | 类型   | 说明            |
+| ------------ | ------ | ---------------------- |
+| `agent_id`   | string | 唯一的 subagent 标识符 |
+| `agent_type` | string | Agent 名称             |
 
 ### SessionStart
 
-| Field        | Type   | Description                                      |
+| 字段         | 类型   | 说明                                      |
 | ------------ | ------ | ------------------------------------------------ |
 | `source`     | string | Matcher: `startup`, `resume`, `clear`, `compact` |
-| `model`      | string | Model identifier                                 |
-| `agent_type` | string | If running as an agent (optional)                |
+| `model`      | string | 模型标识符                                       |
+| `agent_type` | string | 若作为 agent 运行则提供（可选）                  |
 
 ### SessionEnd
 
-| Field    | Type   | Description                                                                            |
+| 字段     | 类型   | 说明                                                                            |
 | -------- | ------ | -------------------------------------------------------------------------------------- |
-| `source` | string | Values: `clear`, `logout`, `prompt_input_exit`, `bypass_permissions_disabled`, `other` |
+| `source` | string | 取值：`clear`, `logout`, `prompt_input_exit`, `bypass_permissions_disabled`, `other` |
 
 ### PreCompact
 
-| Field                 | Type   | Description                                |
-| --------------------- | ------ | ------------------------------------------ |
-| `trigger`             | string | `manual` or `auto`                         |
-| `custom_instructions` | string | User instructions (manual) or empty (auto) |
+| 字段                  | 类型   | 说明                               |
+| --------------------- | ------ | ----------------------------------------- |
+| `trigger`             | string | `manual` 或 `auto`                        |
+| `custom_instructions` | string | 用户指令（manual）或空字符串（auto）      |
 
 ### Notification
 
-| Field               | Type   | Description                                                              |
-| ------------------- | ------ | ------------------------------------------------------------------------ |
-| `message`           | string | Notification text                                                        |
-| `title`             | string | Notification title (optional)                                            |
+| 字段                | 类型   | 说明                                                                 |
+| ------------------- | ------ | --------------------------------------------------------------------------- |
+| `message`           | string | 通知文本                                                                    |
+| `title`             | string | 通知标题（可选）                                                            |
 | `notification_type` | string | `permission_prompt`, `idle_prompt`, `auth_success`, `elicitation_dialog` |
 
 ### TeammateIdle
 
-| Field           | Type   | Description   |
-| --------------- | ------ | ------------- |
-| `teammate_name` | string | Teammate name |
-| `team_name`     | string | Team name     |
+| 字段            | 类型   | 说明 |
+| --------------- | ------ | ----------- |
+| `teammate_name` | string | 队友名称    |
+| `team_name`     | string | 团队名称    |
 
 ### TaskCompleted
 
-| Field              | Type   | Description                 |
-| ------------------ | ------ | --------------------------- |
-| `task_id`          | string | Task identifier             |
-| `task_subject`     | string | Task subject line           |
-| `task_description` | string | Task description (optional) |
-| `teammate_name`    | string | Teammate name (optional)    |
-| `team_name`        | string | Team name (optional)        |
+| 字段               | 类型   | 说明            |
+| ------------------ | ------ | ---------------------- |
+| `task_id`          | string | 任务标识符             |
+| `task_subject`     | string | 任务标题行             |
+| `task_description` | string | 任务描述（可选）       |
+| `teammate_name`    | string | 队友名称（可选）       |
+| `team_name`        | string | 团队名称（可选）       |
 
-## Tool Input Schemas (for PreToolUse/PostToolUse)
+## Tool 输入 Schemas（用于 PreToolUse/PostToolUse）
 
-The `tool_input` object varies by tool. Common tool schemas:
+`tool_input` object 会因工具而异。常见 tool schemas 如下：
 
-| Tool         | `tool_input` Fields                                                                                                                                                   |
+| 工具         | `tool_input` 字段                                                                                                                                                   |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Bash         | `command` (string), `description` (string, optional), `timeout` (number, optional), `run_in_background` (boolean, optional)                                           |
 | Write        | `file_path` (string), `content` (string)                                                                                                                              |
@@ -114,9 +114,9 @@ The `tool_input` object varies by tool. Common tool schemas:
 | Skill        | `skill` (string), `args` (string, optional)                                                                                                                           |
 | NotebookEdit | `notebook_path` (string), `new_source` (string), `cell_type` (string, optional), `edit_mode` (string, optional)                                                       |
 
-## Practical Example
+## 实际示例
 
-Extracting fields in a bash hook script using `jq`:
+在 bash hook 脚本中使用 `jq` 提取字段：
 
 ```bash
 #!/bin/bash
@@ -144,4 +144,4 @@ fi
 exit 0
 ```
 
-For structured PreToolUse decisions, emit the JSON on stdout and exit 0. Reserve stderr plus exit 2 for plain blocking feedback that is not using `hookSpecificOutput.permissionDecision`.
+对于结构化的 PreToolUse 决策，应将 JSON 输出到 stdout，并以 exit 0 结束。stderr 加 exit 2 应保留给未使用 `hookSpecificOutput.permissionDecision` 的纯阻塞反馈。

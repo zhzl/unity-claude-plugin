@@ -1,16 +1,16 @@
-# Popular LSP Servers by Language
+# 按语言分类的热门 LSP 服务器
 
-Curated list of recommended Language Server Protocol servers for common programming languages.
+面向常见编程语言的推荐 Language Server Protocol 服务器精选列表。
 
-## Official/Recommended Servers
+## 官方/推荐服务器
 
 ### Python
 
-#### Pyright (Recommended)
+#### Pyright（推荐）
 
-- Fast, full-featured type checker
-- Command: `pyright-langserver --stdio`
-- Install: `npm install -g pyright`
+- 快速、功能完整的类型检查器
+- 命令： `pyright-langserver --stdio`
+- 安装： `npm install -g pyright`
 
 ```json
 {
@@ -27,19 +27,19 @@ Curated list of recommended Language Server Protocol servers for common programm
 }
 ```
 
-#### Pylsp (Alternative)
+#### Pylsp（替代方案）
 
-- Plugin-based, highly extensible
-- Command: `pylsp`
-- Install: `pip install python-lsp-server`
+- 基于插件，扩展性强
+- 命令： `pylsp`
+- 安装： `pip install python-lsp-server`
 
 ### TypeScript/JavaScript
 
-#### TypeScript Language Server (Recommended)
+#### TypeScript Language Server（推荐）
 
-- Official TypeScript server
-- Command: `typescript-language-server --stdio`
-- Install: `npm install -g typescript-language-server typescript`
+- 官方 TypeScript 服务器
+- 命令： `typescript-language-server --stdio`
+- 安装： `npm install -g typescript-language-server typescript`
 
 ```json
 {
@@ -60,11 +60,11 @@ Curated list of recommended Language Server Protocol servers for common programm
 
 ### Rust
 
-#### rust-analyzer (Recommended)
+#### rust-analyzer（推荐）
 
-- Official Rust language server
-- Command: `rust-analyzer`
-- Install: `rustup component add rust-analyzer`
+- 官方 Rust language server
+- 命令： `rust-analyzer`
+- 安装： `rustup component add rust-analyzer`
 
 ```json
 {
@@ -81,11 +81,11 @@ Curated list of recommended Language Server Protocol servers for common programm
 
 ### Go
 
-#### gopls (Official)
+#### gopls（官方）
 
-- Official Go language server
-- Command: `gopls serve`
-- Install: `go install golang.org/x/tools/gopls@latest`
+- 官方 Go 语言服务器
+- 命令： `gopls serve`
+- 安装： `go install golang.org/x/tools/gopls@latest`
 
 ```json
 {
@@ -105,22 +105,22 @@ Curated list of recommended Language Server Protocol servers for common programm
 
 #### Eclipse JDT Language Server
 
-- Full-featured Java server
-- Command: Varies by installation
-- Install: Download from Eclipse
+- 功能完整的 Java 服务器
+- 命令： 取决于安装方式
+- 安装： 从 Eclipse 下载
 
-#### jdtls (Wrapper)
+#### jdtls（封装器）
 
-- Simplified jdtls wrapper
-- Install: Package managers or manual
+- 更简化的 jdtls 封装器
+- 安装： 使用包管理器或手动安装
 
 ### C/C++
 
-#### clangd (Recommended)
+#### clangd（推荐）
 
-- LLVM-based, fast
-- Command: `clangd`
-- Install: Part of LLVM/Clang
+- 基于 LLVM，速度快
+- 命令： `clangd`
+- 安装：LLVM/Clang 的一部分
 
 ```json
 {
@@ -144,16 +144,16 @@ Curated list of recommended Language Server Protocol servers for common programm
 #### csharp-ls
 
 - .NET/C# language server
-- Command: `csharp-ls`
-- Install: `dotnet tool install -g csharp-ls`
+- 命令： `csharp-ls`
+- 安装： `dotnet tool install -g csharp-ls`
 
 ### Ruby
 
 #### Solargraph
 
 - Ruby language server
-- Command: `solargraph stdio`
-- Install: `gem install solargraph`
+- 命令： `solargraph stdio`
+- 安装： `gem install solargraph`
 
 ```json
 {
@@ -174,88 +174,88 @@ Curated list of recommended Language Server Protocol servers for common programm
 
 #### Intelephense
 
-- Fast PHP server
-- Command: `intelephense --stdio`
-- Install: `npm install -g intelephense`
+- 高性能 PHP 服务器
+- 命令： `intelephense --stdio`
+- 安装： `npm install -g intelephense`
 
 #### Phpactor
 
-- Vim-focused, extensible
-- Command: `phpactor language-server`
-- Install: Via Composer
+- 偏向 Vim，且可扩展
+- 命令： `phpactor language-server`
+- 安装： 通过 Composer 安装
 
-## Web Technologies
+## Web 技术
 
 ### HTML/CSS
 
 #### vscode-html-languageserver
 
-- HTML language features
-- Command: `html-languageserver --stdio`
-- Install: `npm install -g vscode-langservers-extracted`
+- 提供 HTML language server 功能
+- 命令： `html-languageserver --stdio`
+- 安装： `npm install -g vscode-langservers-extracted`
 
 #### vscode-css-languageserver
 
-- CSS/SCSS/Less support
-- Command: `css-languageserver --stdio`
-- Install: `npm install -g vscode-langservers-extracted`
+- 支持 CSS/SCSS/Less
+- 命令： `css-languageserver --stdio`
+- 安装： `npm install -g vscode-langservers-extracted`
 
 ### JSON
 
 #### vscode-json-languageserver
 
-- JSON with schema support
-- Command: `json-languageserver --stdio`
-- Install: `npm install -g vscode-langservers-extracted`
+- 支持 schema 的 JSON 服务器
+- 命令： `json-languageserver --stdio`
+- 安装： `npm install -g vscode-langservers-extracted`
 
 ### YAML
 
 #### yaml-language-server
 
-- YAML with schema support
-- Command: `yaml-language-server --stdio`
-- Install: `npm install -g yaml-language-server`
+- 支持 schema 的 YAML 服务器
+- 命令： `yaml-language-server --stdio`
+- 安装： `npm install -g yaml-language-server`
 
-## Other Languages
+## 其他语言
 
 ### Lua
 
 #### lua-language-server
 
-- Full Lua support
-- Install: GitHub releases or package managers
+- 完整 Lua 支持
+- 安装：GitHub 发布页面或包管理器
 
 ### Kotlin
 
 #### kotlin-language-server
 
-- Kotlin support
-- Install: GitHub releases
+- Kotlin 支持
+- 安装：GitHub 发布页面
 
 ### Swift
 
 #### sourcekit-lsp
 
-- Official Swift server
-- Part of Swift toolchain
+- 官方 Swift 服务器
+- 属于 Swift 工具链的一部分
 
 ### Elixir
 
 #### elixir-ls
 
-- Elixir/Phoenix support
-- Install: GitHub releases
+- Elixir/Phoenix 支持
+- 安装：GitHub 发布页面
 
 ### Haskell
 
 #### haskell-language-server
 
-- Full Haskell support
-- Install: `ghcup install hls`
+- 完整 Haskell 支持
+- 安装： `ghcup install hls`
 
-## Installation Verification
+## 安装验证
 
-Test if a server is working:
+测试服务器是否正常工作：
 
 ```bash
 # Check if command exists

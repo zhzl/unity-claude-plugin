@@ -45,9 +45,9 @@
 ## Current State
 
 - **Roadmap Status:** active
-- **Current Phase:** Phase 4 — Integration and tooling skills
+- **Current Phase:** Phase 5 — Examples, scripts, and final consistency
 - **Last Sync:** 2026-05-17
-- **Next Manual Action:** `/superpowers:roadmap-management write-plan docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md Phase 4`
+- **Next Manual Action:** `/superpowers:roadmap-management write-spec docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md Phase 5`
 
 ## Blockers
 
@@ -60,7 +60,7 @@
 | Phase 1 — Inventory and glossary | completed | 盘点文件、定义术语表和保留规则 | Spec `docs/superpowers/specs/2026-05-15-plugin-dev-zh-translation-phase-1-design.md`; Plan `docs/superpowers/plans/2026-05-15-plugin-dev-zh-translation-phase-1.md`; Implementation Summary recorded; Verification Evidence recorded |
 | Phase 2 — Core plugin content | completed | 翻译 `.claude-plugin`、`commands`、`agents`、`docs`，并校验矫正同范围 commands/agents | Spec `docs/superpowers/specs/2026-05-16-plugin-dev-zh-translation-phase-2-design.md`; Plan `docs/superpowers/plans/2026-05-16-plugin-dev-zh-translation-phase-2.md`; Implementation Summary recorded; Verification Evidence recorded |
 | Phase 3 — Core development skills | completed | 翻译 `plugin-dev-guide`、`plugin-structure`、`command-development`、`skill-development` | Spec `docs/superpowers/specs/2026-05-16-plugin-dev-zh-translation-phase-3-design.md`; Plan `docs/superpowers/plans/2026-05-16-plugin-dev-zh-translation-phase-3.md`; Implementation Summary recorded; Verification Evidence recorded |
-| Phase 4 — Integration and tooling skills | designed | 翻译 `agent-development`、`hook-development`、`mcp-integration`、`lsp-integration`、`plugin-settings`、`marketplace-structure` | Spec `docs/superpowers/specs/2026-05-17-plugin-dev-zh-translation-phase-4-design.md`; Plan pending; Implementation Summary pending; Verification Evidence pending |
+| Phase 4 — Integration and tooling skills | completed | 翻译 `agent-development`、`hook-development`、`mcp-integration`、`lsp-integration`、`plugin-settings`、`marketplace-structure` | Spec `docs/superpowers/specs/2026-05-17-plugin-dev-zh-translation-phase-4-design.md`; Plan `docs/superpowers/plans/2026-05-17-plugin-dev-zh-translation-phase-4.md`; Implementation Summary recorded; Verification Evidence recorded |
 | Phase 5 — Examples, scripts, and final consistency | needs-spec | 处理 JSON/shell 示例可读文本并做整体一致性验证 | Spec pending; Plan pending; Implementation Summary pending; Verification Evidence pending |
 
 ## Phase Details
@@ -113,7 +113,7 @@
 
 ### Phase 4 — Integration and tooling skills
 
-- **Status:** designed
+- **Status:** completed
 - **Scope:** 翻译 `skills/agent-development`、`skills/hook-development`、`skills/mcp-integration`、`skills/lsp-integration`、`skills/plugin-settings` 和 `skills/marketplace-structure` 的 Markdown 用户可读内容。
 - **Out of scope:** 前面阶段已处理的核心技能；最终全局一致性验证；修改脚本行为。
 - **Success Criteria:**
@@ -122,9 +122,9 @@
   - frontmatter、代码块、命令示例、路径和字段名保持语义和格式正确。
 - **Artifacts:**
   - **Spec:** `docs/superpowers/specs/2026-05-17-plugin-dev-zh-translation-phase-4-design.md`
-  - **Plan:** pending
-  - **Implementation Summary:** pending
-  - **Verification Evidence:** pending
+  - **Plan:** `docs/superpowers/plans/2026-05-17-plugin-dev-zh-translation-phase-4.md`
+  - **Implementation Summary:** Phase 4 completed Chinese localization for six integration/tooling skill groups under `plugins/plugin-dev/skills`: `agent-development`、`hook-development`、`mcp-integration`、`lsp-integration`、`plugin-settings`、`marketplace-structure`。共 36 个目标 Markdown 文件在代码块外完成中文化，并保留受保护的 code fences、frontmatter 和关键 token。
+  - **Verification Evidence:** 2026-05-17: Scope: `scope ok: 36 Phase 4 plugin files modified; no out-of-scope plugins/plugin-dev files`。Code blocks: `all Phase 4 Markdown code blocks match HEAD with nested-fence-aware parser`。Frontmatter: `frontmatter ok: protected names, command fields, and trigger tokens present`。Token spot check: `terminology/token spot check ok: MCP, LSP, hook, settings, marketplace, schema, tool, resource, prompt, frontmatter, manifest, capability, matcher preserved`。Whitespace: `git diff --check` passed; LF/CRLF warnings only. Quality correction: final review residual check passed after fixing hook/plugin-settings remaining user-readable English table/heading labels (`targeted residual English check ok: no named prior-review strings found outside code fences`)。Behavior unchanged: no runtime/source files changed; Markdown code fences preserved; no staged files.
 
 ### Phase 5 — Examples, scripts, and final consistency
 
@@ -185,6 +185,8 @@
 
 ## Change Log
 
+- 2026-05-17: Completed Phase 4 with verified Chinese localization for 36 integration/tooling skill Markdown files, recorded final scope/frontmatter/code-block/token/quality evidence, and advanced the current phase to Phase 5 with the next manual action set to `write-spec`.
+- 2026-05-17: Added Phase 4 implementation plan artifact and marked Phase 4 as planned.
 - 2026-05-17: Added Phase 4 spec artifact and marked Phase 4 as designed.
 - 2026-05-17: Completed Phase 3, cleared blockers, recorded final nested-fence-aware validation evidence, and advanced the current phase to Phase 4 with the next manual action set to `write-spec`.
 - 2026-05-16: Added Phase 3 implementation plan artifact and marked Phase 3 as planned.

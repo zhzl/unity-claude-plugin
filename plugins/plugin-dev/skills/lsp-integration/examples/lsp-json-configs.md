@@ -1,10 +1,10 @@
-# LSP Configuration Patterns
+# LSP 配置模式
 
-Copy-paste ready `.lsp.json` configurations for common scenarios.
+可直接复制粘贴的 `.lsp.json` 配置，适用于常见场景。
 
-## Minimal Configuration
+## 最小配置
 
-The simplest possible LSP configuration:
+最简单的 LSP 配置示例：
 
 ```json
 {
@@ -18,9 +18,9 @@ The simplest possible LSP configuration:
 }
 ```
 
-## Multiple Languages
+## 多语言
 
-Configure multiple language servers in one file:
+在一个文件中配置多个 language server：
 
 ```json
 {
@@ -45,9 +45,9 @@ Configure multiple language servers in one file:
 }
 ```
 
-## With Environment Variables
+## 搭配环境变量
 
-Pass environment variables to the server:
+向服务器传递环境变量：
 
 ```json
 {
@@ -65,9 +65,9 @@ Pass environment variables to the server:
 }
 ```
 
-## With Initialization Options
+## 搭配 initializationOptions（初始化选项）
 
-Pass options during server initialization:
+在服务器初始化期间传递选项：
 
 ```json
 {
@@ -90,9 +90,9 @@ Pass options during server initialization:
 }
 ```
 
-## With Runtime Settings
+## 搭配运行时设置
 
-Pass settings after initialization:
+在初始化后传递 settings：
 
 ```json
 {
@@ -115,9 +115,9 @@ Pass settings after initialization:
 }
 ```
 
-## With Timeouts and Restart Policy
+## 搭配超时与重启策略
 
-Configure server lifecycle:
+配置服务器生命周期：
 
 ```json
 {
@@ -134,9 +134,9 @@ Configure server lifecycle:
 }
 ```
 
-## Bundled Server
+## 捆绑服务器
 
-Reference a server bundled with the plugin:
+引用随插件一起捆绑的服务器：
 
 ```json
 {
@@ -153,9 +153,9 @@ Reference a server bundled with the plugin:
 }
 ```
 
-## Socket Transport
+## 套接字传输
 
-Use socket instead of stdio only for advanced setups where the language server explicitly documents socket mode. Current plugin docs do not define separate host/port fields or automatic inference from `args`, so do not treat this as a copy-paste-ready configuration. Prefer `stdio` unless Claude Code or the server's docs specify the exact connection details.
+仅在高级场景中使用套接字，即 language server 文档明确说明支持套接字模式时。当前插件文档没有定义独立的 host/port 字段，也不会从 `args` 自动推断，因此不要将这里视为可直接复制粘贴的配置。除非 Claude Code 或服务器文档明确给出连接细节，否则优先使用 `stdio`。
 
 ```json
 {
@@ -170,9 +170,9 @@ Use socket instead of stdio only for advanced setups where the language server e
 }
 ```
 
-## Full Configuration Example
+## 完整配置示例
 
-All options together:
+将所有选项组合在一起：
 
 ```json
 {
@@ -209,9 +209,9 @@ All options together:
 }
 ```
 
-## Inline in plugin.json
+## 在 plugin.json 中内联
 
-Instead of a separate `.lsp.json`, configure inline:
+不使用单独的 `.lsp.json`，而是直接内联配置：
 
 ```json
 {
@@ -230,7 +230,7 @@ Instead of a separate `.lsp.json`, configure inline:
 }
 ```
 
-Or reference an external file:
+或者引用外部文件：
 
 ```json
 {

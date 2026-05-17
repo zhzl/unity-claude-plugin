@@ -1,25 +1,25 @@
 ---
 name: plugin-settings
-description: This skill should be used when the user asks about "plugin settings", "store plugin configuration", "user-configurable plugin", ".local.md files", "plugin state files", "read YAML frontmatter", "per-project plugin settings", "CLAUDE.md imports", "rules system", "memory hierarchy", "memory priority", or wants to make plugin behavior configurable. Documents the .claude/plugin-name.local.md pattern for storing plugin-specific configuration with YAML frontmatter and markdown content.
+description: 这个技能适用于用户询问 "plugin settings"、如何 "store plugin configuration"、如何构建 "user-configurable plugin"、如何使用 ".local.md files"、如何读取 "YAML frontmatter"、如何设计 "per-project plugin settings"、如何让设置与 "CLAUDE.md imports"、"rules system"、"memory hierarchy"、"memory priority" 协同工作，或希望让插件行为可配置、管理 "plugin state files" 的场景。文档说明使用 `.claude/plugin-name.local.md` 模式来保存插件专属 configuration 与状态。
 ---
 
-# Plugin Settings Pattern for Claude Code Plugins
+# Claude Code 插件的 Plugin Settings 模式
 
-## Overview
+## 概览
 
-Plugins can store user-configurable settings and state in `.claude/plugin-name.local.md` files within the project directory. This pattern uses YAML frontmatter for structured configuration and markdown content for prompts or additional context.
+插件可以在项目目录中的 `.claude/plugin-name.local.md` 文件里保存用户可配置的 settings 和状态。这个模式使用 YAML frontmatter 保存结构化 configuration，使用 markdown 内容保存 prompt 或补充上下文。
 
-**Key characteristics:**
+**关键特征：**
 
-- File location: `.claude/plugin-name.local.md` in project root
-- Structure: YAML frontmatter + markdown body
-- Purpose: Per-project plugin configuration and state
-- Usage: Read from hooks, commands, and agents
-- Lifecycle: User-managed (not in git, should be in `.gitignore`)
+- 文件位置：项目根目录下的 `.claude/plugin-name.local.md`
+- 结构：YAML frontmatter + markdown body
+- 目的：Per-project plugin configuration 和状态
+- 用法：供 hooks、commands 和 agents 读取
+- 生命周期：由用户管理（不进 git，应加入 `.gitignore`）
 
-## File Structure
+## 文件结构
 
-### Basic Template
+### 基础模板
 
 ```markdown
 ---
@@ -40,9 +40,9 @@ This markdown body can contain:
 - Documentation or notes
 ```
 
-### Example: Plugin State File
+### 示例：插件状态文件
 
-**.claude/my-plugin.local.md:**
+**.claude/my-plugin.local.md：**
 
 ```markdown
 ---
@@ -59,11 +59,11 @@ This plugin is configured for standard validation mode.
 Contact @team-lead with questions.
 ```
 
-## Reading Settings Files
+## 读取 Settings 文件
 
-### From Hooks (Bash Scripts)
+### 从 Hooks（Bash Scripts）读取
 
-#### Pattern: Check existence and parse frontmatter
+#### 模式：检查文件是否存在并解析 frontmatter
 
 ```bash
 #!/bin/bash
@@ -103,11 +103,11 @@ if [[ "$VALIDATION_MODE" == "strict" ]]; then
 fi
 ```
 
-See `examples/read-settings-hook.sh` for complete working example. That example requires `jq` because it reads hook JSON input and emits JSON output.
+完整可运行示例见 `examples/read-settings-hook.sh`。该示例因为要读取 hook JSON 输入并输出 JSON，所以依赖 `jq`。
 
-### From Commands
+### 从 Commands 读取
 
-Commands can read settings files to customize behavior:
+Commands 可以读取 settings 文件来自定义行为：
 
 ```markdown
 ---
@@ -126,9 +126,9 @@ Steps:
 5. Execute with configured behavior
 ```
 
-### From Agents
+### 从 Agents 读取
 
-Agents can reference settings in their instructions:
+Agents 可以在自己的指令中引用 settings：
 
 ```markdown
 ---
@@ -144,9 +144,9 @@ If present, parse YAML frontmatter and adapt behavior according to:
 - Additional configuration fields
 ```
 
-## Parsing Techniques
+## 解析技术
 
-### Extract Frontmatter
+### 提取 Frontmatter
 
 ```bash
 # Extract everything between --- markers
@@ -160,31 +160,31 @@ FRONTMATTER=$(awk '
 ' "$FILE")
 ```
 
-### Read Individual Fields
+### 读取单个字段
 
-**String fields:**
+**字符串字段：**
 
 ```bash
 VALUE=$(printf '%s\n' "$FRONTMATTER" | grep '^field_name:' | sed 's/field_name: *//' | sed 's/^"\(.*\)"$/\1/' || true)
 ```
 
-**Boolean fields:**
+**布尔字段：**
 
 ```bash
 ENABLED=$(printf '%s\n' "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//' || true)
 # Compare: if [[ "$ENABLED" == "true" ]]; then
 ```
 
-**Numeric fields:**
+**数值字段：**
 
 ```bash
 MAX=$(printf '%s\n' "$FRONTMATTER" | grep '^max_value:' | sed 's/max_value: *//' || true)
 # Use: if [[ $MAX -gt 100 ]]; then
 ```
 
-### Read Markdown Body
+### 读取 Markdown Body
 
-Extract content after second `---`:
+提取第二个 `---` 之后的内容：
 
 ```bash
 # Get everything after the closing marker; later body --- lines are preserved
@@ -204,11 +204,11 @@ BODY=$(awk '
 ' "$FILE")
 ```
 
-## Common Patterns
+## 常见模式
 
-### Pattern 1: Temporarily Active Hooks
+### 模式 1：临时激活的 Hooks
 
-Use settings file to control hook activation:
+使用 settings 文件控制 hook 是否启用：
 
 ```bash
 #!/bin/bash
@@ -238,13 +238,13 @@ fi
 # ...
 ```
 
-**Use case:** Enable/disable hook behavior without editing hook registration.
+**使用场景：** 无需修改 hook registration，就可以启用或禁用 hook 行为。
 
-### Pattern 2: Agent State Management
+### 模式 2：Agent 状态管理
 
-Store agent-specific state and configuration:
+保存 agent 专属的状态与 configuration：
 
-**.claude/multi-agent-swarm.local.md:**
+**.claude/multi-agent-swarm.local.md：**
 
 ```markdown
 ---
@@ -267,7 +267,7 @@ Implement JWT authentication for the API.
 - PR created and CI green
 ```
 
-Read from hooks to coordinate agents:
+可以由 hooks 读取以协调 agents：
 
 ```bash
 AGENT_NAME=$(printf '%s\n' "$FRONTMATTER" | grep '^agent_name:' | sed 's/agent_name: *//' || true)
@@ -277,9 +277,9 @@ COORDINATOR=$(printf '%s\n' "$FRONTMATTER" | grep '^coordinator_session:' | sed 
 tmux send-keys -t "$COORDINATOR" "Agent $AGENT_NAME completed task" Enter
 ```
 
-### Pattern 3: Configuration-Driven Behavior
+### 模式 3：Configuration-Driven Behavior
 
-**.claude/my-plugin.local.md:**
+**.claude/my-plugin.local.md：**
 
 ```markdown
 ---
@@ -295,7 +295,7 @@ Strict mode enabled for this project.
 All writes validated against security policies.
 ```
 
-Use in hooks or commands:
+在 hooks 或 commands 中使用：
 
 ```bash
 LEVEL=$(printf '%s\n' "$FRONTMATTER" | grep '^validation_level:' | sed 's/validation_level: *//' || true)
@@ -313,11 +313,11 @@ case "$LEVEL" in
 esac
 ```
 
-## Creating Settings Files
+## 创建 Settings 文件
 
-### From Commands
+### 从 Commands 创建
 
-Commands can create settings files:
+Commands 可以创建 settings 文件：
 
 ```markdown
 # Setup Command
@@ -331,9 +331,9 @@ Steps:
 5. Tell the user that settings are read on the next hook/command invocation; restart Claude Code only after changing hook registration or plugin configuration
 ```
 
-### Template Generation
+### 生成模板
 
-Provide template in plugin README:
+可以在插件 README 中提供模板：
 
 ```markdown
 ## Configuration
@@ -355,36 +355,36 @@ Settings are active.
 After creating or editing settings content, the next hook or command invocation can read the new values. Restart Claude Code only after changing hook registration or plugin configuration.
 ```
 
-## Best Practices
+## 最佳实践
 
-### File Naming
+### 文件命名
 
-✅ **DO:**
+✅ **建议：**
 
-- Use `.claude/plugin-name.local.md` format
-- Match plugin name exactly
-- Use `.local.md` suffix for user-local files
+- 使用 `.claude/plugin-name.local.md` 格式
+- 与插件名精确匹配
+- 用户本地文件使用 `.local.md` 后缀
 
-❌ **DON'T:**
+❌ **不要：**
 
-- Use different directory (not `.claude/`)
-- Use inconsistent naming
-- Use `.md` without `.local` (might be committed)
+- 使用其他目录（不是 `.claude/`）
+- 命名不一致
+- 使用不带 `.local` 的 `.md`（可能会被提交）
 
 ### Gitignore
 
-Always add to `.gitignore`:
+始终添加到 `.gitignore`：
 
 ```gitignore
 .claude/*.local.md
 .claude/*.local.json
 ```
 
-Document this in plugin README.
+并在插件 README 中说明这一点。
 
-### Defaults
+### 默认值
 
-Provide sensible defaults when settings file doesn't exist:
+当 settings 文件不存在时，提供合理默认值：
 
 ```bash
 if [[ ! -f "$STATE_FILE" ]]; then
@@ -397,9 +397,9 @@ else
 fi
 ```
 
-### Validation
+### 验证
 
-Validate settings values:
+对 settings 值进行验证：
 
 ```bash
 MAX=$(printf '%s\n' "$FRONTMATTER" | grep '^max_value:' | sed 's/max_value: *//' || true)
@@ -411,11 +411,11 @@ if ! [[ "$MAX" =~ ^[0-9]+$ ]] || [[ $MAX -lt 1 ]] || [[ $MAX -gt 100 ]]; then
 fi
 ```
 
-### Restart Requirement
+### 重启要求
 
-**Important:** Settings file content changes do not require a restart if your hook or command reads the file each time. Restart Claude Code only after changing hook registration or plugin configuration.
+**重要：** 如果你的 hook 或 command 每次都会读取 settings 文件，那么 settings 内容变更本身不需要重启。只有在修改 hook registration 或 plugin configuration 后，才需要重启 Claude Code。
 
-Document in the plugin README:
+建议在插件 README 中写明：
 
 ```markdown
 ## Changing Settings
@@ -427,13 +427,13 @@ After editing `.claude/my-plugin.local.md`:
 3. Restart Claude Code only if you changed hook registration or plugin configuration
 ```
 
-Hook definitions cannot be hot-swapped within a session, but hook scripts can read updated settings files on each invocation.
+Hook definitions 不能在同一 session 内热更新，但 hook scripts 可以在每次调用时读取最新的 settings 文件。
 
-## Security Considerations
+## 安全注意事项
 
-### Sanitize User Input
+### 清理用户输入
 
-When writing settings files from user input:
+当根据用户输入写入 settings 文件时：
 
 ```bash
 # Prefer allowlisted values for YAML fields.
@@ -446,9 +446,9 @@ esac
 # or use a YAML-aware writer such as yq/python instead of interpolating raw input.
 ```
 
-### Validate File Paths
+### 验证文件路径
 
-If settings contain file paths:
+如果 settings 中包含文件路径：
 
 ```bash
 FILE_PATH=$(printf '%s\n' "$FRONTMATTER" | grep '^data_file:' | sed 's/data_file: *//' || true)
@@ -460,19 +460,19 @@ if [[ "$FILE_PATH" == *".."* ]]; then
 fi
 ```
 
-### Permissions
+### 权限
 
-Settings files should be:
+Settings 文件应当：
 
-- Readable by user only (`chmod 600`)
-- Not committed to git
-- Not shared between users
+- 仅用户可读（`chmod 600`）
+- 不提交到 git
+- 不在不同用户之间共享
 
-## Real-World Examples
+## 真实世界示例
 
 ### multi-agent-swarm Plugin
 
-**.claude/multi-agent-swarm.local.md:**
+**.claude/multi-agent-swarm.local.md：**
 
 ```markdown
 ---
@@ -491,16 +491,16 @@ Build JWT-based authentication for the REST API.
 Coordinate with auth-agent on shared types.
 ```
 
-**Hook usage (agent-stop-notification.sh):**
+**Hook 用法（agent-stop-notification.sh）：**
 
-- Checks if file exists (line 15-18: quick exit if not)
-- Parses frontmatter to get coordinator_session, agent_name, enabled
-- Sends notifications to coordinator if enabled
-- Allows quick activation/deactivation via `enabled: true/false`
+- 检查文件是否存在（第 15-18 行：不存在则快速退出）
+- 解析 frontmatter，读取 coordinator_session、agent_name、enabled
+- 如果 enabled，则向 coordinator 发送通知
+- 通过 `enabled: true/false` 实现快速启停
 
 ### ralph-wiggum Plugin
 
-**.claude/ralph-loop.local.md:**
+**.claude/ralph-loop.local.md：**
 
 ```markdown
 ---
@@ -513,17 +513,17 @@ Fix all the linting errors in the project.
 Make sure tests pass after each fix.
 ```
 
-**Hook usage (stop-hook.sh):**
+**Hook 用法（stop-hook.sh）：**
 
-- Checks if file exists (line 15-18: quick exit if not active)
-- Reads iteration count and max_iterations
-- Extracts completion_promise for loop termination
-- Reads body as the prompt to feed back
-- Updates iteration count on each loop
+- 检查文件是否存在（第 15-18 行：未激活则快速退出）
+- 读取 iteration count 和 max_iterations
+- 提取 completion_promise 用于循环终止
+- 将 body 作为要回送的 prompt 读取出来
+- 每轮循环更新 iteration count
 
-## Quick Reference
+## 快速参考
 
-### File Location
+### 文件位置
 
 ```
 project-root/
@@ -531,7 +531,7 @@ project-root/
     └── plugin-name.local.md
 ```
 
-### Frontmatter Parsing
+### Frontmatter 解析
 
 ```bash
 # Extract frontmatter
@@ -548,14 +548,14 @@ FRONTMATTER=$(awk '
 VALUE=$(printf '%s\n' "$FRONTMATTER" | grep '^field:' | sed 's/field: *//' | sed 's/^"\(.*\)"$/\1/' || true)
 ```
 
-### Body Parsing
+### Body 解析
 
 ```bash
 # Extract body (after second ---)
 BODY=$(awk '/^---$/{i++; next} i>=2' "$FILE")
 ```
 
-### Quick Exit Pattern
+### Quick Exit 模式
 
 ```bash
 if [[ ! -f ".claude/my-plugin.local.md" ]]; then
@@ -563,55 +563,55 @@ if [[ ! -f ".claude/my-plugin.local.md" ]]; then
 fi
 ```
 
-## Memory & Rules Context
+## Memory 与 Rules 语境
 
-### Settings Scope Precedence
+### Settings 作用域优先级
 
-Settings follow precedence: Managed > CLI flags > Local (`.claude/settings.local.json`) > Project (`.claude/settings.json`) > User (`~/.claude/settings.json`). Plugin hooks and MCP servers are merged across scopes, not replaced. A plugin-settings `.local.md` file is separate from this system — it's a custom per-project state file your plugin reads directly.
+Settings 的优先级遵循：Managed > CLI flags > Local（`.claude/settings.local.json`）> Project（`.claude/settings.json`）> User（`~/.claude/settings.json`）。Plugin hooks 和 MCP servers 会跨作用域合并，而不是相互替换。plugin-settings 的 `.local.md` 文件不属于这套 system；它是插件直接读取的自定义 per-project state file。
 
-Plugin settings files (`.local.md`) exist alongside Claude Code's broader memory and rules system. Understanding how CLAUDE.md imports, `.claude/rules/` path-specific rules, and the memory priority hierarchy interact with plugin content helps design plugins that complement rather than conflict with user configurations.
+Plugin settings 文件（`.local.md`）与 Claude Code 更广泛的 memory 和 rules system 并存。理解 CLAUDE.md imports、`.claude/rules/` 的 path-specific rules，以及 memory priority hierarchy 如何与插件内容交互，有助于设计出与用户 configuration 互补而非冲突的插件。
 
-See `references/memory-rules-system.md` for the full priority hierarchy, import syntax, and design implications.
+完整的优先级 hierarchy、import 语法和设计影响，请见 `references/memory-rules-system.md`。
 
 ---
 
-## Additional Resources
+## 额外资源
 
-### Reference Files
+### 参考文件
 
-For detailed implementation patterns:
+如需更详细的实现模式，请参考：
 
-- **`references/parsing-techniques.md`** - Complete guide to parsing YAML frontmatter and markdown bodies
-- **`references/real-world-examples.md`** - Deep dive into multi-agent-swarm and ralph-wiggum implementations
-- **`references/memory-rules-system.md`** - How plugin content interacts with CLAUDE.md, rules, and the memory hierarchy
+- **`references/parsing-techniques.md`** - 解析 YAML frontmatter 与 markdown body 的完整指南
+- **`references/real-world-examples.md`** - 深入分析 multi-agent-swarm 与 ralph-wiggum 的实现
+- **`references/memory-rules-system.md`** - 说明插件内容如何与 CLAUDE.md、rules 和 memory hierarchy 交互
 
-### Example Files
+### 示例文件
 
-Working examples in `examples/`:
+`examples/` 中的可运行示例：
 
-- **`read-settings-hook.sh`** - Hook that reads and uses settings
-- **`create-settings-command.md`** - Command that creates settings file
-- **`example-settings.md`** - Template settings file
+- **`read-settings-hook.sh`** - 读取并使用 settings 的 hook
+- **`create-settings-command.md`** - 创建 settings 文件的 command
+- **`example-settings.md`** - settings 模板文件
 
-### Utility Scripts
+### 工具脚本
 
-These scripts assume a shell environment with `bash` 3.2+, `grep`, and `sed`. The `examples/read-settings-hook.sh` example also requires `jq` for parsing hook JSON input and generating JSON output. Check tool availability with `bash --version`, `grep --version`, `sed --version`, and `jq --version` when debugging script failures.
+这些脚本假设 shell 环境中提供 `bash` 3.2+、`grep` 和 `sed`。`examples/read-settings-hook.sh` 示例还需要 `jq` 来解析 hook JSON 输入并生成 JSON 输出。排查脚本失败时，可通过 `bash --version`、`grep --version`、`sed --version` 和 `jq --version` 检查工具是否可用。
 
-Development tools in `scripts/`:
+`scripts/` 中的开发工具：
 
-- **`validate-settings.sh`** - Validate settings file structure
-- **`parse-frontmatter.sh`** - Extract frontmatter fields
+- **`validate-settings.sh`** - 验证 settings 文件结构
+- **`parse-frontmatter.sh`** - 提取 frontmatter 字段
 
-## Implementation Workflow
+## 实施工作流
 
-To add settings to a plugin:
+为插件添加 settings 时：
 
-1. Design settings schema (which fields, types, defaults)
-2. Create template file in plugin documentation
-3. Add gitignore entry for `.claude/*.local.md`
-4. Implement settings parsing in hooks/commands
-5. Use quick-exit pattern (check file exists, check enabled field)
-6. Document settings in plugin README with template
-7. Explain that settings content is read on the next hook/command invocation, while hook registration or plugin configuration changes require a Claude Code restart
+1. 设计 settings schema（有哪些字段、类型、默认值）
+2. 在插件文档中创建模板文件
+3. 为 `.claude/*.local.md` 添加 gitignore 条目
+4. 在 hooks/commands 中实现 settings 解析
+5. 使用 quick-exit 模式（检查文件存在、检查 enabled 字段）
+6. 在插件 README 中记录 settings 与模板
+7. 说明：settings 内容会在下一次 hook/command 调用时读取，而 hook registration 或 plugin configuration 的变更需要重启 Claude Code
 
-Focus on keeping settings simple and providing good defaults when settings file doesn't exist.
+重点是让 settings 保持简单，并在 settings 文件不存在时提供良好的默认值。

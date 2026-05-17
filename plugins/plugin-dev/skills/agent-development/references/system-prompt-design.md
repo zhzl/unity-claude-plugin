@@ -1,10 +1,10 @@
-# System Prompt Design Patterns
+# System Prompt 设计模式
 
-Complete guide to writing effective agent system prompts that enable autonomous, high-quality operation.
+这是编写高质量 agent system prompt 的完整指南，帮助 agent 实现自主且高质量的运行。
 
-## Core Structure
+## 核心结构
 
-Every agent system prompt should follow this proven structure:
+每个 agent system prompt 都应遵循这套已验证的结构：
 
 ```markdown
 You are [specific role] specializing in [specific domain].
@@ -42,9 +42,9 @@ Handle these situations:
 - [Edge case 2]: [Specific handling approach]
 ```
 
-## Pattern 1: Analysis Agents
+## 模式 1：Analysis Agents（分析类）
 
-For agents that analyze code, PRs, or documentation:
+适用于分析代码、PR 或文档的 agent：
 
 ```markdown
 You are an expert [domain] analyzer specializing in [specific analysis type].
@@ -103,9 +103,9 @@ You are an expert [domain] analyzer specializing in [specific analysis type].
 - Unclear code: Request clarification rather than guessing
 ```
 
-## Pattern 2: Generation Agents
+## 模式 2：Generation Agents（生成类）
 
-For agents that create code, tests, or documentation:
+适用于创建代码、测试或文档的 agent：
 
 ```markdown
 You are an expert [domain] engineer specializing in creating high-quality [output type].
@@ -151,9 +151,9 @@ Create [what] with:
 - Complex requirements: Break into smaller pieces
 ```
 
-## Pattern 3: Validation Agents
+## 模式 3：Validation Agents（校验类）
 
-For agents that validate, check, or verify:
+适用于验证、检查或核验的 agent：
 
 ```markdown
 You are an expert [domain] validator specializing in ensuring [quality aspect].
@@ -211,9 +211,9 @@ You are an expert [domain] validator specializing in ensuring [quality aspect].
 - Ambiguous rules: Document uncertainty, request clarification
 ```
 
-## Pattern 4: Orchestration Agents
+## 模式 4：Orchestration Agents（编排类）
 
-For agents that coordinate multiple tools or steps:
+适用于协调多个工具或多个步骤的 agent：
 
 ```markdown
 You are an expert [domain] orchestrator specializing in coordinating [complex workflow].
@@ -267,11 +267,11 @@ You are an expert [domain] orchestrator specializing in coordinating [complex wo
 - Timeout: Report partial completion
 ```
 
-## Writing Style Guidelines
+## 写作风格指南
 
-### Tone and Voice
+### 语气与视角
 
-**Use second person (addressing the agent):**
+**使用第二人称（直接对 agent 说话）：**
 
 ```
 ✅ You are responsible for...
@@ -283,9 +283,9 @@ You are an expert [domain] orchestrator specializing in coordinating [complex wo
 ❌ I will analyze...
 ```
 
-### Clarity and Specificity
+### 清晰度与具体性
 
-**Be specific, not vague:**
+**要具体，不要模糊：**
 
 ```
 ✅ Check for SQL injection by examining all database queries for parameterization
@@ -298,9 +298,9 @@ You are an expert [domain] orchestrator specializing in coordinating [complex wo
 ❌ Rate the severity of issues
 ```
 
-### Actionable Instructions
+### 可执行指令
 
-**Give concrete steps:**
+**给出明确步骤：**
 
 ```
 ✅ Read the file using the Read tool, then search for patterns using Grep
@@ -310,9 +310,9 @@ You are an expert [domain] orchestrator specializing in coordinating [complex wo
 ❌ Create tests
 ```
 
-## Common Pitfalls
+## 常见陷阱
 
-### ❌ Vague Responsibilities
+### ❌ 职责描述过于模糊
 
 ```markdown
 **Your Core Responsibilities:**
@@ -322,9 +322,9 @@ You are an expert [domain] orchestrator specializing in coordinating [complex wo
 3. Be helpful
 ```
 
-**Why bad:** Not specific enough to guide behavior.
+**为什么不好：** 不够具体，无法真正指导 agent 行为。
 
-### ✅ Specific Responsibilities
+### ✅ 职责具体明确
 
 ```markdown
 **Your Core Responsibilities:**
@@ -334,15 +334,15 @@ You are an expert [domain] orchestrator specializing in coordinating [complex wo
 3. Recommend specific type improvements with examples
 ```
 
-### ❌ Missing Process Steps
+### ❌ 缺少过程步骤
 
 ```markdown
 Analyze the code and provide feedback.
 ```
 
-**Why bad:** Agent doesn't know HOW to analyze.
+**为什么不好：** agent 不知道应该如何分析。
 
-### ✅ Clear Process
+### ✅ 过程清晰
 
 ```markdown
 **Analysis Process:**
@@ -354,15 +354,15 @@ Analyze the code and provide feedback.
 5. List findings with file:line references
 ```
 
-### ❌ Undefined Output
+### ❌ 输出未定义
 
 ```markdown
 Provide a report.
 ```
 
-**Why bad:** Agent doesn't know what format to use.
+**为什么不好：** agent 不知道应该采用什么格式输出。
 
-### ✅ Defined Output Format
+### ✅ 输出格式已定义
 
 ```markdown
 **Output Format:**
@@ -383,82 +383,82 @@ Provide a report.
 [Specific fixes with examples]
 ```
 
-## Length Guidelines
+## 长度指南
 
-### Minimum Viable Agent
+### 最小可用 Agent
 
-**~500 words minimum:**
+**最低约 500 词：**
 
-- Role description
-- 3 core responsibilities
-- 5-step process
-- Output format
+- 角色描述
+- 3 条 core responsibilities
+- 5 步 process
+- output format
 
-### Standard Agent
+### 标准 Agent
 
-**~1,000-2,000 words:**
+**约 1,000-2,000 词：**
 
-- Detailed role and expertise
-- 5-8 responsibilities
-- 8-12 process steps
-- Quality standards
-- Output format
-- 3-5 edge cases
+- 详细的角色与专长描述
+- 5-8 条职责
+- 8-12 步流程
+- quality standards
+- output format
+- 3-5 个 edge cases
 
-### Comprehensive Agent
+### 完整型 Agent
 
-**~2,000-5,000 words:**
+**约 2,000-5,000 词：**
 
-- Complete role with background
-- Comprehensive responsibilities
-- Detailed multi-phase process
-- Extensive quality standards
-- Multiple output formats
-- Many edge cases
-- Examples within system prompt
+- 完整角色背景
+- 全面的职责列表
+- 详细的多阶段流程
+- 更广泛的 quality standards
+- 多种 output format
+- 更多 edge cases
+- system prompt 内嵌示例
 
-**Avoid > 10,000 words:** Too long, diminishing returns.
+**避免超过 10,000 词：** 太长，收益递减。
 
-## Testing System Prompts
+## 测试 System Prompt
 
-### Test Completeness
+### 测试完整性
 
-Can the agent handle these based on system prompt alone?
+单靠 system prompt，agent 是否能处理这些情况？
 
-- [ ] Typical task execution
-- [ ] Edge cases mentioned
-- [ ] Error scenarios
-- [ ] Unclear requirements
-- [ ] Large/complex inputs
-- [ ] Empty/missing inputs
+- [ ] 典型任务执行
+- [ ] 已提到的 edge cases
+- [ ] 错误场景
+- [ ] 不明确的需求
+- [ ] 大型/复杂输入
+- [ ] 空输入/缺失输入
 
-### Test Clarity
+### 测试清晰度
 
-Read the system prompt and ask:
+阅读 system prompt 时，检查：
 
-- Can another developer understand what this agent does?
-- Are process steps clear and actionable?
-- Is output format unambiguous?
-- Are quality standards measurable?
+- 另一个开发者能否理解这个 agent 是做什么的？
+- process steps 是否清晰且可执行？
+- output format 是否没有歧义？
+- quality standards 是否可衡量？
 
-### Iterate Based on Results
+### 根据结果迭代
 
-After testing agent:
+测试 agent 之后：
 
-1. Identify where it struggled
-2. Add missing guidance to system prompt
-3. Clarify ambiguous instructions
-4. Add process steps for edge cases
-5. Re-test
+1. 找出它卡住的地方
+2. 在 system prompt 中补充缺失指导
+3. 澄清有歧义的说明
+4. 为 edge cases 添加处理步骤
+5. 重新测试
 
-## Conclusion
+## 结论
 
-Effective system prompts are:
+高质量的 system prompts 具备这些特点：
 
-- **Specific**: Clear about what and how
-- **Structured**: Organized with clear sections
-- **Complete**: Covers normal and edge cases
-- **Actionable**: Provides concrete steps
-- **Testable**: Defines measurable standards
+- **具体**：清楚说明做什么、怎么做
+- **结构清晰**：分区明确、组织良好
+- **完整**：覆盖正常路径与 edge cases
+- **可执行**：提供具体步骤
+- **可测试**：定义可衡量的标准
 
-Use the patterns above as templates, customize for your domain, and iterate based on agent performance.
+把上面的模式当作模板，再结合你的领域进行定制，并根据 agent 的实际表现持续迭代。

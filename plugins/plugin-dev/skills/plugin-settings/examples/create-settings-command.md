@@ -1,17 +1,17 @@
 ---
-description: "Create plugin settings file with user preferences"
+description: "创建包含用户偏好的 plugin settings 文件"
 allowed-tools: Write, AskUserQuestion
 ---
 
-# Create Plugin Settings
+# 创建 Plugin Settings
 
-This command helps users create a `.claude/my-plugin.local.md` settings file.
+这个命令用于帮助用户创建 `.claude/my-plugin.local.md` settings 文件。
 
-## Steps
+## 步骤
 
-### Step 1: Ask User for Preferences
+### 第 1 步：询问用户偏好
 
-Use AskUserQuestion to gather configuration:
+使用 AskUserQuestion 收集 configuration：
 
 ```json
 {
@@ -54,16 +54,16 @@ Use AskUserQuestion to gather configuration:
 }
 ```
 
-### Step 2: Parse Answers
+### 第 2 步：解析答案
 
-Extract answers from AskUserQuestion result:
+从 AskUserQuestion 的结果中提取答案：
 
-- answers["0"]: enabled (Yes/No)
-- answers["1"]: mode (Strict/Standard/Lenient)
+- answers["0"]：enabled（Yes/No）
+- answers["1"]：mode（Strict/Standard/Lenient）
 
-### Step 3: Create Settings File
+### 第 3 步：创建 Settings 文件
 
-Use Write tool to create `.claude/my-plugin.local.md`:
+使用 Write 工具创建 `.claude/my-plugin.local.md`：
 
 ```markdown
 ---
@@ -80,21 +80,21 @@ Your plugin is configured with <mode> validation mode.
 To modify settings, edit this file. The next hook or command invocation can read the new values; restart Claude Code only after changing hook registration or plugin configuration.
 ```
 
-### Step 4: Inform User
+### 第 4 步：告知用户
 
-Tell the user:
+告诉用户：
 
-- Settings file created at `.claude/my-plugin.local.md`
-- Current configuration summary
-- How to edit manually if needed
-- Reminder: Settings content is read on the next hook/command invocation; restart only after hook registration or plugin configuration changes
-- Settings file is gitignored (won't be committed)
+- Settings 文件已创建在 `.claude/my-plugin.local.md`
+- 当前 configuration 摘要
+- 如有需要，如何手动编辑
+- 提醒：settings 内容会在下一次 hook/command 调用时读取；只有在 hook registration 或 plugin configuration 变更后才需要重启 Claude Code
+- Settings 文件已被 gitignore（不会提交）
 
-## Implementation Notes
+## 实现说明
 
-Always validate user input before writing:
+写入前始终验证用户输入：
 
-- Check mode is valid
-- Validate numeric fields are numbers
-- Ensure paths don't have traversal attempts
-- Sanitize any free-text fields
+- 检查 mode 是否有效
+- 验证数值字段确实是数字
+- 确保路径不存在 traversal 尝试
+- 清理任何 free-text 字段

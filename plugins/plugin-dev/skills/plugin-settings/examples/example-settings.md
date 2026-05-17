@@ -1,8 +1,8 @@
-# Example Plugin Settings File
+# Plugin Settings 文件示例
 
-## Template: Basic Configuration
+## 模板：基础 Configuration
 
-**.claude/my-plugin.local.md:**
+**.claude/my-plugin.local.md：**
 
 ```markdown
 ---
@@ -15,9 +15,9 @@ mode: standard
 Plugin is active in standard mode.
 ```
 
-## Template: Advanced Configuration
+## 模板：高级 Configuration
 
-**.claude/my-plugin.local.md:**
+**.claude/my-plugin.local.md：**
 
 ```markdown
 ---
@@ -47,9 +47,9 @@ This project uses custom plugin configuration with:
 Contact @team-lead with questions about this configuration.
 ```
 
-## Template: Agent State File
+## 模板：Agent 状态文件
 
-**.claude/multi-agent-swarm.local.md:**
+**.claude/multi-agent-swarm.local.md：**
 
 ```markdown
 ---
@@ -90,9 +90,9 @@ Depends on:
 Report status to coordinator session 'team-leader'.
 ```
 
-## Template: Feature Flag Pattern
+## 模板：Feature Flag 模式
 
-**.claude/experimental-features.local.md:**
+**.claude/experimental-features.local.md：**
 
 ```markdown
 ---
@@ -115,9 +115,9 @@ Current enabled features:
 Experimental mode is OFF (stable features only).
 ```
 
-## Usage in Hooks
+## 在 Hooks 中使用
 
-These templates can be read by hooks:
+这些模板可以被 hooks 读取：
 
 ```bash
 # Check if plugin is configured
@@ -138,7 +138,7 @@ fi
 
 ## Gitignore
 
-Always add to project `.gitignore`:
+始终向项目 `.gitignore` 添加：
 
 ```gitignore
 # Plugin settings (user-local, not committed)
@@ -146,9 +146,9 @@ Always add to project `.gitignore`:
 .claude/*.local.json
 ```
 
-## Editing Settings
+## 编辑 Settings
 
-Users can edit settings files manually:
+用户可以手动编辑 settings 文件：
 
 ```bash
 # Edit settings
@@ -158,4 +158,4 @@ vim .claude/my-plugin.local.md
 # Restart Claude Code only after changing hook registration or plugin configuration.
 ```
 
-Settings content changes can be read by hooks/commands on their next invocation. Restart Claude Code only after changing hook registration or plugin configuration.
+settings 内容变更后，hooks/commands 会在下一次调用时读取。只有在修改 hook registration 或 plugin configuration 后才需要重启 Claude Code。

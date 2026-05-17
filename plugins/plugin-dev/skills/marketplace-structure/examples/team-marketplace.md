@@ -1,14 +1,14 @@
-# Team Marketplace Example
+# 团队 marketplace 示例
 
-An internal company marketplace with team settings integration.
+带有团队 settings 集成的公司内部 marketplace。
 
-## Use Case
+## 使用场景
 
-- Distribute approved plugins across engineering team
-- Auto-install required plugins for projects
-- Mix of internal and curated external plugins
+- 在工程团队内分发已批准的 plugins
+- 为项目自动安装必需 plugins
+- 混合使用内部 plugin 与精选的外部 plugins
 
-## Directory Structure
+## 目录结构
 
 ```text
 company-plugins/
@@ -70,9 +70,9 @@ company-plugins/
 }
 ```
 
-## Team Settings Integration
+## 团队 settings 集成
 
-Add to project's `.claude/settings.json`:
+添加到项目的 `.claude/settings.json`：
 
 ```json
 {
@@ -91,9 +91,9 @@ Add to project's `.claude/settings.json`:
 }
 ```
 
-## Project-Specific Settings
+## 项目特定 settings
 
-For projects requiring specific plugins, commit `.claude/settings.json`:
+对于需要特定 plugins 的项目，提交 `.claude/settings.json`：
 
 ```json
 {
@@ -111,17 +111,17 @@ For projects requiring specific plugins, commit `.claude/settings.json`:
 }
 ```
 
-When developers trust the project folder, these plugins install automatically.
+当开发者信任该项目文件夹后，这些 plugins 会自动安装。
 
-## Adding New Plugins to the Marketplace
+## 向 Marketplace 添加新 Plugins
 
-1. Create plugin in `plugins/` directory
-2. Add entry to `marketplace.json`
-3. Bump marketplace `metadata.version`
-4. Create PR for review
-5. After merge, team can run `/plugin marketplace update company-plugins`
+1. 在 `plugins/` 目录中创建 plugin
+2. 向 `marketplace.json` 添加条目
+3. 提升 marketplace 的 `metadata.version`
+4. 创建 PR 进行审查
+5. 合并后，团队可运行 `/plugin marketplace update company-plugins`
 
-## Installation for New Team Members
+## 新团队成员的安装方式
 
 ```text
 # Type in Claude Code: one-time marketplace setup
@@ -132,4 +132,4 @@ When developers trust the project folder, these plugins install automatically.
 /plugin install security-scanner@company-plugins
 ```
 
-Or let project settings auto-install by trusting the project folder.
+或者通过信任项目文件夹，让项目 settings 自动安装。

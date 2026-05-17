@@ -1,33 +1,33 @@
 ---
 name: marketplace-structure
-description: This skill should be used when the user asks to "create a marketplace", "set up marketplace.json", "organize multiple plugins", "distribute plugins", "host plugins", "marketplace schema", "plugin marketplace structure", "multi-plugin organization", "strictKnownMarketplaces", "private marketplace", "marketplace auth", "pin plugin version", "hostPattern", or needs guidance on plugin marketplace creation, marketplace manifest configuration, or plugin distribution strategies.
+description: 当用户要求 "create a marketplace"、"set up marketplace.json"、"organize multiple plugins"、"distribute plugins"、"host plugins"、了解 marketplace schema、plugin marketplace structure、multi-plugin organization、strictKnownMarketplaces、private marketplace、marketplace auth、"pin plugin version"、hostPattern，或需要关于 plugin marketplace 创建、marketplace.json 配置、plugin distribution 策略的指导时，应使用此技能。
 ---
 
-# Marketplace Structure
+# Marketplace 结构
 
-A plugin marketplace is a catalog of available plugins that enables centralized discovery, version management, and distribution. This skill covers creating and maintaining marketplaces for team or community plugin distribution.
+plugin marketplace 是一个可用 plugins 的目录，可实现集中式发现、版本管理和 distribution。此技能涵盖如何创建与维护 marketplace，以支持团队或社区级的 plugin 分发。
 
-## Overview
+## 概览
 
-Marketplaces provide:
+marketplace 提供：
 
-- **Centralized discovery** - Browse plugins from multiple sources in one place
-- **Version management** - Track and update plugin versions automatically
-- **Team distribution** - Share required plugins across an organization
-- **Flexible sources** - Support for relative paths, GitHub repos, and git URLs
+- **集中式发现** - 在一个位置浏览来自多个来源的 plugins
+- **版本管理** - 自动跟踪并更新 plugin versions
+- **团队分发** - 在组织内共享必需 plugins
+- **灵活来源** - 支持相对路径、GitHub repos 与 git URLs
 
-### When to Create a Marketplace vs. a Plugin
+### 何时创建 Marketplace，何时创建 Plugin
 
-| Create a Plugin                     | Create a Marketplace                 |
-| ----------------------------------- | ------------------------------------ |
-| Single-purpose extension            | Collection of related plugins        |
-| Used directly by end users          | Distributes multiple plugins         |
-| One team or individual maintains it | Curates plugins from various sources |
-| Installed via `/plugin install`     | Added via `/plugin marketplace add`  |
+| 创建 Plugin | 创建 Marketplace |
+| ----------- | ---------------- |
+| 单一用途扩展 | 相关 plugins 的集合 |
+| 由终端用户直接使用 | 用于分发多个 plugins |
+| 由单个团队或个人维护 | 从多种来源中精选 plugins |
+| 通过 `/plugin install` 安装 | 通过 `/plugin marketplace add` 添加 |
 
-## Directory Structure
+## 目录结构
 
-Place `marketplace.json` in the `.claude-plugin/` directory at the repository root:
+将 `marketplace.json` 放在仓库根目录下的 `.claude-plugin/` 目录中：
 
 ```text
 marketplace-repo/
@@ -43,19 +43,19 @@ marketplace-repo/
 └── README.md                 # Recommended: Marketplace documentation
 ```
 
-## Marketplace Schema
+## Marketplace schema 说明
 
-The `marketplace.json` manifest defines the marketplace and its available plugins.
+`marketplace.json` manifest 用于定义 marketplace 及其中可用的 plugins。
 
-### Required Fields
+### 必需字段
 
-| Field     | Type   | Description                                    |
-| --------- | ------ | ---------------------------------------------- |
-| `name`    | string | Marketplace identifier (kebab-case, no spaces) |
-| `owner`   | object | Marketplace maintainer information             |
-| `plugins` | array  | List of available plugin entries               |
+| 字段 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| `name` | string | marketplace 标识符（kebab-case，不含空格） |
+| `owner` | object | marketplace 维护者信息 |
+| `plugins` | array | 可用 plugin 条目列表 |
 
-### Owner Object
+### 所有者对象（owner）
 
 ```json
 {
@@ -67,7 +67,7 @@ The `marketplace.json` manifest defines the marketplace and its available plugin
 }
 ```
 
-### Optional Metadata
+### 可选 Metadata
 
 ```json
 {
@@ -79,45 +79,45 @@ The `marketplace.json` manifest defines the marketplace and its available plugin
 }
 ```
 
-The `pluginRoot` field sets the base path for relative plugin sources. With `pluginRoot: "plugins"`, use sources like `./code-standards`; without `pluginRoot`, use paths like `./plugins/code-standards`.
+`pluginRoot` 字段用于设置相对 plugin source 的基准路径。若使用 `pluginRoot: "plugins"`，则可写 `./code-standards` 这类 source；若未设置 `pluginRoot`，则应写成 `./plugins/code-standards` 这类路径。
 
-## Plugin Entry Format
+## Plugin 条目格式
 
-Each plugin in the `plugins` array requires:
+`plugins` 数组中的每个 plugin 至少需要：
 
-| Field    | Type             | Description                                               |
-| -------- | ---------------- | --------------------------------------------------------- |
-| `name`   | string           | Plugin identifier (kebab-case, unique within marketplace) |
-| `source` | string or object | Where to fetch the plugin                                 |
+| 字段 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| `name` | string | plugin 标识符（kebab-case，且在 marketplace 内唯一） |
+| `source` | string or object | 获取 plugin 的位置 |
 
-### Optional Plugin Fields
+### 可选 Plugin 字段
 
-Standard metadata fields:
+标准 metadata 字段：
 
-- `description` - Brief plugin description
-- `version` - Plugin version (semver)
-- `author` - Author information object
-- `homepage` - Documentation URL
-- `repository` - Source code URL
-- `license` - SPDX license identifier
-- `keywords` - Tags for discovery
-- `category` - Plugin category
-- `tags` - Additional searchability tags
+- `description` - 简短的 plugin 描述
+- `version` - plugin 版本（semver）
+- `author` - 作者信息 object
+- `homepage` - 文档 URL
+- `repository` - 源码 URL
+- `license` - SPDX license 标识符
+- `keywords` - 用于发现的 tags
+- `category` - plugin 分类
+- `tags` - 额外的可搜索 tags
 
-Component configuration fields:
+组件配置字段：
 
-- `commands` - Custom paths to command files or directories
-- `agents` - Custom paths to agent files
-- `hooks` - Hooks configuration or path to hooks file
-- `mcpServers` - MCP server configurations
+- `commands` - command 文件或目录的自定义路径
+- `agents` - agent 文件的自定义路径
+- `hooks` - hooks 配置或 hooks 文件路径
+- `mcpServers` - MCP server 配置
 
-For complete field reference, see `references/schema-reference.md`.
+完整字段参考见 `references/schema-reference.md`。
 
-## Plugin Sources
+## Plugin 来源
 
-### Relative Paths
+### 相对路径
 
-For plugins within the same repository:
+适用于位于同一仓库中的 plugins：
 
 ```json
 {
@@ -126,7 +126,7 @@ For plugins within the same repository:
 }
 ```
 
-### GitHub Repositories
+### GitHub 仓库
 
 ```json
 {
@@ -138,9 +138,9 @@ For plugins within the same repository:
 }
 ```
 
-### GitHub Repositories with Pinning
+### 带 Pinning 的 GitHub 仓库
 
-Pin to a specific ref or commit SHA for reproducible builds:
+为实现可复现构建，可 pin 到特定 ref 或 commit SHA：
 
 ```json
 {
@@ -154,12 +154,12 @@ Pin to a specific ref or commit SHA for reproducible builds:
 }
 ```
 
-- `ref` — Branch, tag, or commit reference (e.g., `"v1.0"`, `"main"`)
-- `sha` — Exact commit SHA for integrity verification
+- `ref` — branch、tag 或 commit reference（例如 `"v1.0"`、`"main"`）
+- `sha` — 用于完整性校验的精确 commit SHA
 
-### Git URLs
+### Git URL
 
-For GitLab, Bitbucket, or self-hosted git:
+适用于 GitLab、Bitbucket 或自托管 git：
 
 ```json
 {
@@ -172,20 +172,20 @@ For GitLab, Bitbucket, or self-hosted git:
 }
 ```
 
-## Strict vs. Non-Strict Mode
+## Strict 与 Non-Strict 模式
 
-The `strict` field controls whether plugins must have their own `plugin.json`:
+`strict` 字段控制 plugin 是否必须拥有自己的 `plugin.json`：
 
-| Mode                     | Behavior                                                              |
-| ------------------------ | --------------------------------------------------------------------- |
-| `strict: true` (default) | Plugin must include `plugin.json`; marketplace entry supplements it   |
-| `strict: false`          | `plugin.json` optional; marketplace entry serves as complete manifest |
+| 模式 | 行为 |
+| ---- | ---- |
+| `strict: true` (default) | plugin 必须包含 `plugin.json`；marketplace 条目会对其进行补充 |
+| `strict: false` | `plugin.json` 可选；marketplace 条目会作为完整 manifest |
 
-Use `strict: false` when:
+以下场景适合使用 `strict: false`：
 
-- Curating external plugins without modifying their source
-- Providing all metadata in the marketplace entry
-- Plugin directories contain only commands/agents/skills without manifest
+- 精选外部 plugins，但不修改其源码
+- 在 marketplace 条目中直接提供全部 metadata
+- plugin 目录仅包含 commands/agents/skills，而没有 manifest
 
 ```json
 {
@@ -200,11 +200,11 @@ Use `strict: false` when:
 }
 ```
 
-## Enterprise Features
+## 企业特性
 
-### Managed Marketplace Restrictions
+### 托管 Marketplace 限制
 
-Organizations can restrict which marketplaces users can install from using managed settings:
+组织可通过托管 settings 限制用户可以从哪些 marketplace 安装：
 
 ```json
 {
@@ -212,7 +212,7 @@ Organizations can restrict which marketplaces users can install from using manag
 }
 ```
 
-An empty array creates lockdown mode with no additional approved marketplace sources. To allow specific marketplaces, list their source objects:
+空数组表示进入 lockdown 模式，即没有额外批准的 marketplace 来源。若要允许特定 marketplace，请列出其 source objects：
 
 ```json
 {
@@ -222,52 +222,52 @@ An empty array creates lockdown mode with no additional approved marketplace sou
 }
 ```
 
-If `strictKnownMarketplaces` is undefined, Claude Code uses the normal known marketplace behavior. When it is an array, users can only install plugins from approved marketplace sources. Host/path patterns belong in managed marketplace restrictions, not plugin `source` entries.
+如果 `strictKnownMarketplaces` 未定义，Claude Code 会使用默认的 known marketplace 行为。若它被设置为数组，用户便只能从已批准的 marketplace sources 安装 plugins。host/path patterns 应配置在托管 marketplace 限制中，而不是 plugin `source` 条目中。
 
-### Private Repository Authentication
+### 私有仓库认证
 
-For marketplaces hosted in private repositories, set the appropriate environment variable:
+对于托管在私有仓库中的 marketplace，请设置相应环境变量：
 
 - **GitHub**: `GITHUB_TOKEN`
 - **GitLab**: `GITLAB_TOKEN`
 - **Bitbucket**: `BITBUCKET_TOKEN`
 
-See `references/distribution-patterns.md` for configuration details.
+配置细节见 `references/distribution-patterns.md`。
 
-### Reserved Marketplace Names
+### 保留的 Marketplace 名称
 
-Some marketplace names are reserved by Anthropic for official use. Choose distinctive names for custom marketplaces to avoid conflicts.
+某些 marketplace 名称由 Anthropic 保留作官方用途。自定义 marketplace 应选择有辨识度的名称，以避免冲突。
 
-### URL-Based Marketplace Limitations
+### 基于 URL 的 Marketplace 限制
 
-Marketplaces added via URL (rather than git source) have limited support for relative paths in plugin sources. Relative paths may not resolve correctly — prefer absolute source references or git-based marketplaces.
+通过 URL 添加的 marketplace（而非 git source）对 plugin source 中的相对路径支持有限。相对路径可能无法被正确解析，因此更推荐使用绝对 source 引用，或直接采用基于 git 的 marketplace。
 
-## Best Practices
+## 最佳实践
 
-### Organization
+### 组织方式
 
-- **One theme per marketplace** - Group related plugins (e.g., "frontend-tools", "security-plugins")
-- **Clear naming** - Use descriptive kebab-case names for both marketplace and plugins
-- **Version all entries** - Include `version` for every plugin entry
-- **Document each plugin** - Provide `description` for discoverability
+- **一个 marketplace 一个主题** - 将相关 plugins 分组（例如 "frontend-tools"、"security-plugins"）
+- **清晰命名** - marketplace 与 plugins 都使用描述性 kebab-case 名称
+- **所有条目都写 version** - 每个 plugin 条目都包含 `version`
+- **为每个 plugin 写说明** - 提供 `description` 以提升可发现性
 
-### Versioning
+### 版本管理
 
-- Use semantic versioning (X.Y.Z) for marketplace `metadata.version`
-- Update marketplace version when adding, removing, or updating plugins
-- Consider a CHANGELOG.md for tracking changes
+- 对 marketplace `metadata.version` 使用语义化版本（X.Y.Z）
+- 当新增、移除或更新 plugins 时同步更新 marketplace version
+- 可考虑提供 CHANGELOG.md 来跟踪变更
 
-### Distribution
+### 分发
 
-- **GitHub hosting** - Simplest distribution via `/plugin marketplace add owner/repo`
-- **Team settings** - Configure `extraKnownMarketplaces` in `.claude/settings.json`
-- **Local testing** - Add with `/plugin marketplace add ./path` during development
+- **GitHub 托管** - 最简单的分发方式：`/plugin marketplace add owner/repo`
+- **团队 settings** - 在 `.claude/settings.json` 中配置 `extraKnownMarketplaces`
+- **本地测试** - 开发期间通过 `/plugin marketplace add ./path` 添加
 
-For detailed distribution patterns, see `references/distribution-patterns.md`.
+更详细的 distribution 模式见 `references/distribution-patterns.md`。
 
-### Validation
+### 校验
 
-Validate marketplace structure before publishing:
+发布前请先校验 marketplace 结构：
 
 ```bash
 # Check JSON syntax
@@ -277,9 +277,9 @@ jq . .claude-plugin/marketplace.json
 jq 'has("name") and has("owner") and has("plugins")' .claude-plugin/marketplace.json
 ```
 
-Use the `plugin-validator` agent with marketplace support for comprehensive validation.
+使用带 marketplace 支持的 `plugin-validator` agent 可以进行更全面的校验。
 
-## Complete Example
+## 完整示例
 
 ```json
 {
@@ -314,20 +314,20 @@ Use the `plugin-validator` agent with marketplace support for comprehensive vali
 }
 ```
 
-## Additional Resources
+## 额外资源
 
-- `references/schema-reference.md` - Complete field reference for marketplace.json
-- `references/distribution-patterns.md` - Hosting and team distribution strategies
-- `examples/minimal-marketplace.md` - Single plugin marketplace template
-- `examples/team-marketplace.md` - Internal company marketplace template
-- `examples/community-marketplace.md` - Public multi-plugin marketplace template
+- `references/schema-reference.md` - marketplace.json 的完整字段参考
+- `references/distribution-patterns.md` - 托管与团队分发策略
+- `examples/minimal-marketplace.md` - 单 plugin marketplace 模板
+- `examples/team-marketplace.md` - 公司内部 marketplace 模板
+- `examples/community-marketplace.md` - 公开多 plugin marketplace 模板
 
-## Related Skills
+## 相关技能
 
-- **plugin-structure** - For individual plugin `plugin.json` details
-- **plugin-validator** agent - For validating marketplace structure
-- **`/plugin-dev:create-marketplace`** - Guided marketplace creation workflow
+- **plugin-structure** - 了解单个 plugin `plugin.json` 细节
+- **plugin-validator** agent - 用于校验 marketplace 结构
+- **`/plugin-dev:create-marketplace`** - 引导式 marketplace 创建工作流
 
-## Working Example
+## 可工作的示例
 
-Use the examples in this skill as marketplace templates. This repository's `plugins/plugin-dev/.claude-plugin/plugin.json` is a plugin manifest, not a root marketplace manifest.
+可将本技能中的示例直接作为 marketplace 模板使用。本仓库中的 `plugins/plugin-dev/.claude-plugin/plugin.json` 是 plugin manifest，不是根级 marketplace manifest.

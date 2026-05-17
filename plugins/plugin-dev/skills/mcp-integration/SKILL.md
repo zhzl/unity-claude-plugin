@@ -1,28 +1,28 @@
 ---
 name: mcp-integration
-description: This skill should be used when the user asks to "add MCP server", "integrate MCP", "configure MCP in plugin", "use .mcp.json", "set up Model Context Protocol", "connect external service", mentions "${CLAUDE_PLUGIN_ROOT} with MCP", discusses MCP server types (stdio, SSE, HTTP/streamable HTTP), or asks to "find MCP server", "discover MCP servers", "what MCP servers exist", "recommend MCP server for [service]", "MCP prompts", "MCP prompts as commands", "tool search", "tool search threshold", "claude mcp serve", "allowedMcpServers", "deniedMcpServers", "managed MCP". Provides comprehensive guidance for integrating Model Context Protocol servers into Claude Code plugins for external tool and service integration.
+description: 当用户要求 "add MCP server"、"integrate MCP"、"configure MCP in plugin"，明确提到 "use .mcp.json"、"set up Model Context Protocol"、"connect external service"、"${CLAUDE_PLUGIN_ROOT} with MCP"，或讨论 Model Context Protocol、`.mcp.json`、`${CLAUDE_PLUGIN_ROOT}`、stdio、SSE、HTTP、`MCP prompts`、`allowedMcpServers`、`deniedMcpServers`、`managed MCP`、`MCP prompts as commands`、`tool search`、`tool search threshold`、`claude mcp serve`，以及询问 "find MCP server"、"discover MCP servers"、"what MCP servers exist"、"recommend MCP server for [service]" 时使用。
 ---
 
-# MCP Integration for Claude Code Plugins
+# Claude Code 插件的 MCP 集成
 
-## Overview
+## 概述
 
-Model Context Protocol (MCP) enables Claude Code plugins to integrate with external services and APIs by providing structured tool access. Use MCP integration to expose external service capabilities as tools within Claude Code.
+Model Context Protocol (MCP) 让 Claude Code 插件能通过结构化的 tool 访问方式集成外部服务和 API。通过 MCP 集成，可以把外部服务能力作为 Claude Code 内的 tools 暴露出来。
 
-**Key capabilities:**
+**关键能力：**
 
-- Connect to external services (databases, APIs, file systems)
-- Provide 10+ related tools from a single service
-- Handle OAuth and complex authentication flows
-- Bundle MCP servers with plugins for automatic setup
+- 连接外部服务（数据库、API、文件系统）
+- 从单个服务提供 10+ 个相关 tools
+- 处理 OAuth 和复杂认证流程
+- 将 MCP server 与插件一起打包，实现自动设置
 
-## MCP Server Configuration Methods
+## MCP Server 配置方式
 
-Plugins can bundle MCP servers in two ways:
+插件可以通过两种方式打包 MCP server：
 
-### Method 1: Dedicated .mcp.json (Recommended)
+### 方式 1：专用 `.mcp.json`（推荐）
 
-Create `.mcp.json` at plugin root:
+在插件根目录创建 `.mcp.json`：
 
 ```json
 {
@@ -38,15 +38,15 @@ Create `.mcp.json` at plugin root:
 }
 ```
 
-**Benefits:**
+**优点：**
 
-- Clear separation of concerns
-- Easier to maintain
-- Better for multiple servers
+- 职责分离更清晰
+- 更易维护
+- 更适合多个 server
 
-### Method 2: Inline in plugin.json
+### 方式 2：内联到 plugin.json
 
-Add `mcpServers` field to plugin.json:
+在 `plugin.json` 中添加 `mcpServers` 字段：
 
 ```json
 {
@@ -61,43 +61,43 @@ Add `mcpServers` field to plugin.json:
 }
 ```
 
-**Benefits:**
+**优点：**
 
-- Single configuration file
-- Good for simple single-server plugins
+- 单一配置文件
+- 适合简单的单 server 插件
 
-### MCP Scope System
+### MCP Scope 体系
 
-MCP server configurations follow scope precedence: Local > Project > User.
+MCP server 配置遵循 scope 优先级：Local > Project > User。
 
-| Scope   | Storage                        | Sharing              | Best For                           |
-| ------- | ------------------------------ | -------------------- | ---------------------------------- |
-| Local   | `~/.claude.json` (project path) | Private, current project | Experimental, sensitive credentials |
-| Project | `.mcp.json` in project root    | Via version control  | Team-shared, project-specific      |
-| User    | `~/.claude.json` (global)      | All projects         | Personal utilities, cross-project  |
+| Scope   | 存储位置                        | 共享范围             | 最适合                           |
+| ------- | ------------------------------ | -------------------- | -------------------------------- |
+| Local   | `~/.claude.json`（project 路径） | 私有，仅当前项目     | 实验性配置、敏感 credentials     |
+| Project | 项目根目录中的 `.mcp.json`      | 通过版本控制共享     | 团队共享、项目特定配置           |
+| User    | `~/.claude.json`（全局）        | 所有项目             | 个人工具、跨项目复用             |
 
-Plugin-bundled MCP servers (via `.mcp.json` or inline in `plugin.json`) auto-start when the plugin is enabled. They interact with user/project MCP configs — if a user has a server with the same name, scope precedence determines which loads.
+通过 `.mcp.json` 或 `plugin.json` 内联方式打包的 MCP server，会在插件启用时自动启动。它们会与 user/project 级 MCP 配置一起生效；如果用户已经配置了同名 server，则由 scope 优先级决定最终加载哪一个。
 
-## Discovering MCP Servers
+## 发现 MCP Server
 
-Find existing MCP servers by checking official service documentation, Anthropic/Claude Code MCP guidance, and general web search. PulseMCP can be a useful optional directory when you want broader community discovery.
+可通过查看官方服务文档、Anthropic/Claude Code 的 MCP 指南，以及通用 web 搜索来寻找现成的 MCP server。若你想扩大社区发现范围，PulseMCP 可作为有用的可选目录。
 
-**Discovery workflow:**
+**发现流程：**
 
-1. Search official docs or the web for "[service] MCP server" using available Claude Code web search/fetch tools
-2. Prefer official or well-maintained servers over community one-offs
-3. Optionally check PulseMCP for broader discovery and alternatives
-4. Generate `.mcp.json` configuration based on server type
+1. 使用可用的 Claude Code web search/fetch 工具，在官方文档或 web 上搜索 "[service] MCP server"
+2. 优先选择官方或维护良好的 server，而不是零散的社区项目
+3. 可选地检查 PulseMCP，以获得更广泛的发现和替代方案
+4. 根据 server 类型生成 `.mcp.json` 配置
 
-**See `references/server-discovery.md`** for detailed discovery guidance and curated server recommendations by category.
+**参见 `references/server-discovery.md`**，获取更详细的 发现指南，以及按类别整理的 server 推荐。
 
-## MCP Server Types
+## MCP Server 类型
 
-### stdio (Local Process)
+### stdio（本地进程）
 
-Execute local MCP servers as child processes. Best for local tools and custom servers.
+以子进程方式执行本地 MCP server。最适合本地工具和自定义 server。
 
-**Configuration:**
+**配置：**
 
 ```json
 {
@@ -111,24 +111,24 @@ Execute local MCP servers as child processes. Best for local tools and custom se
 }
 ```
 
-**Use cases:**
+**适用场景：**
 
-- File system access
-- Local database connections
-- Custom MCP servers
-- NPM-packaged MCP servers
+- 文件系统访问
+- 本地数据库连接
+- 自定义 MCP server
+- 以 NPM 打包的 MCP server
 
-**Process management:**
+**进程管理：**
 
-- Claude Code spawns and manages the process
-- Communicates via stdin/stdout
-- Terminates when Claude Code exits
+- Claude Code 负责启动并管理进程
+- 通过 stdin/stdout 通信
+- Claude Code 退出时终止
 
-### SSE (Server-Sent Events)
+### SSE（Server-Sent Events）
 
-Connect to hosted MCP servers with OAuth support. Best for cloud services.
+连接带有 OAuth 支持的托管 MCP server。最适合云服务。
 
-**Configuration:**
+**配置：**
 
 ```json
 {
@@ -139,26 +139,26 @@ Connect to hosted MCP servers with OAuth support. Best for cloud services.
 }
 ```
 
-Hosted MCP URLs are provider-specific and can change over time. Treat example URLs in this skill as placeholders unless the provider's current docs give an exact endpoint to use.
+托管 MCP URL 具有 provider 特异性，并且可能会随时间变化。除非 provider 当前文档给出了明确 endpoint，否则本技能中的示例 URL 都应视为占位符。
 
-**Use cases:**
+**适用场景：**
 
-- Official hosted MCP servers (Asana, GitHub, etc.)
-- Cloud services with MCP endpoints
-- OAuth-based authentication
-- No local installation needed
+- 官方托管的 MCP server（Asana、GitHub 等）
+- 带 MCP endpoint 的云服务
+- 基于 OAuth 的认证
+- 无需本地安装
 
-**Authentication:**
+**认证：**
 
-- OAuth flows handled automatically
-- User prompted on first use
-- Tokens managed by Claude Code
+- OAuth 流程 由 Claude Code 自动处理
+- 首次使用时提示用户
+- token 由 Claude Code 管理
 
 ### HTTP (MCP over HTTP)
 
-Connect to MCP servers over HTTP with token authentication. The endpoint must implement MCP over HTTP; arbitrary REST endpoints are not MCP servers.
+通过 HTTP 连接 MCP server，并使用 token 认证。该 endpoint 必须实现 MCP over HTTP；任意 REST endpoint 都不是 MCP server。
 
-**Configuration:**
+**配置：**
 
 ```json
 {
@@ -173,18 +173,18 @@ Connect to MCP servers over HTTP with token authentication. The endpoint must im
 }
 ```
 
-**Use cases:**
+**适用场景：**
 
-- Hosted MCP endpoints
-- Token-based authentication
-- Custom MCP backends
-- Stateless interactions
+- 托管的 MCP endpoint
+- 基于 token 的认证
+- 自定义 MCP backend
+- 无状态交互
 
-## Environment Variable Expansion
+## 环境变量展开
 
-All MCP configurations support environment variable substitution:
+所有 MCP 配置都支持环境变量替换：
 
-**${CLAUDE_PLUGIN_ROOT}** - Plugin directory (always use for portability):
+**${CLAUDE_PLUGIN_ROOT}** - plugin 目录（为保证可移植性应始终使用）：
 
 ```json
 {
@@ -192,7 +192,7 @@ All MCP configurations support environment variable substitution:
 }
 ```
 
-**User environment variables** - From user's shell:
+**用户环境变量** - 来自用户 shell：
 
 ```json
 {
@@ -203,33 +203,33 @@ All MCP configurations support environment variable substitution:
 }
 ```
 
-Env vars support fallback values: `${VAR:-default_value}`. If `VAR` is unset, `default_value` is used. Supported in `command`, `args`, `env`, `url`, and `headers` fields.
+环境变量支持 fallback 值：`${VAR:-default_value}`。如果 `VAR` 未设置，则使用 `default_value`。这适用于 `command`、`args`、`env`、`url` 和 `headers` 字段。
 
-**Best practice:** Document all required environment variables in plugin README.
+**最佳实践：** 在插件 README 中记录所有必需的环境变量。
 
-## MCP Tool Naming
+## MCP Tool 命名
 
-When MCP servers provide tools, they're automatically named by server and tool:
+当 MCP server 提供 tools 时，Claude Code 会按 server 和 tool 自动命名：
 
-**Format:** `mcp__<server-name>__<tool-name>`
+**格式：** `mcp__<server-name>__<tool-name>`
 
-**Example:**
+**示例：**
 
 - Server: `asana`
 - Tool: `asana_create_task`
-- **Full name:** `mcp__asana__asana_create_task`
+- **完整名称:** `mcp__asana__asana_create_task`
 
 ## MCP Resources
 
-MCP servers can expose resources that Claude can access using the `@` syntax:
+MCP server 也可以暴露 resource，Claude 可使用 `@` 语法访问：
 
-### Resource Syntax
+### Resource 语法
 
 ```
 @server-name:protocol://path
 ```
 
-**Examples:**
+**示例：**
 
 ```
 @filesystem:file:///Users/me/project/README.md
@@ -237,70 +237,70 @@ MCP servers can expose resources that Claude can access using the `@` syntax:
 @github:https://github.com/user/repo
 ```
 
-### Using Resources in Prompts
+### 在 Prompt 中使用 Resource
 
-Reference resources directly in your prompts:
+可直接在 prompt 中引用 resource：
 
 ```
 Look at @filesystem:file:///path/to/config.json and suggest improvements
 ```
 
-Claude will fetch the resource content and include it in context.
+Claude 会抓取 resource 内容并将其纳入上下文。
 
-### Resource Types
+### Resource 类型
 
-- **file://** - Local file system paths
-- **https://** - HTTP resources
-- **Custom protocols** - Server-specific (postgres://, s3://, etc.)
+- **file://** - 本地文件系统路径
+- **https://** - HTTP resource
+- **自定义协议** - server 特定协议（postgres://、s3:// 等）
 
-## MCP Prompts as Commands
+## 将 MCP Prompts 作为 Commands
 
-MCP servers can expose **prompts** that appear as slash commands in Claude Code:
+MCP server 可以暴露 **prompts**，它们会在 Claude Code 中显示为 slash commands：
 
-**Format:** `/mcp__servername__promptname`
+**格式：** `/mcp__servername__promptname`
 
-**Example:**
+**示例：**
 
-- Server `github` exposes prompt `create-pr`
-- Available as: `/mcp__github__create-pr`
+- server `github` 暴露 prompt `create-pr`
+- 可用形式：`/mcp__github__create-pr`
 
-MCP prompts appear alongside regular commands in the `/` menu. They accept arguments and execute the server's prompt template with Claude. This enables MCP servers to provide guided workflows beyond simple tool calls.
+MCP prompts 会与常规 command 一起出现在 `/` 菜单中。它们可以接收参数，并用 Claude 执行 server 侧的 prompt 模板。这使 MCP server 除了简单的 tool call 之外，还能提供引导式工作流。
 
-**Plugin design note:** If your MCP server exposes prompts, document their names and expected arguments in your plugin README so users can discover them.
+**插件设计说明：** 如果你的 MCP server 暴露了 prompts，请在插件 README 中记录它们的名称和预期参数，方便用户发现。
 
-**Plugin-provided MCP prompts:** If your plugin bundles an MCP server, that server can expose prompts that automatically become slash commands for users. This provides guided workflows beyond simple tool calls — for example, a `/mcp__myserver__setup-project` prompt that walks users through project configuration.
+**插件提供的 MCP prompts：** 如果你的插件打包了一个 MCP server，该 server 暴露的 prompts 会自动成为用户可用的 slash commands。这能提供超出简单 tool call 的引导式工作流，例如 `/mcp__myserver__setup-project` 这样的 prompt，用于引导用户完成项目配置。
 
 ## Tool Search
 
-For MCP servers with many tools, use Tool Search to find relevant tools:
+对于拥有大量 tools 的 MCP server，可使用 Tool Search 查找相关工具：
 
-**When to use:**
+**适用场景：**
 
-- Server provides 10+ tools
-- You don't know exact tool names
-- Exploring server capabilities
+- server 提供 10+ 个 tools
+- 你不知道确切的 tool name
+- 正在探索 server 能力
 
-**How it works:**
+**工作方式：**
 
-1. Claude Code indexes MCP tool names and descriptions
-2. Search by natural language or partial names
-3. Get filtered list of matching tools
+1. Claude Code 会为 MCP tool name 和 description 建立索引
+2. 可按自然语言或部分名称搜索
+3. 返回过滤后的匹配 tool 列表
 
-### Default Behavior
+### 默认行为
 
-MCP Tool Search is enabled by default. Claude Code can search MCP tool names and descriptions on demand instead of relying only on tools loaded into the immediate context.
+MCP Tool Search 默认启用。Claude Code 可以按需搜索 MCP tool name 和 description，而不只依赖当前上下文中已加载的 tools。
 
-**Plugin design implications:**
+**插件设计影响：**
 
-- **Many-tool servers**: Tools may not be immediately visible; use descriptive tool names and descriptions
-- **Documentation**: Note tool search behavior in README if your server provides 20+ tools
-- **Environment control**: use `ENABLE_TOOL_SEARCH=auto` for automatic threshold behavior or `ENABLE_TOOL_SEARCH=auto:N` for a custom threshold
+- **多 tool server：** tools 可能不会立刻可见，因此要使用描述性强的 tool name 和 description
+- **文档：** 如果 server 提供 20+ 个 tools，应在 README 中说明 tool search 行为
+- **环境控制：** 使用 `ENABLE_TOOL_SEARCH=auto` 获得自动阈值行为，或使用 `ENABLE_TOOL_SEARCH=auto:N` 自定义阈值
 
-This feature is automatic - just ask Claude about available tools or describe what you want to do.
+这个特性是自动生效的——只需直接询问 Claude 可用 tools，或描述你想完成的事情即可。
 
-### Using MCP Tools in Commands
+### 在 Commands 中使用 MCP Tools
 
-Pre-allow specific MCP tools in command frontmatter:
+可在 command frontmatter 中预先 allow 特定 MCP tools：
 
 ```markdown
 ---
@@ -311,7 +311,7 @@ allowed-tools:
 ---
 ```
 
-**Wildcard (use sparingly):**
+**Wildcard（谨慎使用）：**
 
 ```markdown
 ---
@@ -321,32 +321,32 @@ allowed-tools:
 ---
 ```
 
-**Best practice:** Pre-allow specific tools, not wildcards, for security.
+**最佳实践：** 为了安全性，优先预先 allow 特定 tools，而不是 wildcard。
 
-## Lifecycle Management
+## 生命周期管理
 
-**Automatic startup:**
+**自动启动：**
 
-- MCP servers start when plugin enables
-- Connection established before first tool use
-- Restart required for configuration changes
+- 插件启用时启动 MCP server
+- 首次 tool 使用前建立连接
+- 配置变更后需要重启
 
-**Lifecycle:**
+**生命周期：**
 
-1. Plugin loads
-2. MCP configuration parsed
-3. Server process started (stdio) or connection established (SSE/HTTP/WS)
-4. Tools discovered and registered
-5. Tools available as `mcp__<server-name>__<tool-name>`
+1. 插件加载
+2. 解析 MCP 配置
+3. 启动 server 进程（stdio）或建立连接（SSE/HTTP/WS）
+4. 发现并注册 tools
+5. tools 以 `mcp__<server-name>__<tool-name>` 形式可用
 
-**Viewing servers:**
-Use `/mcp` command to see all servers including plugin-provided ones.
+**查看 servers：**
+使用 `/mcp` command 查看所有 server，包括 插件提供的 server。
 
-## Authentication Patterns
+## 认证模式
 
-### OAuth (SSE/HTTP)
+### OAuth（SSE/HTTP）
 
-OAuth handled automatically by Claude Code:
+OAuth 由 Claude Code 自动处理：
 
 ```json
 {
@@ -355,11 +355,11 @@ OAuth handled automatically by Claude Code:
 }
 ```
 
-User authenticates in browser on first use. No additional configuration needed.
+用户首次使用时会在浏览器中认证。无需额外配置。
 
-### Token-Based (Headers)
+### 基于 Token 的方式（Headers）
 
-Static or environment variable tokens:
+静态 token 或环境变量 token：
 
 ```json
 {
@@ -371,11 +371,11 @@ Static or environment variable tokens:
 }
 ```
 
-Document required environment variables in README.
+请在 README 中记录所需环境变量。
 
-### Environment Variables (stdio)
+### 环境变量（stdio）
 
-Pass configuration to MCP server:
+向 MCP server 传递配置：
 
 ```json
 {
@@ -389,11 +389,11 @@ Pass configuration to MCP server:
 }
 ```
 
-## Integration Patterns
+## 集成模式
 
-### Pattern 1: Simple Tool Wrapper
+### 模式 1：简单 Tool 包装器
 
-Commands use MCP tools with user interaction:
+command 通过用户交互来使用 MCP tools：
 
 ```markdown
 # Command: create-item.md
@@ -409,11 +409,11 @@ Steps:
 3. Confirm creation
 ```
 
-**Use for:** Adding validation or preprocessing before MCP calls.
+**适用于:** 在 MCP call 前增加验证或预处理。
 
-### Pattern 2: Autonomous Agent
+### 模式 2：自主 Agent
 
-Agents use MCP tools autonomously:
+agent 自主使用 MCP tools：
 
 ```markdown
 # Agent: data-analyzer.md
@@ -425,11 +425,11 @@ Analysis Process:
 3. Generate insights report
 ```
 
-**Use for:** Multi-step MCP workflows without user interaction.
+**适用于:** 无需用户交互的多步 MCP 工作流。
 
-### Pattern 3: Multi-Server Plugin
+### 模式 3：多 Server 插件
 
-Integrate multiple MCP servers:
+集成多个 MCP server：
 
 ```json
 {
@@ -444,38 +444,38 @@ Integrate multiple MCP servers:
 }
 ```
 
-Use provider docs to replace these placeholders with current hosted endpoints.
+应使用 provider 文档把这些占位符替换为当前托管 endpoint。
 
-**Use for:** Workflows spanning multiple services.
+**适用于:** 跨多个服务的 工作流。
 
-## Security Best Practices
+## 安全最佳实践
 
-### Use HTTPS
+### 使用 HTTPS
 
-Always use secure connections for hosted MCP endpoints:
+对于托管的 MCP endpoint，始终使用安全连接：
 
 ```text
 ✅ "url": "https://mcp.example.com/sse"
 ❌ "url": "http://mcp.example.com/sse"
 ```
 
-### Token Management
+### Token 管理
 
-**DO:**
+**应该做：**
 
-- ✅ Use environment variables for tokens
-- ✅ Document required env vars in README
-- ✅ Let OAuth flow handle authentication
+- ✅ 对 token 使用环境变量
+- ✅ 在 README 中记录必需 环境变量
+- ✅ 让 OAuth 流程处理认证
 
-**DON'T:**
+**不应该做：**
 
-- ❌ Hardcode tokens in configuration
-- ❌ Commit tokens to git
-- ❌ Share tokens in documentation
+- ❌ 在配置中硬编码 token
+- ❌ 将 token 提交到 git
+- ❌ 在文档中共享 token
 
-### Permission Scoping
+### 权限范围控制
 
-Pre-allow only necessary MCP tools:
+只预先 allow 必要的 MCP tools：
 
 ```markdown
 ✅ allowed-tools: `mcp__api__read_data`, `mcp__api__create_item`
@@ -483,11 +483,11 @@ Pre-allow only necessary MCP tools:
 ❌ allowed-tools: mcp__api__*
 ```
 
-### Managed MCP Controls (Enterprise)
+### 托管 MCP 控制（Enterprise）
 
-Organizations can control MCP server access through managed settings.
+组织可通过 managed settings 控制 MCP server 访问。
 
-Place `managed-mcp.json` at the system-wide managed settings path for exclusive control over MCP server configuration. Alternatively, use allow/deny lists in managed settings:
+将 `managed-mcp.json` 放在系统级 managed settings 路径下，可对 MCP server 配置实施独占控制。或者，也可以在 managed settings 中使用 allow/deny list：
 
 ```json
 {
@@ -502,89 +502,89 @@ Place `managed-mcp.json` at the system-wide managed settings path for exclusive 
 }
 ```
 
-**Matcher types:**
+**匹配器类型:**
 
-- `serverName` — Match by configured server name
-- `serverCommand` — Match by exact command array
-- `serverUrl` — Match by URL pattern (supports `*` wildcards)
+- `serverName` — 按已配置的 server name 匹配
+- `serverCommand` — 按精确 command 数组匹配
+- `serverUrl` — 按 URL 模式匹配（支持 `*` 通配符）
 
-These settings are configured by administrators and cannot be overridden by users or plugins.
+这些设置由管理员配置，用户和 plugin 都无法覆盖。
 
-## Claude Code as MCP Server
+## 将 Claude Code 作为 MCP Server
 
-Claude Code can itself act as an MCP server, exposing its capabilities to other tools:
+Claude Code 本身也可以作为一个 MCP server，对外暴露自己的能力：
 
 ```bash
 claude mcp serve
 ```
 
-This enables other MCP-compatible clients to use Claude Code's tools. Useful for building tool chains where Claude Code is one component.
+这样其他兼容 MCP 的 client 就能使用 Claude Code 的 tools。它适合构建以 Claude Code 为其中一个组成部分的工具链。
 
-### Importing from Claude Desktop
+### 从 Claude Desktop 导入
 
-Users who already have MCP servers configured in Claude Desktop can import them:
+已经在 Claude Desktop 中配置过 MCP server 的用户，可以直接导入：
 
 ```bash
 claude mcp add-from-claude-desktop
 ```
 
-This copies MCP server configurations from Claude Desktop into Claude Code. Plugin developers should note that users may already have servers configured this way — avoid name conflicts with commonly used server names.
+该命令会把 Claude Desktop 中的 MCP server 配置复制到 Claude Code。plugin 开发者需要注意，用户可能已经以这种方式配置过 server，因此应避免与常见 server name 冲突。
 
-## Dynamic Tool Updates
+## 动态 Tool 更新
 
-MCP servers can notify Claude Code when their available tools change at runtime using the `list_changed` notification. This enables servers that dynamically add or remove tools based on context (e.g., loading project-specific tools after initialization). Claude Code automatically re-discovers tools when `list_changed` fires, without requiring a restart.
+MCP server 可以在运行时通过 `list_changed` notification 通知 Claude Code 它的可用 tools 发生了变化。这使 server 能根据上下文动态增加或移除 tools（例如初始化后加载项目特定 tools）。当 `list_changed` 触发时，Claude Code 会自动重新发现 tools，无需重启。
 
-**Plugin design note:** If your MCP server's available tools depend on runtime state, implement `list_changed` to ensure Claude Code always has an up-to-date tool list.
+**插件设计说明:** 如果你的 MCP server 可用 tools 依赖运行时状态，请实现 `list_changed`，以确保 Claude Code 始终持有最新的 tool 列表。
 
-## MCP Output Limits
+## MCP 输出限制
 
-MCP tool responses are subject to size limits:
+MCP tool 响应受大小限制：
 
-- **Warning threshold**: 10,000 tokens
-- **Default maximum**: 25,000 tokens (responses exceeding this are truncated)
-- **Configuration**: Set `MAX_MCP_OUTPUT_TOKENS` environment variable to adjust the maximum
+- **警告阈值**: 10,000 tokens
+- **默认最大值**: 25,000 tokens（超过该值的响应会被截断）
+- **配置**: 设置 `MAX_MCP_OUTPUT_TOKENS` 环境变量可调整最大值
 
-Design MCP tools to return concise, relevant data. Use pagination or filtering for large datasets.
+设计 MCP tools 时，应返回简洁且相关的数据。对于大型数据集，请使用分页或过滤。
 
-## Error Handling
+## 错误处理
 
-### Connection Failures
+### 连接失败
 
-Handle MCP server unavailability:
+处理 MCP server 不可用的情况：
 
-- Provide fallback behavior in commands
-- Inform user of connection issues
-- Check server URL and configuration
+- 在 command 中提供 fallback 行为
+- 向用户说明连接问题
+- 检查 server URL 和配置
 
-### Tool Call Errors
+### Tool 调用错误
 
-Handle failed MCP operations:
+处理失败的 MCP 操作：
 
-- Validate inputs before calling MCP tools
-- Provide clear error messages
-- Check rate limiting and quotas
+- 调用 MCP tools 前先验证输入
+- 提供清晰错误信息
+- 检查 rate limiting 和配额
 
-### Configuration Errors
+### 配置错误
 
-Validate MCP configuration:
+验证 MCP 配置：
 
-- Test server connectivity during development
-- Validate JSON syntax
-- Check required environment variables
+- 在开发期间测试 server 连通性
+- 验证 JSON 语法
+- 检查必需环境变量
 
-## Performance Considerations
+## 性能注意事项
 
-### Lazy Loading
+### 延迟加载
 
-MCP servers connect on-demand:
+MCP server 按需连接：
 
-- Not all servers connect at startup
-- First tool use triggers connection
-- Connection pooling managed automatically
+- 不是所有 server 都会在启动时连接
+- 首次 tool 使用会触发连接
+- 连接池由 Claude Code 自动管理
 
-### Batching
+### 批处理
 
-Batch similar requests when possible:
+可行时对相似请求进行批处理：
 
 ```
 # Good: Single query with filters
@@ -595,29 +595,29 @@ for id in task_ids:
     task = get_task(id)
 ```
 
-## Testing MCP Integration
+## 测试 MCP 集成
 
-### Local Testing
+### 本地测试
 
-1. Configure MCP server in `.mcp.json`
-2. Install plugin locally (`.claude-plugin/`)
-3. Run `/mcp` to verify server appears
-4. Test tool calls in commands
-5. Check `claude --debug` logs for connection issues
+1. 在 `.mcp.json` 中配置 MCP server
+2. 在本地安装 plugin（`.claude-plugin/`）
+3. 运行 `/mcp` 验证 server 是否出现
+4. 测试 command 中的 tool calls
+5. 检查 `claude --debug` 日志中的连接问题
 
-### Validation Checklist
+### 验证清单
 
-- [ ] MCP configuration is valid JSON
-- [ ] Server URL is correct and accessible
-- [ ] Required environment variables documented
-- [ ] Tools appear in `/mcp` output
-- [ ] Authentication works (OAuth or tokens)
-- [ ] Tool calls succeed from commands
-- [ ] Error cases handled gracefully
+- [ ] MCP 配置是有效 JSON
+- [ ] Server URL 正确且可访问
+- [ ] 必需环境变量已记录
+- [ ] tools 出现在 `/mcp` 输出中
+- [ ] 认证正常（OAuth 或 tokens）
+- [ ] tool calls 可从 commands 成功执行
+- [ ] 已优雅处理错误场景
 
-## MCP CLI Commands
+## MCP CLI 命令
 
-For testing and managing MCP servers during development:
+用于开发期间测试和管理 MCP server：
 
 ```bash
 # Add servers
@@ -636,125 +636,125 @@ claude mcp add-from-claude-desktop             # Import from Claude Desktop
 claude mcp reset-project-choices               # Reset project MCP approval choices
 ```
 
-Key flags: `--scope` (local/project/user), `--env KEY=value`, `--callback-port` (for OAuth).
+关键 flags：`--scope`（local/project/user）、`--env KEY=value`、`--callback-port`（用于 OAuth）。
 
-## Debugging
+## 调试
 
-### Enable Debug Logging
+### 启用 Debug 日志
 
 ```bash
 claude --debug
 ```
 
-Look for:
+关注以下内容：
 
-- MCP server connection attempts
-- Tool discovery logs
-- Authentication flows
-- Tool call errors
+- MCP server 连接尝试
+- tool 发现日志
+- 认证流程
+- tool 调用错误
 
-### Common Issues
+### 常见问题
 
-**Server not connecting:**
+**Server 无法连接:**
 
-- Check URL is correct
-- Verify server is running (stdio)
-- Check network connectivity
-- Review authentication configuration
+- 检查 URL 是否正确
+- 验证 server 是否正在运行（stdio）
+- 检查网络连通性
+- 查看认证配置
 
-**Tools not available:**
+**Tools 不可用:**
 
-- Verify server connected successfully
-- Check tool names match exactly
-- Run `/mcp` to see available tools
-- Restart Claude Code after config changes
+- 验证 server 已成功连接
+- 检查 tool name 是否完全匹配
+- 运行 `/mcp` 查看可用 tools
+- 配置修改后重启 Claude Code
 
-**Authentication failing:**
+**认证失败:**
 
-- Clear cached auth tokens
-- Re-authenticate
-- Check token scopes and permissions
-- Verify environment variables set
+- 清除缓存的 auth tokens
+- 重新认证
+- 检查 token scopes 和权限
+- 验证环境变量已设置
 
-## Quick Reference
+## 快速参考
 
-### MCP Server Types
+### MCP Server 类型
 
-| Type  | Transport | Best For                    | Auth     |
+| 类型 | Transport | 更适合 | 认证 |
 | ----- | --------- | --------------------------- | -------- |
-| stdio | Process   | Local tools, custom servers | Env vars |
-| SSE   | HTTP      | Hosted services, cloud APIs | OAuth    |
-| HTTP  | MCP over HTTP | Hosted MCP endpoints, token auth | Tokens   |
+| stdio | 进程 | 本地 tools、自定义 servers | 环境变量 |
+| SSE | HTTP | 托管服务、云 API | OAuth |
+| HTTP | MCP over HTTP | 托管 MCP endpoints、token auth | Tokens |
 
-### Configuration Checklist
+### 配置清单
 
-- [ ] Server type specified (stdio/SSE/HTTP or streamable-http)
-- [ ] Type-specific fields complete (command or url)
-- [ ] Authentication configured
-- [ ] Environment variables documented
-- [ ] HTTPS used for hosted MCP endpoints
-- [ ] ${CLAUDE_PLUGIN_ROOT} used for paths
+- [ ] 已指定 server 类型（stdio/SSE/HTTP 或 streamable-http）
+- [ ] 类型特定字段已补全（command 或 url）
+- [ ] 认证已配置
+- [ ] 环境变量已记录
+- [ ] 托管 MCP endpoint 使用 HTTPS
+- [ ] 路径使用 ${CLAUDE_PLUGIN_ROOT}
 
-### Best Practices
+### 最佳实践
 
-**DO:**
+**应该做：**
 
-- ✅ Use ${CLAUDE_PLUGIN_ROOT} for portable paths
-- ✅ Document required environment variables
-- ✅ Use secure connections (HTTPS for HTTP/SSE)
-- ✅ Pre-allow specific MCP tools in commands
-- ✅ Test MCP integration before publishing
-- ✅ Handle connection and tool errors gracefully
+- ✅ 使用 ${CLAUDE_PLUGIN_ROOT} 以获得可移植路径
+- ✅ 记录所需环境变量
+- ✅ 使用安全连接（HTTP/SSE 使用 HTTPS）
+- ✅ 在 command 中预先 allow 特定 MCP tools
+- ✅ 发布前测试 MCP 集成
+- ✅ 优雅处理连接和 tool 错误
 
-**DON'T:**
+**不应该做：**
 
-- ❌ Hardcode absolute paths
-- ❌ Commit credentials to git
-- ❌ Use HTTP instead of HTTPS
-- ❌ Pre-allow all tools with wildcards
-- ❌ Skip error handling
-- ❌ Forget to document setup
+- ❌ 硬编码绝对路径
+- ❌ 将 credentials 提交到 git
+- ❌ 用 HTTP 代替 HTTPS
+- ❌ 用 wildcard 预先 allow 所有 tools
+- ❌ 跳过错误处理
+- ❌ 忘记记录设置
 
-## Additional Resources
+## 其他资源
 
-### Reference Files
+### 参考文件
 
-For detailed information, consult:
+如需详细信息，请参考：
 
-- **`references/server-discovery.md`** - Find MCP servers using official docs, web search, and optional directories
-- **`references/server-types.md`** - Deep dive on each server type
-- **`references/authentication.md`** - Authentication patterns and OAuth
-- **`references/tool-usage.md`** - Using MCP tools in commands and agents
+- **`references/server-discovery.md`** - 使用官方文档、web search 和可选目录发现 MCP server
+- **`references/server-types.md`** - 各类 server 的深入说明
+- **`references/authentication.md`** - 认证模式与 OAuth
+- **`references/tool-usage.md`** - 在 commands 和 agents 中使用 MCP tools
 
-### Example Configurations
+### 示例配置
 
-Working examples in `examples/`:
+`examples/` 中提供可工作的示例：
 
-- **`stdio-server.json`** - Local stdio MCP server
-- **`sse-server.json`** - Hosted SSE server with OAuth
-- **`http-server.json`** - HTTP MCP endpoint with token auth
+- **`stdio-server.json`** - 本地 stdio MCP server
+- **`sse-server.json`** - 带 OAuth 的托管 SSE server
+- **`http-server.json`** - 带 token auth 的 HTTP MCP endpoint
 
-`ws-server.json` is retained only as an unsupported-transport note because WebSocket is not a documented Claude Code MCP transport.
+`ws-server.json` 仅保留为 不支持的 transport 说明，因为 WebSocket 不是 Claude Code 已文档化支持的 MCP transport。
 
-### External Resources
+### 外部资源
 
-- **Official MCP Docs**: <https://modelcontextprotocol.io/>
-- **Claude Code MCP Docs**: <https://code.claude.com/docs/en/mcp>
+- **官方 MCP 文档**: <https://modelcontextprotocol.io/>
+- **Claude Code MCP 文档**: <https://code.claude.com/docs/en/mcp>
 - **MCP SDK**: @modelcontextprotocol/sdk
-- **Testing**: Use `claude --debug` and `/mcp` command
+- **测试**: 使用 `claude --debug` 和 `/mcp` command
 
-## Implementation Workflow
+## 实现工作流
 
-To add MCP integration to a plugin:
+向插件添加 MCP 集成 时：
 
-1. Choose MCP server type (stdio, SSE, HTTP/streamable HTTP)
-2. Create `.mcp.json` at plugin root with configuration
-3. Use ${CLAUDE_PLUGIN_ROOT} for all file references
-4. Document required environment variables in README
-5. Test locally with `/mcp` command
-6. Pre-allow MCP tools in relevant commands
-7. Handle authentication (OAuth or tokens)
-8. Test error cases (connection failures, auth errors)
-9. Document MCP integration in plugin README
+1. 选择 MCP server 类型（stdio、SSE、HTTP/streamable HTTP）
+2. 在插件根目录创建 `.mcp.json` 并写入配置
+3. 所有文件引用都使用 ${CLAUDE_PLUGIN_ROOT}
+4. 在 README 中记录必需环境变量
+5. 使用 `/mcp` command 本地测试
+6. 在相关 command 中预先 allow MCP tools
+7. 处理认证（OAuth 或 tokens）
+8. 测试错误场景（连接失败、auth 错误）
+9. 在插件 README 中记录 MCP 集成
 
-Focus on stdio for custom/local servers, SSE for hosted services with OAuth.
+对于自定义/本地 server，重点考虑 stdio；对于带 OAuth 的托管服务，重点考虑 SSE。

@@ -1,23 +1,23 @@
-# Migrating from Basic to Advanced Hooks
+# 从基础 Hooks 迁移到高级 Hooks
 
-This guide shows how to migrate from basic command hooks to advanced prompt-based hooks for better maintainability and flexibility.
+本指南说明如何从基础 command hooks 迁移到高级 prompt-based hooks，以获得更好的可维护性与灵活性。
 
-The JSON snippets below show the contents of the `hooks` object. In `.claude/settings.json` or plugin `hooks/hooks.json`, wrap them as `{ "hooks": { ... } }`.
+下方 JSON 片段展示的是 `hooks` object 的内容。在 `.claude/settings.json` 或 plugin `hooks/hooks.json` 中，请将它们包装为 `{ "hooks": { ... } }`。
 
-## Why Migrate?
+## 为什么要迁移？
 
-Prompt-based hooks offer several advantages:
+Prompt-based hooks 有以下优势：
 
-- **Natural language reasoning**: LLM understands context and intent
-- **Better edge case handling**: Adapts to unexpected scenarios
-- **No bash scripting required**: Simpler to write and maintain
-- **More flexible validation**: Can handle complex logic without coding
+- **自然语言推理**：LLM 能理解上下文和意图
+- **更好的边界情况处理**：能适应意料之外的场景
+- **无需 bash 脚本**：更易编写和维护
+- **更灵活的验证**：无需编码即可处理复杂逻辑
 
-## Migration Example: Bash Command Validation
+## 迁移示例：Bash 命令校验
 
-### Before (Basic Command Hook)
+### Before（基础 Command Hook）
 
-**Configuration:**
+**配置：**
 
 ```json
 {
@@ -35,7 +35,7 @@ Prompt-based hooks offer several advantages:
 }
 ```
 
-**Script (validate-bash.sh):**
+**脚本（validate-bash.sh）：**
 
 ```bash
 #!/bin/bash
@@ -49,17 +49,17 @@ if [[ "$command" == *"rm -rf"* ]]; then
 fi
 ```
 
-**Problems:**
+**问题：**
 
-- Only checks for exact "rm -rf" pattern
-- Doesn't catch variations like `rm -fr` or `rm -r -f`
-- Misses other dangerous commands (`dd`, `mkfs`, etc.)
-- No context awareness
-- Requires bash scripting knowledge
+- 只能检查精确的 `rm -rf` 模式
+- 无法捕捉 `rm -fr` 或 `rm -r -f` 之类变体
+- 会漏掉其他危险命令（`dd`、`mkfs` 等）
+- 缺少上下文感知能力
+- 需要 bash 脚本知识
 
-### After (Advanced Prompt Hook)
+### After（高级 Prompt Hook）
 
-**Configuration:**
+**配置：**
 
 ```json
 {
@@ -78,20 +78,20 @@ fi
 }
 ```
 
-**Benefits:**
+**收益：**
 
-- Catches all variations and patterns
-- Understands intent, not just literal strings
-- No script file needed
-- Easy to extend with new criteria
-- Context-aware decisions
-- Natural language explanation in denial
+- 能捕捉各种变体和模式
+- 理解的是意图，而不只是字面字符串
+- 不再需要脚本文件
+- 易于按新标准扩展
+- 决策具备上下文感知能力
+- 拒绝时可自然语言说明原因
 
-## Migration Example: File Write Validation
+## 迁移示例：文件写入校验
 
-### Before (Basic Command Hook)
+### Before（基础 Command Hook）
 
-**Configuration:**
+**配置：**
 
 ```json
 {
@@ -109,7 +109,7 @@ fi
 }
 ```
 
-**Script (validate-write.sh):**
+**脚本（validate-write.sh）：**
 
 ```bash
 #!/bin/bash
@@ -136,16 +136,16 @@ if [[ "$file_path" == "/etc/"* ]] || [[ "$file_path" == "/sys/"* ]]; then
 fi
 ```
 
-**Problems:**
+**问题：**
 
-- Hard-coded path patterns
-- Doesn't understand symlinks
-- Missing edge cases (e.g., `/etc` vs `/etc/`)
-- No consideration of file content
+- 路径模式是硬编码的
+- 无法理解 symlink
+- 缺少边界情况处理（例如 `/etc` 与 `/etc/`）
+- 不考虑文件内容
 
-### After (Advanced Prompt Hook)
+### After（高级 Prompt Hook）
 
-**Configuration:**
+**配置：**
 
 ```json
 {
@@ -163,19 +163,19 @@ fi
 }
 ```
 
-**Benefits:**
+**收益：**
 
-- Context-aware (considers content too)
-- Handles symlinks and edge cases
-- Natural understanding of "system directories"
-- Can detect secrets in content
-- Easy to extend criteria
+- 具备上下文感知能力（也会考虑内容）
+- 能处理 symlink 和边界情况
+- 能自然理解“system directories”
+- 能检测内容中的 secrets
+- 易于扩展校验标准
 
-## When to Keep Command Hooks
+## 何时保留 Command Hooks
 
-Command hooks still have their place:
+Command hooks 仍然有其适用位置：
 
-### 1. Deterministic Performance Checks
+### 1. 确定性的性能检查
 
 ```bash
 #!/bin/bash
@@ -189,9 +189,9 @@ if [ "$size" -gt 10000000 ]; then
 fi
 ```
 
-**Use command hooks when:** Validation is purely mathematical or deterministic. When returning a structured PreToolUse permission decision, print the JSON to stdout and exit 0.
+**在以下情况使用 command hooks：** 验证逻辑纯粹是数学或确定性的。若返回结构化的 PreToolUse 权限决策，应将 JSON 打印到 stdout，并以 exit 0 结束。
 
-### 2. External Tool Integration
+### 2. 外部工具集成
 
 ```bash
 #!/bin/bash
@@ -205,9 +205,9 @@ if [ "$?" -ne 0 ]; then
 fi
 ```
 
-**Use command hooks when:** Integrating with external tools that provide yes/no answers.
+**在以下情况使用 command hooks：** 需要接入会返回是/否结果的外部工具。
 
-### 3. Very Fast Checks (< 50ms)
+### 3. 极快检查 (< 50ms)
 
 ```bash
 #!/bin/bash
@@ -219,11 +219,11 @@ if [[ "$command" =~ ^(ls|pwd|echo)$ ]]; then
 fi
 ```
 
-**Use command hooks when:** Performance is critical and logic is simple.
+**在以下情况使用 command hooks：** 性能至关重要且逻辑简单。
 
-## Hybrid Approach
+## 混合方案
 
-Combine both for multi-stage validation:
+将两者结合，进行多阶段验证：
 
 ```json
 {
@@ -247,31 +247,31 @@ Combine both for multi-stage validation:
 }
 ```
 
-The command hook does fast deterministic checks, while the prompt hook handles complex reasoning.
+其中 command hook 负责快速确定性检查，而 prompt hook 负责复杂推理。
 
-## Migration Checklist
+## 迁移检查清单
 
-When migrating hooks:
+迁移 hooks 时：
 
-- [ ] Identify the validation logic in the command hook
-- [ ] Convert hard-coded patterns to natural language criteria
-- [ ] Test with edge cases the old hook missed
-- [ ] Verify LLM understands the intent
-- [ ] Set appropriate timeout (usually 15-30s for prompt hooks)
-- [ ] Document the new hook in README
-- [ ] Remove or archive old script files
+- [ ] 找出 command hook 中的验证逻辑
+- [ ] 将硬编码模式改写为自然语言标准
+- [ ] 用旧 hook 漏掉的边界情况做测试
+- [ ] 验证 LLM 能正确理解意图
+- [ ] 设置合适的 timeout（prompt hooks 通常为 15-30s）
+- [ ] 在 README 中记录新的 hook
+- [ ] 移除或归档旧脚本文件
 
-## Migration Tips
+## 迁移提示
 
-1. **Start with one hook**: Don't migrate everything at once
-2. **Test thoroughly**: Verify prompt hook catches what command hook caught
-3. **Look for improvements**: Use migration as opportunity to enhance validation
-4. **Keep scripts for reference**: Archive old scripts in case you need to reference the logic
-5. **Document reasoning**: Explain why prompt hook is better in README
+1. **一次先迁移一个 hook**：不要一次性全部迁移
+2. **充分测试**：确认 prompt hook 能捕捉到 command hook 原本能捕捉的问题
+3. **寻找改进点**：把迁移当成增强验证的机会
+4. **保留脚本作参考**：归档旧脚本，以便需要时参考原逻辑
+5. **记录原因**：在 README 中说明 prompt hook 为什么更好
 
-## Complete Migration Example
+## 完整迁移示例
 
-### Original Plugin Structure
+### 原始 Plugin 结构
 
 ```
 my-plugin/
@@ -283,7 +283,7 @@ my-plugin/
     └── check-tests.sh
 ```
 
-### After Migration
+### 迁移后
 
 ```
 my-plugin/
@@ -296,7 +296,7 @@ my-plugin/
         └── check-tests.sh
 ```
 
-### Updated hooks.json
+### 更新后的 hooks.json
 
 ```json
 {
@@ -334,13 +334,13 @@ my-plugin/
 }
 ```
 
-**Result:** Simpler, more maintainable, more powerful.
+**结果：** 更简单、更易维护、功能更强。
 
-## Common Migration Patterns
+## 常见迁移模式
 
-### Pattern: String Contains → Natural Language
+### 模式：字符串包含 → 自然语言
 
-**Before:**
+**Before：**
 
 ```bash
 if [[ "$command" == *"sudo"* ]]; then
@@ -349,15 +349,15 @@ if [[ "$command" == *"sudo"* ]]; then
 fi
 ```
 
-**After:**
+**After：**
 
 ```
 "Check for privilege escalation (sudo, su, etc)"
 ```
 
-### Pattern: Regex → Intent
+### 模式：正则 → 意图
 
-**Before:**
+**Before：**
 
 ```bash
 if [[ "$file" =~ \.(env|secret|key|token)$ ]]; then
@@ -366,15 +366,15 @@ if [[ "$file" =~ \.(env|secret|key|token)$ ]]; then
 fi
 ```
 
-**After:**
+**After：**
 
 ```
 "Verify not writing to credential files (.env, secrets, keys, tokens)"
 ```
 
-### Pattern: Multiple Conditions → Criteria List
+### 模式：多个条件 → 条件列表
 
-**Before:**
+**Before：**
 
 ```bash
 if [ condition1 ] || [ condition2 ] || [ condition3 ]; then
@@ -383,12 +383,12 @@ if [ condition1 ] || [ condition2 ] || [ condition3 ]; then
 fi
 ```
 
-**After:**
+**After：**
 
 ```
 "Check: 1) condition1 2) condition2 3) condition3. Deny if any fail."
 ```
 
-## Conclusion
+## 结论
 
-Migrating to prompt-based hooks makes plugins more maintainable, flexible, and powerful. Reserve command hooks for deterministic checks and external tool integration.
+迁移到 prompt-based hooks 能让 plugin 更易维护、更灵活、也更强大。将 command hooks 保留给确定性检查和外部工具集成即可。

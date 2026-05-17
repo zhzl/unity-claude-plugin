@@ -1,10 +1,10 @@
-# Settings File Parsing Techniques
+# Settings 文件解析技术
 
-Complete guide to parsing `.claude/plugin-name.local.md` files in bash scripts.
+这是在 bash 脚本中解析 `.claude/plugin-name.local.md` 文件的完整指南。
 
-## File Structure
+## 文件结构
 
-Settings files use markdown with YAML frontmatter:
+Settings 文件使用带 YAML frontmatter 的 markdown：
 
 ```markdown
 ---
@@ -21,9 +21,9 @@ This body content can be extracted separately.
 It's useful for prompts, documentation, or additional context.
 ```
 
-## Parsing Frontmatter
+## 解析 Frontmatter
 
-### Extract Frontmatter Block
+### 提取 Frontmatter 区块
 
 ```bash
 #!/bin/bash
@@ -40,16 +40,16 @@ FRONTMATTER=$(awk '
 ' "$FILE")
 ```
 
-**How it works:**
+**工作原理：**
 
-- `NR == 1` - Require the opening `---` to be on line 1
-- `next` - Skip the opening marker
-- `/^---$/ { exit }` - Stop at the closing marker
-- `{ print }` - Print only the frontmatter lines between the first two markers
+- `NR == 1` - 要求开头的 `---` 必须在第 1 行
+- `next` - 跳过开头标记
+- `/^---$/ { exit }` - 在结束标记处停止
+- `{ print }` - 只输出前两个标记之间的 frontmatter 行
 
-### Extract Individual Fields
+### 提取单个字段
 
-**String fields:**
+**字符串字段：**
 
 ```bash
 # Simple value
@@ -59,7 +59,7 @@ VALUE=$(printf '%s\n' "$FRONTMATTER" | grep '^field_name:' | sed 's/field_name: 
 VALUE=$(printf '%s\n' "$FRONTMATTER" | grep '^field_name:' | sed 's/field_name: *//' | sed 's/^"\(.*\)"$/\1/' || true)
 ```
 
-**Boolean fields:**
+**布尔字段：**
 
 ```bash
 ENABLED=$(printf '%s\n' "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//' || true)
@@ -70,7 +70,7 @@ if [[ "$ENABLED" == "true" ]]; then
 fi
 ```
 
-**Numeric fields:**
+**数值字段：**
 
 ```bash
 MAX=$(printf '%s\n' "$FRONTMATTER" | grep '^max_value:' | sed 's/max_value: *//' || true)
@@ -84,7 +84,7 @@ if [[ "$MAX" =~ ^[0-9]+$ ]]; then
 fi
 ```
 
-**List fields (simple):**
+**列表字段（简单方式）：**
 
 ```bash
 # YAML: list: ["item1", "item2", "item3"]
@@ -97,7 +97,7 @@ if [[ "$LIST" == *"item1"* ]]; then
 fi
 ```
 
-**List fields (proper parsing with jq):**
+**列表字段（使用 jq 正确解析）：**
 
 ```bash
 # For proper list handling, use yq or convert to JSON
@@ -112,9 +112,9 @@ echo "$LIST" | jq -r '.[]' | while read -r item; do
 done
 ```
 
-## Parsing Markdown Body
+## 解析 Markdown Body
 
-### Extract Body Content
+### 提取 Body 内容
 
 ```bash
 #!/bin/bash
@@ -138,15 +138,15 @@ BODY=$(awk '
 ' "$FILE")
 ```
 
-**How it works:**
+**工作原理：**
 
-- `NR == 1` - Require the file to start with `---`
-- First `in_body == 0 && /^---$/` - Treat only the second marker as the body delimiter
-- `in_body == 1 { print }` - Print everything after that, including later body `---` lines
+- `NR == 1` - 要求文件以 `---` 开头
+- 第一个 `in_body == 0 && /^---$/` - 只把第二个标记视为 body 分隔符
+- `in_body == 1 { print }` - 输出之后的所有内容，包括后续 body 中的 `---` 行
 
-**Handles edge case:** Later markdown separators are preserved because only the first two `---` markers are treated as delimiters.
+**处理的边界情况：** 后续 markdown 分隔线会被保留，因为只有前两个 `---` 标记被视为分隔符。
 
-### Use Body as Prompt
+### 将 Body 作为 Prompt 使用
 
 ```bash
 # Extract body
@@ -169,7 +169,7 @@ PROMPT=$(awk '
 echo '{"decision": "block", "reason": "'"$PROMPT"'"}' | jq .
 ```
 
-**Important:** Use `jq -n --arg` for safer JSON construction with user content:
+**重要：** 对含用户内容的 JSON，使用 `jq -n --arg` 更安全：
 
 ```bash
 PROMPT=$(awk '
@@ -194,9 +194,9 @@ jq -n --arg prompt "$PROMPT" '{
 }'
 ```
 
-## Common Parsing Patterns
+## 常见解析模式
 
-### Pattern: Field with Default
+### 模式：带默认值的字段
 
 ```bash
 VALUE=$(printf '%s\n' "$FRONTMATTER" | grep '^field:' | sed 's/field: *//' | sed 's/^"\(.*\)"$/\1/' || true)
@@ -207,7 +207,7 @@ if [[ -z "$VALUE" ]]; then
 fi
 ```
 
-### Pattern: Optional Field
+### 模式：可选字段
 
 ```bash
 OPTIONAL=$(printf '%s\n' "$FRONTMATTER" | grep '^optional_field:' | sed 's/optional_field: *//' | sed 's/^"\(.*\)"$/\1/' || true)
@@ -219,7 +219,7 @@ if [[ -n "$OPTIONAL" ]] && [[ "$OPTIONAL" != "null" ]]; then
 fi
 ```
 
-### Pattern: Multiple Fields at Once
+### 模式：一次解析多个字段
 
 ```bash
 # Parse all fields in one pass
@@ -241,11 +241,11 @@ while IFS=': ' read -r key value; do
 done <<< "$FRONTMATTER"
 ```
 
-## Updating Settings Files
+## 更新 Settings 文件
 
-### Atomic Updates
+### 原子更新
 
-Always use temp file + atomic move to prevent corruption:
+始终使用临时文件 + 原子移动来避免损坏：
 
 ```bash
 #!/bin/bash
@@ -263,7 +263,7 @@ sed "s/^field_name: .*/field_name: $NEW_VALUE/" "$FILE" > "$TEMP_FILE"
 mv "$TEMP_FILE" "$FILE"
 ```
 
-### Update Single Field
+### 更新单个字段
 
 ```bash
 # Increment iteration counter
@@ -276,7 +276,7 @@ sed "s/^iteration: .*/iteration: $NEXT/" "$FILE" > "$TEMP_FILE"
 mv "$TEMP_FILE" "$FILE"
 ```
 
-### Update Multiple Fields
+### 更新多个字段
 
 ```bash
 # Update several fields at once (secure temp file)
@@ -290,9 +290,9 @@ sed -e "s/^iteration: .*/iteration: $NEXT_ITERATION/" \
 mv "$TEMP_FILE" "$FILE"
 ```
 
-## Validation Techniques
+## 验证技术
 
-### Validate File Exists and Is Readable
+### 验证文件存在且可读
 
 ```bash
 FILE=".claude/my-plugin.local.md"
@@ -308,7 +308,7 @@ if [[ ! -r "$FILE" ]]; then
 fi
 ```
 
-### Validate Frontmatter Structure
+### 验证 Frontmatter 结构
 
 ```bash
 # Count --- markers (should be exactly 2 at start)
@@ -321,7 +321,7 @@ if [[ $MARKER_COUNT -lt 2 ]]; then
 fi
 ```
 
-### Validate Field Values
+### 验证字段值
 
 ```bash
 MODE=$(printf '%s\n' "$FRONTMATTER" | grep '^mode:' | sed 's/mode: *//' || true)
@@ -337,7 +337,7 @@ case "$MODE" in
 esac
 ```
 
-### Validate Numeric Ranges
+### 验证数值范围
 
 ```bash
 MAX_SIZE=$(printf '%s\n' "$FRONTMATTER" | grep '^max_size:' | sed 's/max_size: *//' || true)
@@ -353,11 +353,11 @@ if [[ $MAX_SIZE -lt 1 ]] || [[ $MAX_SIZE -gt 10000000 ]]; then
 fi
 ```
 
-## Edge Cases and Gotchas
+## 边界情况与注意点
 
-### Quotes in Values
+### 值中的引号
 
-YAML allows both quoted and unquoted strings:
+YAML 允许带引号和不带引号的字符串：
 
 ```yaml
 # These are equivalent:
@@ -366,16 +366,16 @@ field2: "value"
 field3: "value"
 ```
 
-**Handle both:**
+**同时兼容两种写法：**
 
 ```bash
 # Remove surrounding quotes if present
 VALUE=$(printf '%s\n' "$FRONTMATTER" | grep '^field:' | sed 's/field: *//' | sed 's/^"\(.*\)"$/\1/' | sed "s/^'\\(.*\\)'$/\\1/" || true)
 ```
 
-### --- in Markdown Body
+### Markdown Body 中的 ---
 
-If the markdown body contains `---`, the parsing still works because we only match the first two:
+如果 markdown body 包含 `---`，解析仍然成立，因为我们只匹配前两个：
 
 ```markdown
 ---
@@ -389,11 +389,11 @@ field: value
 More content after the separator.
 ```
 
-The `awk '/^---$/{i++; next} i>=2'` pattern handles this correctly.
+`awk '/^---$/{i++; next} i>=2'` 这个模式可以正确处理该情况。
 
-### Empty Values
+### 空值
 
-Handle missing or empty fields:
+处理缺失或空字段：
 
 ```yaml
 field1:
@@ -401,7 +401,7 @@ field2: ""
 field3: null
 ```
 
-**Parsing:**
+**解析：**
 
 ```bash
 VALUE=$(printf '%s\n' "$FRONTMATTER" | grep '^field1:' | sed 's/field1: *//' || true)
@@ -413,9 +413,9 @@ if [[ -z "$VALUE" ]] || [[ "$VALUE" == "null" ]]; then
 fi
 ```
 
-### Special Characters
+### 特殊字符
 
-Values with special characters need careful handling:
+包含特殊字符的值需要更谨慎地处理：
 
 ```yaml
 message: "Error: Something went wrong!"
@@ -423,7 +423,7 @@ path: "/path/with spaces/file.txt"
 regex: "^[a-zA-Z0-9_]+$"
 ```
 
-**Safe parsing:**
+**安全解析：**
 
 ```bash
 # Always quote variables when using
@@ -432,11 +432,11 @@ MESSAGE=$(printf '%s\n' "$FRONTMATTER" | grep '^message:' | sed 's/message: *//'
 echo "Message: $MESSAGE"  # Quoted!
 ```
 
-## Performance Optimization
+## 性能优化
 
-### Cache Parsed Values
+### 缓存已解析的值
 
-If reading settings multiple times:
+如果需要多次读取 settings：
 
 ```bash
 # Parse once
@@ -455,11 +455,11 @@ FIELD2=$(printf '%s\n' "$FRONTMATTER" | grep '^field2:' | sed 's/field2: *//' ||
 FIELD3=$(printf '%s\n' "$FRONTMATTER" | grep '^field3:' | sed 's/field3: *//' || true)
 ```
 
-**Don't:** Re-parse file for each field.
+**不要：** 为每个字段都重新解析文件。
 
-### Lazy Loading
+### 延迟加载（lazy loading）
 
-Only parse settings when needed:
+只在需要时解析 settings：
 
 ```bash
 #!/bin/bash
@@ -478,9 +478,9 @@ if [[ -f ".claude/my-plugin.local.md" ]]; then
 fi
 ```
 
-## Debugging
+## 调试
 
-### Print Parsed Values
+### 打印解析结果
 
 ```bash
 #!/bin/bash
@@ -507,7 +507,7 @@ if [[ -f "$FILE" ]]; then
 fi
 ```
 
-### Validate Parsing
+### 验证解析结果
 
 ```bash
 # Show what was parsed
@@ -522,9 +522,9 @@ if [[ "$ENABLED" != "true" ]] && [[ "$ENABLED" != "false" ]]; then
 fi
 ```
 
-## Alternative: Using yq
+## 备选方案：使用 yq
 
-For complex YAML, consider using `yq`:
+对于复杂 YAML，可以考虑使用 `yq`：
 
 ```bash
 # Install: brew install yq
@@ -550,21 +550,21 @@ echo "$LIST" | jq -r '.[]' | while read -r item; do
 done
 ```
 
-**Pros:**
+**优点：**
 
-- Proper YAML parsing
-- Handles complex structures
-- Better list/object support
+- 真正的 YAML 解析
+- 能处理复杂结构
+- 对列表/对象支持更好
 
-**Cons:**
+**缺点：**
 
-- Requires yq installation
-- Additional dependency
-- May not be available on all systems
+- 需要安装 yq
+- 额外依赖
+- 不一定在所有系统上都可用
 
-**Recommendation:** Use sed/grep for simple fields, yq for complex structures.
+**建议：** 简单字段用 sed/grep，复杂结构用 yq。
 
-## Complete Example
+## 完整示例
 
 ```bash
 #!/bin/bash
@@ -627,4 +627,4 @@ case "$MODE" in
 esac
 ```
 
-This provides robust settings handling with defaults, validation, and error recovery.
+这个示例提供了较为稳健的 settings 处理方式，包含默认值、验证和错误恢复。

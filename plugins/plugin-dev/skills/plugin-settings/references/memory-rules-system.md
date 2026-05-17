@@ -1,32 +1,32 @@
-# Memory & Rules System Interaction
+# Memory 与 Rules system（规则系统）的交互
 
-Claude Code has a layered memory and rules system that plugins interact with. Understanding this system helps plugin developers design components that complement (rather than conflict with) the user's existing configuration.
+Claude Code 拥有分层的 memory 与 rules system，插件会与其交互。理解这个 system 有助于插件开发者设计出与用户现有 configuration 互补、而非冲突的组件。
 
-## CLAUDE.md Memory Files
+## CLAUDE.md Memory 文件
 
-### What They Are
+### 它们是什么
 
-CLAUDE.md files provide persistent instructions that Claude reads at the start of every session. They contain project context, coding standards, and behavioral guidance.
+CLAUDE.md 文件提供持久化指令，Claude 会在每次会话开始时读取。它们包含项目上下文、编码标准和行为指导。
 
-### File Locations and Priority
+### 文件位置与优先级
 
-Memory files are loaded in priority order (highest first):
+Memory 文件按优先级顺序加载（最高优先）：
 
-| Priority    | Location                             | Scope                         |
+| 优先级     | 位置                                 | 作用域                        |
 | ----------- | ------------------------------------ | ----------------------------- |
-| 1 (highest) | Managed policy (system paths)        | Organization-wide             |
-| 2           | `.claude/CLAUDE.md` or `./CLAUDE.md` | Project (shared via git)      |
-| 3           | `.claude/rules/*.md`                 | Project rules (modular)       |
-| 4           | `~/.claude/CLAUDE.md`                | User (personal, all projects) |
-| 5 (lowest)  | `.claude/CLAUDE.local.md`            | Project local (gitignored)    |
+| 1（最高）   | 托管策略（managed policy，system paths） | 组织范围                   |
+| 2           | `.claude/CLAUDE.md` 或 `./CLAUDE.md` | Project（通过 git 共享）      |
+| 3           | `.claude/rules/*.md`                 | Project rules（模块化）       |
+| 4           | `~/.claude/CLAUDE.md`                | User（个人，所有项目）        |
+| 5（最低）   | `.claude/CLAUDE.local.md`            | Project local（gitignored）   |
 
-Higher-priority instructions take precedence when there are conflicts.
+发生冲突时，优先级更高的指令会覆盖更低者。
 
-**Why local is lowest priority:** Unlike typical configuration systems where ".local" means "override", Claude Code's `.local.md` files are for personal, project-specific notes and preferences that shouldn't override team standards. The hierarchy ensures organizational policy (managed) > team standards (project) > personal preferences (user/local).
+**为什么 local 的优先级最低：** 不同于很多 configuration system 里“.local”表示“覆盖”，Claude Code 的 `.local.md` 文件用于保存个人、项目级的笔记和偏好，不应覆盖团队标准。这个 hierarchy 保证组织策略（managed）> 团队标准（project）> 个人偏好（user/local）。
 
-### Import Syntax
+### Import 语法
 
-CLAUDE.md files can import other files:
+CLAUDE.md 文件可以 import 其他文件：
 
 ```markdown
 # Project Instructions
@@ -35,17 +35,17 @@ CLAUDE.md files can import other files:
 @docs/api-conventions.md
 ```
 
-**Rules:**
+**规则：**
 
-- Paths are relative to the importing file
-- Absolute paths are also supported
-- Maximum recursion depth: 5 hops
-- Imports are NOT evaluated inside code blocks or inline code spans
-- Circular imports are detected and handled
+- 路径相对于发起 import 的文件
+- 也支持绝对路径
+- 最大递归深度：5 hops
+- code block 或 inline code span 内不会解析 imports
+- 会检测并处理循环 imports
 
-### Creating CLAUDE.md
+### 创建 CLAUDE.md
 
-The `/init` command generates a starter CLAUDE.md by analyzing the codebase. Alternatively, create one manually:
+`/init` 命令会通过分析代码库生成一个初始 CLAUDE.md。你也可以手动创建：
 
 ```markdown
 # Project Name
@@ -66,20 +66,20 @@ The `/init` command generates a starter CLAUDE.md by analyzing the codebase. Alt
 - Use Jest with React Testing Library
 ```
 
-### Auto-Memory (MEMORY.md)
+### Auto-Memory（MEMORY.md）
 
-Claude Code can automatically persist learnings between sessions using memory files:
+Claude Code 可以使用 memory 文件在会话之间自动持久化经验：
 
-- **`MEMORY.md`**: Auto-generated file where Claude stores session-to-session learnings
-- **Topic files**: Claude may create topic-specific memory files (e.g., `MEMORY-debugging.md`) for organized knowledge
+- **`MEMORY.md`**：Claude 用于保存跨会话经验的自动生成文件
+- **Topic files**：Claude 可能会创建按主题拆分的 memory 文件（例如 `MEMORY-debugging.md`）来组织知识
 
-**Plugin interaction:**
+**Plugin 交互：**
 
-- Plugins should not write to or modify the user's auto-memory files
-- Plugin agents with `memory` frontmatter use a separate, agent-specific memory directory (see agent-development skill)
-- If your plugin generates knowledge worth persisting, instruct users to save it to CLAUDE.md rather than relying on auto-memory
+- 插件不应写入或修改用户的 auto-memory 文件
+- 带有 `memory` frontmatter 的 plugin agents 使用独立的、agent 专属的 memory 目录（见 agent-development skill）
+- 如果你的插件产生了值得长期保留的知识，应引导用户保存到 CLAUDE.md，而不是依赖 auto-memory
 
-**Import syntax note:** The `@path` import syntax works in all CLAUDE.md files (project, user, local), not just the root one. This enables modular configuration:
+**Import 语法说明：** `@path` import 语法在所有 CLAUDE.md 文件中都可用（project、user、local），不只根文件支持。这让 modular configuration 成为可能：
 
 ```markdown
 # My CLAUDE.md
@@ -88,13 +88,13 @@ Claude Code can automatically persist learnings between sessions using memory fi
 @.claude/plugin-config.md
 ```
 
-## Rules System
+## Rules system（规则系统）
 
-### What Rules Are
+### Rules 是什么
 
-Rules are modular instruction files in `.claude/rules/` that can optionally target specific file patterns. They provide focused guidance that loads contextually.
+Rules 是放在 `.claude/rules/` 中的模块化指令文件，也可以可选地面向特定文件模式。它们提供按上下文加载的聚焦指导。
 
-### File Structure
+### 文件结构
 
 ```
 .claude/
@@ -104,9 +104,9 @@ Rules are modular instruction files in `.claude/rules/` that can optionally targ
     └── typescript.md       # Path-specific (see below)
 ```
 
-### Path-Specific Rules
+### Path-specific rules（路径专用 rules）
 
-Rules can target specific files using YAML frontmatter with glob patterns:
+Rules 可以使用带 glob 模式的 YAML frontmatter 指定目标文件：
 
 ```markdown
 ---
@@ -122,96 +122,96 @@ Use strict TypeScript patterns:
 - Use discriminated unions over type assertions
 ```
 
-**Glob support:**
+**Glob 支持：**
 
-- Standard patterns: `*`, `?`, `**`
-- Brace expansion: `src/**/*.{ts,tsx}`
-- Multiple patterns in the `paths` array
-- Patterns match against relative paths from project root
+- 标准模式：`*`、`?`、`**`
+- Brace expansion：`src/**/*.{ts,tsx}`
+- `paths` 数组中可放多个模式
+- 模式针对项目根目录的相对路径匹配
 
-### When Rules Load
+### Rules 何时加载
 
-Rules load automatically based on file context:
+Rules 会基于文件上下文自动加载：
 
-- Global rules (no `paths` frontmatter): Always loaded
-- Path-specific rules: Loaded when Claude accesses matching files
-- Rules in subdirectories: Organized by topic, all discovered automatically
+- Global rules（没有 `paths` frontmatter）：始终加载
+- Path-specific rules：当 Claude 访问匹配文件时加载
+- 子目录中的 rules：可按主题组织，都会被自动发现
 
-### User-Level Rules
+### User-level rules（用户级 rules）
 
-Personal rules in `~/.claude/rules/` apply across all projects with lower priority than project rules.
+`~/.claude/rules/` 中的个人 rules 会应用到所有项目，但优先级低于 project rules。
 
-## How Plugin Content Fits
+## Plugin 内容如何融入其中
 
-### Plugin Content Priority
+### Plugin 内容的优先级语境
 
-Plugin content loads differently from the memory/rules hierarchy:
+Plugin 内容的加载方式不同于 memory/rules hierarchy：
 
-| Content Type          | How It Loads                           | Priority Context                    |
-| --------------------- | -------------------------------------- | ----------------------------------- |
-| Skill descriptions    | As tool definitions (always available) | Independent of memory hierarchy     |
-| Skill body (SKILL.md) | When skill triggers                    | Independent of memory hierarchy     |
-| Agent definitions     | As subagent configs                    | Independent of memory hierarchy     |
-| Hook configurations   | Merge with user/project hooks          | Parallel execution with other hooks |
-| MCP servers           | As tool providers                      | Independent of memory hierarchy     |
+| 内容类型            | 加载方式                               | 优先级语境                          |
+| ------------------- | -------------------------------------- | ----------------------------------- |
+| Skill descriptions  | 作为 tool definitions（始终可用）      | 独立于 memory hierarchy             |
+| Skill body (SKILL.md) | skill 触发时                         | 独立于 memory hierarchy             |
+| Agent definitions   | 作为 subagent configs                  | 独立于 memory hierarchy             |
+| Hook configurations | 与 user/project hooks 合并             | 与其他 hooks 并行执行               |
+| MCP servers         | 作为 tool providers                    | 独立于 memory hierarchy             |
 
-Plugin content doesn't directly compete with CLAUDE.md for priority — it operates through different mechanisms (tool definitions, hooks, MCP tools).
+Plugin 内容不会直接与 CLAUDE.md 争夺优先级，它们通过不同机制生效（tool definitions、hooks、MCP tools）。
 
-### Where They Overlap
+### 它们重叠的地方
 
-Conflicts can arise when:
+以下情况可能产生冲突：
 
-1. **CLAUDE.md instructions contradict plugin skill guidance** — CLAUDE.md has implicit priority as it's always in context
-2. **Project rules specify patterns that conflict with plugin hooks** — Both apply; hooks enforce, rules guide
-3. **User settings restrict tools that plugins need** — User settings win; plugins should document requirements
+1. **CLAUDE.md 指令与 plugin skill guidance 矛盾** —— CLAUDE.md 因始终在上下文中而拥有隐式优先级
+2. **Project rules 指定的模式与 plugin hooks 冲突** —— 两者都会生效；hooks 负责强制，rules 提供指导
+3. **User settings 限制了插件所需工具** —— user settings 优先；插件应清楚记录要求
 
-## Design Implications for Plugin Developers
+## 对插件开发者的设计启示
 
-### Don't Duplicate CLAUDE.md Content
+### 不要重复 CLAUDE.md 内容
 
-If a project's CLAUDE.md already specifies coding standards, your plugin skills shouldn't re-specify them. Instead, reference them:
+如果项目的 CLAUDE.md 已经规定了编码标准，你的 plugin skills 不应重复说明，而应引用它们：
 
 ```markdown
 Follow the project's coding standards (see CLAUDE.md) while applying
 the additional [domain-specific] patterns below...
 ```
 
-### Use Rules for File-Type Guidance
+### 用 Rules 处理文件类型指导
 
-If your plugin needs file-type-specific behavior, consider whether it belongs as:
+如果你的插件需要针对特定文件类型的行为，请考虑它更适合作为：
 
-- **A rule** (`.claude/rules/`): For guidance that should always apply to certain file types
-- **A skill**: For knowledge that's invoked on demand
-- **A hook**: For enforcement that must happen every time
+- **rule**（`.claude/rules/`）：适用于某类文件、且应始终生效的指导
+- **skill**：按需调用的知识
+- **hook**：每次都必须执行的强制逻辑
 
-### Understand Override Behavior
+### 理解 Override 行为
 
-Users can override plugin behavior through:
+用户可以通过以下方式覆盖插件行为：
 
-- CLAUDE.md instructions (higher priority context)
-- Settings that restrict tools (`permissions.deny`)
-- Disabling plugin hooks via settings
+- CLAUDE.md 指令（更高优先级的上下文）
+- 限制工具的 settings（`permissions.deny`）
+- 通过 settings 禁用 plugin hooks
 
-Design plugins to be graceful when overridden. Document what settings affect plugin behavior.
+设计插件时，要保证在被 override 时依然能优雅退化，并文档化哪些 settings 会影响 plugin behavior。
 
-### Plugin Settings (.local.md) vs Rules
+### Plugin Settings（.local.md）与 Rules 的区别
 
-Plugin settings (`.claude/plugin-name.local.md`) and rules (`.claude/rules/`) serve different purposes:
+Plugin settings（`.claude/plugin-name.local.md`）与 rules（`.claude/rules/`）服务于不同目的：
 
-| Aspect     | Plugin .local.md              | .claude/rules/                        |
+| 方面       | Plugin .local.md              | .claude/rules/                        |
 | ---------- | ----------------------------- | ------------------------------------- |
-| Purpose    | Plugin-specific configuration | Project-wide guidance                 |
-| Format     | YAML frontmatter + markdown   | Optional paths frontmatter + markdown |
-| Scope      | Single plugin                 | All Claude interactions               |
-| Managed by | User configuring plugin       | Project maintainers                   |
-| In git     | No (gitignored)               | Yes (shared with team)                |
+| 用途       | Plugin 专属 configuration     | Project 级指导                        |
+| 格式       | YAML frontmatter + markdown   | 可选 paths frontmatter + markdown     |
+| 作用域     | 单个 plugin                   | 所有 Claude interactions              |
+| 管理者     | 配置 plugin 的用户            | Project 维护者                        |
+| 是否进 git | 否（gitignored）              | 是（与团队共享）                      |
 
-### Test with Various Configurations
+### 用多种 configuration 进行测试
 
-Test your plugin with:
+测试你的插件时，建议覆盖：
 
-1. Empty CLAUDE.md (no project context)
-2. Detailed CLAUDE.md (potential conflicts)
-3. Path-specific rules (ensure hooks don't conflict)
-4. User-level rules (personal preferences)
-5. Managed settings (enterprise restrictions)
+1. 空白 CLAUDE.md（无 project context）
+2. 详细 CLAUDE.md（可能存在冲突）
+3. Path-specific rules（确认 hooks 不冲突）
+4. User-level rules（个人偏好）
+5. Managed settings（企业限制）

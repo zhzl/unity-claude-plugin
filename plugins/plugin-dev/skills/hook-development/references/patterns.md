@@ -1,12 +1,12 @@
-# Common Hook Patterns
+# 常见 Hook 模式
 
-This reference provides common, proven patterns for implementing Claude Code hooks. Use these patterns as starting points for typical hook use cases.
+本参考提供了实现 Claude Code hooks 的常见成熟模式。可将这些模式作为典型 hook 用例的起点。
 
-The JSON snippets below show the contents of the `hooks` object. In `.claude/settings.json` or plugin `hooks/hooks.json`, wrap them as `{ "hooks": { ... } }`.
+下方 JSON 片段展示的是 `hooks` object 的内容。在 `.claude/settings.json` 或 plugin `hooks/hooks.json` 中，请将它们包装为 `{ "hooks": { ... } }`。
 
-## Pattern 1: Security Validation
+## 模式 1：安全校验
 
-Block dangerous file writes using prompt-based hooks:
+使用 prompt-based hooks 阻止危险的文件写入：
 
 ```json
 {
@@ -24,11 +24,11 @@ Block dangerous file writes using prompt-based hooks:
 }
 ```
 
-**Use for:** Preventing writes to sensitive files or system directories.
+**适用于：** 防止写入敏感文件或系统目录。
 
-## Pattern 2: Test Enforcement
+## 模式 2：测试约束
 
-Ensure tests run before stopping:
+确保停止前已运行测试：
 
 ```json
 {
@@ -46,11 +46,11 @@ Ensure tests run before stopping:
 }
 ```
 
-**Use for:** Enforcing quality standards and preventing incomplete work.
+**适用于：** 强制执行质量标准，防止工作不完整就结束。
 
-## Pattern 3: Context Loading
+## 模式 3：上下文加载
 
-Load project-specific context at session start:
+在 session 开始时加载项目专属上下文：
 
 ```json
 {
@@ -68,7 +68,7 @@ Load project-specific context at session start:
 }
 ```
 
-**Example script (load-context.sh):**
+**示例脚本（load-context.sh）：**
 
 ```bash
 #!/bin/bash
@@ -84,11 +84,11 @@ elif [ -f "Cargo.toml" ]; then
 fi
 ```
 
-**Use for:** Automatically detecting and configuring project-specific settings.
+**适用于：** 自动检测并配置项目专属设置。
 
-## Pattern 4: Notification Logging
+## 模式 4：通知日志
 
-Log all notifications for audit or analysis:
+记录所有通知，用于审计或分析：
 
 ```json
 {
@@ -106,11 +106,11 @@ Log all notifications for audit or analysis:
 }
 ```
 
-**Use for:** Tracking user notifications or integration with external logging systems.
+**适用于：** 跟踪用户通知，或与外部日志系统集成。
 
-## Pattern 5: MCP Tool Monitoring
+## 模式 5：MCP 工具监控
 
-Monitor and validate MCP tool usage:
+监控并验证 MCP 工具的使用：
 
 ```json
 {
@@ -128,11 +128,11 @@ Monitor and validate MCP tool usage:
 }
 ```
 
-**Use for:** Protecting against destructive MCP operations.
+**适用于：** 防止破坏性的 MCP 操作。
 
-## Pattern 6: Build Verification
+## 模式 6：构建验证
 
-Ensure project builds after code changes:
+确保代码变更后项目可以成功构建：
 
 ```json
 {
@@ -150,11 +150,11 @@ Ensure project builds after code changes:
 }
 ```
 
-**Use for:** Catching build errors before committing or stopping work.
+**适用于：** 在提交或停止工作前捕捉构建错误。
 
-## Pattern 7: Permission Confirmation
+## 模式 7：权限确认
 
-Ask user before dangerous operations:
+在危险操作前询问用户：
 
 ```json
 {
@@ -172,11 +172,11 @@ Ask user before dangerous operations:
 }
 ```
 
-**Use for:** User confirmation on potentially destructive commands.
+**适用于：** 对潜在破坏性命令进行用户确认。
 
-## Pattern 8: Code Quality Checks
+## 模式 8：代码质量检查
 
-Run linters or formatters on file edits:
+在文件编辑后运行 linter 或 formatter：
 
 ```json
 {
@@ -194,7 +194,7 @@ Run linters or formatters on file edits:
 }
 ```
 
-**Example script (check-quality.sh):**
+**示例脚本（check-quality.sh）：**
 
 ```bash
 #!/bin/bash
@@ -207,11 +207,11 @@ if [[ "$file_path" == *.js ]] || [[ "$file_path" == *.ts ]]; then
 fi
 ```
 
-**Use for:** Automatic code quality enforcement.
+**适用于：** 自动执行代码质量约束。
 
-## Pattern Combinations
+## 模式组合
 
-Combine multiple patterns for comprehensive protection:
+组合多个模式，形成更全面的保护：
 
 ```json
 {
@@ -260,11 +260,11 @@ Combine multiple patterns for comprehensive protection:
 }
 ```
 
-This provides multi-layered protection and automation.
+这能提供多层保护与自动化。
 
-## Pattern 9: Temporarily Active Hooks
+## 模式 9：临时启用的 Hooks
 
-Create hooks that only run when explicitly enabled via flag files:
+创建仅在通过 flag file 显式启用时才运行的 hook：
 
 ```bash
 #!/bin/bash
@@ -284,7 +284,7 @@ file_path=$(echo "$input" | jq -r '.tool_input.file_path')
 security-scanner "$file_path"
 ```
 
-**Activation:**
+**启用方式：**
 
 ```bash
 # Enable the hook
@@ -294,18 +294,18 @@ touch .enable-security-scan
 rm .enable-security-scan
 ```
 
-**Use for:**
+**适用于：**
 
-- Temporary debugging hooks
-- Feature flags for development
-- Project-specific validation that's opt-in
-- Performance-intensive checks only when needed
+- 临时调试 hooks
+- 开发阶段的特性开关
+- 按项目选择开启的验证
+- 仅在必要时运行的高性能开销检查
 
-**Note:** Flag files are checked when the hook runs, so creating or removing the flag affects the next matching hook invocation.
+**注意：** Flag file 会在 hook 运行时检查，因此创建或删除 flag 会影响下一次匹配到的 hook 调用。
 
-## Pattern 10: Configuration-Driven Hooks
+## 模式 10：配置驱动的 Hooks
 
-Use JSON configuration to control hook behavior:
+使用 JSON 配置控制 hook 行为：
 
 ```bash
 #!/bin/bash
@@ -336,7 +336,7 @@ if [ "$file_size" -gt "$max_file_size" ]; then
 fi
 ```
 
-**Configuration file (.claude/my-plugin.local.json):**
+**配置文件（.claude/my-plugin.local.json）：**
 
 ```json
 {
@@ -346,18 +346,18 @@ fi
 }
 ```
 
-This example uses structured PreToolUse output, so the JSON is written to stdout and exits 0.
+此示例使用结构化的 PreToolUse 输出，因此 JSON 会写到 stdout，并以 exit 0 结束。
 
-**Use for:**
+**适用于：**
 
-- User-configurable hook behavior
-- Per-project settings
-- Team-specific rules
-- Dynamic validation criteria
+- 用户可配置的 hook 行为
+- 按项目定制的设置
+- 团队专属规则
+- 动态验证标准
 
-## Pattern 11: TeammateIdle Notification
+## 模式 11：TeammateIdle 通知
 
-Send notifications when agent team teammates go idle:
+当 agent team 的 teammate 进入空闲时发送通知：
 
 ```json
 {
@@ -375,7 +375,7 @@ Send notifications when agent team teammates go idle:
 }
 ```
 
-**Example script (notify-idle.sh):**
+**示例脚本（notify-idle.sh）：**
 
 ```bash
 #!/bin/bash
@@ -390,11 +390,11 @@ echo "Teammate $teammate in team $team went idle" >> /tmp/team-log.txt
 exit 0
 ```
 
-**Use for:** Monitoring team progress, logging teammate activity, enforcing work standards.
+**适用于：** 监控团队进度、记录 teammate 活动、强制执行工作标准。
 
-## Pattern 12: Task Completion Verification
+## 模式 12：任务完成验证
 
-Verify task quality before accepting completion:
+在接受任务完成前验证质量：
 
 ```json
 {
@@ -412,7 +412,7 @@ Verify task quality before accepting completion:
 }
 ```
 
-**Example script (verify-task.sh):**
+**示例脚本（verify-task.sh）：**
 
 ```bash
 #!/bin/bash
@@ -431,4 +431,4 @@ fi
 exit 0
 ```
 
-**Use for:** Enforcing quality gates, preventing premature task completion, team workflow standards.
+**适用于：** 强制执行质量门禁，防止任务过早完成，规范团队工作流。

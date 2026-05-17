@@ -1,159 +1,159 @@
-# Permission Modes & Rules Reference
+# Permission Modes 与 Rules 参考
 
-This reference covers the Claude Code permission system for project/user subagents, including current permission modes and the permission rule syntax for fine-grained access control.
+本参考说明 Claude Code 针对 project/user subagent 的权限系统，包括当前的 permission mode，以及用于细粒度访问控制的 permission rule 语法。
 
-Plugin-shipped agents should not set `permissionMode` in frontmatter. Claude Code ignores that field for plugin agents, so use `tools`/`disallowedTools` plus documented user/project permission rules instead.
+插件随附 agent 不应在 frontmatter 中设置 `permissionMode`。Claude Code 会忽略插件 agent 上的该字段，因此应改用 `tools`/`disallowedTools`，并结合已文档化的 user/project permission rules。
 
 ## Permission Modes
 
-Project/user subagents can specify a `permissionMode` in frontmatter to control how permission requests are handled. Plugin-shipped agents cannot rely on this field because Claude Code ignores it for plugin agents:
+project/user subagent 可以在 frontmatter 中指定 `permissionMode`，用于控制权限请求的处理方式。插件随附 agent 不能依赖该字段，因为 Claude Code 会忽略它：
 
 ```yaml
 permissionMode: acceptEdits
 ```
 
-### All Permission Modes
+### 所有 Permission Mode
 
-| Mode                | Behavior                                                     | Use Case                                        |
-| ------------------- | ------------------------------------------------------------ | ----------------------------------------------- |
-| `default`           | Standard permission model — prompts user for each action     | General-purpose agents, untrusted contexts      |
-| `acceptEdits`       | Auto-accept file edit operations (Write, Edit, NotebookEdit) | Code generation agents that need to write files |
-| `auto`              | Lets Claude choose an appropriate permission strategy        | Trusted workflows where adaptive behavior helps |
-| `dontAsk`           | Skip all permission dialogs                                  | Trusted automation agents, CI/CD agents         |
-| `bypassPermissions` | Full bypass of all permission checks                         | Fully trusted agents only                       |
-| `plan`              | Planning mode — propose changes without executing            | Architecture/design agents, review agents       |
+| 模式 | 行为 | 适用场景 |
+| ---- | ---- | -------- |
+| `default` | 标准权限模型——每次操作前都提示用户 | 通用 agent、不受信任上下文 |
+| `acceptEdits` | 自动接受文件编辑操作（Write、Edit、NotebookEdit） | 需要写文件的代码生成 agent |
+| `auto` | 让 Claude 自行选择合适的权限策略 | 可信工作流中希望获得自适应行为 |
+| `dontAsk` | 跳过全部权限对话框 | 可信自动化 agent、CI/CD agent |
+| `bypassPermissions` | 完全绕过所有权限检查 | 仅适用于完全可信的 agent |
+| `plan` | planning mode——只提方案，不执行变更 | 架构/设计 agent、审查 agent |
 
-### Mode Details
+### 模式细节
 
 #### default
 
-The standard interactive permission model. Claude asks the user before performing actions that require permission. This is the implicit mode when `permissionMode` is not specified.
+标准的交互式权限模型。Claude 会在执行需要权限的操作前先询问用户。当未指定 `permissionMode` 时，这就是隐式默认模式。
 
-**When to use:** General-purpose agents, agents handling sensitive operations, agents in untrusted contexts.
+**适用场景：** 通用 agent、涉及敏感操作的 agent、运行在不受信任环境中的 agent。
 
 #### acceptEdits
 
-Auto-accepts file writing operations (Write, Edit, NotebookEdit) without prompting. Other operations (Bash, etc.) still require user permission.
+自动接受文件写入操作（Write、Edit、NotebookEdit），无需提示。其他操作（如 Bash）仍然需要用户授权。
 
-**When to use:** Code generation agents, refactoring agents, documentation generators.
+**适用场景：** 代码生成 agent、重构 agent、文档生成 agent。
 
 #### dontAsk
 
-Skips all permission dialogs. The agent proceeds without user confirmation for any action.
+跳过所有权限对话框。agent 在执行任何操作时都不再向用户确认。
 
-**When to use:** Trusted automation, background agents, CI/CD pipelines where no user is present.
+**适用场景：** 可信自动化、后台 agent、没有用户在场的 CI/CD 流水线。
 
 #### bypassPermissions
 
-Full permission bypass with no restrictions. More permissive than `dontAsk` as it bypasses even system-level restrictions.
+完全绕过权限检查且不受限制。它比 `dontAsk` 更宽松，因为连系统级限制也会一并跳过。
 
-**When to use:** Only for fully trusted agents in controlled environments. Never for plugins distributed to unknown users.
+**适用场景：** 仅适用于受控环境中的完全可信 agent。绝不要用于分发给未知用户的插件。
 
 #### plan
 
-Planning mode restricts the agent to read-only operations. The agent can explore the codebase and propose changes but cannot execute them. Requires user approval before any modifications.
+planning mode 会把 agent 限制为只读操作。agent 可以探索代码库、提出变更方案，但不能直接执行。任何修改都需要先得到用户批准。
 
-**When to use:** Architecture planning, design review, impact analysis agents.
+**适用场景：** 架构规划、设计审查、影响分析 agent。
 
 #### auto
 
-Lets Claude choose an appropriate permission strategy for the workflow instead of pinning a single fixed mode up front.
+让 Claude 根据当前工作流自行选择合适的权限策略，而不是一开始就固定到单一模式。
 
-**When to use:** Trusted workflows where adaptive behavior is useful, but you still want Claude Code's permission system to choose the right level.
+**适用场景：** 可信工作流中希望获得自适应行为，但仍想让 Claude Code 权限系统负责决策。
 
-### Team Lead Guidance
+### Team Lead 指导
 
-For coordination-focused team leads, do not rely on a `delegate` permission mode. Instead:
+对于以协作为主的 team lead，不要依赖 `delegate` permission mode。应当：
 
-- Restrict tools so the lead lacks implementation capabilities it should not use
-- State clearly in the system prompt that the lead decomposes work, assigns tasks, and reviews teammate output rather than coding directly
-- Use permission rules in settings when you need tighter spawn restrictions, such as `Agent(code-reviewer, test-runner)`
+- 通过工具限制，让 lead 不具备其不该直接使用的实现能力
+- 在 system prompt 中明确说明：lead 负责拆解工作、分派任务、审查 teammate 输出，而不是亲自编码
+- 当需要更严格地限制生成行为时，在 settings 中使用 permission rules，例如 `Agent(code-reviewer, test-runner)`
 
-## Permission Specifier Syntax
+## Permission Specifier 语法
 
-Permission specifiers define exactly which tool invocations a rule matches. Each tool type has its own pattern syntax.
+permission specifier 用于精确描述某条规则会匹配哪种 tool 调用。每类 tool 都有自己的模式语法。
 
-### Bash Patterns
+### Bash 模式
 
-| Pattern          | Behavior                     | Example Match             | Non-Match          |
-| ---------------- | ---------------------------- | ------------------------- | ------------------ |
-| `Bash(npm test)` | Exact match                  | `npm test`                | `npm test --watch` |
-| `Bash(npm *)`    | Prefix with word boundary    | `npm test`, `npm install` | `npmx build`       |
-| `Bash(git*)`     | Prefix without word boundary | `git`, `git push`, `gitk` | —                  |
+| Pattern | 行为 | 匹配示例 | 不匹配示例 |
+| ------- | ---- | -------- | ---------- |
+| `Bash(npm test)` | 精确匹配 | `npm test` | `npm test --watch` |
+| `Bash(npm *)` | 带词边界的前缀匹配 | `npm test`, `npm install` | `npmx build` |
+| `Bash(git*)` | 不带词边界的前缀匹配 | `git`, `git push`, `gitk` | — |
 
-Space before `*` means word boundary: `Bash(ls *)` matches `ls -la` but NOT `lsof`. No space means substring: `Bash(git*)` matches both `git push` and `gitk`.
+`*` 前面有空格表示词边界：`Bash(ls *)` 会匹配 `ls -la`，但**不会**匹配 `lsof`。没有空格则表示子串前缀：`Bash(git*)` 会同时匹配 `git push` 和 `gitk`。
 
-### Path Patterns for Edit/Read/Write
+### Edit/Read/Write 的路径模式
 
-Path specifiers follow the gitignore specification:
+路径 specifier 遵循 gitignore 规范：
 
-| Pattern  | Meaning                                      | Example                |
-| -------- | -------------------------------------------- | ---------------------- |
-| `//path` | Absolute from filesystem root                | `Edit(//etc/config)`   |
-| `~/path` | Relative to home directory                   | `Read(~/Documents/**)` |
-| `/path`  | Relative to settings file location           | `Edit(/src/**)`        |
-| `./path` | Relative to current directory                | `Write(./output/*)`    |
-| `path`   | Relative to current directory (same as `./`) | `Edit(src/**)`         |
-| `*`      | Single directory level wildcard              | `Read(src/*)`          |
-| `**`     | Recursive directory wildcard                 | `Edit(src/**)`         |
+| Pattern | 含义 | 示例 |
+| ------- | ---- | ---- |
+| `//path` | 相对于文件系统根目录的绝对路径 | `Edit(//etc/config)` |
+| `~/path` | 相对于 home 目录 | `Read(~/Documents/**)` |
+| `/path` | 相对于 settings 文件所在位置 | `Edit(/src/**)` |
+| `./path` | 相对于当前目录 | `Write(./output/*)` |
+| `path` | 相对于当前目录（等同于 `./`） | `Edit(src/**)` |
+| `*` | 单层目录通配符 | `Read(src/*)` |
+| `**` | 递归目录通配符 | `Edit(src/**)` |
 
-### WebFetch Patterns
+### WebFetch 模式
 
-Restrict by domain:
+按域名限制：
 
 ```
 WebFetch(domain:example.com)
 ```
 
-### MCP Tool Patterns
+### MCP Tool 模式
 
-| Pattern             | Matches                   |
-| ------------------- | ------------------------- |
-| `mcp__server`       | All tools from server     |
-| `mcp__server__*`    | All tools from server     |
-| `mcp__server__tool` | Specific tool from server |
+| Pattern | 匹配内容 |
+| ------- | -------- |
+| `mcp__server` | 该 server 的全部 tools |
+| `mcp__server__*` | 该 server 的全部 tools |
+| `mcp__server__tool` | 该 server 下的特定 tool |
 
-### Agent Patterns
+### Agent 模式
 
-| Pattern               | Matches                      |
-| --------------------- | ---------------------------- |
-| `Agent(agent-name)`   | Only the named agent type    |
-| `Agent(name1, name2)` | Only listed agent types      |
-| `Agent`               | All subagent types           |
-| _(omit entirely)_     | No subagent spawning allowed |
+| Pattern | 匹配内容 |
+| ------- | -------- |
+| `Agent(agent-name)` | 仅匹配指定名称的 agent type |
+| `Agent(name1, name2)` | 仅匹配列出的 agent types |
+| `Agent` | 全部 subagent types |
+| _(omit entirely)_ | 不允许生成任何 subagent |
 
-### Skill Patterns
+### Skill 模式
 
-| Pattern         | Matches                     |
-| --------------- | --------------------------- |
-| `Skill(name)`   | Exact skill name match      |
-| `Skill(name *)` | Prefix match with arguments |
+| Pattern | 匹配内容 |
+| ------- | -------- |
+| `Skill(name)` | 精确匹配 skill 名称 |
+| `Skill(name *)` | 带参数的前缀匹配 |
 
-### Evaluation Order
+### 求值顺序
 
-Rules are evaluated in a strict order — first match wins within each tier:
+规则按严格顺序求值——在每一层级中都是第一个匹配生效：
 
-1. **Deny** rules checked first
-2. **Ask** rules checked second
-3. **Allow** rules checked last
+1. 先检查 **Deny** 规则
+2. 再检查 **Ask** 规则
+3. 最后检查 **Allow** 规则
 
-### Default Permission Tiers
+### 默认权限层级
 
-Tools fall into three default permission tiers:
+tools 默认分为三个权限层级：
 
-| Tier              | Tools                     | Behavior                                           |
-| ----------------- | ------------------------- | -------------------------------------------------- |
-| Read-only         | Read, Glob, Grep          | No approval needed                                 |
-| Bash commands     | Bash                      | Manual approval on first use per directory/command |
-| File modification | Write, Edit, NotebookEdit | Approval required per session                      |
+| 层级 | Tools | 行为 |
+| ---- | ----- | ---- |
+| Read-only | Read, Glob, Grep | 无需批准 |
+| Bash commands | Bash | 每个目录/命令首次使用时需手动批准 |
+| File modification | Write, Edit, NotebookEdit | 每个会话需要批准 |
 
 ## Permission Rules
 
-Permission rules provide fine-grained control over specific tool access. They are configured in settings files (not agent frontmatter) and apply based on precedence.
+permission rules 提供针对特定 tool 访问的细粒度控制。它们配置在 settings 文件中（而不是 agent frontmatter），并根据优先级生效。
 
-### Rule Syntax
+### Rule 语法
 
-Rules are specified in `settings.json` under `permissions`:
+在 `settings.json` 的 `permissions` 下定义规则：
 
 ```json
 {
@@ -164,17 +164,17 @@ Rules are specified in `settings.json` under `permissions`:
 }
 ```
 
-### Tool Specifiers
+### Tool Specifier
 
-| Pattern              | Matches                         | Example                              |
-| -------------------- | ------------------------------- | ------------------------------------ |
-| `ToolName`           | Any use of that tool            | `Read` — all file reads              |
-| `ToolName(argument)` | Tool with specific argument     | `Bash(npm test)` — only this command |
-| `ToolName(pattern*)` | Tool with wildcard argument     | `Bash(npm *)` — any npm command      |
-| `Edit(path)`         | Edit with gitignore-style path  | `Edit(src/**)` — edits in src/       |
-| `Write(path)`        | Write with gitignore-style path | `Write(tests/**)` — writes in tests/ |
+| Pattern | 匹配内容 | 示例 |
+| ------- | -------- | ---- |
+| `ToolName` | 该 tool 的任意使用 | `Read` — 所有文件读取 |
+| `ToolName(argument)` | 带特定参数的 tool 调用 | `Bash(npm test)` — 仅该命令 |
+| `ToolName(pattern*)` | 带通配参数的 tool 调用 | `Bash(npm *)` — 任意 npm 命令 |
+| `Edit(path)` | 带 gitignore 风格路径的 Edit | `Edit(src/**)` — 编辑 `src/` 下内容 |
+| `Write(path)` | 带 gitignore 风格路径的 Write | `Write(tests/**)` — 写入 `tests/` 下内容 |
 
-### MCP Tool Patterns
+### MCP Tool 模式
 
 ```json
 {
@@ -184,13 +184,13 @@ Rules are specified in `settings.json` under `permissions`:
 }
 ```
 
-- `mcp__server__tool` — specific MCP tool
-- `mcp__server__*` — all tools from a server
-- `mcp__*` — all MCP tools (use sparingly)
+- `mcp__server__tool` — 特定 MCP tool
+- `mcp__server__*` — 某个 server 下的全部 tools
+- `mcp__*` — 全部 MCP tools（谨慎使用）
 
-### Agent Patterns
+### Agent 模式
 
-Control which agent types can be spawned:
+控制允许生成哪些 agent type：
 
 ```json
 {
@@ -200,21 +200,21 @@ Control which agent types can be spawned:
 }
 ```
 
-- `Agent(type1, type2)` — only listed agent types
-- `Agent` — allow any subagent
-- Omitting `Agent` — no subagent spawning
+- `Agent(type1, type2)` — 仅允许列出的 agent type
+- `Agent` — 允许任意 subagent
+- 省略 `Agent` — 不允许生成 subagent
 
-### Rule Precedence
+### Rule 优先级
 
-When multiple rules match:
+当多条规则同时匹配时：
 
-1. **deny** rules always take precedence over **allow** rules
-2. More specific rules take precedence over general ones
-3. Explicit rules override `permissionMode` settings
+1. **deny** 规则始终优先于 **allow** 规则
+2. 更具体的规则优先于更宽泛的规则
+3. 显式规则优先于 `permissionMode` 设置
 
-### Plugin Developer Guidance
+### 面向插件开发者的指导
 
-**Document required permissions:** If your plugin's agents need specific tool access, document the minimum required permissions in your README:
+**文档化所需权限：** 如果插件的 agent 需要特定工具访问，请在 README 中写明最小必需权限：
 
 ```markdown
 ## Required Permissions
@@ -226,6 +226,6 @@ This plugin's agents need:
 - `mcp__myserver__*` — for MCP tool access
 ```
 
-**Configure agent permissions:** For plugin-shipped agents, do not put `permissionMode` in agent frontmatter. Claude Code ignores it there. Instead, constrain plugin agents with `tools`/`disallowedTools` and document any user/project permission rules that must be configured.
+**配置 agent 权限：** 对于插件随附 agent，不要把 `permissionMode` 放进 agent frontmatter。Claude Code 会忽略它。应改为通过 `tools`/`disallowedTools` 约束插件 agent，并说明用户/项目侧必须配置的 permission rules。
 
-**Principle of least privilege:** Request only the permissions your agent actually needs. For project/user subagents, prefer narrower modes such as `acceptEdits` over broader modes like `dontAsk` when only file writes are needed.
+**最小权限原则：** 只申请 agent 实际需要的权限。对于 project/user subagent，当只需要文件写入时，优先使用 `acceptEdits` 这类较窄的模式，而不是 `dontAsk` 这类更宽泛的模式。

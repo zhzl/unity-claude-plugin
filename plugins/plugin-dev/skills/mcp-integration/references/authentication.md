@@ -1,29 +1,29 @@
-# MCP Authentication Patterns
+# MCP 认证模式
 
-Complete guide to authentication methods for MCP servers in Claude Code plugins.
+Claude Code 插件 中 MCP server 认证方式的完整指南。
 
-## Overview
+## 概述
 
-MCP servers support multiple authentication methods depending on the server type and service requirements. Choose the method that best matches your use case and security requirements.
+MCP server 会根据 server 类型和服务要求支持多种 认证方法。请选择最符合你的 使用场景 和安全要求的方法。
 
-## OAuth (Automatic)
+## OAuth（自动）
 
-### How It Works
+### 工作方式
 
-Claude Code automatically handles the complete OAuth 2.0 flow (with PKCE) for SSE and HTTP servers:
+对于 SSE 和 HTTP server，Claude Code 会自动处理完整的 OAuth 2.0 流程（含 PKCE）：
 
-1. User attempts to use MCP tool
-2. Claude Code detects authentication is needed
-3. Initiates OAuth 2.0 Authorization Code flow with PKCE (Proof Key for Code Exchange)
-4. Opens browser for OAuth consent
-5. User authorizes in browser
-6. Claude Code exchanges the authorization code for tokens
-7. Tokens stored securely by Claude Code
-8. Automatic token refresh using refresh tokens
+1. 用户尝试使用 MCP tool
+2. Claude Code 检测到需要认证
+3. 发起带 PKCE（Proof Key for Code Exchange）的 OAuth 2.0 Authorization Code 流程
+4. 打开浏览器进行 OAuth 授权确认
+5. 用户在浏览器中授权
+6. Claude Code 用 authorization code 换取 tokens
+7. Claude Code 安全存储 tokens
+8. 使用 refresh tokens 自动刷新 token
 
-PKCE provides additional security for public clients by preventing authorization code interception attacks. Claude Code also supports pre-configured OAuth credentials for MCP servers that provide them.
+PKCE 能为 公共 client 提供额外安全性，防止 authorization code 被拦截。Claude Code 也支持 MCP server 提供的预配置 OAuth credentials。
 
-### Configuration
+### 配置
 
 ```json
 {
@@ -34,22 +34,22 @@ PKCE provides additional security for public clients by preventing authorization
 }
 ```
 
-No additional auth configuration needed! Claude Code handles everything.
+不需要额外的 auth 配置。Claude Code 会处理全部流程。
 
-### Supported Services
+### 支持的服务
 
-**Known OAuth-enabled MCP servers:**
+**已知支持 OAuth 的 MCP server：**
 
 - Asana: `https://mcp.asana.com/sse`
-- GitHub (when available)
-- Google services (when available)
-- Custom OAuth servers
+- GitHub（如果可用）
+- Google services（如果可用）
+- 自定义 OAuth server
 
-### OAuth Scopes
+### OAuth scopes
 
-OAuth scopes are determined by the MCP server. Users see required scopes during the consent flow.
+OAuth scopes 由 MCP server 决定。用户会在授权确认流程中看到所需 scopes。
 
-**Document required scopes in your README:**
+**请在 README 中记录所需 scopes：**
 
 ```markdown
 ## Authentication
@@ -61,36 +61,36 @@ This plugin requires the following Asana permissions:
 - Access workspace data
 ```
 
-### Token Storage
+### Token 存储
 
-Tokens are stored securely by Claude Code:
+Tokens 由 Claude Code 安全存储：
 
-- Not accessible to plugins
-- Encrypted at rest
-- Automatic refresh
-- Cleared on sign-out
+- 插件无法访问
+- 静态加密存储
+- 自动刷新
+- 退出登录后清除
 
-### Troubleshooting OAuth
+### OAuth 故障排查
 
-**Authentication loop:**
+**认证循环：**
 
-- Clear cached tokens (sign out and sign in)
-- Check OAuth redirect URLs
-- Verify server OAuth configuration
+- 清除缓存的 tokens（退出登录后重新登录）
+- 检查 OAuth redirect URL
+- 验证 server 的 OAuth 配置
 
-**Scope issues:**
+**scope 问题：**
 
-- User may need to re-authorize for new scopes
-- Check server documentation for required scopes
+- 用户可能需要为新的 scopes 重新授权
+- 检查 server 文档确认所需 scopes
 
-**Token expiration:**
+**token 过期：**
 
-- Claude Code auto-refreshes
-- If refresh fails, prompts re-authentication
+- Claude Code 会自动刷新
+- 若刷新失败，会提示重新认证
 
-## CLI OAuth Setup
+## CLI OAuth 设置
 
-For MCP servers requiring OAuth 2.0, use CLI flags to pre-configure credentials:
+对于需要 OAuth 2.0 的 MCP server，可使用 CLI 标志预配置 credentials：
 
 ```bash
 claude mcp add --transport http my-service https://api.example.com/mcp \
@@ -100,18 +100,18 @@ claude mcp add --transport http my-service https://api.example.com/mcp \
 ```
 
 - `--client-id` — OAuth client ID
-- `--client-secret` — prompts for secret (hidden input); or set `MCP_CLIENT_SECRET` env var
-- `--callback-port` — local port for OAuth callback (default varies by server)
+- `--client-secret` — 提示输入 secret（隐藏输入）；或设置 `MCP_CLIENT_SECRET` 环境变量
+- `--callback-port` — 用于 OAuth callback 的本地端口（默认值因 server 而异）
 
-For interactive OAuth setup, use the `/mcp` command within Claude Code to authenticate via browser.
+如果需要交互式 OAuth 设置，请在 Claude Code 中使用 `/mcp` command 通过浏览器完成认证。
 
-## Token-Based Authentication
+## 基于 token 的认证
 
-### Bearer Tokens
+### Bearer token
 
-Most common for HTTP MCP servers.
+这是 HTTP MCP server 最常见的方式。
 
-**Configuration:**
+**配置：**
 
 ```json
 {
@@ -125,17 +125,17 @@ Most common for HTTP MCP servers.
 }
 ```
 
-**Environment variable:**
+**环境变量：**
 
 ```bash
 export API_TOKEN="your-secret-token-here"
 ```
 
-### API Keys
+### API key
 
-Alternative to Bearer tokens, often in custom headers.
+这是 Bearer token 的替代方案，通常放在自定义 header 中。
 
-**Configuration:**
+**配置：**
 
 ```json
 {
@@ -150,11 +150,11 @@ Alternative to Bearer tokens, often in custom headers.
 }
 ```
 
-### Custom Headers
+### 自定义 headers
 
-Services may use custom authentication headers.
+某些服务会使用自定义 认证 headers。
 
-**Configuration:**
+**配置：**
 
 ```json
 {
@@ -170,9 +170,9 @@ Services may use custom authentication headers.
 }
 ```
 
-### Documenting Token Requirements
+### 记录 token 要求
 
-Always document in your README:
+请始终在 README 中记录：
 
 ```markdown
 ## Setup
@@ -203,11 +203,11 @@ The API token needs the following permissions:
   \`\`\`
 ```
 
-## Environment Variable Authentication (stdio)
+## 环境变量认证（stdio）
 
-### Passing Credentials to Server
+### 向 Server 传递 Credentials
 
-For stdio servers, pass credentials via environment variables:
+对于 stdio server，可通过环境变量向 server 传递 credentials：
 
 ```json
 {
@@ -223,7 +223,7 @@ For stdio servers, pass credentials via environment variables:
 }
 ```
 
-### User Environment Variables
+### 用户环境变量
 
 ```bash
 # User sets these in their shell
@@ -232,7 +232,7 @@ export DB_USER="myuser"
 export DB_PASSWORD="mypassword"
 ```
 
-### Documentation Template
+### 文档模板
 
 ```markdown
 ## Database Configuration
@@ -257,11 +257,11 @@ Load with your shell's dotenv support or a parser that handles quoting safely. A
 \`\`\`
 ```
 
-## Dynamic Headers
+## 动态 Headers
 
-### Headers Helper Script
+### Headers 辅助脚本
 
-For tokens that change or expire, use a helper script:
+对于会变化或过期的 token，可使用 辅助脚本：
 
 ```json
 {
@@ -273,7 +273,7 @@ For tokens that change or expire, use a helper script:
 }
 ```
 
-**Script (get-headers.sh):**
+**脚本（get-headers.sh）：**
 
 ```bash
 #!/bin/bash
@@ -291,40 +291,18 @@ cat <<EOF
 EOF
 ```
 
-### Use Cases for Dynamic Headers
+### 动态 Headers 的适用场景
 
-- Short-lived tokens that need refresh
-- Tokens with HMAC signatures
-- Time-based authentication
-- Dynamic tenant/workspace selection
+- 需要刷新的短期 token
+- 带 HMAC signatures 的 token
+- 基于时间的 认证
+- 动态 tenant/workspace 选择
 
-## Security Best Practices
+## 安全最佳实践
 
-### DO
+### 应该做
 
-✅ **Use environment variables:**
-
-```json
-{
-  "headers": {
-    "Authorization": "Bearer ${API_TOKEN}"
-  }
-}
-```
-
-✅ **Document required variables in README**
-
-✅ **Use HTTPS for hosted MCP endpoints**
-
-✅ **Implement token rotation**
-
-✅ **Store tokens securely (env vars, not files)**
-
-✅ **Let OAuth handle authentication when available**
-
-### DON'T
-
-❌ **Hardcode tokens:**
+✅ **使用环境变量：**
 
 ```json
 {
@@ -334,23 +312,45 @@ EOF
 }
 ```
 
-Never replace `${API_TOKEN}` with a literal secret such as `Bearer sk-abc123...`.
+✅ **在 README 中记录必需变量**
 
-❌ **Commit tokens to git**
+✅ **对托管的 MCP endpoint 使用 HTTPS**
 
-❌ **Share tokens in documentation**
+✅ **实现 token 轮换**
 
-❌ **Use HTTP instead of HTTPS**
+✅ **安全存储 token（用 环境变量，不要写入文件）**
 
-❌ **Store tokens in plugin files**
+✅ **可用时优先让 OAuth 处理 认证**
 
-❌ **Log tokens or sensitive headers**
+### 不该做
 
-## Multi-Tenancy Patterns
+❌ **硬编码 token：**
 
-### Workspace/Tenant Selection
+```json
+{
+  "headers": {
+    "Authorization": "Bearer ${API_TOKEN}"
+  }
+}
+```
 
-**Via environment variable:**
+绝不要把 `${API_TOKEN}` 替换成字面 secret，例如 `Bearer sk-abc123...`。
+
+❌ **把 token 提交到 git**
+
+❌ **在文档中共享 token**
+
+❌ **使用 HTTP 而不是 HTTPS**
+
+❌ **将 token 存储在插件文件中**
+
+❌ **记录 token 或敏感 header**
+
+## 多租户模式
+
+### Workspace/Tenant 选择
+
+**通过环境变量：**
 
 ```json
 {
@@ -365,7 +365,7 @@ Never replace `${API_TOKEN}` with a literal secret such as `Bearer sk-abc123...`
 }
 ```
 
-**Via URL:**
+**通过 URL:**
 
 ```json
 {
@@ -376,34 +376,34 @@ Never replace `${API_TOKEN}` with a literal secret such as `Bearer sk-abc123...`
 }
 ```
 
-### Per-User Configuration
+### 按用户配置
 
-Users set their own workspace:
+用户设置自己的 workspace：
 
 ```bash
 export WORKSPACE_ID="my-workspace-123"
 export TENANT_ID="my-company"
 ```
 
-## Authentication Troubleshooting
+## 认证故障排查
 
-### Common Issues
+### 常见问题
 
-**401 Unauthorized:**
+**401 Unauthorized：**
 
-- Check token is set correctly
-- Verify token hasn't expired
-- Check token has required permissions
-- Ensure header format is correct
+- 检查 token 是否正确设置
+- 验证 token 是否已过期
+- 检查 token 是否具备所需权限
+- 确保 header 格式正确
 
-**403 Forbidden:**
+**403 Forbidden：**
 
-- Token valid but lacks permissions
-- Check scope/permissions
-- Verify workspace/tenant ID
-- May need admin approval
+- token 有效，但权限不足
+- 检查 scope/permissions
+- 验证 workspace/tenant ID
+- 可能需要管理员批准
 
-**Token not found:**
+**未找到 token：**
 
 ```bash
 # Check environment variable is set
@@ -413,29 +413,29 @@ echo $API_TOKEN
 export API_TOKEN="your-token"
 ```
 
-**Token in wrong format:**
+**Token 格式错误：**
 
 ```text
 Correct: Authorization: Bearer ${API_TOKEN}
 Wrong:   Authorization: ${API_TOKEN}
 ```
 
-### Debugging Authentication
+### 调试认证
 
-**Enable debug mode:**
+**启用 debug 模式：**
 
 ```bash
 claude --debug
 ```
 
-Look for:
+检查以下内容：
 
-- Authentication header values (sanitized)
-- OAuth flow progress
-- Token refresh attempts
-- Authentication errors
+- 认证 header 值（已脱敏）
+- OAuth 流程 进度
+- token refresh 尝试
+- 认证错误
 
-**Test authentication separately:**
+**单独测试 认证：**
 
 ```bash
 # Test HTTP endpoint
@@ -445,11 +445,11 @@ curl -H "Authorization: Bearer $API_TOKEN" \
 # Should return 200 OK
 ```
 
-## Migration Patterns
+## 迁移模式
 
-### From Hardcoded to Environment Variables
+### 从硬编码迁移到环境变量
 
-**Before:**
+**变更前：**
 
 ```json
 {
@@ -459,7 +459,7 @@ curl -H "Authorization: Bearer $API_TOKEN" \
 }
 ```
 
-**After:**
+**变更后：**
 
 ```json
 {
@@ -469,17 +469,17 @@ curl -H "Authorization: Bearer $API_TOKEN" \
 }
 ```
 
-**Migration steps:**
+**迁移步骤：**
 
-1. Add environment variable to plugin README
-2. Update configuration to use ${VAR}
-3. Test with variable set
-4. Remove hardcoded value
-5. Commit changes
+1. 在插件 README 中加入环境变量说明
+2. 更新配置，改为使用 `${VAR}`
+3. 在变量已设置的情况下进行测试
+4. 删除硬编码值
+5. 提交变更
 
-### From Basic Auth to OAuth
+### 从 Basic Auth 迁移到 OAuth
 
-**Before:**
+**变更前：**
 
 ```json
 {
@@ -489,7 +489,7 @@ curl -H "Authorization: Bearer $API_TOKEN" \
 }
 ```
 
-**After:**
+**变更后：**
 
 ```json
 {
@@ -498,22 +498,22 @@ curl -H "Authorization: Bearer $API_TOKEN" \
 }
 ```
 
-**Benefits:**
+**收益：**
 
-- Better security
-- No credential management
-- Automatic token refresh
-- Scoped permissions
+- 更好的安全性
+- 无需管理 credentials
+- 自动刷新 token
+- 具备 scopes 权限控制
 
-## Advanced Authentication
+## 高级认证
 
-### Mutual TLS (mTLS)
+### 双向 TLS（mTLS）
 
-Some enterprise services require client certificates.
+某些 企业服务 需要 client certificates。
 
-**Not directly supported in MCP configuration.**
+**MCP 配置中不直接支持。**
 
-**Workaround:** Wrap in stdio server that handles mTLS:
+**替代方案：** 用 stdio server 包一层来处理 mTLS：
 
 ```json
 {
@@ -527,9 +527,9 @@ Some enterprise services require client certificates.
 }
 ```
 
-### JWT Tokens
+### JWT token
 
-Generate JWT tokens dynamically with headers helper:
+使用 headers 辅助脚本 动态生成 JWT token：
 
 ```bash
 #!/bin/bash
@@ -547,9 +547,9 @@ echo "{\"Authorization\": \"Bearer $JWT\"}"
 }
 ```
 
-### HMAC Signatures
+### HMAC 签名
 
-For APIs requiring request signing:
+对于需要 request signing 的 API：
 
 ```bash
 #!/bin/bash
@@ -567,34 +567,34 @@ cat <<EOF
 EOF
 ```
 
-## Best Practices Summary
+## 最佳实践摘要
 
-### For Plugin Developers
+### 面向 Plugin 开发者
 
-1. **Prefer OAuth** when service supports it
-2. **Use environment variables** for tokens
-3. **Document all required variables** in README
-4. **Provide setup instructions** with examples
-5. **Never commit credentials**
-6. **Use HTTPS for hosted MCP endpoints**
-7. **Test authentication thoroughly**
+1. **优先使用 OAuth**，前提是服务支持
+2. **对 token 使用环境变量**
+3. **在 README 中记录所有必需变量**
+4. **提供带示例的 设置说明**
+5. **绝不提交 credentials**
+6. **对托管的 MCP endpoint 使用 HTTPS**
+7. **充分测试 认证**
 
-### For Plugin Users
+### 面向 Plugin 用户
 
-1. **Set environment variables** before using plugin
-2. **Keep tokens secure** and private
-3. **Rotate tokens regularly**
-4. **Use different tokens** for dev/prod
-5. **Don't commit .env files** to git
-6. **Review OAuth scopes** before authorizing
+1. **使用插件前先设置环境变量**
+2. **妥善保管 token，保持私密**
+3. **定期轮换 token**
+4. **为 dev/prod 使用不同 token**
+5. **不要把 .env 文件提交到 git**
+6. **授权前检查 OAuth scopes**
 
-## Conclusion
+## 结论
 
-Choose the authentication method that matches your MCP server's requirements:
+请选择与你的 MCP server 要求相匹配的 认证方法：
 
-- **OAuth** for cloud services (easiest for users)
-- **Bearer tokens** for API services
-- **Environment variables** for stdio servers
-- **Dynamic headers** for complex auth flows
+- **OAuth** 适用于云服务（对用户最简单）
+- **Bearer tokens** 适用于 API 服务
+- **环境变量** 适用于 stdio server
+- **动态 headers** 适用于复杂 认证流程
 
-Always prioritize security and provide clear setup documentation for users.
+始终优先考虑安全性，并为用户提供清晰的 设置文档。
