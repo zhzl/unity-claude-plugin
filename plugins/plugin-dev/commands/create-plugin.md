@@ -1,5 +1,5 @@
 ---
-description: 使用 guided 8-phase workflow 创建 plugin
+description: 使用引导式 8 阶段工作流创建 plugin
 argument-hint: "[plugin-description]"
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash(mkdir *), Bash(git init *), TaskCreate, TaskGet, TaskUpdate, TaskList, AskUserQuestion, Skill, Agent
 model: sonnet
@@ -107,7 +107,7 @@ model: sonnet
 **技能示例问题**：
 
 - 哪些具体的用户提问应触发这个 skill？
-- 它是否应包含 utility scripts？需要什么功能？
+- 它是否应包含实用脚本？需要什么功能？
 - 核心 SKILL.md 与 references/ 之间的详细程度如何分配？
 - 是否需要包含真实世界示例？
 
@@ -198,9 +198,9 @@ git commit -m "feat: initial plugin structure"
      - 使用第三人称描述，并包含具体触发短语
      - 正文精简（1,500-2,000 words），使用祈使句
      - 引用配套支持文件
-   - 为详细内容创建 reference files
-   - 为可运行代码创建 example files
-   - 如有需要，创建 utility scripts
+   - 为详细内容创建参考文件
+   - 为可运行代码创建示例文件
+   - 如有需要，创建实用脚本
 3. 使用 skill-reviewer agent 验证每个 skill
 
 ### 对于命令（Commands）
@@ -211,7 +211,7 @@ git commit -m "feat: initial plugin structure"
    - 包含清晰的 description 和 argument-hint
    - 指定 allowed-tools（最小必要集）
    - 为 Claude 编写指令，而不是写给用户
-   - 提供 usage examples 和 tips
+   - 提供使用示例和提示
    - 如适用，引用相关 skills
 
 ### 对于智能体（Agents）

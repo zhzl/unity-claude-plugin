@@ -1,5 +1,5 @@
 ---
-description: 使用 guided workflow 创建 plugin marketplace
+description: 使用引导式工作流创建 plugin marketplace
 argument-hint: "[marketplace-description]"
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash(mkdir *), Bash(git init *), TaskCreate, TaskGet, TaskUpdate, TaskList, AskUserQuestion, Skill, Agent
 model: sonnet

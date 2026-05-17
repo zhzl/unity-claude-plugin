@@ -83,7 +83,7 @@
 - 读取：5 个 Phase 5 JSON 文件
 - 读取：14 个 Phase 5 shell 文件
 
-- [ ] **步骤 1：确认主范围文件存在且当前 `plugins/plugin-dev` 主范围未被预先修改**
+- [x] **步骤 1：确认主范围文件存在且当前 `plugins/plugin-dev` 主范围未被预先修改**
 
 运行：
 
@@ -131,7 +131,7 @@ PY
 
 预期：先输出 `baseline ok: 5 JSON targets, 14 shell targets, no pre-existing Phase 5 target diffs`，再输出 `Phase 5 base commit: <sha>`。记录该 SHA 并在后续步骤中设为 `PHASE5_BASE` 供累计验证使用。如果失败，停止并向用户确认是否基于现有修改继续。
 
-- [ ] **步骤 2：更新 roadmap 的 Phase 5 spec/plan artifact 和 planned 状态**
+- [x] **步骤 2：更新 roadmap 的 Phase 5 spec/plan artifact 和 planned 状态**
 
 编辑 `docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md`：
 
@@ -144,7 +144,7 @@ PY
 - `Phase Details` 中 Phase 5 的 `Plan` 改为 ``docs/superpowers/plans/2026-05-17-plugin-dev-zh-translation-phase-5.md``。
 - `Change Log` 追加 `2026-05-17` 的 Phase 5 plan artifact 记录。
 
-- [ ] **步骤 3：验证 roadmap planning artifact 同步成功**
+- [x] **步骤 3：验证 roadmap planning artifact 同步成功**
 
 运行：
 
@@ -171,7 +171,7 @@ PY
 
 预期：输出 `roadmap planning sync ok: Phase 5 spec and plan artifacts recorded`。
 
-- [ ] **步骤 4：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 4：提交检查点（仅用户明确授权时执行）**
 
 运行：
 
@@ -196,7 +196,7 @@ git commit -m "docs: plan plugin-dev translation phase 5"
 - 修改：`plugins/plugin-dev/skills/mcp-integration/examples/stdio-server.json`
 - 修改：`plugins/plugin-dev/skills/mcp-integration/examples/ws-server.json`
 
-- [ ] **步骤 1：翻译允许的 JSON 字符串值**
+- [x] **步骤 1：翻译允许的 JSON 字符串值**
 
 编辑以下字段，其他 JSON 内容保持不变：
 
@@ -222,7 +222,7 @@ plugins/plugin-dev/skills/mcp-integration/examples/ws-server.json
   改为: "WebSocket/ws 不是 Claude Code 文档化的 MCP transport。请改用 stdio-server.json、sse-server.json 或 http-server.json。"
 ```
 
-- [ ] **步骤 2：验证 JSON 可解析且只改允许字段**
+- [x] **步骤 2：验证 JSON 可解析且只改允许字段**
 
 运行：
 
@@ -276,7 +276,7 @@ PY
 
 预期：先用任务 1 记录的 SHA 设置 `PHASE5_BASE=<sha>`，再输出 `json ok: 5 files parse and only allowed _comment/description values changed`。
 
-- [ ] **步骤 3：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 3：提交检查点（仅用户明确授权时执行）**
 
 运行：
 
@@ -303,7 +303,7 @@ git commit -m "docs: translate plugin-dev phase 5 json examples"
 - 修改：`plugins/plugin-dev/skills/command-development/scripts/check-frontmatter.sh`
 - 修改：`plugins/plugin-dev/skills/command-development/scripts/validate-command.sh`
 
-- [ ] **步骤 1：列出本任务 shell 注释候选行**
+- [x] **步骤 1：列出本任务 shell 注释候选行**
 
 运行：
 
@@ -329,7 +329,7 @@ PY
 
 预期：输出 5 个文件中的注释候选行；只把这些候选行中的用户可读英文翻译为中文。
 
-- [ ] **步骤 2：翻译注释并保留所有输出文本**
+- [x] **步骤 2：翻译注释并保留所有输出文本**
 
 编辑本任务 5 个 shell 文件：
 
@@ -340,7 +340,7 @@ PY
 - 不修改命令、变量、函数名、参数、控制流、退出码、路径或正则表达式。
 - 术语按 Phase 1 glossary 处理：`agent`、`command`、`frontmatter`、`YAML`、`Markdown`、`Claude Code`、`JSON` 等关键 token 保留英文。
 
-- [ ] **步骤 3：验证本任务 shell 文件语法有效且只改注释**
+- [x] **步骤 3：验证本任务 shell 文件语法有效且只改注释**
 
 运行：
 
@@ -376,7 +376,7 @@ PY
 
 预期：先用任务 1 记录的 SHA 设置 `PHASE5_BASE=<sha>`，再输出 `agent/command shell ok: syntax valid and only comments changed`。
 
-- [ ] **步骤 4：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 4：提交检查点（仅用户明确授权时执行）**
 
 运行：
 
@@ -407,7 +407,7 @@ git commit -m "docs: translate plugin-dev agent and command script comments"
 - 修改：`plugins/plugin-dev/skills/plugin-settings/scripts/parse-frontmatter.sh`
 - 修改：`plugins/plugin-dev/skills/plugin-settings/scripts/validate-settings.sh`
 
-- [ ] **步骤 1：列出本任务 shell 注释候选行**
+- [x] **步骤 1：列出本任务 shell 注释候选行**
 
 运行：
 
@@ -437,7 +437,7 @@ PY
 
 预期：输出 9 个文件中的注释候选行；只把这些候选行中的用户可读英文翻译为中文。
 
-- [ ] **步骤 2：翻译注释并保留所有输出文本**
+- [x] **步骤 2：翻译注释并保留所有输出文本**
 
 编辑本任务 9 个 shell 文件：
 
@@ -448,7 +448,7 @@ PY
 - 不修改命令、变量、函数名、参数、控制流、退出码、路径或正则表达式。
 - 术语按 Phase 1 glossary 处理：`hook`、`matcher`、`PreToolUse`、`PostToolUse`、`UserPromptSubmit`、`settings`、`frontmatter`、`YAML`、`JSON` 等关键 token 保留英文。
 
-- [ ] **步骤 3：验证本任务 shell 文件语法有效且只改注释**
+- [x] **步骤 3：验证本任务 shell 文件语法有效且只改注释**
 
 运行：
 
@@ -488,7 +488,7 @@ PY
 
 预期：先用任务 1 记录的 SHA 设置 `PHASE5_BASE=<sha>`，再输出 `hook/plugin-settings shell ok: syntax valid and only comments changed`。
 
-- [ ] **步骤 4：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 4：提交检查点（仅用户明确授权时执行）**
 
 运行：
 
@@ -518,7 +518,7 @@ git commit -m "docs: translate plugin-dev hook and settings script comments"
 - 读取：`plugins/plugin-dev/**/*.sh`
 - 条件修改：符合 Phase 5 规格的主范围外漏网文件
 
-- [ ] **步骤 1：运行 code fence 外自然语言扫描**
+- [x] **步骤 1：运行 code fence 外自然语言扫描**
 
 运行：
 
@@ -607,7 +607,7 @@ PY
 
 预期：输出 `residual natural-language scan ok: no review candidates` 或 `residual natural-language review candidates:`。若出现候选行，逐条分类为“合理保留英文”“符合 Phase 5 漏网修复边界”“需另行决策”。
 
-- [ ] **步骤 2：修复符合规格边界的漏网自然语言**
+- [x] **步骤 2：修复符合规格边界的漏网自然语言**
 
 仅当步骤 1 发现符合 Phase 5 规格的漏网项时编辑对应文件。每个修改必须满足：
 
@@ -627,7 +627,7 @@ Leak repair record:
 
 如果没有符合边界的漏网项，记录 `leak repair: none`。
 
-- [ ] **步骤 3：重新运行扫描并记录最终分类摘要**
+- [x] **步骤 3：重新运行扫描并记录最终分类摘要**
 
 再次运行步骤 1 的 Python 扫描命令。
 
@@ -641,7 +641,7 @@ Leak repair record:
 - 读取：所有 Phase 5 主范围文件
 - 读取：所有本阶段修改过的 `plugins/plugin-dev` 文件
 
-- [ ] **步骤 1：验证 `plugins/plugin-dev` 修改范围**
+- [x] **步骤 1：验证 `plugins/plugin-dev` 修改范围**
 
 运行：
 
@@ -695,13 +695,13 @@ PY
 
 预期：输出 against `PHASE5_BASE` 的主范围修改数量和主范围外漏网修复数量；若出现主范围外路径，必须与任务 5 的 `Leak repair record` 一一对应。
 
-- [ ] **步骤 2：验证 5 个 JSON 文件 parse 和结构保护**
+- [x] **步骤 2：验证 5 个 JSON 文件 parse 和结构保护**
 
 运行任务 2 步骤 2 的 JSON 验证命令。
 
 预期：输出 `json ok: 5 files parse and only allowed _comment/description values changed`。
 
-- [ ] **步骤 3：验证 14 个 shell 文件语法有效且只改注释**
+- [x] **步骤 3：验证 14 个 shell 文件语法有效且只改注释**
 
 运行：
 
@@ -751,7 +751,7 @@ PY
 
 预期：先用任务 1 记录的 SHA 设置 `PHASE5_BASE=<sha>`，再输出 `shell ok: 14 files syntax valid; ... modified comment-only; ... checked unchanged`。
 
-- [ ] **步骤 4：验证 shell 输出文本保持原文**
+- [x] **步骤 4：验证 shell 输出文本保持原文**
 
 运行：
 
@@ -777,23 +777,30 @@ paths = [
     'plugins/plugin-dev/skills/plugin-settings/scripts/validate-settings.sh',
 ]
 keywords = ('echo', 'printf', 'Usage', 'usage', 'Error', 'ERROR', 'Warning', 'WARNING', 'Success', 'Failed', 'failed', 'passed', 'cat <<')
+
+def output_like_lines(lines):
+    return [
+        line for line in lines
+        if not line.lstrip().startswith('#') and any(k in line for k in keywords)
+    ]
+
 phase5_base = subprocess.check_output(['bash', '-lc', 'printf "%s" "$PHASE5_BASE"'], text=True, encoding='utf-8').strip()
 if not phase5_base:
     raise SystemExit('PHASE5_BASE is required; set it to the SHA recorded in 任务 1 步骤 1')
 for path in paths:
     base = subprocess.check_output(['git', 'show', f'{phase5_base}:{path}'], text=True, encoding='utf-8').splitlines()
     cur = Path(path).read_text(encoding='utf-8').splitlines()
-    base_outputs = [line for line in base if any(k in line for k in keywords)]
-    cur_outputs = [line for line in cur if any(k in line for k in keywords)]
+    base_outputs = output_like_lines(base)
+    cur_outputs = output_like_lines(cur)
     if base_outputs != cur_outputs:
-        raise SystemExit(f'shell output-like lines changed: {path}')
-print('shell output text ok: echo/printf/usage/error/status-like lines match PHASE5_BASE')
+        raise SystemExit(f'shell output-like lines changed (comments excluded): {path}')
+print('shell output text ok: echo/printf/usage/error/status-like lines match PHASE5_BASE (comments excluded)')
 PY
 ```
 
-预期：先用任务 1 记录的 SHA 设置 `PHASE5_BASE=<sha>`，再输出 `shell output text ok: echo/printf/usage/error/status-like lines match PHASE5_BASE`。
+预期：先用任务 1 记录的 SHA 设置 `PHASE5_BASE=<sha>`，再输出 `shell output text ok: echo/printf/usage/error/status-like lines match PHASE5_BASE (comments excluded)` 或等价成功信息。该 guard 会忽略 shell 注释行；shebang 和注释翻译仍由步骤 3 的 comment-only guard 保护，本步骤只保护实际输出相关行。
 
-- [ ] **步骤 5：验证 against `PHASE5_BASE` 的累计格式检查没有 whitespace error**
+- [x] **步骤 5：验证 against `PHASE5_BASE` 的累计格式检查没有 whitespace error**
 
 运行：
 
@@ -807,7 +814,7 @@ git diff --check "$PHASE5_BASE" -- \
 
 预期：对任务 1 记录的 `PHASE5_BASE` 到当前状态的累计变更执行格式检查且无 whitespace error；如果只有 LF/CRLF 提示且退出码为 0，在最终证据中说明这是 against `PHASE5_BASE` 的累计检查且无 whitespace error。
 
-- [ ] **步骤 6：整理验收证据摘要**
+- [x] **步骤 6：整理验收证据摘要**
 
 记录以下证据文本，供任务 7 写入 roadmap：
 
@@ -816,7 +823,7 @@ Phase 5 evidence draft:
 - Scope: <任务 6 步骤 1 输出摘要；against PHASE5_BASE 的主范围修改数量；漏网修复数量和路径>
 - JSON: json ok: 5 files parse and only allowed _comment/description values changed
 - Shell syntax/comment guard: shell ok: 14 files syntax valid; <N> modified comment-only; <M> checked unchanged
-- Shell output guard: shell output text ok: echo/printf/usage/error/status-like lines match PHASE5_BASE
+- Shell output guard: shell output text ok: echo/printf/usage/error/status-like lines match PHASE5_BASE (comments excluded)
 - Final natural-language scan: <任务 5 最终扫描结论；合理保留英文分类；已修复漏网项或需另行决策项>
 - Format: git diff --check against PHASE5_BASE passed; <如有 LF/CRLF 警告则说明这是 against PHASE5_BASE 的累计检查且无 whitespace error>
 ```

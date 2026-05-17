@@ -44,10 +44,10 @@
 
 ## Current State
 
-- **Roadmap Status:** active
-- **Current Phase:** Phase 5 — Examples, scripts, and final consistency
+- **Roadmap Status:** completed
+- **Current Phase:** None — all phases completed
 - **Last Sync:** 2026-05-17
-- **Next Manual Action:** `/superpowers:roadmap-management implement-plan docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md Phase 5`
+- **Next Manual Action:** Review final diff and decide whether to commit or open PR
 
 ## Blockers
 
@@ -61,7 +61,7 @@
 | Phase 2 — Core plugin content | completed | 翻译 `.claude-plugin`、`commands`、`agents`、`docs`，并校验矫正同范围 commands/agents | Spec `docs/superpowers/specs/2026-05-16-plugin-dev-zh-translation-phase-2-design.md`; Plan `docs/superpowers/plans/2026-05-16-plugin-dev-zh-translation-phase-2.md`; Implementation Summary recorded; Verification Evidence recorded |
 | Phase 3 — Core development skills | completed | 翻译 `plugin-dev-guide`、`plugin-structure`、`command-development`、`skill-development` | Spec `docs/superpowers/specs/2026-05-16-plugin-dev-zh-translation-phase-3-design.md`; Plan `docs/superpowers/plans/2026-05-16-plugin-dev-zh-translation-phase-3.md`; Implementation Summary recorded; Verification Evidence recorded |
 | Phase 4 — Integration and tooling skills | completed | 翻译 `agent-development`、`hook-development`、`mcp-integration`、`lsp-integration`、`plugin-settings`、`marketplace-structure` | Spec `docs/superpowers/specs/2026-05-17-plugin-dev-zh-translation-phase-4-design.md`; Plan `docs/superpowers/plans/2026-05-17-plugin-dev-zh-translation-phase-4.md`; Implementation Summary recorded; Verification Evidence recorded |
-| Phase 5 — Examples, scripts, and final consistency | planned | 处理 JSON/shell 示例可读文本并做整体一致性验证 | Spec `docs/superpowers/specs/2026-05-17-plugin-dev-zh-translation-phase-5-design.md`; Plan `docs/superpowers/plans/2026-05-17-plugin-dev-zh-translation-phase-5.md`; Implementation Summary pending; Verification Evidence pending |
+| Phase 5 — Examples, scripts, and final consistency | completed | 处理 JSON/shell 示例可读文本并做整体一致性验证 | Spec `docs/superpowers/specs/2026-05-17-plugin-dev-zh-translation-phase-5-design.md`; Plan `docs/superpowers/plans/2026-05-17-plugin-dev-zh-translation-phase-5.md`; Implementation Summary recorded; Verification Evidence recorded |
 
 ## Phase Details
 
@@ -128,7 +128,7 @@
 
 ### Phase 5 — Examples, scripts, and final consistency
 
-- **Status:** planned
+- **Status:** completed
 - **Scope:** 处理 JSON 示例、shell 脚本中的用户可读文本、剩余示例内容，并执行最终术语、格式和行为一致性验证。
 - **Out of scope:** 新增测试框架；新增校验器；重新拆分前面阶段范围。
 - **Success Criteria:**
@@ -138,8 +138,14 @@
 - **Artifacts:**
   - **Spec:** `docs/superpowers/specs/2026-05-17-plugin-dev-zh-translation-phase-5-design.md`
   - **Plan:** `docs/superpowers/plans/2026-05-17-plugin-dev-zh-translation-phase-5.md`
-  - **Implementation Summary:** pending
-  - **Verification Evidence:** pending
+  - **Implementation Summary:** Phase 5 translated the allowed JSON `description`/`_comment` values, translated comments in all 14 scoped shell scripts without changing shell behavior or outputs, and repaired 9 out-of-main-scope residual natural-language items found by the final scan.
+  - **Verification Evidence:** 2026-05-17: Phase 5 evidence draft:
+    - Scope: scope check: 19 main Phase 5 files modified; leak repair files outside main scope: 9; leak repair paths: plugins/plugin-dev/.claude-plugin/plugin.json, plugins/plugin-dev/agents/agent-creator.md, plugins/plugin-dev/commands/create-marketplace.md, plugins/plugin-dev/commands/create-plugin.md, plugins/plugin-dev/skills/agent-development/SKILL.md, plugins/plugin-dev/skills/hook-development/SKILL.md, plugins/plugin-dev/skills/lsp-integration/references/popular-lsp-servers.md, plugins/plugin-dev/skills/plugin-structure/references/github-actions.md, plugins/plugin-dev/skills/skill-development/SKILL.md
+    - JSON: json ok: 5 files parse and only allowed _comment/description values changed
+    - Shell syntax/comment guard: shell ok: 14 files syntax valid; 14 modified comment-only; 0 checked unchanged
+    - Shell output guard: shell output text ok: echo/printf/usage/error/status-like lines match PHASE5_BASE (comments excluded)
+    - Final natural-language scan: full scan covered 79 Markdown, 6 JSON, and 14 shell files under plugins/plugin-dev; 1125 candidates classified as technical/token 666, quoted/template 51, noise 216, decision 192, repair 0; 9 leak repair files recorded; no unclassified obvious user-readable English remained
+    - Format: git diff --check against PHASE5_BASE passed; only LF/CRLF warnings were reported, with no whitespace error
 
 ## Pending Proposals
 
@@ -185,6 +191,7 @@
 
 ## Change Log
 
+- 2026-05-17: Completed Phase 5 with verified JSON/shell translation scope, recorded final consistency evidence, marked the roadmap completed, and updated the next manual action to review the final diff.
 - 2026-05-17: Added Phase 5 spec and plan artifacts, marked Phase 5 as planned, and updated the next manual action to `implement-plan`.
 - 2026-05-17: Completed Phase 4 with verified Chinese localization for 36 integration/tooling skill Markdown files, recorded final scope/frontmatter/code-block/token/quality evidence, and advanced the current phase to Phase 5 with the next manual action set to `write-spec`.
 - 2026-05-17: Added Phase 4 implementation plan artifact and marked Phase 4 as planned.

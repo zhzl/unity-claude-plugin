@@ -851,7 +851,7 @@ echo "$output" | jq .
 - **`validate-bash.sh`** - Bash 命令验证示例
 - **`load-context.sh`** - SessionStart 上下文加载示例
 
-### Utility Scripts
+### 实用脚本
 
 > **前提条件**：这些脚本假定环境提供 `bash` 3.2+、`grep` 和 `sed`。JSON 校验脚本还需要 `jq` 1.6+；可用 `jq --version` 检查，如缺失请通过系统包管理器安装。
 
@@ -863,10 +863,10 @@ echo "$output" | jq .
 
 ### 外部资源
 
-- **Official Docs**: <https://code.claude.com/docs/en/hooks>
-- **Examples**: 参考 marketplace 中的 security-guidance plugin
-- **Testing**: 使用 `claude --debug` 查看详细日志
-- **Validation**: 使用 `jq` 校验 hook JSON 输出
+- **官方文档**：<https://code.claude.com/docs/en/hooks>
+- **示例**：参考 marketplace 中的 security-guidance plugin
+- **测试**：使用 `claude --debug` 查看详细日志
+- **校验**：使用 `jq` 校验 hook JSON 输出
 
 ## 实现工作流
 

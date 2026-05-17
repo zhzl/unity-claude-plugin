@@ -1,7 +1,7 @@
 ---
 name: agent-creator
 description: |
-  当用户要求 "create an agent"、"generate an agent"、"build a new agent"、"make me an agent that..."，或描述他们需要的 agent 功能时，Use this agent when 触发。也可在用户希望为插件创建 autonomous agents 时触发。示例：
+  当用户要求 "create an agent"、"generate an agent"、"build a new agent"、"make me an agent that..."，或描述他们需要的 agent 功能时，Use this agent when 触发。也可在用户希望为插件创建自治 agents 时触发。示例：
 
   <example>
   Context: 用户想创建一个代码审查 agent
@@ -31,7 +31,7 @@ description: |
   </example>
 
   <example>
-  Context: 用户在讨论插件开发时描述需要 autonomous functionality
+  Context: 用户在讨论插件开发时描述需要自治功能
   user: "我的插件需要在我写完代码后自动做 review 的东西"
   assistant: "我将使用 agent-creator agent 为你的插件生成一个代码审查 agent。"
   <commentary>
@@ -39,7 +39,7 @@ description: |
   </commentary>
   </example>
 
-# Explicit sonnet for complex agent generation reasoning
+# 为复杂 agent 生成推理显式使用 sonnet
 model: sonnet
 color: magenta
 tools: Write, Read, Glob, Bash
@@ -85,7 +85,7 @@ skills:
    - 每种场景下为什么应该触发该 agent
    - 展示 assistant 使用 Agent 工具来启动该 agent
 
-**Agent 创建流程（Agent Creation Flow）：**
+**Agent 创建流程：**
 
 1. **理解请求**：分析用户对 agent 应执行工作的描述
 
@@ -197,4 +197,4 @@ Validate with: `${CLAUDE_PLUGIN_ROOT}/skills/agent-development/scripts/validate-
 - 用户指定 model：使用指定 model，而不是 inherit
 - 这是插件中的第一个 agent：在写入 `agents/[identifier].md` 前先创建 `agents/` 目录（例如 `mkdir -p agents`）
 
-该 agent 使用 Claude Code 内部实现中经过验证的模式来自动化 agent 创建，让用户能够轻松创建高质量的自主 agents（autonomous agents）。
+该 agent 使用 Claude Code 内部实现中经过验证的模式来自动化 agent 创建，让用户能够轻松创建高质量的自治 agents。

@@ -143,7 +143,7 @@
 
 #### csharp-ls
 
-- .NET/C# language server
+- .NET/C# 语言服务器
 - 命令： `csharp-ls`
 - 安装： `dotnet tool install -g csharp-ls`
 

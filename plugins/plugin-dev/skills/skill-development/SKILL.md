@@ -431,7 +431,7 @@ claude --plugin-dir /path/to/plugin
 
 每个示例都展示了 progressive disclosure 和强触发能力。
 
-## Validation 检查清单
+## 验证检查清单
 
 完成 skill 前：
 
@@ -464,7 +464,7 @@ claude --plugin-dir /path/to/plugin
 - [ ] SKILL.md 正文使用祈使式/不定式
 - [ ] 正文聚焦且精简（理想 1,500-2,000 词，最多 <3k）
 - [ ] 详细内容移到 references/
-- [ ] Examples 完整且可运行
+- [ ] 示例完整且可运行
 
 **测试：**
 
@@ -524,7 +524,7 @@ skill-name/
 - 使用祈使式/不定式写作
 - 清楚引用支持文件
 - 提供可运行 examples
-- 为常见操作创建 utility scripts
+- 为常见操作创建实用脚本
 
 **不要做：**
 

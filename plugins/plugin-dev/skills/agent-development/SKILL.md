@@ -7,13 +7,13 @@ description: 使用本技能，当用户要求 "create an agent"、"add an agent
 
 ## 概览
 
-Agents 是自治的子进程，能够独立处理复杂的多步骤任务。掌握 agent 结构、triggering conditions 和 system prompt 设计，才能构建强大的自治能力。
+Agents 是自治的子进程，能够独立处理复杂的多步骤任务。掌握 agent 结构、触发条件和 system prompt 设计，才能构建强大的自治能力。
 
 **关键概念：**
 
 - Agents 用于自治工作，commands 用于用户主动发起的操作
 - 文件格式是带 YAML frontmatter 的 Markdown
-- 通过 description 字段和 examples 实现 triggering
+- 通过 description 字段和示例实现触发
 - system prompt 决定 agent 行为
 - 可选的 model 与 color 自定义
 
@@ -160,7 +160,7 @@ agent 的标识符，用于命名空间和调用。
 
 **必须包含：**
 
-1. triggering conditions（“Use this agent when...”）
+1. 触发条件（“Use this agent when...”）
 2. 多个 `<example>` block 展示使用方式
 3. 每个 example 都包含 context、user request 与 assistant response
 4. 使用 `<commentary>` 解释 agent 为什么会触发
@@ -184,7 +184,7 @@ assistant: "[How Claude should respond]"
 
 **最佳实践：**
 
-- 包含 2-4 个具体 examples
+- 包含 2-4 个具体示例
 - 同时展示主动触发与被动触发
 - 覆盖同一意图的不同说法
 - 在 commentary 中解释推理
@@ -402,7 +402,7 @@ Return JSON with:
 ### 方法 2：手动创建
 
 1. 选择 agent identifier（3-50 个字符，小写，连字符）
-2. 编写带 examples 的 description
+2. 编写带示例的 description
 3. 如有需要，选择 model（省略则默认继承）
 4. 如有需要，选择用于视觉区分的 color
 5. 定义完成任务所需的最小 tools
@@ -428,8 +428,8 @@ Return JSON with:
 ### Description 验证
 
 **长度：** 10-5,000 个字符
-**必须包含：** triggering conditions 与 examples
-**最佳范围：** 200-1,000 个字符，配合 2-4 个 examples
+**必须包含：** 触发条件与示例
+**最佳范围：** 200-1,000 个字符，配合 2-4 个示例
 
 ### System Prompt 验证
 
@@ -476,8 +476,8 @@ agents 会自动带上命名空间：
 
 创建测试场景，确认 agent 能按预期触发：
 
-1. 编写带有明确 examples 的 agent
-2. 在测试中使用与 examples 相近的措辞
+1. 编写带有明确示例的 agent
+2. 在测试中使用与示例相近的措辞
 3. 检查 Claude 是否加载该 agent
 4. 验证 agent 是否提供了预期功能
 
@@ -531,17 +531,17 @@ claude --agents "code-reviewer,test-generator"
 
 **DO：**
 
-- ✅ 在 description 中加入 2-4 个具体 examples
-- ✅ 编写明确的 triggering conditions
+- ✅ 在 description 中加入 2-4 个具体示例
+- ✅ 编写明确的触发条件
 - ✅ 除非有明确需要，否则 model 使用 `inherit`
 - ✅ 选择恰当的 tools（最小权限原则）
 - ✅ 编写清晰、结构化的 system prompts
-- ✅ 充分测试 agent 的 triggering
+- ✅ 充分测试 agent 的触发效果
 
 **DON'T：**
 
-- ❌ 使用没有 examples 的泛化 description
-- ❌ 省略 triggering conditions
+- ❌ 使用没有示例的泛化 description
+- ❌ 省略触发条件
 - ❌ 让所有 agents 都用同一个 color
 - ❌ 授予不必要的工具访问权限
 - ❌ 编写模糊的 system prompt
