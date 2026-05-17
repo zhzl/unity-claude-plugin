@@ -7,7 +7,7 @@
 - **Roadmap Path:** `docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md`
 - **Status:** `active`
 - **Created:** 2026-05-16
-- **Last Sync:** 2026-05-16
+- **Last Sync:** 2026-05-17
 - **Reference Inputs:**
   - `references/unity-mcp-v2`
   - `references/Unity-Skills`
@@ -534,8 +534,9 @@ Phase 9 至少实现半自动一致性检查，覆盖：
   - Resources 和 artifact model 范围；
   - safety model；
   - skill/schema 防漂移机制。
-- 当前阶段：Phase 1 已完成 spec 和 plan，等待执行 plan。
-- **Next Manual Action:** `/superpowers:roadmap-management implement-plan docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md Phase 1`
+- 当前阶段：Phase 2 需要编写 spec。
+- Phase 1 已完成架构与边界蓝图规格验证，并记录 completion evidence。
+- **Next Manual Action:** `/superpowers:roadmap-management write-spec docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md Phase 2`
 - 当前不实现代码。
 
 ## Blockers
@@ -548,8 +549,8 @@ Phase 9 至少实现半自动一致性检查，覆盖：
 
 | Phase | Status | Goal | Spec | Plan | Verification | Next |
 |-------|--------|------|------|------|--------------|------|
-| Phase 1 — 架构与边界蓝图 | planned | 定义 Unity Agent Kit 总体结构和硬约束 | `docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md` | `docs/superpowers/plans/2026-05-16-unity-agent-kit-phase-1-architecture-boundary.md` | pending | implement-plan |
-| Phase 2 — Unity Agent Skill 体系设计 | not-started | 设计任务型/能力型 skills，不照搬 Unity-Skills | pending | pending | pending | after Phase 1 |
+| Phase 1 — 架构与边界蓝图 | completed | 定义 Unity Agent Kit 总体结构和硬约束 | `docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md` | `docs/superpowers/plans/2026-05-16-unity-agent-kit-phase-1-architecture-boundary.md` | recorded | completed |
+| Phase 2 — Unity Agent Skill 体系设计 | needs-spec | 设计任务型/能力型 skills，不照搬 Unity-Skills | pending | pending | pending | write-spec |
 | Phase 3 — Public MCP Tool Action Design | not-started | 逐个设计 public tool、action、参数、异步语义、safety、验证路径 | pending | pending | pending | after Phase 2 |
 | Phase 4 — Async / Job / Workflow / Artifact Semantics | not-started | 明确 TS 与 Unity C# 的异步职责、job 协议、diagnostics 和 artifact model | pending | pending | pending | after Phase 3 |
 | Phase 5 — 高频日常闭环基础设施 | not-started | 实现 editor/compile/console/test/playmode/screenshot 的核心闭环 | pending | pending | pending | after Phase 4 |
@@ -562,7 +563,7 @@ Phase 9 至少实现半自动一致性检查，覆盖：
 
 ### Phase 1：架构与边界蓝图
 
-**Status:** `planned`
+**Status:** `completed`
 
 **Goal:**
 定义 Unity Agent Kit 的总体结构、继承自 v2 的部分、需要重设的部分，以及后续 phase 的硬约束。
@@ -607,17 +608,17 @@ Phase 9 至少实现半自动一致性检查，覆盖：
 **Artifacts:**
 - **Spec:** `docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md`
 - **Plan:** `docs/superpowers/plans/2026-05-16-unity-agent-kit-phase-1-architecture-boundary.md`
-- **Implementation Summary:** pending
-- **Verification Evidence:** pending
+- **Implementation Summary:** Phase 1 完成 Unity Agent Kit 架构与边界蓝图规格，明确新插件 identity、四层主干、Contract Kernel、public/internal/host 边界、v2 candidate baseline 采纳规则、安全/完成语义/持久化/target/artifact/result/error 边界，以及 Phase 2-9 的交接输入。
+- **Verification Evidence:** 2026-05-17：`docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md` 和 `docs/superpowers/plans/2026-05-16-unity-agent-kit-phase-1-architecture-boundary.md` 已验证。规格自检通过：TODO/FIXME/TBD 检查通过、裸延后表述检查通过、legacy compatibility 正向表述检查通过；关键内容存在性检查覆盖 `developmentRepoRoot`、`pluginRoot`、`unityProjectRoot`、`Transport Security 与 Host 最低校验`、`Contract Kernel 与 C# host 的关系`、`默认持久化与保存范围`、`Phase Handoff Table`。Success criteria 覆盖证据：规格明确 Unity Agent Kit 不是单纯 MCP server；public/internal/host 边界明确；Public MCP tools 与 Internal operations 分离；Unity C# 不读取 public metadata；Resources 首版只用于 tool-generated artifacts/reports；Phase Handoff Table 明确 Phase 2-9 交接输入。计划执行证据：Phase 1 plan 中任务 1-5 关键步骤均已勾选，包含新版 roadmap 表格检查、Current State/Blockers 检查、pending completion evidence 检查、规格自检、completion evidence 交接和最终工作区检查。
 
 **Next Manual Action:**
-`/superpowers:roadmap-management implement-plan docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md Phase 1`
+Phase 1 已完成；下一步手动命令见 Current State 中的 Phase 2 `write-spec`。
 
 ---
 
 ### Phase 2：Unity Agent Skill 体系设计
 
-**Status:** `not-started`
+**Status:** `needs-spec`
 
 **Goal:**
 设计新的 skill 调用指导体系，借鉴但不照搬 Unity-Skills。
@@ -1467,6 +1468,7 @@ Skill/schema consistency audit：
 
 ## Change Log
 
+- 2026-05-17：完成 Phase 1 架构与边界蓝图，记录规格验证证据，并将当前阶段推进到 Phase 2 `needs-spec`。
 - 2026-05-16：创建 Unity Agent Kit roadmap。
 - 2026-05-16：确认基于 `unity-mcp-v2` 演进，不全新重写。
 - 2026-05-16：确认 public MCP tools 与 internal operations 分离。
