@@ -140,8 +140,18 @@
   - **Plan:** `docs/superpowers/plans/2026-05-17-plugin-dev-zh-translation-phase-5.md`
   - **Implementation Summary:** Phase 5 translated the allowed JSON `description`/`_comment` values, translated comments in all 14 scoped shell scripts without changing shell behavior or outputs, and repaired 9 out-of-main-scope residual natural-language items found by the final scan.
   - **Verification Evidence:** 2026-05-17: Phase 5 evidence:
-    - Scope: scope check: 19 main Phase 5 files modified; leak repair files outside main scope: 9; leak repair paths: plugins/plugin-dev/.claude-plugin/plugin.json, plugins/plugin-dev/agents/agent-creator.md, plugins/plugin-dev/commands/create-marketplace.md, plugins/plugin-dev/commands/create-plugin.md, plugins/plugin-dev/skills/agent-development/SKILL.md, plugins/plugin-dev/skills/hook-development/SKILL.md, plugins/plugin-dev/skills/lsp-integration/references/popular-lsp-servers.md, plugins/plugin-dev/skills/plugin-structure/references/github-actions.md, plugins/plugin-dev/skills/skill-development/SKILL.md
-    - JSON: json ok: 5 files parse and only allowed _comment/description values changed
+    - Scope: scope check: 19 main Phase 5 files modified; leak repair files outside main scope: 9
+    - Leak repair records:
+      - `plugins/plugin-dev/.claude-plugin/plugin.json` — reason: JSON manifest `description` 中残留用户可读英文。 boundary: 仅修改 manifest `description` 值；未修改 JSON key、结构或其他字段。
+      - `plugins/plugin-dev/agents/agent-creator.md` — reason: code fence 外的 agent 描述、注释和标题中残留用户可读英文。 boundary: 未修改 code fence、frontmatter key、工具名、模型名、路径或命令。
+      - `plugins/plugin-dev/commands/create-marketplace.md` — reason: frontmatter `description` 中残留用户可读英文。 boundary: 仅修改 description；未修改 argument-hint、allowed-tools、命令或路径。
+      - `plugins/plugin-dev/commands/create-plugin.md` — reason: frontmatter `description` 与 code fence 外说明中残留用户可读英文。 boundary: 未修改 code fence、命令、路径、字段名或工具名。
+      - `plugins/plugin-dev/skills/agent-development/SKILL.md` — reason: code fence 外正文/checklist 中残留 triggering/examples 等用户可读英文。 boundary: 未修改 code fence、frontmatter 字段、quoted trigger phrases、schema/token 或工具字段。
+      - `plugins/plugin-dev/skills/hook-development/SKILL.md` — reason: code fence 外标题和资源标签中残留用户可读英文。 boundary: 未修改 URL、命令、脚本名、JSON/schema 或 hook event token。
+      - `plugins/plugin-dev/skills/lsp-integration/references/popular-lsp-servers.md` — reason: code fence 外 LSP server 说明中残留用户可读英文。 boundary: 保留 `.NET`、`C#`、`csharp-ls` 和安装命令；仅翻译自然语言说明。
+      - `plugins/plugin-dev/skills/plugin-structure/references/github-actions.md` — reason: code fence 外 GitHub Actions 说明、表格用途和 checklist 中残留用户可读英文。 boundary: 未修改 code fence、workflow/action 标识符、字段名、provider/API token、命令或路径。
+      - `plugins/plugin-dev/skills/skill-development/SKILL.md` — reason: code fence 外标题/checklist 中残留 Validation/Examples/utility scripts 等用户可读英文。 boundary: 未修改 code fence、frontmatter/schema token、quoted trigger phrases、路径、文件名或命令。
+    - JSON: json ok: 5 main files parse and only allowed _comment/description values changed; leak repair JSON plugins/plugin-dev/.claude-plugin/plugin.json parsed and only manifest description changed
     - Shell syntax/comment guard: shell ok: 14 files syntax valid; 14 modified comment-only; 0 checked unchanged
     - Shell output guard: shell output text ok: echo/printf/usage/error/status-like lines match PHASE5_BASE (comments excluded)
     - Final natural-language scan: full scan covered 79 Markdown, 6 JSON, and 14 shell files under plugins/plugin-dev; 1125 candidates classified as technical/token 666, quoted/template 51, noise 216, decision 192, repair 0; 9 leak repair files recorded; no unclassified obvious user-readable English remained
