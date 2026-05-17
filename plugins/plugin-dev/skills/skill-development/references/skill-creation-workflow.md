@@ -1,4 +1,4 @@
-# Skill 创建 workflow（Skill Creation Workflow）
+# Skill 创建工作流（Skill Creation Workflow）
 
 本参考为 Claude Code plugins 创建 skills 提供详细的分步说明。概览请参见主 SKILL.md。
 
@@ -24,7 +24,7 @@
 要把具体示例转化为有效的 skill，逐个分析示例：
 
 1. 考虑如果从零开始执行该示例，需要怎么做
-2. 识别在重复执行这些 workflows 时，哪些 scripts、references 和 assets 会有帮助
+2. 识别在重复执行这些工作流时，哪些 scripts、references 和 assets 会有帮助
 
 ### 示例
 
@@ -64,7 +64,7 @@ touch plugin-name/skills/skill-name/SKILL.md
 
 ## 步骤 4：编辑 Skill
 
-编辑新建或现有 skill 时，记住该 skill 是给另一个 Claude 实例使用的。重点包含对 Claude 有益且非显而易见的信息。思考哪些 procedural knowledge、domain-specific details 或 reusable assets 能帮助另一个 Claude 实例更有效地执行这些任务。
+编辑新建或现有 skill 时，记住该 skill 是给另一个 Claude 实例使用的。重点包含对 Claude 有益且非显而易见的信息。思考哪些流程性知识、领域特定细节或可复用 assets 能帮助另一个 Claude 实例更有效地执行这些任务。
 
 ### 从可复用 Skill 内容开始
 
@@ -103,7 +103,7 @@ description: Provides hook guidance.  # No trigger phrases
 
 1. 该 skill 的目的是什么？用几句话说明。
 2. 何时应使用该 skill？（在 frontmatter description 中包含这一点，并使用具体 triggers）
-3. 实际使用时，Claude 应如何使用该 skill？上面开发出的所有 reusable skill contents 都应被引用，以便 Claude 知道如何使用它们。
+3. 实际使用时，Claude 应如何使用该 skill？上面开发出的所有可复用 skill 内容都应被引用，以便 Claude 知道如何使用它们。
 
 **保持 SKILL.md 精简：** 正文目标 1,500-2,000 词。将详细内容移到 references/：
 
@@ -146,17 +146,19 @@ Working examples in `examples/`:
 
 **使用 skill-reviewer agent：**
 
+如当前环境提供 skill-reviewer agent，可使用：
+
 ```
 Ask: "Review my skill and check if it follows best practices"
 ```
 
-skill-reviewer agent 会检查 description 质量、内容组织和 progressive disclosure。
+该 agent 可检查 description 质量、内容组织和 progressive disclosure；否则按本节清单人工复核。
 
 ## 步骤 6：迭代
 
 测试 skill 后，用户可能会请求改进。这通常发生在刚使用 skill 之后，此时对 skill 表现有新鲜上下文。
 
-**迭代 workflow：**
+**迭代工作流：**
 
 1. 在真实任务中使用 skill
 2. 注意卡点或低效之处
@@ -178,7 +180,7 @@ skill-reviewer agent 会检查 description 质量、内容组织和 progressive 
 **包含（skill 触发时始终加载）：**
 
 - 核心概念和概览
-- 必要 procedures 和 workflows
+- 必要流程和工作流
 - 快速参考表（Quick reference tables）
 - 指向 references/examples/scripts 的指针
 - 最常见用例

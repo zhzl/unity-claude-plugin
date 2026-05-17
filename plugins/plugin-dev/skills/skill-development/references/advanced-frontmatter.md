@@ -20,7 +20,7 @@
 
 - **`inherit`（默认）：** 适用于大多数 skills。让用户的 model 选择生效。
 - **`haiku`：** 快速且成本敏感的操作 — linting、格式检查、简单查找。适合频繁运行的 skills。
-- **`sonnet`：** 标准 workflow — code review、生成、分析。均衡的默认选择。
+- **`sonnet`：** 标准工作流 — code review、生成、分析。均衡的默认选择。
 - **`opus`：** 复杂推理 — 架构决策、安全审计、需要最高能力的详细分析。
 - **完整 model ID：** 当 skill 行为依赖精确 model 能力时，固定到特定版本。
 
@@ -46,7 +46,7 @@ model: haiku
 
 ### 概念
 
-不同于 `hooks.json`（plugin 激活时全局生效），frontmatter 中的 scoped hooks 与 skill 生命周期绑定。它们在 skill 加载时激活，并在 skill 完成时停用。这允许 skill-specific validation，而不会影响其他 workflows。
+不同于 `hooks.json`（plugin 激活时全局生效），frontmatter 中的 scoped hooks 与 skill 生命周期绑定。它们在 skill 加载时激活，并在 skill 完成时停用。这允许 skill-specific validation，而不会影响其他工作流。
 
 ### 格式
 
@@ -95,7 +95,7 @@ Scoped hooks 支持 hook events 的子集：
 ### 用例
 
 - **Skill-specific validation：** “database writer” skill 在执行前验证 SQL
-- **受限 workflows：** “deploy” skill 在允许 Bash commands 前检查 branch 和 test 状态
+- **受限工作流：** “deploy” skill 在允许 Bash commands 前检查 branch 和 test 状态
 - **质量门禁：** “code generator” skill 在每次 Write operation 后运行 linting
 
 ### Frontmatter 中的 Hook 类型
@@ -223,4 +223,4 @@ To generate the visualization:
 3. The script outputs an HTML file — inform the user of its location
 ```
 
-Visual output generators 将 deterministic scripts 的能力与 Claude 收集 context 和呈现结果的能力结合起来。脚本负责渲染，Claude 负责数据收集和用户交互。
+视觉输出生成器将确定性 scripts 的能力与 Claude 收集 context 和呈现结果的能力结合起来。脚本负责渲染，Claude 负责数据收集和用户交互。

@@ -6,17 +6,17 @@ archival: true
 
 # Skill Creator（归档参考）
 
-此文件保留为原始通用 skill creator 的归档参考材料。除非你的 checkout 中存在所引用 scripts，否则不要在此 plugin 中遵循其可执行指导；`skill-creation-workflow.md` 中的 plugin-specific workflow 才是当前可信来源。
+此文件保留为原始通用 skill creator 的归档参考材料。除非你的 checkout 中存在所引用 scripts，否则不要在此 plugin 中遵循其可执行指导；`skill-creation-workflow.md` 中的 plugin 专用工作流才是当前可信来源。
 
 此 skill 提供创建有效 skills 的指导。
 
 ## 关于 Skills
 
-Skills 是模块化、自包含的包，通过提供 specialized knowledge、workflows 和 tools 来扩展 Claude 的能力。可以把它们看作特定领域或任务的 “onboarding guides”：它们将 Claude 从通用 agent 转化为配备 procedural knowledge 的 specialized agent，而这些知识是任何 model 都无法完全内化的。
+Skills 是模块化、自包含的包，通过提供 specialized knowledge、工作流和 tools 来扩展 Claude 的能力。可以把它们看作特定领域或任务的“onboarding guides”：它们将 Claude 从通用 agent 转化为配备流程性知识的 specialized agent，而这些知识是任何 model 都无法完全内化的。
 
 ### Skills 提供什么
 
-1. 专用 workflows：面向特定领域的多步骤 procedures
+1. 专用工作流：面向特定领域的多步骤流程
 2. Tool integrations（工具集成）：使用特定 file formats 或 APIs 的说明
 3. Domain expertise（领域知识）：公司特定知识、schemas、业务逻辑
 4. Bundled resources（捆绑资源）：面向复杂和重复任务的 scripts、references 和 assets
@@ -46,9 +46,9 @@ skill-name/
 
 ##### 脚本（Scripts，`scripts/`）
 
-用于需要 deterministic reliability 或会被反复重写的任务的可执行代码（Python/Bash 等）。
+用于需要确定性可靠性或会被反复重写的任务的可执行代码（Python/Bash 等）。
 
-- **何时包含**：当相同代码被反复重写，或需要 deterministic reliability 时
+- **何时包含**：当相同代码被反复重写，或需要确定性可靠性时
 - **示例**：用于 PDF 旋转任务的 `scripts/rotate_pdf.py`
 - **收益**：Token 高效、确定性强，可在不加载到 context 的情况下执行
 - **说明**：Claude 可能仍需读取 scripts，以便进行 patching 或 environment-specific 调整
@@ -59,10 +59,10 @@ skill-name/
 
 - **何时包含**：当 Claude 工作时应参考某些文档
 - **示例**：财务 schemas 的 `references/finance.md`、公司 NDA template 的 `references/mnda.md`、公司 policies 的 `references/policies.md`、API specifications 的 `references/api_docs.md`
-- **用例**：Database schemas、API documentation、domain knowledge、company policies、detailed workflow guides
+- **用例**：Database schemas、API documentation、domain knowledge、company policies、详细工作流指南
 - **收益**：保持 SKILL.md 精简，仅在 Claude 判断需要时加载
 - **最佳实践**：如果文件较大（>10k words），在 SKILL.md 中包含 grep search patterns
-- **避免重复**：信息应只存在于 SKILL.md 或 references files 之一，不要两边重复。除非内容确实是 skill 的核心，否则优先放入 references files；这样能保持 SKILL.md 精简，同时让信息可发现，避免占用 context window。SKILL.md 只保留必要的流程性指令和 workflow 指引；将详细参考材料、schemas 和 examples 移到 references files。
+- **避免重复**：信息应只存在于 SKILL.md 或 references files 之一，不要两边重复。除非内容确实是 skill 的核心，否则优先放入 references files；这样能保持 SKILL.md 精简，同时让信息可发现，避免占用 context window。SKILL.md 只保留必要的流程性指令和工作流指引；将详细参考材料、schemas 和 examples 移到 references files。
 
 ##### 资源文件（Assets，`assets/`）
 
@@ -109,7 +109,7 @@ Skills 使用三级加载系统来高效管理 context：
 要把具体示例转化为有效的 skill，逐个分析示例：
 
 1. 考虑如果从零开始执行该示例，需要怎么做
-2. 识别在重复执行这些 workflows 时，哪些 scripts、references 和 assets 会有帮助
+2. 识别在重复执行这些工作流时，哪些 scripts、references 和 assets 会有帮助
 
 示例：构建 `pdf-editor` skill 来处理 “Help me rotate this PDF” 这类查询时，分析显示：
 
@@ -132,9 +132,9 @@ Skills 使用三级加载系统来高效管理 context：
 
 此时可以实际创建 skill。
 
-仅当正在开发的 skill 已经存在，并且需要 iteration 或 packaging 时，才跳过此步骤。在这种情况下，继续下一步。
+仅当正在开发的 skill 已经存在，并且需要迭代或打包时，才跳过此步骤。在这种情况下，继续下一步。
 
-在原始通用 workflow 中，`init_skill.py` 会生成模板 skill 目录。对于此 plugin，不要假设该脚本存在；请按 `skill-creation-workflow.md` 中的说明直接创建 plugin skills。
+在原始通用工作流中，`init_skill.py` 会生成模板 skill 目录。对于此 plugin，不要假设该脚本存在；请按 `skill-creation-workflow.md` 中的说明直接创建 plugin skills。
 
 用法：
 
@@ -154,7 +154,7 @@ scripts/init_skill.py <skill-name> --path <output-directory>
 
 ### 步骤 4：编辑 Skill
 
-编辑新生成或现有 skill 时，记住该 skill 是给另一个 Claude 实例使用的。重点包含对 Claude 有益且非显而易见的信息。思考哪些 procedural knowledge、domain-specific details 或 reusable assets 能帮助另一个 Claude 实例更有效地执行这些任务。
+编辑新生成或现有 skill 时，记住该 skill 是给另一个 Claude 实例使用的。重点包含对 Claude 有益且非显而易见的信息。思考哪些流程性知识、领域特定细节或可复用 assets 能帮助另一个 Claude 实例更有效地执行这些任务。
 
 #### 从可复用 Skill 内容开始
 
@@ -170,11 +170,11 @@ scripts/init_skill.py <skill-name> --path <output-directory>
 
 1. 该 skill 的目的是什么？用几句话说明。
 2. 何时应使用该 skill？
-3. 实际使用时，Claude 应如何使用该 skill？上面开发出的所有 reusable skill contents 都应被引用，以便 Claude 知道如何使用它们。
+3. 实际使用时，Claude 应如何使用该 skill？上面开发出的所有可复用 skill 内容都应被引用，以便 Claude 知道如何使用它们。
 
 ### 步骤 5：打包 Skill
 
-在原始通用 workflow 中，skill 准备好后会被打包成可分发的 zip file；在此 plugin 中不要默认执行此步骤。Packaging 过程会先自动验证该 skill，确保其满足所有要求：
+在原始通用工作流中，skill 准备好后会被打包成可分发的 zip file；在此 plugin 中不要默认执行此步骤。打包过程会先自动验证该 skill，确保其满足所有要求：
 
 ```text
 # Archival example only; script may not exist in this plugin.
@@ -188,7 +188,7 @@ scripts/package_skill.py <path/to/skill-folder>
 scripts/package_skill.py <path/to/skill-folder> ./dist
 ```
 
-Packaging script 会：
+打包脚本会：
 
 1. **Validate** skill，自动检查：
    - YAML frontmatter 格式和必需字段
@@ -204,7 +204,7 @@ Packaging script 会：
 
 测试 skill 后，用户可能会请求改进。这通常发生在刚使用 skill 之后，此时对 skill 表现有新鲜上下文。
 
-**迭代 workflow：**
+**迭代工作流：**
 
 1. 在真实任务中使用 skill
 2. 注意卡点或低效之处

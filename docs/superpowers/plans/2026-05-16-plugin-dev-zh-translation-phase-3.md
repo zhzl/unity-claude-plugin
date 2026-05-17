@@ -959,7 +959,7 @@ git commit -m "docs: translate skill development examples"
 - 修改：`plugins/plugin-dev/skills/skill-development/references/skill-creation-workflow.md`
 - 修改：`plugins/plugin-dev/skills/skill-development/references/skill-creator-original.md`
 
-- [ ] **步骤 1：翻译 4 个 reference 文件的代码块外自然语言**
+- [x] **步骤 1：翻译 4 个 reference 文件的代码块外自然语言**
 
 编辑本任务列出的 4 个 reference 文件：
 
@@ -969,7 +969,7 @@ git commit -m "docs: translate skill development examples"
 - `commands-vs-skills.md` 无代码块，仍需保护路径、命令名和技术 token。
 - 若发现同文件内原始说明和当前 plugin-dev 语境不一致，可修正解释文字；不得引入 standalone packaging 或脚本行为变更。
 
-- [ ] **步骤 2：验证 skill-development reference 代码块未改变**
+- [x] **步骤 2：验证 skill-development reference 代码块未改变**
 
 运行：
 
@@ -1017,7 +1017,7 @@ PY
 
 预期：输出 `code blocks unchanged: 4 files`。
 
-- [ ] **步骤 3：验证 `skill-creator-original.md` frontmatter protected fields**
+- [x] **步骤 3：验证 `skill-creator-original.md` frontmatter protected fields**
 
 运行：
 
@@ -1040,7 +1040,7 @@ PY
 
 预期：输出 `skill-creator-original frontmatter ok`。
 
-- [ ] **步骤 4：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 4：提交检查点（仅用户明确授权时执行）**
 
 运行：
 
@@ -1059,7 +1059,7 @@ git commit -m "docs: translate skill development references"
 - 读取：31 个 Phase 3 目标 Markdown 文件
 - 修改：`docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md`
 
-- [ ] **步骤 1：验证只有 Phase 3 目标文件和 roadmap 发生相关修改**
+- [x] **步骤 1：验证只有 Phase 3 目标文件和 roadmap 发生相关修改**
 
 运行：
 
@@ -1112,7 +1112,7 @@ PY
 
 预期：输出 `scope ok: 31 Phase 3 plugin files modified`，或输出的数量与明确未改文件数量相符并在最终证据中解释。
 
-- [ ] **步骤 2：全量验证 Markdown 代码块与 `HEAD` 一致**
+- [x] **步骤 2：全量验证 Markdown 代码块与 `HEAD` 一致**
 
 运行：
 
@@ -1187,7 +1187,7 @@ PY
 
 预期：输出 `all Phase 3 Markdown code blocks match HEAD`。
 
-- [ ] **步骤 3：全量验证 5 个 frontmatter 文件的 protected fields 和关键触发词**
+- [x] **步骤 3：全量验证 5 个 frontmatter 文件的 protected fields 和关键触发词**
 
 运行：
 
@@ -1219,7 +1219,7 @@ PY
 
 预期：输出 `frontmatter ok: protected names and trigger tokens present`。
 
-- [ ] **步骤 4：抽查术语和机器可读 token**
+- [x] **步骤 4：抽查术语和机器可读 token**
 
 运行：
 
@@ -1244,7 +1244,7 @@ PY
 
 预期：输出 `terminology/token spot check ok: plugin, skill, command, frontmatter, manifest, workflow, validation-related tokens preserved`。
 
-- [ ] **步骤 5：检查 Markdown diff 没有空白错误**
+- [x] **步骤 5：检查 Markdown diff 没有空白错误**
 
 运行：
 
@@ -1254,7 +1254,7 @@ git diff --check
 
 预期：无 whitespace error；如果只有 CRLF/LF 提示且退出码为 0，在最终证据中说明。
 
-- [ ] **步骤 6：人工 review 质量矫正记录**
+- [x] **步骤 6：人工 review 质量矫正记录**
 
 阅读 `git diff -- plugins/plugin-dev/skills/plugin-dev-guide plugins/plugin-dev/skills/plugin-structure plugins/plugin-dev/skills/command-development plugins/plugin-dev/skills/skill-development`，记录以下证据：
 
@@ -1262,7 +1262,7 @@ git diff --check
 - 哪些文件做了同范围质量小修，问题类型是错字、过时说明、触发描述不清、术语不一致、资源索引不一致或用户可读说明不准确。
 - 是否发现需要另行确认的问题；若有，只记录文件、问题和原因，不修改范围外文件。
 
-- [ ] **步骤 7：更新 roadmap Phase 3 状态和证据**
+- [x] **步骤 7：更新 roadmap Phase 3 状态和证据**
 
 编辑 `docs/superpowers/roadmaps/2026-05-15-plugin-dev-zh-translation/ROADMAP.md`：
 
@@ -1274,7 +1274,7 @@ git diff --check
 
 如果任一验证未通过，不更新为 `completed`；保留为 `in-progress` 并记录 blocker 或实际缺口。
 
-- [ ] **步骤 8：提交检查点（仅用户明确授权时执行）**
+- [x] **步骤 8：提交检查点（仅用户明确授权时执行）**
 
 运行：
 
