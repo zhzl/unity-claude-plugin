@@ -34,7 +34,7 @@ Phase 3 不实现 MCP server、Unity C# host、actual skill 文件或审计脚�
 - 不定义完整 material property value model、UI query language、animation controller model、nested prefab 语义或 batch asset selector；这些属于 Phase 7/8 对应规格。
 - 不复制 `unity-mcp-v2` 的 public operation names。
 - 不复制 `Unity-Skills` 的 JSON 文件队列或 PascalCase command format。
-- 不把 `unity_project_command.invoke` 作为标准 public tools 的替代入口。
+- 不把 `unity_project_command.invoke` 视为标准 public tools 之外的通用后备入口。
 
 ## 已确认设计决策
 
@@ -57,7 +57,7 @@ Phase 3 继承 Phase 1、Phase 2 和 roadmap 的约束：
 - Public tools 面向 Claude tool selection；internal operations 面向 TS orchestration、host routing、测试和 Unity C# operation router。
 - Unity C# host 只接收 internal operations，不读取 public metadata，也不承担 public action 聚合、长 workflow 编排或最终业务成功判定。
 - Public tool 使用 `unity_` 前缀；tool 内 action 使用 `snake_case`。
-- Public schema 必须明确，禁止自由形态 `{ action: string, params: object }` 作为主接口。
+- Public schema 必须明确，禁止自由形态 `{ action: string, payload: unknown }` 这类未约束主接口。
 - Public action 必须声明完成语义、安全 metadata 和验证路径。
 - 写操作不能只返回 `ok=true`；必须能表达对应的 state/effect/artifact/report 信号、验证结果和失败/不确定原因。
 - `uncertain` 是一等结果；无法证明 `successMeans` 时不得返回 verified success。
@@ -170,7 +170,7 @@ PublicToolInput =
 Phase 3 定义最低共同 result envelope，不定义完整 diagnostics/job/artifact schema。
 
 ```text
-status: success | failed | uncertain
+status: succeeded | failed | uncertain | cancelled | timeout | lost | rejected
 tool
 action
 summary
@@ -189,7 +189,7 @@ nextStep?
 
 | 字段 | 语义 |
 |---|---|
-| `status` | action 结果：`success`、`failed` 或 `uncertain`。 |
+| `status` | action 结果：`succeeded`、`failed`、`uncertain`、`cancelled`、`timeout`、`lost` 或 `rejected`；该枚举由 Phase 4 细化并作为最终 result status contract。 |
 | `tool` / `action` | 机器可检查引用。 |
 | `summary` | 面向 Claude 和用户的短摘要。 |
 | `changed?` | 是否修改 Unity project/editor state、transient editor state、job state 或 artifact/report state。 |
@@ -206,11 +206,11 @@ nextStep?
 
 - 只读 action 至少返回 `status`、`summary` 和对应 snapshot/count/state。
 - 修改并保存 Unity project/editor persistence unit 的 effect action，success 必须表达 `changed=true`、`persisted=true` 和验证信号。
-- `request_accepted` action success 必须表达请求已接受的信号；不得伪装成最终 effect verified。
-- Transient editor state 或 diagnostic view mutation success 必须表达对应 readback 信号；`persisted` 可省略或为 `false`。
+- `request_accepted` action 的 `status: succeeded` 必须表达请求已接受的信号；不得伪装成最终 effect verified。
+- Transient editor state 或 diagnostic view mutation 的 `status: succeeded` 必须表达对应 readback 信号；`persisted` 可省略或为 `false`。
 - 产出 artifact 的 action 必须返回 artifact reference、`validationStatus` 和 artifact verification signals；`persisted` 可省略或为 `false`。
 - 产出 report 的 action 必须返回 report reference 和 report collection / verification signals；`persisted` 可省略或为 `false`。
-- `dryRun` success 必须表达 `changed=false`、`persisted=false`。
+- `dryRun` 的 `status: succeeded` 必须表达 `changed=false`、`persisted=false`。
 - `uncertain` 必须包含 `diagnostics` 和 `nextStep`。
 - 部分生效必须显式表达，不能伪装成 clean success。
 
@@ -586,6 +586,8 @@ Phase 5 implementation note
 ### P0 `inputSchemaRef` 清单
 
 这些 refs 是 Phase 3 的稳定 schema 引用名。Phase 5 负责 materialize 具体 JSON/Zod/schema，并保持 refs 与 catalog 对齐。
+
+本节 23 行 `inputSchemaRef` 清单只覆盖 P0 `stable_ready` actions，并作为这部分 catalog 的稳定引用检查基线。Phase 7 candidate actions、Phase 8 taxonomy actions，以及 `unity_project_command` 的 candidate shell 条目不由这 23 行证明 catalog 完整性；它们在 Phase 3 只保留有界候选信息，完整 domain schema、metadata 与 registry 细节分别由 Phase 7、Phase 8、Phase 6 收敛。与 diagnostics、artifact lifecycle 相关的验证细节仍由 Phase 4 负责。
 
 | Tool | Action | inputSchemaRef | Phase 3 bounded fields / hints |
 |---|---|---|---|
@@ -1301,6 +1303,8 @@ Phase 9 audit should verify:
 - public tool/action docs align with catalog descriptions.
 
 ## Success criteria coverage
+
+说明：下表中的“每个 public action 有 safety metadata。”保留 roadmap 原文不变，但其在 Phase 3 的达成口径需要按 scope depth 解读。P0 `stable_ready` actions 具备完整 safety metadata 字段：`sideEffectLevel`、`confirmationPolicy`、`dryRunMode`。Phase 7 candidate actions、Phase 8 taxonomy actions，以及 `unity_project_command` 的 candidate shell 条目在本阶段只承载 safety notes 或部分候选 metadata；这些条目的完整 safety metadata 分别属于 Phase 7、Phase 8、Phase 6 的收敛范围。与 diagnostics、artifact lifecycle 相关的细化边界仍由 Phase 4 持有。
 
 | Roadmap Phase 3 success criteria | Spec coverage |
 |---|---|
