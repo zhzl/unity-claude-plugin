@@ -573,11 +573,11 @@ Phase 9 至少实现半自动一致性检查，覆盖：
   - safety model；
   - skill/schema 防漂移机制；
   - actual `/unity` skill materialization 与 skill/tool context budget 边界。
-- 当前阶段：Phase 4 需要编写 spec。
+- 当前阶段：Phase 4 已完成 spec 和 plan，等待执行 plan。
 - Phase 1 已完成架构与边界蓝图规格验证，并记录 completion evidence。
 - Phase 2 已完成 Unity Agent Skill 体系设计规格和计划，并记录 completion evidence。
 - Phase 3 已完成 Public MCP Tool Action Design 规格和计划，并记录 completion evidence。
-- **Next Manual Action:** `/superpowers:roadmap-management write-spec docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md Phase 4`
+- **Next Manual Action:** `/superpowers:roadmap-management implement-plan docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md Phase 4`
 - 当前不实现代码。
 
 ## Blockers
@@ -593,7 +593,7 @@ Phase 9 至少实现半自动一致性检查，覆盖：
 | Phase 1 — 架构与边界蓝图 | completed | 定义 Unity Agent Kit 总体结构和硬约束 | `docs/superpowers/specs/2026-05-16-unity-agent-kit-phase-1-architecture-boundary-design.md` | `docs/superpowers/plans/2026-05-16-unity-agent-kit-phase-1-architecture-boundary.md` | recorded | completed |
 | Phase 2 — Unity Agent Skill 体系设计 | completed | 设计 skill 架构、/unity 路由、P0 daily loop recipe contract 和跨 phase handoff | `docs/superpowers/specs/2026-05-17-unity-agent-kit-phase-2-skill-architecture-design.md` | `docs/superpowers/plans/2026-05-17-unity-agent-kit-phase-2-skill-architecture.md` | recorded | completed |
 | Phase 3 — Public MCP Tool Action Design | completed | 逐个设计 public tool、action、参数、异步语义、safety、验证路径和 action catalog | `docs/superpowers/specs/2026-05-17-unity-agent-kit-phase-3-public-tool-action-design.md` | `docs/superpowers/plans/2026-05-17-unity-agent-kit-phase-3-public-tool-action-design.md` | recorded | completed |
-| Phase 4 — Async / Job / Workflow / Artifact Semantics | needs-spec | 明确 TS 与 Unity C# 的异步职责、job 协议、diagnostics 和 artifact model | pending | pending | pending | write-spec |
+| Phase 4 — Async / Job / Workflow / Artifact Semantics | planned | 明确 TS 与 Unity C# 的异步职责、job 协议、diagnostics 和 artifact model | `docs/superpowers/specs/2026-05-17-unity-agent-kit-phase-4-async-job-workflow-artifact-semantics-design.md` | `docs/superpowers/plans/2026-05-17-unity-agent-kit-phase-4-async-job-workflow-artifact-semantics.md` | pending | implement-plan |
 | Phase 5 — 高频日常闭环基础设施 | not-started | 实现 editor/compile/console/test/playmode/screenshot 的核心闭环，并创建最小 actual `/unity` skill | pending | pending | pending | after Phase 4 |
 | Phase 6 — Project Editor Command Registry 增强 | not-started | 强化项目自定义命令发现、schema、安全、验证和 recipe landing strategy | pending | pending | pending | after Phase 5 |
 | Phase 7 — 简单创作 vertical slice | not-started | object/component/material/screenshot/validation 创作闭环和 recipe landing strategy | pending | pending | pending | after Phase 6 |
@@ -950,7 +950,7 @@ MCP Resources 设计范围：
 
 ### Phase 4：Async / Job / Workflow / Artifact Semantics
 
-**Status:** `not-started`
+**Status:** `planned`
 
 **Goal:**
 定义异步操作、job-backed operation、workflow 编排、diagnostics、artifact model 和最终判定规则。
@@ -1046,8 +1046,8 @@ metadata
 - Artifact model 与 Resources 设计一致。
 
 **Artifacts:**
-- **Spec:** pending
-- **Plan:** pending
+- **Spec:** `docs/superpowers/specs/2026-05-17-unity-agent-kit-phase-4-async-job-workflow-artifact-semantics-design.md`
+- **Plan:** `docs/superpowers/plans/2026-05-17-unity-agent-kit-phase-4-async-job-workflow-artifact-semantics.md`
 - **Implementation Summary:** pending
 - **Verification Evidence:** pending
 
@@ -1651,6 +1651,7 @@ Skill/schema consistency audit：
 
 ## Change Log
 
+- 2026-05-17：完成 Phase 4 Async / Job / Workflow / Artifact Semantics spec 和 plan artifact 接入；Phase 4 进入 `planned`，下一步为 `implement-plan`。
 - 2026-05-17：完成 Phase 3 Public MCP Tool Action Design，记录 verification evidence，并将当前阶段推进到 Phase 4 `needs-spec`。
 - 2026-05-17：完成 Phase 3 Public MCP Tool Action Design spec 和 plan artifact 接入；Phase 3 进入 `planned`，下一步为 `implement-plan`。
 - 2026-05-17：批准并同步 actual skill materialization 与 skill/tool context budget roadmap 澄清；Phase 5 首次创建最小 actual `/unity` skill，Phase 9 只审计已有 skill。
