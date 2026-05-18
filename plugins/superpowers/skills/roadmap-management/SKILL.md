@@ -143,7 +143,7 @@ Phase status：
 
 ## 验收同步规则
 
-最终验收通过后的事实性 roadmap 同步可以由 `subagent-driven-development` 的 roadmap 同步子代理执行。同步是执行验收的一部分，不是独立 action，不新增后台同步机制。
+最终验收通过后的事实性 roadmap 同步可以由 `subagent-driven-development` 的 roadmap 同步子代理执行。同步是执行验收的一部分，不是独立 action，不新增后台同步流程。
 
 验收同步允许更新的字段：
 
@@ -432,8 +432,8 @@ Roadmap discovery 是本技能内置的 brainstorming-lite，不是 `superpowers
 - 自动调用其他 Superpowers 技能。
 - 在 `new-roadmap` / 结构性 `change-roadmap` 的 discovery 或 phase strategy 讨论中自动调用 `superpowers:brainstorming`。
 - 不要创建 CLI 命令。
-- 不要创建 schema validators。
-- 不要创建后台同步；验收同步只能由执行验收流程中的子代理显式完成，不新增后台同步机制。
+- 不要创建 schema 验证器。
+- 不要创建后台同步；验收同步只能由执行验收流程中的子代理显式完成，不新增后台同步流程。
 - 不要新增 worktree guidance。
 - 复制 OpenSpec 的完整 `changes/` lifecycle。
 - 不要复制 GSD 的完整 `.planning/PROJECT.md`、`STATE.md`、`CONTEXT.md` artifact set。
