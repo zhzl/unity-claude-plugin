@@ -1476,7 +1476,7 @@ EOF
 - 验证：`docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md`
 - 验证：`docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md`
 
-- [ ] **步骤 1：运行综合落地检查**
+- [x] **步骤 1：运行综合落地检查**
 
 运行：
 
@@ -1542,7 +1542,7 @@ PASS Phase 5 split landing complete
 
 证明：该检查证明 split design 已落地为 deprecated old plan、plan index、5A plan 和 roadmap planned state，旧总 plan 不再是可执行入口。
 
-- [ ] **步骤 2：运行占位符检查**
+- [x] **步骤 2：运行占位符检查**
 
 运行：
 
@@ -1586,7 +1586,7 @@ PASS no placeholder markers in new split plans
 
 证明：该检查证明新 plan index 和 5A plan 不含禁止占位符，后续执行者不会遇到空泛指令。
 
-- [ ] **步骤 3：运行 markdown whitespace 检查**
+- [x] **步骤 3：运行 markdown whitespace 检查**
 
 运行：
 
@@ -1598,7 +1598,7 @@ git diff --check
 
 证明：该检查证明本计划落地的 Markdown 修改没有 trailing whitespace 或 diff whitespace 错误。
 
-- [ ] **步骤 4：检查工作区范围**
+- [x] **步骤 4：检查工作区范围**
 
 运行：
 
