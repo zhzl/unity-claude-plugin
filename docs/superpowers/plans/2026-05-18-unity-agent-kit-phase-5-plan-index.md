@@ -18,7 +18,7 @@ This index keeps Phase 5 as a single roadmap phase while splitting execution int
 
 | Subplan | Scope | Plan | Status | Completion Evidence | Upgrade Check |
 |---|---|---|---|---|---|
-| Phase 5A | Host Runtime 基础设施 | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md` | pending | pending | stays subplan |
+| Phase 5A | Host Runtime 基础设施 | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md` | planned | pending | stays subplan |
 | Phase 5B | Artifact / Resource / Timeout / Completion 基础设施 | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5b-artifact-resource-timeout.md` | pending | pending | stays subplan |
 | Phase 5C | Core Diagnostics Workflows | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5c-core-diagnostics-workflows.md` | pending | pending | stays subplan |
 | Phase 5D | Test / PlayMode / Screenshot Workflows | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5d-test-playmode-screenshot-workflows.md` | pending | pending | stays subplan |
