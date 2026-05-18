@@ -113,7 +113,8 @@ Plan index 是 Phase 5 的计划入口和状态索引，不是 implementation pl
 关键边界：
 
 - 5A 处理 host runtime、operation dispatch、main-thread dispatch、lost/rebind。
-- 5B 处理通用 timeout / polling / completion / artifact / Resource 语义。
+- 5A 只实现 transport / dispatch 层的 host-level safety timeout 和诊断性 timeout result。
+- 5B 处理通用 workflow-level timeout / polling / completion / artifact / Resource 语义。
 - 5C 和 5D 都会实现异步或等待型 workflow。
 - 5D 不是“异步开始的地方”；它是 test job、PlayMode transition、screenshot artifact 这些更重 workflow 的落地点。
 - 5C 交付 console diagnostics / cursor / snapshot 能力，供 5D 的 test/playmode/screenshot 诊断辅助复用。
@@ -127,7 +128,7 @@ Plan index 是 Phase 5 的计划入口和状态索引，不是 implementation pl
 - 单一 Unity C# host runtime，位于 `unity/Assets/UnityAgentKit/`。
 - loopback HTTP server：动态端口、`/probe`、`/operations`、启动 / 停止、domain reload identity / epoch。
 - host registry：写入 `unity/Library/UnityAgentKit/host.json`，支持 active host validation、probe、lost / rebind 语义。
-- Unity main-thread dispatch：可等待、有返回值、异常传播、timeout。
+- Unity main-thread dispatch：可等待、有返回值、异常传播、host-level safety timeout。
 - C# host request / response DTO：使用 DTO 和 JSON serialization / deserialization；不用 string concat / string search 作为主要协议实现。
 - Operation result envelope：建立 Unity host response、TS public result、MCP tool result 映射规则的基础。
 
@@ -406,7 +407,7 @@ docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md
 
 | Subplan | Scope | Plan | Status | Completion Evidence | Upgrade Check |
 |---|---|---|---|---|---|
-| Phase 5A | Host Runtime 基础设施 | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md` | planned | pending | stays subplan |
+| Phase 5A | Host Runtime 基础设施 | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md` | pending | pending | stays subplan |
 | Phase 5B | Artifact / Resource / Timeout / Completion 基础设施 | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5b-artifact-resource-timeout.md` | pending | pending | stays subplan |
 | Phase 5C | Core Diagnostics Workflows | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5c-core-diagnostics-workflows.md` | pending | pending | stays subplan |
 | Phase 5D | Test / PlayMode / Screenshot Workflows | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5d-test-playmode-screenshot-workflows.md` | pending | pending | stays subplan |
@@ -421,6 +422,8 @@ docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md
 - `completed`：subplan 已完成并有 evidence；
 - `blocked`：subplan 有阻塞项；
 - `deprecated`：旧计划或被替代计划。
+
+Phase 5A 在 plan index 创建时初始为 `pending`。只有 Phase 5A implementation plan 已创建并通过审查后，才能更新为 `planned`。
 
 Plan index 可以更新 subplan 状态，但不能把 roadmap Phase 5 标记 completed。
 
@@ -535,7 +538,7 @@ lastProbeAt?
 - 可等待；
 - 有返回值；
 - 异常传播；
-- timeout；
+- host-level safety timeout；
 - 不在 HTTP handler 内直接长阻塞 Unity 主线程；
 - 不让后台线程直接调用 Unity API。
 
@@ -596,7 +599,7 @@ plugins/unity-agent-kit/src/contracts/result.ts
 - `/operations` invoke；
 - lost/rebind 语义；
 - operation envelope → public result 基础映射；
-- timeout failure 返回可诊断结果。
+- host-level timeout failure 返回可诊断结果。
 
 ### Phase 5A Out of Scope
 
@@ -624,6 +627,22 @@ host.status
 
 但不能把它们当作 Phase 5 stable public action。
 
+### Phase 5A 最小 vertical smoke path
+
+Phase 5A implementation plan 必须从一条最小端到端 internal operation path 开始：
+
+```text
+Unity host writes registry
+→ TS reads registry
+→ TS probes active host
+→ TS invokes /operations
+→ Unity dispatches to main thread
+→ Unity returns DTO envelope
+→ TS maps envelope to public-result foundation
+```
+
+其他 5A 组件必须围绕这条路径增量扩展，不先做孤立的大型 runtime 框架。
+
 ### Phase 5A Reference Mapping
 
 Phase 5A plan 必须映射：
@@ -644,7 +663,7 @@ Phase 5A 完成时必须提供：
 
 - TS tests：registry read、probe active host、lost/rebind、operation envelope mapping、timeout result。
 - Unity EditMode tests：registry path 和字段、dynamic port、`/probe`、`/operations`、main-thread dispatch success / exception / timeout、DTO serialization。
-- 最小 loopback smoke：Unity host 写入 registry、TS probe 成功、TS invoke 最小 operation 成功、host restart / epoch 变化可检测。
+- 最小 vertical smoke path：Unity host 写入 registry、TS 读取 registry、TS probe active host、TS invoke `/operations`、Unity dispatch 到主线程、Unity 返回 DTO envelope、TS 映射 envelope 到 public-result foundation、host restart / epoch 变化可检测。
 
 ---
 
@@ -713,10 +732,9 @@ Plan index 必须：
 
 ### 过渡到 implementation plan
 
-本规格写入并通过自检后，不直接执行 Phase 5A。下一步是调用 `superpowers:writing-plans`，为“Phase 5 split design 落地”创建 implementation plan。该 plan 应包含：
+本规格写入、审查并通过自检后，不直接执行 Phase 5A。下一步是调用 `superpowers:writing-plans`，为“Phase 5 split design 落地”创建 implementation plan。该 plan 应验证并使用已审查的 split design spec 作为输入，只落地下游 artifacts：
 
-1. 写 split design spec；
-2. 废弃旧总 plan；
-3. 创建 plan index；
-4. 写 Phase 5A implementation plan；
-5. 同步 roadmap planned 状态。
+1. 废弃旧总 plan；
+2. 创建 plan index；
+3. 写 Phase 5A implementation plan；
+4. 同步 roadmap planned 状态。
