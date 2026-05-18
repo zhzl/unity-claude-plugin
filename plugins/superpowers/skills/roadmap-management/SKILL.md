@@ -340,10 +340,10 @@ Roadmap discovery 是本技能内置的 brainstorming-lite，不是 `superpowers
 1. 读取 `ROADMAP.md`。
 2. 定位目标 phase。
 3. 提取 `Goal`、`Shared Constraints`、phase scope、out of scope 和 success criteria。
-4. 执行 Phase 范围检查；如果 phase 可能过大，先让用户选择拆正式 roadmap phases、拆同 phase 多个 plans，或接受单一 phase / plan 风险后继续。
-5. 生成 `Spec Discussion Brief`，其中必须包含 Roadmap / Phase 摘要、`Shared Constraints`、phase scope、out of scope、success criteria、phase 范围检查结果、可能的拆分单元、reference input mapping（如适用）、主动挑战扫描清单、第一条“必须先确认”的问题和未确认挑战清单。
-6. 只有在必须先确认的问题已确认或明确记录为 roadmap 假设后，才建议用户手动调用 `superpowers:brainstorming`。
-7. handoff 给 brainstorming 时必须带上已确认结论、未确认挑战清单、phase 范围检查结果和未确认的拆分风险或 handoff 风险。
+4. 执行 Phase 范围检查；如果 phase 可能过大，先让用户选择：`拆为正式 roadmap phases` 时停止当前 `write-spec` 并建议进入 `change-roadmap`；选择 `保持同一 roadmap phase，但拆为多个 implementation plans`，或 `明确接受单一 phase / 单一 plan 风险后继续` 时，才继续当前 `write-spec`。
+5. 若继续当前 action，生成 `Spec Discussion Brief`，其中必须包含 Roadmap / Phase 摘要、`Shared Constraints`、phase scope、out of scope、success criteria、phase 范围检查结果、可能的拆分单元、reference input mapping（如适用）、主动挑战扫描清单、第一条“必须先确认”的问题和未确认挑战清单。
+6. 只有在继续当前 action，且必须先确认的问题已确认或明确记录为 roadmap 假设后，才建议用户手动调用 `superpowers:brainstorming`。
+7. 若继续当前 action，handoff 给 brainstorming 时必须带上已确认结论、未确认挑战清单、phase 范围检查结果和未确认的拆分风险或 handoff 风险。
 
 不要自动调用 `superpowers:brainstorming`。
 
@@ -357,9 +357,9 @@ Roadmap discovery 是本技能内置的 brainstorming-lite，不是 `superpowers
 2. 定位目标 phase。
 3. 读取 phase 的 `Spec` 路径。
 4. 提取 Roadmap 路径、Phase、`Shared Constraints`、phase scope、out of scope、success criteria、spec 中已确认的关键决策和 reference inputs。
-5. 执行 Phase 范围检查；如果 phase 可能过大，先让用户选择拆正式 roadmap phases、拆同 phase 多个 plans，或接受单一 phase / plan 风险后继续。
-6. 生成 plan handoff，必须包含 phase 范围检查结果、用户选择的拆分方向、`Shared Constraints`、phase scope、out of scope、success criteria、spec 中已确认的关键决策、reference inputs，以及写 plan 前必须处理的未确认问题。
-7. 建议用户手动调用 `superpowers:writing-plans`。
+5. 执行 Phase 范围检查；如果 phase 可能过大，先让用户选择：`拆为正式 roadmap phases` 时停止当前 `write-plan` 并建议进入 `change-roadmap`；选择 `保持同一 roadmap phase，但拆为多个 implementation plans`，或 `明确接受单一 phase / 单一 plan 风险后继续` 时，才继续当前 `write-plan`。
+6. 若继续当前 action，生成 plan handoff，必须包含 phase 范围检查结果、用户选择的拆分方向、`Shared Constraints`、phase scope、out of scope、success criteria、spec 中已确认的关键决策、reference inputs，以及写 plan 前必须处理的未确认问题。
+7. 若继续当前 action，建议用户手动调用 `superpowers:writing-plans`。
 
 不要直接写 plan，除非用户另行显式调用 `writing-plans`。
 
