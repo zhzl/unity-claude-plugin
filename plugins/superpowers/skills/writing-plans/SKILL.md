@@ -63,7 +63,7 @@ description: 当你有规格说明或需求用于多步骤任务时使用，在�
 ---
 ```
 
-如果用户明确接受继续单一计划的风险，改写为：
+如果用户明确接受继续单一计划的风险，仅改写上面的拆分检查相关行，不改写整个头部：
 
 ```markdown
 **拆分检查：** 已检查；用户选择继续单一计划。
@@ -79,19 +79,19 @@ description: 当你有规格说明或需求用于多步骤任务时使用，在�
 **Phase:** P1 / P2 / N/A
 ```
 
-如果用户显式提供 Roadmap 路径，在编写计划前读取该 roadmap，并遵守它的 `Shared Constraints`。如果只提供 Phase 而未提供 Roadmap，不要主动寻找 roadmap；只记录用户提供的 Phase。
+如果用户显式提供 Roadmap 路径，在编写计划前读取该 roadmap，并遵守它的 `Shared Constraints`。如果只提供 Phase 而未提供 Roadmap，不要主动寻找 roadmap；只记录用户提供的 Phase，并仅使用 spec 或用户已确认的上下文补足其余约束。
 
 ## 上游约束摘要
 
-每个 plan 在任务列表前必须包含：
+每个 plan 在任务列表前必须包含以下字段；如果没有 roadmap 路径，这些字段也必须保留，但可以根据 spec、用户已确认的上下文或当前已知 phase 信息填写，仍无法确定时写 `N/A`。用户未提供 roadmap 时，不要为了补全这些字段主动寻找 roadmap。
 
 ```markdown
 ## 上游约束摘要
 
-- **Roadmap Shared Constraints:** [从 roadmap 提取；没有时写 N/A]
-- **Phase Scope:** [当前 phase scope]
-- **Phase Out-of-scope:** [当前 phase out-of-scope]
-- **Success Criteria:** [当前 phase success criteria]
+- **Roadmap Shared Constraints:** [从 roadmap 的 Shared Constraints 提取；未提供 roadmap 时写 N/A]
+- **Phase Scope:** [来自 roadmap phase；若无 roadmap，则根据 spec/用户确认上下文概括；仍无法确定时写 N/A]
+- **Phase Out-of-scope:** [来自 roadmap phase；若无 roadmap，则根据 spec/用户确认上下文概括；仍无法确定时写 N/A]
+- **Success Criteria:** [来自 roadmap phase；若无 roadmap，则根据 spec/用户确认上下文概括；仍无法确定时写 N/A]
 - **用户确认事项:** [用户已确认的关键决策]
 - **本计划不包含:** [明确不进入本计划的范围]
 ```
