@@ -73,7 +73,7 @@
 
 | Gate | 最低信心分 | 达标条件 | 未达标处理 |
 |---|---|---|---|
-| loopback | 8/10 | 真实 `/probe` HTTP response` 和 `/operations` HTTP request` 测试都通过，且 DTO 反序列化断言完整 | 若低于 8，先补 probe/operations 实测，再继续后续任务 |
+| loopback | 8/10 | 真实 `/probe` HTTP response 和 `/operations` HTTP request 测试都通过，且 DTO 反序列化断言完整 | 若低于 8，先补 probe/operations 实测，再继续后续任务 |
 | main-thread dispatch | 8/10 | `host.threadCheck` 证明 dispatch 到 captured Unity main thread | 若低于 8，停止扩展 operation catalog，只修复 dispatch foundation |
 | DTO/result envelope | 8/10 | DTO JSON round-trip、Malformed JSON、unknown operation、dispatch exception 都返回结构化 envelope | 若低于 8，停止 TS client 开发，先补齐 DTO contract |
 | active host validation | 8/10 | TS 能识别 host restart、hostId / hostEpoch mismatch 和 wrong protocol | 若低于 8，禁止把 runtime 标记为 stable foundation |
@@ -544,8 +544,8 @@ Unity writes registry → TS reads registry → TS probes `/probe` → TS invoke
   记录至少以下 evidence：
 
   - DTO JSON round-trip
-  - 真实 `/probe` HTTP response`
-  - 真实 `/operations` HTTP request`
+  - 真实 `/probe` HTTP response
+  - 真实 `/operations` HTTP request
   - `host.threadCheck`
   - `status`, `operation`, `requestId`, `hostId`, `hostEpoch`, `summary`, `data`, `diagnostics`, `startedAt`, `completedAt`, `durationMs`
   - Malformed JSON structured failed envelope
