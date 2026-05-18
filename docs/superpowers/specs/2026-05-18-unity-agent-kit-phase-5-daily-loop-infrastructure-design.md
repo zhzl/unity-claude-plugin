@@ -91,6 +91,18 @@ Phase 5 不扩展创作工具、project command 生态或完整 Unity 操作域�
     - Phase 5 cannot be marked completed unless TS/MCP tests and at least one Unity E2E run against `unity/` pass.
     - If Unity `2022.3.61f1` cannot be started, record a blocker or partial evidence, not completion.
 
+12. **Safety metadata materialization**
+    - Each of the 19 P0 stable actions must materialize and verify `sideEffectLevel`, `confirmationPolicy`, and `dryRunMode` from Phase 3.
+
+13. **Timeout policy handoff**
+    - The implementation plan must define a compact per-workflow timeout / polling policy table.
+    - The spec does not lock concrete timeout values or add user-facing timeout configuration.
+
+14. **Recent compile report proof boundary**
+    - `compile_and_check` should prefer request / observe-current-cycle proof.
+    - A recent compile report can be used only when it is tied to the active Unity project/session and a bounded complete compile lifecycle.
+    - Phase 5 still does not implement full project-wide change tracking.
+
 ## Scope
 
 ### Required 19 P0 Actions
@@ -302,6 +314,8 @@ Rules:
 - `safeToRetry` is not `true` unless duplicate side effects are ruled out.
 - Claude must not blindly retry after timeout.
 
+The implementation plan must define a compact timeout / polling policy table for the P0 workflows. The table should group lightweight reads, editor readiness, compile workflows, test workflows, PlayMode transitions, screenshot capture, Resource readback, and E2E validation. It should state when a longer wait requires explicit user intent or justification, without adding broad user-facing configuration.
+
 ## TS / Unity C# Ownership
 
 ### TS MCP Layer Owns
@@ -448,6 +462,13 @@ Compiler diagnostics rules:
 - Console diagnostics are supplemental and cannot replace compiler messages.
 - Console-clean and editor-idle states do not prove compile success.
 - No-new-compile without bounded recent report validity proof returns `status: uncertain`.
+
+Recent report proof boundary:
+
+- Prefer request / observe-current-cycle proof for `compile_and_check`.
+- Use a recent compile report only when it is tied to the active Unity project/session and comes from a bounded complete compile lifecycle.
+- Do not implement full project-wide change tracking in Phase 5.
+- If the report binding or lifecycle proof is incomplete, return `status: uncertain`.
 
 Minimum result signals:
 
@@ -705,6 +726,7 @@ Required checks:
 
 - 19 P0 actions have concrete schemas.
 - Each schema aligns with Phase 3 `inputSchemaRef`.
+- Each of the 19 P0 actions materializes and verifies `sideEffectLevel`, `confirmationPolicy`, and `dryRunMode`.
 - Result envelope uses Phase 4 status enum.
 - No free-form `{ action, params }` public interface.
 - `/unity` executable recipe steps reference only stable P0 actions.
@@ -721,6 +743,7 @@ Required test categories:
 - Public tool registration tests.
 - Action dispatch tests.
 - Timeout result shape tests.
+- Safety metadata presence and consistency tests.
 - Resource URI assembly tests.
 - Compile no-new-compile `uncertain` tests.
 - Test report collected vs verified pass tests.
@@ -777,6 +800,7 @@ Before marking Phase 5 complete, review these risks explicitly:
 - `unity_console.clear` is not hidden inside daily health check.
 - `compile_and_check` does not use idle + Console-clean as success proof.
 - `capture_game_view` does not accept arbitrary output paths.
+- Each stable P0 action exposes the required safety metadata.
 - Resource identity uses generated IDs and URIs, not user-provided local paths.
 - E2E evidence covers the Phase 5 success criteria.
 
@@ -804,6 +828,8 @@ The Phase 5 implementation plan should decompose work by capability unit and ver
 3. Implement schemas and public tool registration for the 19 P0 actions.
 4. Implement Unity host services for status, compile diagnostics, console cursor/snapshot, tests, PlayMode, and screenshot artifact.
 5. Implement TS workflows for readiness, compile check, test verify, PlayMode verify, screenshot artifact, Resource readback, timeout, and host rebind semantics.
-6. Enable `/unity` executable recipes only after stable action verification.
-7. Run static checks, TS/MCP tests, and Unity E2E against `unity/` on Unity `2022.3.61f1`.
-8. Produce completion evidence suitable for roadmap sync.
+6. Define the compact per-workflow timeout / polling policy table required by this spec.
+7. Prefer request / observe-current-cycle compile proof and bound any recent report reuse to active project/session and complete lifecycle evidence.
+8. Enable `/unity` executable recipes only after stable action verification.
+9. Run static checks, TS/MCP tests, and Unity E2E against `unity/` on Unity `2022.3.61f1`.
+10. Produce completion evidence suitable for roadmap sync.
