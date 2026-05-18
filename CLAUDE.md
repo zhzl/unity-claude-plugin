@@ -68,3 +68,4 @@
 
 - **全权操作**：拥有当前 Workspace（含 .claude 目录）完整文件读写与命令执行权限。
 - **Git与依赖**：严格遵循现有包管理器与 lockfile；允许并在验证后 `git commit`，但未经明确要求严禁 push/rebase/reset/clean。
+- **并行提效**：任务可解耦时，尽可能开启 subagent 并行执行。
