@@ -43,8 +43,8 @@
 - 移动/创建：`docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-daily-loop-infrastructure-deprecated.md` — 保存旧总 plan 并在文件头强标记 deprecated / 不得执行。
 - 删除/移除：`docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-daily-loop-infrastructure.md` — 原路径不再作为可执行 plan 存在。
 - 创建：`docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md` — Phase 5 plan artifact 入口，索引 5A-5E subplans 和状态。
-- 创建：`docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md` — 第一个可执行 subplan，规划 Host Runtime 基础设施。
-- 修改：`docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md` — Phase 5 进入 `planned`，Plan artifact 指向 plan index，Next Manual Action 指向执行 5A。
+- 创建：`docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md` — Phase 5A technical contract 历史路径，当前执行入口迁移到 5A execution index。
+- 修改：`docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md` — Phase 5 进入 `planned`，Plan artifact 指向 plan index，Next Manual Action 指向基于 5A execution index 准备/审查 5A-01 strict execution plan。
 
 ---
 

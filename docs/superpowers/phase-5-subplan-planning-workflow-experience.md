@@ -16,12 +16,12 @@ Phase 5 split landing plan 只负责：
 
 1. 废弃旧 Phase 5 总 plan；
 2. 创建 Phase 5 plan index；
-3. 创建 Phase 5A Host Runtime implementation plan；
-4. 将 roadmap Phase 5 同步到可执行 5A 的 planned 状态。
+3. 创建 Phase 5A Host Runtime 初始文档，当前已重新定位为 technical contract；
+4. 创建/接入 Phase 5A execution index，并把 roadmap 下一步指向 5A-01 strict execution plan 准备。
 
 执行者读到 `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-split-landing.md` 后，容易产生疑问：
 
-> 这里只有 5A plan。5A 完成后，5B / 5C / 5D / 5E 的 plan 应该什么时候写？调用什么技能？输入什么上下文？plan index 状态怎么更新？
+> technical contract 和 execution index 已有，首个 strict execution plan 应该什么时候写？5A execution plans 完成后，5B / 5C / 5D / 5E 应该什么时候写？输入什么上下文？plan index 状态怎么更新？
 
 ## 当前观察到的体验问题
 
@@ -32,7 +32,7 @@ Phase 5 split landing plan 只负责：
 - 当前 subplan 完成后，什么时候创建下一个 subplan plan；
 - 创建下一个 plan 前必须满足什么 evidence gate；
 - 写下一个 plan 应调用 `writing-plans`，执行已有 plan 应调用 `subagent-driven-development` 或 `executing-plans`；
-- Next Manual Action 应如何从执行 5A 切换到写 5B，再切换到执行 5B。
+- Next Manual Action 应如何从准备 5A-01 strict execution plan，切换到执行已审查的 expanded plan，再切换到写 5B。
 
 ### 2. Split landing plan 是一次性落地计划，不是长期流程说明
 
