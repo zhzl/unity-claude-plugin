@@ -2,9 +2,9 @@
 
 > **面向 AI 代理的工作者：** 必需子技能：使用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 逐任务实现此计划。步骤使用复选框（`- [ ]`）语法来跟踪进度。
 
-**目标：** 落地 Phase 5 split design：废弃旧总 plan、创建 Phase 5 plan index、创建 Phase 5A Host Runtime 初始文档；当前该文档已重新定位为 technical contract，执行入口迁移到 5A execution index，并把 roadmap Phase 5 同步到可执行 5A 的 planned 状态。
+**目标：** 落地 Phase 5 split design：废弃旧总 plan、创建 Phase 5 plan index、创建 Phase 5A Host Runtime 初始文档；当前该文档已重新定位为 technical contract，执行入口迁移到 5A execution index，并把 roadmap Phase 5 同步到 technical contract + execution index 已就绪、下一步准备 5A strict execution plan 的 planned 状态。
 
-**架构：** 本计划只修改文档 artifact，不实现 Unity Agent Kit 运行时代码。Roadmap Phase 5 保持单一 phase，`Plan` artifact 指向 plan index；plan index 再映射 5A-5E subplans，其中只有 5A plan 在本计划中创建。
+**架构：** 本计划只修改文档 artifact，不实现 Unity Agent Kit 运行时代码。Roadmap Phase 5 保持单一 phase，`Plan` artifact 指向 plan index；plan index 再映射 5A-5E subplans，其中本计划只记录 5A technical contract 的创建历史与后续 execution-plan handoff。
 
 **技术栈：** Markdown、Python inline 文本检查、git diff/check。
 **拆分检查：** 已检查；无需拆分。本计划是 Phase 5 split design 的文档落地单元，四个 artifact 变更按顺序强依赖，不能独立交付为多个 implementation plans。
@@ -24,9 +24,9 @@
 - **Roadmap Shared Constraints:** Unity Agent Kit 基于 `unity-mcp-v2` 演进；public MCP tools 与 internal operations 分离；public 参数必须有界；TS 负责 workflow 编排、轮询、timeout、host rebind 和最终判定；Unity C# 负责短主线程动作、状态读取、job/report 记录；首版 Resources 只用于 artifacts/reports；写操作和 artifact action 不能无证据报成功。
 - **Phase Scope:** Phase 5 覆盖 19 个 P0 daily loop actions、最小 actual `/unity` skill、TS/MCP layer、Unity C# host、artifact/report Resources 和最终 daily loop E2E。
 - **Phase Out-of-scope:** 不实现 object/component/material 创作工具；不实现 Phase 6/7/8 domain recipes；不实现 Scene View 或 EditorWindow screenshot capture；不执行旧 3000+ 行总 plan；不正式拆 roadmap phases。
-- **Success Criteria:** Phase 5 拆分后，roadmap `Plan` artifact 指向 plan index；旧总 plan 明确 deprecated；5A-5E subplans 有明确 scope 和状态；5A technical contract 具备 Host Runtime 最小 vertical smoke path、Phase 1-4 compliance matrix、v2 reference mapping、7 分 quality gate 和 completion evidence；5A plan 通过审查后才更新 plan index 和 roadmap planned 状态；roadmap Phase 5 保持 `planned`，下一步指向准备 5A strict execution plan。
-- **用户确认事项:** 先设计 subplans，再决定是否升级正式 roadmap phases；旧总 plan 标记 deprecated 并保留历史参考；第一个可执行 subplan 是 5A Host Runtime；reference mapping 按能力域 / 基础设施域；subplan 独立 evidence，Phase 5 最终统一完成；5A plan index 初始状态为 `pending`，5A plan 创建并通过审查后改为 `planned`。
-- **本计划不包含:** 不实现 5A 运行时代码；不执行 5A plan；不创建 5B-5E plans；不修改通用 `roadmap-management` skill；不把 5A-5E 写入 roadmap Phase Summary 作为正式 phases。
+- **Success Criteria:** Phase 5 拆分后，roadmap `Plan` artifact 指向 plan index；旧总 plan 明确 deprecated；5A-5E subplans 有明确 scope 和状态；5A technical contract 具备 Host Runtime 最小 vertical smoke path、Phase 1-4 compliance matrix、v2 reference mapping、7 分 quality gate 和 completion evidence；5A execution index 已创建并指向 5A-01 strict execution plan 准备入口；roadmap Phase 5 保持 `planned`，下一步指向准备 5A strict execution plan。
+- **用户确认事项:** 先设计 subplans，再决定是否升级正式 roadmap phases；旧总 plan 标记 deprecated 并保留历史参考；第一个执行准备单元围绕 5A Host Runtime technical contract 展开；reference mapping 按能力域 / 基础设施域；subplan 独立 evidence，Phase 5 最终统一完成；5A execution index 创建后，下一步是基于该 index 创建并审查 5A-01 strict execution plan。
+- **本计划不包含:** 不实现 5A 运行时代码；不直接执行 5A technical contract；不创建 5B-5E plans；不修改通用 `roadmap-management` skill；不把 5A-5E 写入 roadmap Phase Summary 作为正式 phases。
 
 ## 参考输入映射
 
@@ -280,10 +280,10 @@ If a subplan gains an independent roadmap goal, cross-phase dependency, standalo
 
 ## Next Manual Action
 
-After Phase 5A plan is created and this index is updated to mark Phase 5A as `planned`, execute:
+After the Phase 5A technical contract and execution index are in place, create and review the first strict execution plan card:
 
 ```text
-/superpowers:subagent-driven-development docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md
+/superpowers:writing-plans Create strict execution plan for Phase 5A-01 TS result + MCP mapping foundation using docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md and docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md
 ```
 '''
 path.write_text(content, encoding='utf-8')
@@ -371,14 +371,15 @@ from pathlib import Path
 roadmap = Path('docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md')
 text = roadmap.read_text(encoding='utf-8')
 required = [
-    '| Phase 5 — 高频日常闭环基础设施 | planned | 实现 editor/compile/console/test/playmode/screenshot 的核心闭环，并创建最小 actual `/unity` skill | `docs/superpowers/specs/2026-05-18-unity-agent-kit-phase-5-daily-loop-infrastructure-design.md` | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md` | pending | implement-plan |',
-    '- 当前阶段：Phase 5 split design、plan index 和 5A Host Runtime plan 已创建并审查通过，等待执行 5A plan。',
-    '- **Next Manual Action:** `/superpowers:subagent-driven-development docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md`',
+    '| Phase 5 — 高频日常闭环基础设施 | planned | 实现 editor/compile/console/test/playmode/screenshot 的核心闭环，并创建最小 actual `/unity` skill | `docs/superpowers/specs/2026-05-18-unity-agent-kit-phase-5-daily-loop-infrastructure-design.md` | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md` | pending | prepare-5a-execution-plan |',
+    '- 当前阶段：Phase 5A technical contract 已通过审查；下一步是创建和审查 Phase 5A execution plan set。',
+    '- **Next Manual Action:** `/superpowers:writing-plans Create strict execution plan for Phase 5A-01 TS result + MCP mapping foundation using docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md and docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md`',
     '### Phase 5：高频日常闭环基础设施',
     '**Status:** `planned`',
     '- **Spec:** `docs/superpowers/specs/2026-05-18-unity-agent-kit-phase-5-daily-loop-infrastructure-design.md`',
     '- **Plan:** `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md`',
-    '完成 Phase 5 split design、plan index 和已审查的 5A Host Runtime plan；Phase 5 进入 split-plan `planned` 状态，下一步执行 5A plan。',
+    'Phase 5A execution index 已创建，当前动作是基于该 index 创建并审查 5A-01 strict execution plan。',
+    '完成 Phase 5 split design、5A technical contract 审查和 execution index 建立；下一步是准备 5A strict execution plan，不再直接执行 technical contract。',
 ]
 missing = [item for item in required if item not in text]
 if missing:
@@ -392,14 +393,14 @@ PY
 
 预期：FAIL，输出 Phase 5 roadmap planned split state missing。
 
-证明：该检查证明 roadmap 还没有把 Phase 5 的 plan artifact 指向 plan index，也没有把下一步指向 5A 执行。
+证明：该检查证明 roadmap 还没有把 Phase 5 的 plan artifact 指向 plan index，也没有把下一步切换到 5A execution index 驱动的 strict execution plan 准备入口。
 
 - [x] **步骤 2：更新 Phase Summary 中 Phase 5 行**
 
 将 Phase 5 行替换为：
 
 ```markdown
-| Phase 5 — 高频日常闭环基础设施 | planned | 实现 editor/compile/console/test/playmode/screenshot 的核心闭环，并创建最小 actual `/unity` skill | `docs/superpowers/specs/2026-05-18-unity-agent-kit-phase-5-daily-loop-infrastructure-design.md` | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md` | pending | implement-plan |
+| Phase 5 — 高频日常闭环基础设施 | planned | 实现 editor/compile/console/test/playmode/screenshot 的核心闭环，并创建最小 actual `/unity` skill | `docs/superpowers/specs/2026-05-18-unity-agent-kit-phase-5-daily-loop-infrastructure-design.md` | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md` | pending | prepare-5a-execution-plan |
 ```
 
 - [x] **步骤 3：更新 Current State**
@@ -407,12 +408,13 @@ PY
 将 Current State 中 Phase 5 相关行更新为：
 
 ```markdown
-- 当前阶段：Phase 5 split design、plan index 和 5A Host Runtime plan 已创建并审查通过，等待执行 5A plan。
+- 当前阶段：Phase 5A technical contract 已通过审查；下一步是创建和审查 Phase 5A execution plan set。
+- Phase 5A execution index 已创建，当前动作是基于该 index 创建并审查 5A-01 strict execution plan。
 - Phase 1 已完成架构与边界蓝图规格验证，并记录 completion evidence。
 - Phase 2 已完成 Unity Agent Skill 体系设计规格和计划，并记录 completion evidence。
 - Phase 3 已完成 Public MCP Tool Action Design 规格和计划，并记录 completion evidence。
 - Phase 4 已完成 Async / Job / Workflow / Artifact Semantics 规格验证和计划执行，并记录 completion evidence。
-- **Next Manual Action:** `/superpowers:subagent-driven-development docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md`
+- **Next Manual Action:** `/superpowers:writing-plans Create strict execution plan for Phase 5A-01 TS result + MCP mapping foundation using docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md and docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md`
 - 当前不实现 Phase 6/7/8 能力域。
 ```
 
@@ -437,7 +439,7 @@ PY
 在 `## Change Log` 顶部追加：
 
 ```markdown
-- 2026-05-18：完成 Phase 5 split design、plan index 和已审查的 5A Host Runtime plan；Phase 5 进入 split-plan `planned` 状态，下一步执行 5A plan。
+- 2026-05-18：完成 Phase 5 split design、5A technical contract 审查和 execution index 建立；Phase 5 进入 split-plan `planned` 状态，下一步是准备 5A strict execution plan，不再直接执行 technical contract。
 ```
 
 - [x] **步骤 6：运行 roadmap planned 状态检查并确认通过**
@@ -450,7 +452,7 @@ PY
 PASS Phase 5 roadmap planned split state is present
 ```
 
-证明：该检查证明 roadmap current truth 已指向 plan index，且下一步是执行 5A plan，不再指向旧总 plan。
+证明：该检查证明 roadmap current truth 已指向 plan index，且下一步是准备 5A strict execution plan，不再把 technical contract 当作直接执行入口。
 
 - [x] **步骤 7：Commit**
 
@@ -488,7 +490,7 @@ checks = {
     ],
     'docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md': [
         '本文件不是 implementation plan',
-        '| Phase 5A | Host Runtime 基础设施 | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md` | planned | pending | stays subplan |',
+        'docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md',
         'Phase 5 completed only after all subplans + final E2E evidence pass',
     ],
     'docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md': [
@@ -506,8 +508,9 @@ checks = {
         'TS public result → MCP tool result payload',
     ],
     'docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md': [
-        '| Phase 5 — 高频日常闭环基础设施 | planned | 实现 editor/compile/console/test/playmode/screenshot 的核心闭环，并创建最小 actual `/unity` skill | `docs/superpowers/specs/2026-05-18-unity-agent-kit-phase-5-daily-loop-infrastructure-design.md` | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md` | pending | implement-plan |',
-        '/superpowers:subagent-driven-development docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md',
+        '| Phase 5 — 高频日常闭环基础设施 | planned | 实现 editor/compile/console/test/playmode/screenshot 的核心闭环，并创建最小 actual `/unity` skill | `docs/superpowers/specs/2026-05-18-unity-agent-kit-phase-5-daily-loop-infrastructure-design.md` | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md` | pending | prepare-5a-execution-plan |',
+        '/superpowers:writing-plans Create strict execution plan for Phase 5A-01 TS result + MCP mapping foundation using docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md and docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md',
+        '下一步是准备 5A strict execution plan，不再直接执行 technical contract',
     ],
 }
 errors = []
@@ -538,7 +541,7 @@ PY
 PASS Phase 5 split landing complete
 ```
 
-证明：该检查证明 split design 已落地为 deprecated old plan、plan index、5A plan 和 roadmap planned state，旧总 plan 不再是可执行入口。
+证明：该检查证明 split design 已落地为 deprecated old plan、plan index、5A technical contract 与 execution index 指针，且下一步是准备 5A strict execution plan，不再直接执行 technical contract。
 
 - [x] **步骤 2：运行占位符检查**
 
@@ -582,7 +585,7 @@ PY
 PASS no placeholder markers in new split plans
 ```
 
-证明：该检查证明新 plan index 和 5A plan 不含禁止占位符，后续执行者不会遇到空泛指令。
+证明：该检查证明新 plan index 和 5A technical contract 不含禁止占位符，后续执行者不会遇到空泛指令。
 
 - [x] **步骤 3：运行 markdown whitespace 检查**
 
