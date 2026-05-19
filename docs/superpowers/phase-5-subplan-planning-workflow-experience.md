@@ -244,6 +244,27 @@ Roadmap
 
 后续 large subplan 完成 contract / execution index handoff 时，最终回复应直接说明下一步入口：`writing-plans` 创建并审查当前 plan card 对应的 expanded strict execution plan；不得只说“执行 5A plan”或让 technical contract 看起来可执行。
 
+## 5A-01 strict execution plan 实战新增经验
+
+2026-05-19，Phase 5A-01 首次跑通：technical contract → execution index plan card → expanded strict execution plan → `reviewing-specs` → `subagent-driven-development` → evidence → current-truth sync。
+
+本轮暴露出以下可复用规则：
+
+1. **Plan 审查要显式问“是否严格遵循 technical contract”。** 只做普通 consistency review 会先抓到显眼问题，例如测试数量预期错误；但第二轮用“是否严格遵循 `phase-5a-host-runtime.md`”追问后，才抓到 top-level `code` / `message` 和 envelope metadata preservation 这类合同遗漏。
+2. **5A-01 这种 interface foundation 也必须证明语义。** 即使没有 Unity host 或 HTTP runtime，测试仍要证明 status semantics、diagnostic preservation、failure metadata preservation、MCP `structuredContent` preservation、summary-only `content` 和 `isError` rule，而不是只证明文件或类型存在。
+3. **执行前要检查 untracked implementation directory。** 本次进入 `subagent-driven-development` 时，`plugins/unity-agent-kit/` 已经存在任务 1 产物；controller 先检查内容再派发实现者，避免实现者盲目覆盖已有工作。
+4. **子代理额外跑错命令不应污染 evidence。** 代码质量审查子代理曾尝试 root `npm test` / workspace 命令并因无 root `package.json` 失败；只要 plan 要求的命令通过，应在汇报中明确区分“额外错误命令”与正式 evidence。
+5. **untracked plan 文件不能只靠 `git diff` 验证 checkbox。** 新建 expanded plan 未暂存前，普通 `git diff -- <path>` 可能无输出；controller 应用 `Grep` 或暂存前内容检查确认只勾选了已通过两阶段审查的任务。
+6. **完成 sibling execution plan 后只做 partial sync。** 5A-01 completed 后，Phase 5A 只能变为 partial / in-progress，不能 completed；Phase 5 仍保持 planned / pending。Next Manual Action 必须推进到 5A-02 strict execution plan。
+7. **Commit 可以把“记录使用体验”和实际 5A-01 evidence 放在同一提交，但要确保 current-truth 与 history/experience 分工清楚。** plan index、execution index 和 roadmap 是下一步入口；experience doc 只记录协作和流程经验。
+
+本轮后续通用 skill 候选改进：
+
+- `writing-plans` 生成 expanded sibling plan 后，默认提示用户先跑“strictly follows technical contract”口径的 `reviewing-specs`。
+- `subagent-driven-development` 在执行未跟踪新目录时，controller 应先检查目录是否已有部分产物。
+- 文档同步关卡应提醒：untracked plan 的 checkbox verification 不能只依赖 `git diff`。
+- roadmap / plan index 同步应有 partial subplan evidence 模式，避免单个 sibling plan 完成后误把 subplan 或 phase 标记 completed。
+
 ## 当前结论
 
-先执行 `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-contract-execution-plan-set.md`，把 Large Subplan Planning Protocol、5A technical contract 和 5A execution index 落地为项目内 current-truth。等 Phase 5A 至少跑通 technical contract → execution index → expanded strict execution plan → evidence 的真实接力后，再基于本记录和实际失败模式修改通用 superpowers skills。
+Phase 5A 已跑通第一轮真实接力：5A technical contract → 5A execution index → 5A-01 expanded strict execution plan → review → subagent-driven implementation → evidence → current-truth sync。下一步应基于同一流程创建并审查 5A-02 Unity DTO + registry contract strict execution plan；等 5A 至少再跑通 5A-02 或后续一个 runtime-facing sibling plan 后，再决定哪些规则迁移到通用 superpowers skill。
