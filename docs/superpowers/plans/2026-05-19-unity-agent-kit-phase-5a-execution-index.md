@@ -28,7 +28,7 @@
 | 5A-03 | Host bootstrap + lifecycle cleanup | 5A-LIFE-01, 5A-LIFE-02, 5A-REG-02 | 2 | 5A-02 | pending | candidate |
 | 5A-04 | GET /probe HTTP contract | 5A-HTTP-01, 5A-HTTP-03, 5A-REG-02 | 2 | 5A-02, 5A-03 | pending | candidate |
 | 5A-05 | POST /operations envelope + router | 5A-DTO-02, 5A-HTTP-02, 5A-HTTP-03, 5A-OPS-01, 5A-OPS-02 | 3 | 5A-01, 5A-02, 5A-04 | pending | candidate |
-| 5A-06 | Main-thread dispatch + host-level timeout | 5A-DISPATCH-01, 5A-DISPATCH-02, 5A-TIMEOUT-01, 5A-TIMEOUT-02 | 4 | 5A-05 | pending | candidate |
+| 5A-06 | Main-thread dispatch + host-level timeout | 5A-DISPATCH-01, 5A-DISPATCH-02, 5A-OPS-02, 5A-TIMEOUT-01, 5A-TIMEOUT-02 | 4 | 5A-05 | pending | candidate |
 | 5A-07 | TS registry/probe/invoke/rebind classification | 5A-REG-03, 5A-REBIND-01, 5A-REBIND-02, 5A-REBIND-03, 5A-REBIND-04, 5A-TIMEOUT-02 | 5 | 5A-04, 5A-05, 5A-06 | pending | candidate |
 | 5A-08 | Vertical smoke + completion evidence | 5A-EVIDENCE-01, 5A-EVIDENCE-02, 5A-EVIDENCE-03, 5A-EVIDENCE-04 | 6 | 5A-01, 5A-02, 5A-03, 5A-04, 5A-05, 5A-06, 5A-07 | pending | candidate |
 
