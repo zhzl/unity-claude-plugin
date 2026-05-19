@@ -962,7 +962,7 @@ EOF
 - 验证：`docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-split-landing.md`
 - 验证：`docs/superpowers/phase-5-subplan-planning-workflow-experience.md`
 
-- [ ] **步骤 1：运行最终集成检查**
+- [x] **步骤 1：运行最终集成检查**
 
 运行：
 
@@ -1055,7 +1055,7 @@ PASS large subplan protocol landing complete
 
 证明：该检查证明 protocol、technical contract、execution index、phase index、roadmap、split landing 和 experience doc 的 current-truth 入口一致，不再把 technical contract 当 executable plan。
 
-- [ ] **步骤 2：运行 markdown diff 检查**
+- [x] **步骤 2：运行 markdown diff 检查**
 
 运行：
 
@@ -1074,7 +1074,7 @@ git diff --check -- \
 
 证明：该检查证明文档 diff 没有尾随空格或冲突标记等基础格式问题。
 
-- [ ] **步骤 3：运行计划自检脚本**
+- [x] **步骤 3：运行计划自检脚本**
 
 运行：
 
@@ -1120,7 +1120,7 @@ PASS implementation plan self-check
 
 证明：该检查证明本 implementation plan 包含必需章节、六个落地任务和最终验证，不含已知占位表达。
 
-- [ ] **步骤 4：Commit**
+- [x] **步骤 4：Commit**
 
 仅在用户明确授权 commit 时运行：
 

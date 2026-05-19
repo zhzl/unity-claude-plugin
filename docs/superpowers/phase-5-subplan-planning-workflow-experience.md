@@ -103,7 +103,7 @@ Roadmap Phase
 - Phase 5 spec: docs/superpowers/specs/2026-05-18-unity-agent-kit-phase-5-daily-loop-infrastructure-design.md
 - Split design: docs/superpowers/specs/2026-05-18-unity-agent-kit-phase-5-split-design.md
 - Plan index: docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md
-- Completed 5A plan/evidence: docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md
+- Completed 5A technical contract and execution evidence: docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md + docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md
 - Target output: docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5b-artifact-resource-timeout.md
 
 前置条件：
