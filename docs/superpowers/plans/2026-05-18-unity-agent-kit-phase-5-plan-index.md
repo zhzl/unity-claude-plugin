@@ -19,7 +19,7 @@ This index keeps Phase 5 as a single roadmap phase while splitting execution int
 
 | Subplan | Scope | Contract | Execution Index | Status | Execution Status | Completion Evidence | Upgrade Check |
 |---|---|---|---|---|---|---|---|
-| Phase 5A | Host Runtime 基础设施 | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md` | `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md` | contract-ready | plan-cards-pending | pending | stays subplan |
+| Phase 5A | Host Runtime 基础设施 | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md` | `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md` | in-progress | in-progress | partial: 5A-01 completed; 5A-02 through 5A-08 pending | stays subplan |
 | Phase 5B | Artifact / Resource / Timeout / Completion 基础设施 | pending | pending | pending | pending | pending | stays subplan |
 | Phase 5C | Core Diagnostics Workflows | pending | pending | pending | pending | pending | stays subplan |
 | Phase 5D | Test / PlayMode / Screenshot Workflows | pending | pending | pending | pending | pending | stays subplan |
@@ -82,8 +82,10 @@ If a subplan gains an independent roadmap goal, cross-phase dependency, standalo
 
 ## Next Manual Action
 
-Review the Phase 5A execution index and create/review the first expanded strict execution plan. Start from:
+Phase 5A is partially in progress: 5A-01 is completed, and 5A-02 through 5A-08 remain pending. Create/review the next expanded strict execution plan. Start from:
 
 ```text
-/superpowers:writing-plans Create strict execution plan for Phase 5A-01 TS result + MCP mapping foundation using docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md and docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md
+/superpowers:writing-plans Create strict execution plan for Phase 5A-02 Unity DTO + registry contract using docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md and docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md
 ```
+
+Partial 5A-01 evidence: expanded plan `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-01-ts-result-mcp-mapping.md`; final verification command `cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/host-runtime.test.ts`; observed result `tests 12`, `pass 12`, `fail 0`; final code review result PASS.

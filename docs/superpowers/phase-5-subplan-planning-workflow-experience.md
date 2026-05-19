@@ -219,6 +219,31 @@ Phase 5A 暴露出第二类 subplan 体验问题：技术合同可以通过 `rev
 
 本规则先作为项目本地 protocol 落地。只有等 5A 至少跑通 technical contract -> execution index -> expanded execution plan -> evidence 的真实接力后，才考虑迁移到通用 superpowers skill。
 
+## 文档结构关系图新增经验
+
+Phase 5A contract / execution index handoff 完成后，仍需要单独解释 roadmap 与 5A 文档的结构关系。这说明 large subplan 流程不能只靠文件指针交接；需要在 handoff summary 或 experience doc 中给出一张 current-truth 关系图。
+
+推荐固定表达：
+
+```text
+Roadmap
+└─ Phase 5 Plan Index                      <- Phase 5 current-truth
+   ├─ Phase 5A Technical Contract           <- 技术合同，不可执行
+   │  └─ Contract Requirement Index          <- requirement ID 来源
+   └─ Phase 5A Execution Plan Set Index     <- 5A execution current-truth
+      ├─ 5A-01 Plan Card                    <- coverage / wave / depends_on，仍不可执行
+      │  └─ expanded strict execution plan   <- 真正可执行
+      └─ 5A-02 ... 5A-08 Plan Cards
+```
+
+图中必须区分三类节点：
+
+1. **current-truth entry:** roadmap、Phase plan index、subplan execution index。
+2. **contract/reference:** technical contract、requirement index、protocol、design spec。
+3. **history/experience:** split landing、workflow experience。
+
+后续 large subplan 完成 contract / execution index handoff 时，最终回复应直接说明下一步入口：`writing-plans` 创建并审查当前 plan card 对应的 expanded strict execution plan；不得只说“执行 5A plan”或让 technical contract 看起来可执行。
+
 ## 当前结论
 
 先执行 `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-contract-execution-plan-set.md`，把 Large Subplan Planning Protocol、5A technical contract 和 5A execution index 落地为项目内 current-truth。等 Phase 5A 至少跑通 technical contract → execution index → expanded strict execution plan → evidence 的真实接力后，再基于本记录和实际失败模式修改通用 superpowers skills。

@@ -23,7 +23,7 @@
 
 | Plan | Scope | Requirement IDs | Wave | Depends on | Expanded Plan | Status |
 |---|---|---|---|---|---|---|
-| 5A-01 | TS result + MCP mapping foundation | 5A-RESULT-01, 5A-RESULT-02, 5A-MCP-01 | 1 | none | pending | candidate |
+| 5A-01 | TS result + MCP mapping foundation | 5A-RESULT-01, 5A-RESULT-02, 5A-MCP-01 | 1 | none | `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-01-ts-result-mcp-mapping.md` | completed |
 | 5A-02 | Unity DTO + registry contract | 5A-DTO-01, 5A-REG-01, 5A-REG-02 | 1 | none | pending | candidate |
 | 5A-03 | Host bootstrap + lifecycle cleanup | 5A-LIFE-01, 5A-LIFE-02, 5A-REG-02 | 2 | 5A-02 | pending | candidate |
 | 5A-04 | GET /probe HTTP contract | 5A-HTTP-01, 5A-HTTP-03, 5A-REG-02 | 2 | 5A-02, 5A-03 | pending | candidate |
@@ -34,10 +34,10 @@
 
 ## Current Next Manual Action
 
-Write and review the first expanded strict execution plan before any Phase 5A code implementation:
+Phase 5A-01 TS result + MCP mapping foundation is completed. Write and review the next expanded strict execution plan for Phase 5A-02 before continuing Phase 5A implementation:
 
 ```text
-/superpowers:writing-plans Create strict execution plan for Phase 5A-01 TS result + MCP mapping foundation using docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md and docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md
+/superpowers:writing-plans Create strict execution plan for Phase 5A-02 Unity DTO + registry contract using docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md and docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md
 ```
 
 After the expanded plan passes review, execute that expanded plan, not this index and not the technical contract.
