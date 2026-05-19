@@ -1652,7 +1652,7 @@ Skill/schema consistency audit：
 
 ## Change Log
 
-- 2026-05-18：完成 Phase 5 split design、plan index 和已审查的 5A Host Runtime plan；Phase 5 进入 split-plan `planned` 状态，下一步执行 5A plan。
+- 2026-05-18：完成 Phase 5 split design、plan index 和 5A Host Runtime technical contract；Phase 5 进入 split-plan `planned` 状态，5A execution index 作为执行入口，下一步创建并审查 Phase 5A-01 strict execution plan。
 - 2026-05-18：完成 Phase 4 Async / Job / Workflow / Artifact Semantics，记录 verification evidence，并将当前阶段推进到 Phase 5 `needs-spec`。
 - 2026-05-17：完成 Phase 4 Async / Job / Workflow / Artifact Semantics spec 和 plan artifact 接入；Phase 4 进入 `planned`，下一步为 `implement-plan`。
 - 2026-05-17：完成 Phase 3 Public MCP Tool Action Design，记录 verification evidence，并将当前阶段推进到 Phase 4 `needs-spec`。
