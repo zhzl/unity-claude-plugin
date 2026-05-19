@@ -573,7 +573,7 @@ Phase 9 至少实现半自动一致性检查，覆盖：
   - safety model；
   - skill/schema 防漂移机制；
   - actual `/unity` skill materialization 与 skill/tool context budget 边界。
-- 当前阶段：Phase 5 split design、plan index 和 5A Host Runtime technical contract 已创建并审查通过。Phase 5A Host Runtime technical contract 已通过审查；下一步是创建和审查 Phase 5A execution plan set。
+- 当前阶段：Phase 5 split design、plan index 和 5A Host Runtime technical contract 已创建并审查通过。Phase 5A Host Runtime technical contract 已通过审查；下一步是创建和审查 Phase 5A execution plan set。Phase 5A execution index 已创建，当前动作是基于该 index 创建并审查 5A-01 strict execution plan。
 - Phase 1 已完成架构与边界蓝图规格验证，并记录 completion evidence。
 - Phase 2 已完成 Unity Agent Skill 体系设计规格和计划，并记录 completion evidence。
 - Phase 3 已完成 Public MCP Tool Action Design 规格和计划，并记录 completion evidence。

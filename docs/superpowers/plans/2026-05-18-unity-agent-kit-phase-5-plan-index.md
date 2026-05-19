@@ -38,7 +38,7 @@ This index keeps Phase 5 as a single roadmap phase while splitting execution int
 Execution status values:
 
 - `pending`：尚未创建 execution index。
-- `plan-cards-pending`：execution index 已计划或待创建，expanded execution plans 尚未就绪。
+- `plan-cards-pending`：execution index 已存在，expanded execution plans 尚未就绪。
 - `plan-ready`：当前 expanded execution plan 已通过 review。
 - `in-progress`：execution plans 正在执行。
 - `completed`：所有 active sibling execution plans 已完成。
@@ -50,7 +50,7 @@ Technical contract is not executable. Do not pass `docs/superpowers/plans/2026-0
 1. Technical contract 审查通过后，subplan status 可为 `contract-ready`。
 2. 创建 execution index，记录 candidate plan cards、requirement IDs、wave、depends_on 和 current next action。
 3. 当前 wave 的 plan card 展开为 strict `superpowers:writing-plans` execution plan。
-4. Execution plan 通过 plan-set review 后，execution status 可为 `plan-ready`。
+4. Execution index 和当前 expanded execution plan 通过 plan-set review 后，subplan `Status` 更新为 `execution-planned`，`Execution Status` 更新为 `plan-ready`。
 5. 只执行 expanded execution plan，不执行 technical contract 或 execution index。
 6. 所有 active execution plans 和 subplan evidence 通过后，subplan status 才能为 `completed`。
 7. Roadmap Phase 5 只有 5A-5E 全部 completed 且 final daily loop E2E 通过后才能 completed。
@@ -82,7 +82,7 @@ If a subplan gains an independent roadmap goal, cross-phase dependency, standalo
 
 ## Next Manual Action
 
-Create and review the Phase 5A execution index and the first expanded strict execution plan. Start from:
+Review the Phase 5A execution index and create/review the first expanded strict execution plan. Start from:
 
 ```text
 /superpowers:writing-plans Create strict execution plan for Phase 5A-01 TS result + MCP mapping foundation using docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md and docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md
