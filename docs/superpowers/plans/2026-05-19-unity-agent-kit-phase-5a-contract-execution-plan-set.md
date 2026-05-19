@@ -575,7 +575,7 @@ for item in required_index:
     if item not in index:
         errors.append(f'plan index missing: {item}')
 required_roadmap = [
-    'Phase 5A Host Runtime technical contract 已通过审查；下一步是创建和审查 Phase 5A execution plan set。',
+    'Phase 5A Host Runtime technical contract 已通过审查，Phase 5A execution index 已创建；下一步是基于该 index 创建并审查 Phase 5A-01 strict execution plan。',
     '/superpowers:writing-plans Create strict execution plan for Phase 5A-01',
 ]
 for item in required_roadmap:
@@ -716,7 +716,7 @@ from pathlib import Path
 path = Path('docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md')
 text = path.read_text(encoding='utf-8')
 old_state = '- 当前阶段：Phase 5 split design、plan index 和 5A Host Runtime plan 已创建并审查通过，等待执行 5A plan。'
-new_state = '- 当前阶段：Phase 5 split design、plan index 和 5A Host Runtime technical contract 已创建并审查通过；下一步是创建和审查 Phase 5A execution plan set。'
+new_state = '- 当前阶段：Phase 5 split design、plan index 和 5A Host Runtime technical contract 已创建并审查通过，Phase 5A execution index 已创建；下一步是基于该 index 创建并审查 Phase 5A-01 strict execution plan。'
 old_action = '- **Next Manual Action:** `/superpowers:subagent-driven-development docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md`'
 new_action = '- **Next Manual Action:** `/superpowers:writing-plans Create strict execution plan for Phase 5A-01 TS result + MCP mapping foundation using docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md and docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md`'
 if old_state not in text:
@@ -1011,7 +1011,7 @@ checks = {
         'docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md',
     ],
     'roadmap': [
-        'Phase 5A Host Runtime technical contract 已通过审查；下一步是创建和审查 Phase 5A execution plan set。',
+        'Phase 5A Host Runtime technical contract 已通过审查，Phase 5A execution index 已创建；下一步是基于该 index 创建并审查 Phase 5A-01 strict execution plan。',
         'prepare-5a-execution-plan',
     ],
     'split_landing': [

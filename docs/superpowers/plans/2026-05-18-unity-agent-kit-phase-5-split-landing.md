@@ -372,7 +372,7 @@ roadmap = Path('docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md'
 text = roadmap.read_text(encoding='utf-8')
 required = [
     '| Phase 5 — 高频日常闭环基础设施 | planned | 实现 editor/compile/console/test/playmode/screenshot 的核心闭环，并创建最小 actual `/unity` skill | `docs/superpowers/specs/2026-05-18-unity-agent-kit-phase-5-daily-loop-infrastructure-design.md` | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md` | pending | prepare-5a-execution-plan |',
-    '- 当前阶段：Phase 5A technical contract 已通过审查；下一步是创建和审查 Phase 5A execution plan set。',
+    '- 当前阶段：Phase 5A technical contract 已通过审查，Phase 5A execution index 已创建；下一步是基于该 index 创建并审查 Phase 5A-01 strict execution plan。',
     '- **Next Manual Action:** `/superpowers:writing-plans Create strict execution plan for Phase 5A-01 TS result + MCP mapping foundation using docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md and docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md`',
     '### Phase 5：高频日常闭环基础设施',
     '**Status:** `planned`',
@@ -408,7 +408,7 @@ PY
 将 Current State 中 Phase 5 相关行更新为：
 
 ```markdown
-- 当前阶段：Phase 5A technical contract 已通过审查；下一步是创建和审查 Phase 5A execution plan set。
+- 当前阶段：Phase 5A technical contract 已通过审查，Phase 5A execution index 已创建；下一步是基于该 index 创建并审查 Phase 5A-01 strict execution plan。
 - Phase 5A execution index 已创建，当前动作是基于该 index 创建并审查 5A-01 strict execution plan。
 - Phase 1 已完成架构与边界蓝图规格验证，并记录 completion evidence。
 - Phase 2 已完成 Unity Agent Skill 体系设计规格和计划，并记录 completion evidence。
