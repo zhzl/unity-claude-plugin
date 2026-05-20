@@ -397,7 +397,7 @@ git commit -m "feat: add phase 5a main-thread dispatch queue"
 - 修改：`unity/Assets/UnityAgentKit/Editor/Transport/UnityAgentKitLoopbackHttpServer.cs`
 - 修改：`unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeTests.cs`
 
-- [ ] **步骤 1：编写失败的 real HTTP dispatch test**
+- [x] **步骤 1：编写失败的 real HTTP dispatch test**
 
 在 `HostRuntimeTests.cs` 的 using 区域加入：
 
@@ -502,7 +502,7 @@ private sealed class BackgroundHttpRequest
 }
 ```
 
-- [ ] **步骤 2：运行测试验证失败**
+- [x] **步骤 2：运行测试验证失败**
 
 运行：
 
@@ -513,7 +513,7 @@ UNITY_EDITOR="D:/Program Files/Unity 2022.3.61f1/Editor/Unity.exe"
 
 预期：FAIL；`HostThreadCheckOverOperationsRunsOnCapturedMainThread` fails because existing `/operations` returns `rejected + host.dispatch_required` or never enqueues pending dispatch work. This proves the failing behavior is the missing HTTP-to-main-thread dispatch bridge.
 
-- [ ] **步骤 3：实现 non-blocking HTTP dispatch scheduling**
+- [x] **步骤 3：实现 non-blocking HTTP dispatch scheduling**
 
 In `UnityAgentKitLoopbackHttpServer.HandleOperation`, after JSON parse and before `UnityAgentKitOperationRouter.Route`, insert:
 
@@ -537,7 +537,7 @@ var statusCode = response.status == "rejected" && response.code == "operation.em
 WriteJson(context.Response, statusCode, JsonUtility.ToJson(response));
 ```
 
-- [ ] **步骤 4：运行测试验证通过**
+- [x] **步骤 4：运行测试验证通过**
 
 运行：
 
@@ -548,7 +548,7 @@ UNITY_EDITOR="D:/Program Files/Unity 2022.3.61f1/Editor/Unity.exe"
 
 预期：PASS；result XML contains `result="Passed"` and `failed="0"`。证明：real HTTP `POST /operations` can schedule `host.threadCheck`, the Unity test main thread can drain the dispatch queue, and the HTTP response preserves the top-level operation envelope fields from 5A-05.
 
-- [ ] **步骤 5：Commit**
+- [x] **步骤 5：Commit**
 
 ```bash
 git add unity/Assets/UnityAgentKit/Editor/Transport/UnityAgentKitLoopbackHttpServer.cs unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeTests.cs
