@@ -106,7 +106,7 @@ UNITY_EDITOR="D:/Program Files/Unity 2022.3.61f1/Editor/Unity.exe"
 - 修改：`unity/Assets/UnityAgentKit/Editor/Operations/UnityAgentKitOperationRouter.cs`
 - 修改：`unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeTests.cs`
 
-- [ ] **步骤 1：编写失败的 dispatch queue tests**
+- [x] **步骤 1：编写失败的 dispatch queue tests**
 
 在 `unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeTests.cs` 的 using 区域加入：
 
@@ -172,7 +172,7 @@ public void DispatchExceptionReturnsStructuredDiagnostics()
 }
 ```
 
-- [ ] **步骤 2：运行测试验证失败**
+- [x] **步骤 2：运行测试验证失败**
 
 运行：
 
@@ -183,7 +183,7 @@ UNITY_EDITOR="D:/Program Files/Unity 2022.3.61f1/Editor/Unity.exe"
 
 预期：FAIL，compiler errors mention missing `UnityAgentKitOperationRouter.RequiresMainThreadDispatch`, `UnityAgentKitMainThread.Enqueue`, `UnityAgentKitMainThread.DrainForTests`, or `UnityAgentKitMainThread.CapturedMainThreadIdForTests`。该失败证明 tests target missing 5A-06 dispatch foundation rather than already completed 5A-05 router behavior。
 
-- [ ] **步骤 3：实现最少 dispatch queue 和 router helpers**
+- [x] **步骤 3：实现最少 dispatch queue 和 router helpers**
 
 在 `unity/Assets/UnityAgentKit/Editor/Operations/UnityAgentKitOperationRouter.cs` 中加入 dispatch constants and helpers：
 
@@ -373,7 +373,7 @@ namespace UnityAgentKit.Editor
 }
 ```
 
-- [ ] **步骤 4：运行测试验证通过**
+- [x] **步骤 4：运行测试验证通过**
 
 运行：
 
@@ -384,7 +384,7 @@ UNITY_EDITOR="D:/Program Files/Unity 2022.3.61f1/Editor/Unity.exe"
 
 预期：PASS；result XML contains `result="Passed"` and `failed="0"`。证明：direct dispatch queue can execute `host.threadCheck` on the captured Unity main thread and convert a dispatch exception into a structured operation envelope。
 
-- [ ] **步骤 5：Commit**
+- [x] **步骤 5：Commit**
 
 ```bash
 git add unity/Assets/UnityAgentKit/Editor/Transport/UnityAgentKitMainThread.cs unity/Assets/UnityAgentKit/Editor/Operations/UnityAgentKitOperationRouter.cs unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeTests.cs
