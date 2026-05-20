@@ -128,7 +128,13 @@ namespace UnityAgentKit.Editor
                     response = UnityAgentKitOperationRouter.DispatchException(item.request, item.record, error);
                 }
 
-                item.complete?.Invoke(response);
+                try
+                {
+                    item.complete?.Invoke(response);
+                }
+                catch (Exception)
+                {
+                }
             }
         }
     }

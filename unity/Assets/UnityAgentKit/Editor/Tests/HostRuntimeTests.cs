@@ -503,6 +503,47 @@ namespace UnityAgentKit.Editor.Tests
         }
 
         [Test]
+        public void CompletionCallbackExceptionDoesNotPreventLaterDispatchesInSameDrain()
+        {
+            UnityAgentKitMainThread.ResetForTests();
+            UnityAgentKitMainThread.RegisterDrain();
+            var firstCompletionCount = 0;
+            var secondCompletionCount = 0;
+            UnityAgentKitOperationResponse secondResponse = null;
+            var record = TestHostRecord(49211);
+
+            UnityAgentKitMainThread.Enqueue(new UnityAgentKitOperationRequest
+            {
+                operation = "host.threadCheck",
+                requestId = "req-thread-first"
+            }, record, _ =>
+            {
+                firstCompletionCount += 1;
+                throw new InvalidOperationException("completion failed");
+            });
+
+            UnityAgentKitMainThread.Enqueue(new UnityAgentKitOperationRequest
+            {
+                operation = "host.threadCheck",
+                requestId = "req-thread-second"
+            }, record, completed =>
+            {
+                secondCompletionCount += 1;
+                secondResponse = completed;
+            });
+
+            Assert.DoesNotThrow(() => UnityAgentKitMainThread.DrainForTests());
+
+            Assert.AreEqual(1, firstCompletionCount);
+            Assert.AreEqual(1, secondCompletionCount);
+            AssertOperationEnvelopeMinimumFields(secondResponse, "succeeded", "host.threadCheck", "req-thread-second", record);
+            var data = JsonUtility.FromJson<UnityAgentKitThreadCheckResult>(secondResponse.data);
+            Assert.AreEqual(UnityAgentKitMainThread.CapturedMainThreadIdForTests, data.capturedMainThreadId);
+            Assert.AreEqual(data.capturedMainThreadId, data.executionThreadId);
+            Assert.IsTrue(data.ranOnMainThread);
+        }
+
+        [Test]
         public void DispatchExceptionReturnsStructuredDiagnostics()
         {
             UnityAgentKitMainThread.ResetForTests();
@@ -513,11 +554,11 @@ namespace UnityAgentKit.Editor.Tests
             {
                 operation = "host.throw",
                 requestId = "req-throw"
-            }, TestHostRecord(49211), completed => response = completed);
+            }, TestHostRecord(49212), completed => response = completed);
 
             UnityAgentKitMainThread.DrainForTests();
 
-            AssertOperationEnvelopeMinimumFields(response, "failed", "host.throw", "req-throw", TestHostRecord(49211));
+            AssertOperationEnvelopeMinimumFields(response, "failed", "host.throw", "req-throw", TestHostRecord(49212));
             Assert.AreEqual("host.dispatch_exception", response.code);
             Assert.AreEqual(1, response.diagnostics.Length);
             Assert.AreEqual("error", response.diagnostics[0].severity);
