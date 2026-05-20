@@ -118,14 +118,17 @@ namespace UnityAgentKit.Editor
 
             foreach (var item in work)
             {
+                UnityAgentKitOperationResponse response;
                 try
                 {
-                    item.complete?.Invoke(UnityAgentKitOperationRouter.RunOnMainThread(item.request, item.record, _capturedMainThreadId));
+                    response = UnityAgentKitOperationRouter.RunOnMainThread(item.request, item.record, _capturedMainThreadId);
                 }
                 catch (Exception error)
                 {
-                    item.complete?.Invoke(UnityAgentKitOperationRouter.DispatchException(item.request, item.record, error));
+                    response = UnityAgentKitOperationRouter.DispatchException(item.request, item.record, error);
                 }
+
+                item.complete?.Invoke(response);
             }
         }
     }
