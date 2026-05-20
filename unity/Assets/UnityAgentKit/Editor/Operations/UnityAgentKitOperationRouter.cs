@@ -7,6 +7,8 @@ namespace UnityAgentKit.Editor
         internal const string InvalidRequestOperation = "host.invalidRequest";
         internal const string EchoOperation = "host.echo";
         internal const string ThreadCheckOperation = "host.threadCheck";
+        internal const string ThrowOperation = "host.throw";
+        internal const string PendingDispatchTimeoutOperation = "host.pendingDispatchTimeout";
 
         internal static string NormalizeOperation(string operation)
         {
@@ -35,6 +37,48 @@ namespace UnityAgentKit.Editor
             }
 
             return Rejected(operation, requestId, record, "operation.unknown", "Unknown operation: " + operation, startedAt);
+        }
+
+        internal static bool RequiresMainThreadDispatch(string operation)
+        {
+            var normalized = NormalizeOperation(operation);
+            return normalized == ThreadCheckOperation || normalized == ThrowOperation || normalized == PendingDispatchTimeoutOperation;
+        }
+
+        internal static UnityAgentKitOperationResponse RunOnMainThread(UnityAgentKitOperationRequest request, UnityAgentKitHostRecord record, int capturedMainThreadId)
+        {
+            var startedAt = Now();
+            var operation = NormalizeOperation(request != null ? request.operation : string.Empty);
+            var requestId = request != null ? request.requestId ?? string.Empty : string.Empty;
+
+            if (operation == ThreadCheckOperation)
+            {
+                var result = new UnityAgentKitThreadCheckResult
+                {
+                    capturedMainThreadId = capturedMainThreadId,
+                    executionThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId,
+                    ranOnMainThread = capturedMainThreadId == System.Threading.Thread.CurrentThread.ManagedThreadId
+                };
+                return Succeeded(operation, requestId, record, "Thread check completed.", UnityEngine.JsonUtility.ToJson(result), startedAt);
+            }
+
+            if (operation == ThrowOperation)
+            {
+                throw new InvalidOperationException("Synthetic dispatch exception.");
+            }
+
+            return Rejected(operation, requestId, record, "operation.unknown", "Unknown operation: " + operation, startedAt);
+        }
+
+        internal static UnityAgentKitOperationResponse DispatchException(UnityAgentKitOperationRequest request, UnityAgentKitHostRecord record, Exception error)
+        {
+            var startedAt = Now();
+            var operation = NormalizeOperation(request != null ? request.operation : string.Empty);
+            var requestId = request != null ? request.requestId ?? string.Empty : string.Empty;
+            var message = "Main-thread dispatch failed.";
+            var response = Failed(operation, requestId, record, "host.dispatch_exception", message, startedAt);
+            response.diagnostics[0].details = "{\"exceptionType\":\"" + Escape(error != null ? error.GetType().Name : "Exception") + "\"}";
+            return response;
         }
 
         internal static UnityAgentKitOperationResponse EmptyBody(UnityAgentKitHostRecord record)

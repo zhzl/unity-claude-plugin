@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -468,6 +469,60 @@ namespace UnityAgentKit.Editor.Tests
             Assert.AreEqual(1, response.diagnostics.Length);
             Assert.AreEqual("host.dispatch_required", response.diagnostics[0].code);
             Assert.AreEqual(string.Empty, response.data);
+        }
+
+        [Test]
+        public void ThreadCheckOperationIsMarkedAsMainThreadDispatch()
+        {
+            Assert.IsTrue(UnityAgentKitOperationRouter.RequiresMainThreadDispatch(" host.threadCheck "));
+            Assert.IsTrue(UnityAgentKitOperationRouter.RequiresMainThreadDispatch("host.throw"));
+            Assert.IsFalse(UnityAgentKitOperationRouter.RequiresMainThreadDispatch("host.echo"));
+            Assert.IsFalse(UnityAgentKitOperationRouter.RequiresMainThreadDispatch("unknown.operation"));
+        }
+
+        [Test]
+        public void MainThreadDispatchRunsThreadCheckOnCapturedThread()
+        {
+            UnityAgentKitMainThread.ResetForTests();
+            UnityAgentKitMainThread.RegisterDrain();
+            UnityAgentKitOperationResponse response = null;
+
+            UnityAgentKitMainThread.Enqueue(new UnityAgentKitOperationRequest
+            {
+                operation = "host.threadCheck",
+                requestId = "req-thread-direct"
+            }, TestHostRecord(49210), completed => response = completed);
+
+            UnityAgentKitMainThread.DrainForTests();
+
+            AssertOperationEnvelopeMinimumFields(response, "succeeded", "host.threadCheck", "req-thread-direct", TestHostRecord(49210));
+            var data = JsonUtility.FromJson<UnityAgentKitThreadCheckResult>(response.data);
+            Assert.AreEqual(UnityAgentKitMainThread.CapturedMainThreadIdForTests, data.capturedMainThreadId);
+            Assert.AreEqual(data.capturedMainThreadId, data.executionThreadId);
+            Assert.IsTrue(data.ranOnMainThread);
+        }
+
+        [Test]
+        public void DispatchExceptionReturnsStructuredDiagnostics()
+        {
+            UnityAgentKitMainThread.ResetForTests();
+            UnityAgentKitMainThread.RegisterDrain();
+            UnityAgentKitOperationResponse response = null;
+
+            UnityAgentKitMainThread.Enqueue(new UnityAgentKitOperationRequest
+            {
+                operation = "host.throw",
+                requestId = "req-throw"
+            }, TestHostRecord(49211), completed => response = completed);
+
+            UnityAgentKitMainThread.DrainForTests();
+
+            AssertOperationEnvelopeMinimumFields(response, "failed", "host.throw", "req-throw", TestHostRecord(49211));
+            Assert.AreEqual("host.dispatch_exception", response.code);
+            Assert.AreEqual(1, response.diagnostics.Length);
+            Assert.AreEqual("error", response.diagnostics[0].severity);
+            Assert.AreEqual("host.dispatch_exception", response.diagnostics[0].code);
+            Assert.AreEqual("{\"exceptionType\":\"InvalidOperationException\"}", response.diagnostics[0].details);
         }
 
         [Test]
