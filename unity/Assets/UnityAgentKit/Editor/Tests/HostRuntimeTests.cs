@@ -940,8 +940,18 @@ namespace UnityAgentKit.Editor.Tests
                 Assert.AreEqual(0, UnityAgentKitLoopbackHttpServer.ActiveHandlerCountForTests);
                 Assert.IsFalse(request.IsDone);
 
+                UnityAgentKitMainThread.DrainForTests();
+
+                Assert.Greater(UnityAgentKitMainThread.PendingDispatchCountForTests, 0);
+                Assert.IsFalse(request.IsDone);
+
                 yield return WaitForRequestDone(request);
                 Assert.IsNull(request.GetError());
+
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(request.GetResult().body);
+                Assert.AreEqual(200, request.GetResult().statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "timeout", "host.pendingDispatchTimeout", "req-nonblocking", record);
+                Assert.AreEqual("host.dispatch_timeout", response.code);
             }
             finally
             {

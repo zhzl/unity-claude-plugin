@@ -128,7 +128,7 @@ namespace UnityAgentKit.Editor
 
         private static void Drain()
         {
-            List<PendingDispatch> work;
+            List<PendingDispatch> work = null;
             lock (PendingLock)
             {
                 if (PendingDispatches.Count == 0)
@@ -136,8 +136,26 @@ namespace UnityAgentKit.Editor
                     return;
                 }
 
-                work = new List<PendingDispatch>(PendingDispatches);
-                PendingDispatches.Clear();
+                for (var i = 0; i < PendingDispatches.Count; i += 1)
+                {
+                    var item = PendingDispatches[i];
+                    if (item.holdForTimeout)
+                    {
+                        continue;
+                    }
+
+                    if (work == null)
+                    {
+                        work = new List<PendingDispatch>();
+                    }
+
+                    work.Add(item);
+                }
+            }
+
+            if (work == null)
+            {
+                return;
             }
 
             foreach (var item in work)
@@ -145,11 +163,6 @@ namespace UnityAgentKit.Editor
                 if (item.completed)
                 {
                     Interlocked.Increment(ref _expiredDispatchExecutionCount);
-                    continue;
-                }
-
-                if (item.holdForTimeout)
-                {
                     continue;
                 }
 
