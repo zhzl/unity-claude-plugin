@@ -1053,6 +1053,39 @@ namespace UnityAgentKit.Editor.Tests
         }
 
         [Test]
+        public void StopWindowRejectsNewDispatchRequestsWithoutEnqueueing()
+        {
+            var registryPath = TemporaryRegistryPath("operations-http-stop-window-reject");
+            HttpResult stopWindowResult = default;
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                UnityAgentKitLoopbackHttpServer.BeginStopHookForTests = () =>
+                {
+                    stopWindowResult = Post(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.threadCheck\",\"requestId\":\"req-stop-window\"}");
+                };
+
+                UnityAgentKitHost.StopForTests("host.stopped");
+
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(stopWindowResult.body);
+                Assert.AreEqual(200, stopWindowResult.statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "failed", "host.threadCheck", "req-stop-window", record);
+                Assert.AreEqual("host.stopped", response.code);
+                Assert.AreEqual(1, response.diagnostics.Length);
+                Assert.AreEqual("host.stopped", response.diagnostics[0].code);
+                Assert.AreNotEqual("timeout", response.status);
+                Assert.AreNotEqual("host.dispatch_timeout", response.code);
+                Assert.AreEqual(0, UnityAgentKitMainThread.PendingDispatchCountForTests);
+            }
+            finally
+            {
+                UnityAgentKitLoopbackHttpServer.BeginStopHookForTests = null;
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
         public void StopFailsPendingDispatchWork()
         {
             UnityAgentKitMainThread.ResetForTests();

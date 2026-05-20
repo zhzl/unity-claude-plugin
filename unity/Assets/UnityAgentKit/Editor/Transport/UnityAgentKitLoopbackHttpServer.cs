@@ -11,6 +11,9 @@ namespace UnityAgentKit.Editor
     {
         private sealed class ListenerState
         {
+            private int _isStopping;
+            private string _stopReason = string.Empty;
+
             internal ListenerState(HttpListener listener, UnityAgentKitHostRecord record)
             {
                 this.listener = listener;
@@ -19,6 +22,16 @@ namespace UnityAgentKit.Editor
 
             internal readonly HttpListener listener;
             internal readonly UnityAgentKitHostRecord record;
+
+            internal bool IsStopping => Volatile.Read(ref _isStopping) != 0;
+
+            internal string StopReason => Volatile.Read(ref _stopReason) ?? string.Empty;
+
+            internal void BeginStopping(string reasonCode)
+            {
+                Volatile.Write(ref _stopReason, string.IsNullOrEmpty(reasonCode) ? "host.stopped" : reasonCode);
+                Interlocked.Exchange(ref _isStopping, 1);
+            }
         }
 
         private static readonly ManualResetEventSlim AsyncWriteIdle = new ManualResetEventSlim(true);
@@ -26,6 +39,7 @@ namespace UnityAgentKit.Editor
         private static ListenerState _currentState;
         private static int _activeHandlerCount;
         private static int _pendingAsyncWriteCount;
+        internal static Action BeginStopHookForTests;
 
         internal static bool IsRunning
         {
@@ -72,6 +86,8 @@ namespace UnityAgentKit.Editor
         {
             var state = _currentState;
             _currentState = null;
+            state?.BeginStopping(reasonCode);
+            BeginStopHookForTests?.Invoke();
 
             UnityAgentKitMainThread.Stop(reasonCode);
             WaitForAsyncWritesToFlush();
@@ -119,7 +135,7 @@ namespace UnityAgentKit.Editor
             {
                 try
                 {
-                    HandleContext(state.listener.GetContext(), state.record);
+                    HandleContext(state.listener.GetContext(), state);
                 }
                 catch (HttpListenerException)
                 {
@@ -136,15 +152,16 @@ namespace UnityAgentKit.Editor
             }
         }
 
-        private static void HandleContext(HttpListenerContext context, UnityAgentKitHostRecord record)
+        private static void HandleContext(HttpListenerContext context, ListenerState state)
         {
             Interlocked.Increment(ref _activeHandlerCount);
             try
             {
+                var record = state != null ? state.record : null;
                 var path = context.Request.Url != null ? context.Request.Url.AbsolutePath : string.Empty;
                 if (path == "/operations" && context.Request.HttpMethod == "POST")
                 {
-                    HandleOperation(context, record);
+                    HandleOperation(context, state);
                     return;
                 }
 
@@ -174,8 +191,9 @@ namespace UnityAgentKit.Editor
             }
         }
 
-        private static void HandleOperation(HttpListenerContext context, UnityAgentKitHostRecord record)
+        private static void HandleOperation(HttpListenerContext context, ListenerState state)
         {
+            var record = state != null ? state.record : null;
             var body = ReadRequestBody(context.Request);
             if (string.IsNullOrWhiteSpace(body))
             {
@@ -203,6 +221,12 @@ namespace UnityAgentKit.Editor
             var operation = UnityAgentKitOperationRouter.NormalizeOperation(request.operation);
             if (UnityAgentKitOperationRouter.RequiresMainThreadDispatch(operation))
             {
+                if (state != null && state.IsStopping)
+                {
+                    WriteJson(context.Response, 200, JsonUtility.ToJson(UnityAgentKitOperationRouter.Stopped(request, record, state.StopReason)));
+                    return;
+                }
+
                 UnityAgentKitMainThread.Enqueue(request, record, response =>
                 {
                     QueueWriteJson(context.Response, 200, JsonUtility.ToJson(response));
