@@ -27,16 +27,16 @@
 | 5A-02 | Unity DTO + registry contract | 5A-DTO-01, 5A-REG-01, 5A-REG-02 | 1 | none | `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-02-unity-dto-registry-contract.md` | completed |
 | 5A-03 | Host bootstrap + lifecycle cleanup + GET /probe HTTP contract | 5A-LIFE-01, 5A-LIFE-02, 5A-REG-02, 5A-HTTP-01, 5A-HTTP-03 | 2 | 5A-02 | `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-03-host-lifecycle-probe-contract.md` | completed |
 | 5A-04 | Folded into 5A-03 | covered by 5A-03 | 2 | 5A-02 | `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-03-host-lifecycle-probe-contract.md` | folded |
-| 5A-05 | POST /operations envelope + router | 5A-DTO-02, 5A-HTTP-02, 5A-HTTP-03, 5A-OPS-01, 5A-OPS-02 | 3 | 5A-01, 5A-02, 5A-03 | pending | candidate |
+| 5A-05 | POST /operations envelope + router | 5A-DTO-02, 5A-HTTP-02, 5A-HTTP-03, 5A-OPS-01, 5A-OPS-02 | 3 | 5A-01, 5A-02, 5A-03 | `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-05-operations-envelope-router.md` | completed |
 | 5A-06 | Main-thread dispatch + host-level timeout | 5A-DISPATCH-01, 5A-DISPATCH-02, 5A-OPS-02, 5A-TIMEOUT-01, 5A-TIMEOUT-02 | 4 | 5A-05 | pending | candidate |
 | 5A-07 | TS registry/probe/invoke/rebind classification | 5A-REG-03, 5A-REBIND-01, 5A-REBIND-02, 5A-REBIND-03, 5A-REBIND-04, 5A-TIMEOUT-02 | 5 | 5A-03, 5A-05, 5A-06 | pending | candidate |
 | 5A-08 | Vertical smoke + completion evidence | 5A-EVIDENCE-01, 5A-EVIDENCE-02, 5A-EVIDENCE-03, 5A-EVIDENCE-04 | 6 | 5A-01, 5A-02, 5A-03, 5A-05, 5A-06, 5A-07 | pending | candidate |
 
 ## Current Next Manual Action
 
-Phase 5A-03 Host bootstrap + lifecycle cleanup + GET /probe HTTP contract has completed implementation and final review. Evidence: `HostRuntimeTests` result XML `unity/Library/UnityAgentKit/Phase5A03HostLifecycleProbeResults.xml` shows `result="Passed"`, `total="33"`, `passed="33"`, `failed="0"`; final code review verdict was PASS; diff-scope guard found no newly introduced 5A-05+ forbidden symbols.
+Phase 5A-05 POST `/operations` envelope + router has completed implementation and final review. Evidence: `HostRuntimeTests` result XML `unity/Library/UnityAgentKit/Phase5A05OperationsRouterResults.xml` shows `result="Passed"`, `total="48"`, `passed="48"`, `failed="0"`; final code review verdict was PASS; scope guard confirmed committed diff `6ca74dc..HEAD` changed only the 5A-05 Unity operation router/transport/test files plus required Unity `.meta` files, and the forbidden 5A-06 symbols guard produced no output.
 
-Next, create and review a strict expanded execution plan for 5A-05 POST `/operations` envelope + router, covering only `5A-DTO-02`, `5A-HTTP-02`, `5A-HTTP-03`, `5A-OPS-01`, and `5A-OPS-02`.
+Next action: create or review the strict expanded execution plan for 5A-06 Main-thread dispatch + host-level timeout.
 
 Do not execute this index or the technical contract.
 
