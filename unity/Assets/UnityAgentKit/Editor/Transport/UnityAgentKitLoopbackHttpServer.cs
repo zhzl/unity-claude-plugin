@@ -69,7 +69,6 @@ namespace UnityAgentKit.Editor
         {
             var state = _currentState;
             _currentState = null;
-            _activeHandlerCount = 0;
 
             if (state != null)
             {
@@ -167,7 +166,7 @@ namespace UnityAgentKit.Editor
             }
             finally
             {
-                Interlocked.Decrement(ref _activeHandlerCount);
+                DecrementActiveHandlerCount();
             }
         }
 
@@ -271,6 +270,24 @@ namespace UnityAgentKit.Editor
                 {
                 }
             });
+        }
+
+        private static void DecrementActiveHandlerCount()
+        {
+            while (true)
+            {
+                var current = Volatile.Read(ref _activeHandlerCount);
+                if (current <= 0)
+                {
+                    return;
+                }
+
+                var updated = Interlocked.CompareExchange(ref _activeHandlerCount, current - 1, current);
+                if (updated == current)
+                {
+                    return;
+                }
+            }
         }
 
         private static void WriteJson(HttpListenerResponse response, int statusCode, string json)

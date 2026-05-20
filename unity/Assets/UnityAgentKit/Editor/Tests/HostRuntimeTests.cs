@@ -916,6 +916,7 @@ namespace UnityAgentKit.Editor.Tests
                 Assert.AreEqual("host.dispatch_timeout", response.code);
                 Assert.AreEqual(1, response.diagnostics.Length);
                 Assert.AreEqual("host.dispatch_timeout", response.diagnostics[0].code);
+                Assert.AreEqual(0, UnityAgentKitMainThread.PendingDispatchCountForTests);
             }
             finally
             {
@@ -1004,6 +1005,37 @@ namespace UnityAgentKit.Editor.Tests
 
                 Assert.AreEqual(0, UnityAgentKitMainThread.ExpiredDispatchExecutionCountForTests);
                 Assert.AreEqual(0, UnityAgentKitMainThread.PendingDispatchCountForTests);
+            }
+            finally
+            {
+                UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(250);
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator StopCancelsPendingDispatchWithoutCompletingOldWork()
+        {
+            var registryPath = TemporaryRegistryPath("operations-timeout-stop-cancel");
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(75);
+                var request = StartPostInBackground(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.pendingDispatchTimeout\",\"requestId\":\"req-stop-cancel\"}");
+
+                yield return WaitForPendingDispatch();
+                UnityAgentKitHost.StopForTests("host.stopped");
+
+                Assert.AreEqual(0, UnityAgentKitMainThread.PendingDispatchCountForTests);
+                UnityAgentKitMainThread.DrainForTests();
+                yield return null;
+                yield return null;
+                Assert.AreEqual(0, UnityAgentKitMainThread.PendingDispatchCountForTests);
+                Assert.AreEqual(0, UnityAgentKitMainThread.ExpiredDispatchExecutionCountForTests);
+                Assert.GreaterOrEqual(UnityAgentKitLoopbackHttpServer.ActiveHandlerCountForTests, 0);
+
+                yield return WaitForRequestDone(request);
             }
             finally
             {

@@ -21,6 +21,7 @@ namespace UnityAgentKit.Editor
             internal readonly Action<UnityAgentKitOperationResponse> complete;
             internal Timer timeoutTimer;
             internal bool completed;
+            internal bool cancelled;
             internal bool holdForTimeout;
         }
 
@@ -77,11 +78,19 @@ namespace UnityAgentKit.Editor
         {
             var item = new PendingDispatch(request, record, complete);
             item.holdForTimeout = UnityAgentKitOperationRouter.NormalizeOperation(request != null ? request.operation : string.Empty) == UnityAgentKitOperationRouter.PendingDispatchTimeoutOperation;
-            item.timeoutTimer = new Timer(_ => TryComplete(item, UnityAgentKitOperationRouter.DispatchTimeout(item.request, item.record)), null, _dispatchTimeoutMs, Timeout.Infinite);
+            item.timeoutTimer = new Timer(_ => TryComplete(item, UnityAgentKitOperationRouter.DispatchTimeout(item.request, item.record)), null, Timeout.Infinite, Timeout.Infinite);
 
             lock (PendingLock)
             {
                 PendingDispatches.Add(item);
+            }
+
+            try
+            {
+                item.timeoutTimer.Change(_dispatchTimeoutMs, Timeout.Infinite);
+            }
+            catch (ObjectDisposedException)
+            {
             }
         }
 
@@ -109,6 +118,11 @@ namespace UnityAgentKit.Editor
                 PendingLifecycleWork.Clear();
                 pendingDispatches = new List<PendingDispatch>(PendingDispatches);
                 PendingDispatches.Clear();
+                foreach (var item in pendingDispatches)
+                {
+                    item.completed = true;
+                    item.cancelled = true;
+                }
             }
 
             foreach (var item in pendingDispatches)
@@ -162,7 +176,11 @@ namespace UnityAgentKit.Editor
             {
                 if (item.completed)
                 {
-                    Interlocked.Increment(ref _expiredDispatchExecutionCount);
+                    if (!item.cancelled)
+                    {
+                        Interlocked.Increment(ref _expiredDispatchExecutionCount);
+                    }
+
                     continue;
                 }
 
@@ -187,8 +205,13 @@ namespace UnityAgentKit.Editor
                     return false;
                 }
 
+                if (!PendingDispatches.Remove(item))
+                {
+                    item.completed = true;
+                    return false;
+                }
+
                 item.completed = true;
-                PendingDispatches.Remove(item);
             }
 
             item.timeoutTimer?.Dispose();
