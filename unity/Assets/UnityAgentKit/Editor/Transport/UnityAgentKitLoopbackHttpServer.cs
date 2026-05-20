@@ -39,8 +39,15 @@ namespace UnityAgentKit.Editor
             {
                 lock (_handlerAdmissionGate)
                 {
-                    return _isClosing == 0;
+                    if (_isClosing != 0)
+                    {
+                        return false;
+                    }
+
+                    IncrementActiveHandlerCount();
                 }
+
+                return true;
             }
 
             internal void BeginClosing()
@@ -71,7 +78,7 @@ namespace UnityAgentKit.Editor
             }
         }
 
-        internal static int ActiveHandlerCountForTests => _activeHandlerCount;
+        internal static int ActiveHandlerCountForTests => Volatile.Read(ref _activeHandlerCount);
 
         internal static string BuildProbeUrl(int port)
         {
@@ -179,15 +186,22 @@ namespace UnityAgentKit.Editor
 
         private static void HandleContext(HttpListenerContext context, ListenerState state)
         {
-            if (state != null && !state.TryEnterHandler())
+            if (state != null)
             {
-                AbortResponse(context.Response);
-                return;
+                if (!state.TryEnterHandler())
+                {
+                    AbortResponse(context.Response);
+                    return;
+                }
+            }
+            else
+            {
+                IncrementActiveHandlerCount();
             }
 
-            IncrementActiveHandlerCount();
             try
             {
+                HandlerStartedForTests?.Invoke();
                 var record = state != null ? state.record : null;
                 var path = context.Request.Url != null ? context.Request.Url.AbsolutePath : string.Empty;
                 if (path == "/operations" && context.Request.HttpMethod == "POST")
@@ -371,7 +385,6 @@ namespace UnityAgentKit.Editor
         {
             ActiveHandlersIdle.Reset();
             Interlocked.Increment(ref _activeHandlerCount);
-            HandlerStartedForTests?.Invoke();
         }
 
         private static void DecrementActiveHandlerCount()

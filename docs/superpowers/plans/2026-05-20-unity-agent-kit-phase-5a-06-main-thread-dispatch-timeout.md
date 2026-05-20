@@ -841,7 +841,7 @@ git commit -m "feat: add phase 5a host dispatch timeout"
 - 修改：`unity/Assets/UnityAgentKit/Editor/Operations/UnityAgentKitOperationRouter.cs`
 - 修改：`unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeTests.cs`
 
-- [ ] **步骤 1：编写失败的 pending cleanup tests**
+- [x] **步骤 1：编写失败的 pending cleanup tests**
 
 Add these tests near existing lifecycle cleanup tests:
 
@@ -910,7 +910,7 @@ public void ReloadStopFailsPendingWorkWithoutTimeoutStatus()
 }
 ```
 
-- [ ] **步骤 2：运行测试验证失败**
+- [x] **步骤 2：运行测试验证失败**
 
 运行：
 
@@ -921,7 +921,7 @@ UNITY_EDITOR="D:/Program Files/Unity 2022.3.61f1/Editor/Unity.exe"
 
 预期：FAIL；pending cleanup tests fail because current `Stop` clears dispatch work without completing callbacks, or because no `host.stopped` / `host.stopped_for_reload` operation envelope helper exists.
 
-- [ ] **步骤 3：实现 pending failure envelopes on Stop**
+- [x] **步骤 3：实现 pending failure envelopes on Stop**
 
 In `UnityAgentKitOperationRouter.cs`, add:
 
@@ -954,7 +954,7 @@ foreach (var item in pendingDispatches)
 
 Keep `_lastStopCode` set before the pending failure loop. `TryComplete` disposes each item deadline timer, so a stop/reload failure cannot later turn into `host.dispatch_timeout`.
 
-- [ ] **步骤 4：运行测试验证通过**
+- [x] **步骤 4：运行测试验证通过**
 
 运行：
 
@@ -965,7 +965,7 @@ UNITY_EDITOR="D:/Program Files/Unity 2022.3.61f1/Editor/Unity.exe"
 
 预期：PASS；result XML contains `result="Passed"` and `failed="0"`。证明：Stop/reload/quitting pending work is completed with reason-specific structured failure, pending queue is cleared, and pending stop failure is not classified as timeout.
 
-- [ ] **步骤 5：Commit**
+- [x] **步骤 5：Commit**
 
 ```bash
 git add unity/Assets/UnityAgentKit/Editor/Transport/UnityAgentKitMainThread.cs unity/Assets/UnityAgentKit/Editor/Operations/UnityAgentKitOperationRouter.cs unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeTests.cs
@@ -978,7 +978,7 @@ git commit -m "feat: fail pending dispatch work on host stop"
 - 验证：`unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeTests.cs`
 - 验证：`unity/Library/UnityAgentKit/Phase5A06MainThreadDispatchTimeoutResults.xml`
 
-- [ ] **步骤 1：运行完整 Unity HostRuntimeTests**
+- [x] **步骤 1：运行完整 Unity HostRuntimeTests**
 
 运行：
 
@@ -989,7 +989,7 @@ UNITY_EDITOR="D:/Program Files/Unity 2022.3.61f1/Editor/Unity.exe"
 
 预期：PASS；result XML contains `result="Passed"` and `failed="0"`。证明：5A-01 through 5A-06 Unity host runtime foundation tests remain green in the same `HostRuntimeTests` suite。
 
-- [ ] **步骤 2：验证 5A-06 evidence names present in result XML**
+- [x] **步骤 2：验证 5A-06 evidence names present in result XML**
 
 运行：
 
@@ -1023,7 +1023,7 @@ PASS Phase 5A-06 evidence names present
 
 证明：final result file includes the dispatch, timeout, pending cleanup, and expired work tests required by 5A-06.
 
-- [ ] **步骤 3：运行 scope guard**
+- [x] **步骤 3：运行 scope guard**
 
 运行：
 
@@ -1050,7 +1050,7 @@ PASS Phase 5A-06 scope guard clean
 
 证明：5A-06 implementation did not create TS host client, vertical smoke, or Unity vertical smoke files. If a forbidden path already exists from a completed sibling plan in the working tree, replace this check with a git diff path check against the 5A-06 implementation commits and require no 5A-06 diff under those paths.
 
-- [ ] **步骤 4：Commit final verification notes only if files changed**
+- [x] **步骤 4：Commit final verification notes only if files changed**
 
 If task execution changed only code and tests already committed in tasks 1-4, do not create an empty commit. If plan checkbox synchronization or execution index synchronization is part of the selected workflow, commit those documentation edits separately after review.
 
