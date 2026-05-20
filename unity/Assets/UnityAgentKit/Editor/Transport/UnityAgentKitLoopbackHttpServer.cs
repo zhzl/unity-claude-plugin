@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -34,6 +35,11 @@ namespace UnityAgentKit.Editor
         internal static string BuildProbeUrl(int port)
         {
             return "http://127.0.0.1:" + port + "/probe";
+        }
+
+        internal static string BuildOperationsUrl(int port)
+        {
+            return "http://127.0.0.1:" + port + "/operations";
         }
 
         internal static string BuildLoopbackPrefix(int port)
@@ -126,6 +132,18 @@ namespace UnityAgentKit.Editor
         private static void HandleContext(HttpListenerContext context, UnityAgentKitHostRecord record)
         {
             var path = context.Request.Url != null ? context.Request.Url.AbsolutePath : string.Empty;
+            if (path == "/operations" && context.Request.HttpMethod == "POST")
+            {
+                HandleOperation(context, record);
+                return;
+            }
+
+            if (path == "/operations")
+            {
+                WriteJson(context.Response, 405, JsonUtility.ToJson(UnityAgentKitOperationRouter.MethodNotAllowed(record)));
+                return;
+            }
+
             if (path == "/probe" && context.Request.HttpMethod == "GET")
             {
                 WriteJson(context.Response, 200, JsonUtility.ToJson(CreateProbeResponse(record)));
@@ -138,7 +156,46 @@ namespace UnityAgentKit.Editor
                 return;
             }
 
-            WriteJson(context.Response, 404, JsonUtility.ToJson(FailureProbe("http.not_found", "Unknown route.")));
+            WriteJson(context.Response, 404, JsonUtility.ToJson(UnityAgentKitOperationRouter.HttpNotFound(record)));
+        }
+
+        private static void HandleOperation(HttpListenerContext context, UnityAgentKitHostRecord record)
+        {
+            var body = ReadRequestBody(context.Request);
+            if (string.IsNullOrWhiteSpace(body))
+            {
+                WriteJson(context.Response, 400, JsonUtility.ToJson(UnityAgentKitOperationRouter.EmptyBody(record)));
+                return;
+            }
+
+            UnityAgentKitOperationRequest request;
+            try
+            {
+                request = JsonUtility.FromJson<UnityAgentKitOperationRequest>(body);
+            }
+            catch (Exception error)
+            {
+                WriteJson(context.Response, 400, JsonUtility.ToJson(UnityAgentKitOperationRouter.MalformedJson(record, "Operation request JSON is malformed: " + error.Message)));
+                return;
+            }
+
+            if (request == null)
+            {
+                WriteJson(context.Response, 400, JsonUtility.ToJson(UnityAgentKitOperationRouter.MalformedJson(record, "Operation request JSON is malformed.")));
+                return;
+            }
+
+            var response = UnityAgentKitOperationRouter.Route(request, record);
+            var statusCode = response.status == "rejected" && response.code == "operation.empty" ? 400 : 200;
+            WriteJson(context.Response, statusCode, JsonUtility.ToJson(response));
+        }
+
+        private static string ReadRequestBody(HttpListenerRequest request)
+        {
+            using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+            {
+                return reader.ReadToEnd();
+            }
         }
 
         private static UnityAgentKitProbeResponse CreateProbeResponse(UnityAgentKitHostRecord record)

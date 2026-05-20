@@ -478,6 +478,127 @@ namespace UnityAgentKit.Editor.Tests
         }
 
         [Test]
+        public void BuildOperationsUrlUsesAssignedPortAndCanonicalPath()
+        {
+            Assert.AreEqual("http://127.0.0.1:49180/operations", UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(49180));
+        }
+
+        [Test]
+        public void HostEchoOverOperationsReturnsTopLevelOperationEnvelope()
+        {
+            var registryPath = TemporaryRegistryPath("operations-echo");
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                var result = Post(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.echo\",\"requestId\":\"req-http-echo\",\"inputJson\":\"{\\\"text\\\":\\\"hello\\\"}\"}");
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(result.body);
+
+                Assert.AreEqual(200, result.statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "succeeded", "host.echo", "req-http-echo", record);
+                Assert.AreEqual("{\"text\":\"hello\"}", response.data);
+                Assert.AreEqual(string.Empty, response.code);
+                Assert.AreEqual(string.Empty, response.message);
+                Assert.AreEqual(0, response.diagnostics.Length);
+            }
+            finally
+            {
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void OperationsMissingOperationReturnsStructuredRejectedEnvelope()
+        {
+            var registryPath = TemporaryRegistryPath("operations-missing");
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                var result = Post(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"requestId\":\"req-missing-http\"}");
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(result.body);
+
+                Assert.AreEqual(400, result.statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "rejected", string.Empty, "req-missing-http", record);
+                Assert.AreEqual("operation.empty", response.code);
+                Assert.AreEqual(1, response.diagnostics.Length);
+                Assert.AreEqual("operation.empty", response.diagnostics[0].code);
+            }
+            finally
+            {
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void OperationsEmptyBodyReturnsStructuredFailedEnvelope()
+        {
+            var registryPath = TemporaryRegistryPath("operations-empty-body");
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                var result = Post(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), string.Empty);
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(result.body);
+
+                Assert.AreEqual(400, result.statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "failed", "host.invalidRequest", string.Empty, record);
+                Assert.AreEqual("protocol.empty_body", response.code);
+                Assert.AreEqual(1, response.diagnostics.Length);
+                Assert.AreEqual("protocol.empty_body", response.diagnostics[0].code);
+            }
+            finally
+            {
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void OperationsMalformedJsonReturnsStructuredFailedEnvelope()
+        {
+            var registryPath = TemporaryRegistryPath("operations-malformed-json");
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                var result = Post(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{not-json");
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(result.body);
+
+                Assert.AreEqual(400, result.statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "failed", "host.invalidRequest", string.Empty, record);
+                Assert.AreEqual("protocol.malformed_json", response.code);
+                Assert.AreEqual(1, response.diagnostics.Length);
+                Assert.AreEqual("protocol.malformed_json", response.diagnostics[0].code);
+            }
+            finally
+            {
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void OperationsUnknownOperationReturnsStructuredRejectedEnvelope()
+        {
+            var registryPath = TemporaryRegistryPath("operations-unknown");
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                var result = Post(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"unknown.operation\",\"requestId\":\"req-unknown-http\"}");
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(result.body);
+
+                Assert.AreEqual(200, result.statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "rejected", "unknown.operation", "req-unknown-http", record);
+                Assert.AreEqual("operation.unknown", response.code);
+                Assert.AreEqual(1, response.diagnostics.Length);
+            }
+            finally
+            {
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
         public void ProbeEndpointReturnsHostIdentityOverHttp()
         {
             var registryPath = TemporaryRegistryPath("probe-identity");
@@ -553,11 +674,11 @@ namespace UnityAgentKit.Editor.Tests
             {
                 var record = UnityAgentKitHost.StartForTests(registryPath);
                 var result = Get("http://127.0.0.1:" + record.port + "/unknown");
-                var response = JsonUtility.FromJson<UnityAgentKitProbeResponse>(result.body);
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(result.body);
 
                 Assert.AreEqual(404, result.statusCode);
                 StringAssert.StartsWith("application/json", result.contentType);
-                Assert.AreEqual("not_ready", response.status);
+                AssertOperationEnvelopeMinimumFields(response, "failed", "host.invalidRequest", string.Empty, record);
                 Assert.AreEqual("http.not_found", response.code);
             }
             finally
@@ -827,6 +948,24 @@ namespace UnityAgentKit.Editor.Tests
                 startedAt = "2026-05-20T10:00:00.0000000Z",
                 lastProbeAt = "2026-05-20T10:00:01.0000000Z"
             };
+        }
+
+        private static void AssertOperationEnvelopeMinimumFields(UnityAgentKitOperationResponse response, string status, string operation, string requestId, UnityAgentKitHostRecord record)
+        {
+            Assert.NotNull(response);
+            Assert.AreEqual(status, response.status);
+            Assert.AreEqual(operation, response.operation);
+            Assert.AreEqual(requestId, response.requestId);
+            Assert.AreEqual(record.hostId, response.hostId);
+            Assert.AreEqual(record.hostEpoch, response.hostEpoch);
+            Assert.IsNotEmpty(response.summary);
+            Assert.IsNotNull(response.data);
+            Assert.IsNotNull(response.diagnostics);
+            Assert.IsNotEmpty(response.startedAt);
+            Assert.IsNotEmpty(response.completedAt);
+            Assert.GreaterOrEqual(response.durationMs, 0);
+            Assert.IsNotNull(response.code);
+            Assert.IsNotNull(response.message);
         }
 
         private static UnityAgentKitProbeResponse ReadProbe(string url)
