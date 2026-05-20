@@ -29,6 +29,7 @@ namespace UnityAgentKit.Editor
         private static readonly List<string> PendingLifecycleWork = new List<string>();
         private static readonly List<PendingDispatch> PendingDispatches = new List<PendingDispatch>();
         private static bool _drainRegistered;
+        private static bool _isAcceptingDispatches;
         private static string _lastStopCode = string.Empty;
         private static int _capturedMainThreadId;
         private static int _dispatchTimeoutMs = 250;
@@ -63,7 +64,12 @@ namespace UnityAgentKit.Editor
 
         internal static void RegisterDrain()
         {
-            _capturedMainThreadId = Thread.CurrentThread.ManagedThreadId;
+            lock (PendingLock)
+            {
+                _capturedMainThreadId = Thread.CurrentThread.ManagedThreadId;
+                _isAcceptingDispatches = true;
+            }
+
             EditorApplication.update -= Drain;
             EditorApplication.update += Drain;
             _drainRegistered = true;
@@ -76,13 +82,35 @@ namespace UnityAgentKit.Editor
 
         internal static void Enqueue(UnityAgentKitOperationRequest request, UnityAgentKitHostRecord record, Action<UnityAgentKitOperationResponse> complete)
         {
-            var item = new PendingDispatch(request, record, complete);
-            item.holdForTimeout = UnityAgentKitOperationRouter.NormalizeOperation(request != null ? request.operation : string.Empty) == UnityAgentKitOperationRouter.PendingDispatchTimeoutOperation;
-            item.timeoutTimer = new Timer(_ => TryComplete(item, UnityAgentKitOperationRouter.DispatchTimeout(item.request, item.record)), null, Timeout.Infinite, Timeout.Infinite);
+            PendingDispatch item = null;
+            string stopCode = null;
 
             lock (PendingLock)
             {
-                PendingDispatches.Add(item);
+                if (!_isAcceptingDispatches)
+                {
+                    stopCode = _lastStopCode;
+                }
+                else
+                {
+                    item = new PendingDispatch(request, record, complete);
+                    item.holdForTimeout = UnityAgentKitOperationRouter.NormalizeOperation(request != null ? request.operation : string.Empty) == UnityAgentKitOperationRouter.PendingDispatchTimeoutOperation;
+                    item.timeoutTimer = new Timer(_ => TryComplete(item, UnityAgentKitOperationRouter.DispatchTimeout(item.request, item.record)), null, Timeout.Infinite, Timeout.Infinite);
+                    PendingDispatches.Add(item);
+                }
+            }
+
+            if (item == null)
+            {
+                try
+                {
+                    complete?.Invoke(UnityAgentKitOperationRouter.Stopped(request, record, stopCode));
+                }
+                catch (Exception)
+                {
+                }
+
+                return;
             }
 
             try
@@ -110,11 +138,14 @@ namespace UnityAgentKit.Editor
         internal static void Stop(string reasonCode)
         {
             List<PendingDispatch> pendingDispatches;
+            string stopCode;
             EditorApplication.update -= Drain;
             _drainRegistered = false;
-            _lastStopCode = string.IsNullOrEmpty(reasonCode) ? "host.stopped" : reasonCode;
             lock (PendingLock)
             {
+                _isAcceptingDispatches = false;
+                _lastStopCode = string.IsNullOrEmpty(reasonCode) ? "host.stopped" : reasonCode;
+                stopCode = _lastStopCode;
                 PendingLifecycleWork.Clear();
                 pendingDispatches = new List<PendingDispatch>(PendingDispatches);
                 PendingDispatches.Clear();
@@ -126,7 +157,7 @@ namespace UnityAgentKit.Editor
 
             foreach (var item in pendingDispatches)
             {
-                TryComplete(item, UnityAgentKitOperationRouter.Stopped(item.request, item.record, _lastStopCode), ownsItem: true);
+                TryComplete(item, UnityAgentKitOperationRouter.Stopped(item.request, item.record, stopCode), ownsItem: true);
             }
         }
 

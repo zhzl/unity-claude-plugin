@@ -1141,6 +1141,27 @@ namespace UnityAgentKit.Editor.Tests
         }
 
         [Test]
+        public void EnqueueAfterStopCompletesImmediatelyWithoutPendingDispatch()
+        {
+            UnityAgentKitMainThread.ResetForTests();
+            UnityAgentKitMainThread.RegisterDrain();
+            UnityAgentKitMainThread.Stop("host.stopped");
+            UnityAgentKitOperationResponse response = null;
+
+            UnityAgentKitMainThread.Enqueue(new UnityAgentKitOperationRequest
+            {
+                operation = "host.threadCheck",
+                requestId = "req-enqueue-after-stop"
+            }, TestHostRecord(49244), completed => response = completed);
+
+            AssertOperationEnvelopeMinimumFields(response, "failed", "host.threadCheck", "req-enqueue-after-stop", TestHostRecord(49244));
+            Assert.AreEqual("host.stopped", response.code);
+            Assert.AreEqual(1, response.diagnostics.Length);
+            Assert.AreEqual("host.stopped", response.diagnostics[0].code);
+            Assert.AreEqual(0, UnityAgentKitMainThread.PendingDispatchCountForTests);
+        }
+
+        [Test]
         public void StopFailsPendingWorkWithStoppedDiagnostic()
         {
             UnityAgentKitMainThread.ResetForTests();

@@ -11,7 +11,9 @@ namespace UnityAgentKit.Editor
     {
         private sealed class ListenerState
         {
+            private readonly object _handlerAdmissionGate = new object();
             private int _isStopping;
+            private int _isClosing;
             private string _stopReason = string.Empty;
 
             internal ListenerState(HttpListener listener, UnityAgentKitHostRecord record)
@@ -31,6 +33,22 @@ namespace UnityAgentKit.Editor
             {
                 Volatile.Write(ref _stopReason, string.IsNullOrEmpty(reasonCode) ? "host.stopped" : reasonCode);
                 Interlocked.Exchange(ref _isStopping, 1);
+            }
+
+            internal bool TryEnterHandler()
+            {
+                lock (_handlerAdmissionGate)
+                {
+                    return _isClosing == 0;
+                }
+            }
+
+            internal void BeginClosing()
+            {
+                lock (_handlerAdmissionGate)
+                {
+                    _isClosing = 1;
+                }
             }
         }
 
@@ -98,6 +116,9 @@ namespace UnityAgentKit.Editor
 
             if (state != null)
             {
+                state.BeginClosing();
+                WaitForPendingWorkToFlush();
+
                 try
                 {
                     state.listener.Stop();
@@ -158,6 +179,12 @@ namespace UnityAgentKit.Editor
 
         private static void HandleContext(HttpListenerContext context, ListenerState state)
         {
+            if (state != null && !state.TryEnterHandler())
+            {
+                AbortResponse(context.Response);
+                return;
+            }
+
             IncrementActiveHandlerCount();
             try
             {
@@ -322,19 +349,22 @@ namespace UnityAgentKit.Editor
 
         private static void WaitForIdle(ManualResetEventSlim idleEvent, Func<bool> isIdle, DateTime deadline)
         {
-            if (isIdle())
+            while (true)
             {
-                idleEvent.Set();
-                return;
-            }
+                if (isIdle())
+                {
+                    idleEvent.Set();
+                    return;
+                }
 
-            var remainingMs = (int)Math.Max(0, (deadline - DateTime.UtcNow).TotalMilliseconds);
-            if (remainingMs == 0)
-            {
-                return;
-            }
+                var remainingMs = (int)Math.Max(0, (deadline - DateTime.UtcNow).TotalMilliseconds);
+                if (remainingMs == 0)
+                {
+                    return;
+                }
 
-            idleEvent.Wait(remainingMs);
+                idleEvent.Wait(remainingMs);
+            }
         }
 
         private static void IncrementActiveHandlerCount()
@@ -365,6 +395,23 @@ namespace UnityAgentKit.Editor
 
                     return;
                 }
+            }
+        }
+
+        private static void AbortResponse(HttpListenerResponse response)
+        {
+            try
+            {
+                response.Abort();
+            }
+            catch (HttpListenerException)
+            {
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+            catch (InvalidOperationException)
+            {
             }
         }
 
