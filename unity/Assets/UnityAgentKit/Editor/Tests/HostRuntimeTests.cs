@@ -1056,32 +1056,67 @@ namespace UnityAgentKit.Editor.Tests
         public void StopWindowRejectsNewDispatchRequestsWithoutEnqueueing()
         {
             var registryPath = TemporaryRegistryPath("operations-http-stop-window-reject");
-            HttpResult stopWindowResult = default;
-
-            try
+            BackgroundHttpRequest stopWindowRequest = null;
+            Thread releaseThread = null;
+            using (var handlerStarted = new ManualResetEventSlim(false))
+            using (var releaseHandler = new ManualResetEventSlim(false))
+            using (var stopFlushStarted = new ManualResetEventSlim(false))
             {
-                var record = UnityAgentKitHost.StartForTests(registryPath);
-                UnityAgentKitLoopbackHttpServer.BeginStopHookForTests = () =>
+                try
                 {
-                    stopWindowResult = Post(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.threadCheck\",\"requestId\":\"req-stop-window\"}");
-                };
+                    var record = UnityAgentKitHost.StartForTests(registryPath);
+                    UnityAgentKitLoopbackHttpServer.HandlerStartedForTests = () =>
+                    {
+                        handlerStarted.Set();
+                        releaseHandler.Wait(1000);
+                    };
+                    UnityAgentKitLoopbackHttpServer.BeforeStopFlushHookForTests = () => stopFlushStarted.Set();
+                    UnityAgentKitLoopbackHttpServer.BeginStopHookForTests = () =>
+                    {
+                        stopWindowRequest = StartPostInBackground(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.threadCheck\",\"requestId\":\"req-stop-window\"}");
+                        Assert.IsTrue(handlerStarted.Wait(1000), "Expected stop-window request to enter handler during Stop.");
+                        releaseThread = new Thread(() =>
+                        {
+                            stopFlushStarted.Wait(1000);
+                            releaseHandler.Set();
+                        });
+                        releaseThread.IsBackground = true;
+                        releaseThread.Start();
+                    };
 
-                UnityAgentKitHost.StopForTests("host.stopped");
+                    UnityAgentKitHost.StopForTests("host.stopped");
 
-                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(stopWindowResult.body);
-                Assert.AreEqual(200, stopWindowResult.statusCode);
-                AssertOperationEnvelopeMinimumFields(response, "failed", "host.threadCheck", "req-stop-window", record);
-                Assert.AreEqual("host.stopped", response.code);
-                Assert.AreEqual(1, response.diagnostics.Length);
-                Assert.AreEqual("host.stopped", response.diagnostics[0].code);
-                Assert.AreNotEqual("timeout", response.status);
-                Assert.AreNotEqual("host.dispatch_timeout", response.code);
-                Assert.AreEqual(0, UnityAgentKitMainThread.PendingDispatchCountForTests);
-            }
-            finally
-            {
-                UnityAgentKitLoopbackHttpServer.BeginStopHookForTests = null;
-                UnityAgentKitHost.ResetForTests();
+                    Assert.NotNull(stopWindowRequest);
+                    Assert.IsTrue(stopWindowRequest.thread.Join(1000), "Expected stop-window request to complete before assertion.");
+                    Assert.IsTrue(stopWindowRequest.IsDone);
+                    Assert.IsNull(stopWindowRequest.GetError());
+
+                    var stopWindowResult = stopWindowRequest.GetResult();
+                    var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(stopWindowResult.body);
+                    Assert.AreEqual(200, stopWindowResult.statusCode);
+                    AssertOperationEnvelopeMinimumFields(response, "failed", "host.threadCheck", "req-stop-window", record);
+                    Assert.AreEqual("host.stopped", response.code);
+                    Assert.AreEqual(1, response.diagnostics.Length);
+                    Assert.AreEqual("host.stopped", response.diagnostics[0].code);
+                    Assert.AreNotEqual("timeout", response.status);
+                    Assert.AreNotEqual("host.dispatch_timeout", response.code);
+                    Assert.AreEqual(0, UnityAgentKitMainThread.PendingDispatchCountForTests);
+                    Assert.AreEqual(0, UnityAgentKitLoopbackHttpServer.ActiveHandlerCountForTests);
+                }
+                finally
+                {
+                    stopFlushStarted.Set();
+                    releaseHandler.Set();
+                    if (releaseThread != null)
+                    {
+                        releaseThread.Join(1000);
+                    }
+
+                    UnityAgentKitLoopbackHttpServer.BeginStopHookForTests = null;
+                    UnityAgentKitLoopbackHttpServer.BeforeStopFlushHookForTests = null;
+                    UnityAgentKitLoopbackHttpServer.HandlerStartedForTests = null;
+                    UnityAgentKitHost.ResetForTests();
+                }
             }
         }
 

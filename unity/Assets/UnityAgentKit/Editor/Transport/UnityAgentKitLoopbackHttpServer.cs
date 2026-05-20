@@ -35,11 +35,14 @@ namespace UnityAgentKit.Editor
         }
 
         private static readonly ManualResetEventSlim AsyncWriteIdle = new ManualResetEventSlim(true);
+        private static readonly ManualResetEventSlim ActiveHandlersIdle = new ManualResetEventSlim(true);
         private const int AsyncWriteFlushTimeoutMs = 200;
         private static ListenerState _currentState;
         private static int _activeHandlerCount;
         private static int _pendingAsyncWriteCount;
         internal static Action BeginStopHookForTests;
+        internal static Action BeforeStopFlushHookForTests;
+        internal static Action HandlerStartedForTests;
 
         internal static bool IsRunning
         {
@@ -90,7 +93,8 @@ namespace UnityAgentKit.Editor
             BeginStopHookForTests?.Invoke();
 
             UnityAgentKitMainThread.Stop(reasonCode);
-            WaitForAsyncWritesToFlush();
+            BeforeStopFlushHookForTests?.Invoke();
+            WaitForPendingWorkToFlush();
 
             if (state != null)
             {
@@ -154,7 +158,7 @@ namespace UnityAgentKit.Editor
 
         private static void HandleContext(HttpListenerContext context, ListenerState state)
         {
-            Interlocked.Increment(ref _activeHandlerCount);
+            IncrementActiveHandlerCount();
             try
             {
                 var record = state != null ? state.record : null;
@@ -309,15 +313,35 @@ namespace UnityAgentKit.Editor
             });
         }
 
-        private static void WaitForAsyncWritesToFlush()
+        private static void WaitForPendingWorkToFlush()
         {
-            if (Volatile.Read(ref _pendingAsyncWriteCount) == 0)
+            var deadline = DateTime.UtcNow.AddMilliseconds(AsyncWriteFlushTimeoutMs);
+            WaitForIdle(AsyncWriteIdle, () => Volatile.Read(ref _pendingAsyncWriteCount) == 0, deadline);
+            WaitForIdle(ActiveHandlersIdle, () => Volatile.Read(ref _activeHandlerCount) == 0, deadline);
+        }
+
+        private static void WaitForIdle(ManualResetEventSlim idleEvent, Func<bool> isIdle, DateTime deadline)
+        {
+            if (isIdle())
             {
-                AsyncWriteIdle.Set();
+                idleEvent.Set();
                 return;
             }
 
-            AsyncWriteIdle.Wait(AsyncWriteFlushTimeoutMs);
+            var remainingMs = (int)Math.Max(0, (deadline - DateTime.UtcNow).TotalMilliseconds);
+            if (remainingMs == 0)
+            {
+                return;
+            }
+
+            idleEvent.Wait(remainingMs);
+        }
+
+        private static void IncrementActiveHandlerCount()
+        {
+            ActiveHandlersIdle.Reset();
+            Interlocked.Increment(ref _activeHandlerCount);
+            HandlerStartedForTests?.Invoke();
         }
 
         private static void DecrementActiveHandlerCount()
@@ -327,12 +351,18 @@ namespace UnityAgentKit.Editor
                 var current = Volatile.Read(ref _activeHandlerCount);
                 if (current <= 0)
                 {
+                    ActiveHandlersIdle.Set();
                     return;
                 }
 
                 var updated = Interlocked.CompareExchange(ref _activeHandlerCount, current - 1, current);
                 if (updated == current)
                 {
+                    if (current == 1)
+                    {
+                        ActiveHandlersIdle.Set();
+                    }
+
                     return;
                 }
             }
