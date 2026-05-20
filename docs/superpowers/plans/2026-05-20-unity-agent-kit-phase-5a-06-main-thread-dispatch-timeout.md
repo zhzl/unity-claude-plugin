@@ -563,7 +563,7 @@ git commit -m "feat: dispatch operations from loopback HTTP"
 - 修改：`unity/Assets/UnityAgentKit/Editor/Transport/UnityAgentKitLoopbackHttpServer.cs`
 - 修改：`unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeTests.cs`
 
-- [ ] **步骤 1：编写失败的 host-level timeout tests**
+- [x] **步骤 1：编写失败的 host-level timeout tests**
 
 Add these tests after `HostThreadCheckOverOperationsRunsOnCapturedMainThread`:
 
@@ -679,7 +679,7 @@ public IEnumerator ExpiredDispatchWorkDoesNotExecuteLater()
 }
 ```
 
-- [ ] **步骤 2：运行测试验证失败**
+- [x] **步骤 2：运行测试验证失败**
 
 运行：
 
@@ -690,7 +690,7 @@ UNITY_EDITOR="D:/Program Files/Unity 2022.3.61f1/Editor/Unity.exe"
 
 预期：FAIL，compiler errors mention missing `ConfigureDispatchTimeoutForTests`, `ExpiredDispatchExecutionCountForTests`, or `ActiveHandlerCountForTests`; if those symbols already exist from an implementation attempt, tests fail because `host.pendingDispatchTimeout` does not return `timeout + host.dispatch_timeout` with `mayStillBeRunning` metadata.
 
-- [ ] **步骤 3：实现 deadline-based timeout without blocking handler or main thread**
+- [x] **步骤 3：实现 deadline-based timeout without blocking handler or main thread**
 
 In `UnityAgentKitOperationRouter.cs`, add this helper:
 
@@ -816,7 +816,7 @@ finally
 
 Keep the task 2 async response callback. The test passes only if the handler returns after scheduling dispatch while the response remains pending until the deadline callback completes it.
 
-- [ ] **步骤 4：运行测试验证通过**
+- [x] **步骤 4：运行测试验证通过**
 
 运行：
 
@@ -827,7 +827,7 @@ UNITY_EDITOR="D:/Program Files/Unity 2022.3.61f1/Editor/Unity.exe"
 
 预期：PASS；result XML contains `result="Passed"` and `failed="0"`。证明：host-level timeout comes from a deadline on pending dispatch work, includes `mayStillBeRunning`, leaves the Unity main thread free to keep running coroutine frames, and the HTTP handler has returned before timeout completion.
 
-- [ ] **步骤 5：Commit**
+- [x] **步骤 5：Commit**
 
 ```bash
 git add unity/Assets/UnityAgentKit/Editor/Transport/UnityAgentKitMainThread.cs unity/Assets/UnityAgentKit/Editor/Operations/UnityAgentKitOperationRouter.cs unity/Assets/UnityAgentKit/Editor/Transport/UnityAgentKitLoopbackHttpServer.cs unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeTests.cs
