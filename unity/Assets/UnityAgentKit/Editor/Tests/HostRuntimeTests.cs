@@ -891,6 +891,117 @@ namespace UnityAgentKit.Editor.Tests
             }
         }
 
+        [UnityTest]
+        public IEnumerator PendingDispatchTimeoutReturnsHostTimeout()
+        {
+            var registryPath = TemporaryRegistryPath("operations-pending-timeout");
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(75);
+                var request = StartPostInBackground(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.pendingDispatchTimeout\",\"requestId\":\"req-timeout\"}");
+
+                yield return WaitForPendingDispatch();
+                yield return WaitForRequestDone(request);
+
+                if (request.GetError() != null)
+                {
+                    throw request.GetError();
+                }
+
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(request.GetResult().body);
+                Assert.AreEqual(200, request.GetResult().statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "timeout", "host.pendingDispatchTimeout", "req-timeout", record);
+                Assert.AreEqual("host.dispatch_timeout", response.code);
+                Assert.AreEqual(1, response.diagnostics.Length);
+                Assert.AreEqual("host.dispatch_timeout", response.diagnostics[0].code);
+            }
+            finally
+            {
+                UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(250);
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator PendingDispatchTimeoutDoesNotBlockMainThreadOrHandler()
+        {
+            var registryPath = TemporaryRegistryPath("operations-timeout-nonblocking");
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(250);
+                var request = StartPostInBackground(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.pendingDispatchTimeout\",\"requestId\":\"req-nonblocking\"}");
+
+                yield return WaitForPendingDispatch();
+
+                Assert.AreEqual(0, UnityAgentKitLoopbackHttpServer.ActiveHandlerCountForTests);
+                Assert.IsFalse(request.IsDone);
+
+                yield return WaitForRequestDone(request);
+                Assert.IsNull(request.GetError());
+            }
+            finally
+            {
+                UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(250);
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator PendingDispatchTimeoutMarksMayStillBeRunning()
+        {
+            var registryPath = TemporaryRegistryPath("operations-timeout-may-still-run");
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(75);
+                var request = StartPostInBackground(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.pendingDispatchTimeout\",\"requestId\":\"req-timeout-metadata\"}");
+
+                yield return WaitForPendingDispatch();
+                yield return WaitForRequestDone(request);
+
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(request.GetResult().body);
+                AssertOperationEnvelopeMinimumFields(response, "timeout", "host.pendingDispatchTimeout", "req-timeout-metadata", record);
+                Assert.AreEqual("{\"mayStillBeRunning\":true}", response.metadata);
+                Assert.AreEqual("{\"mayStillBeRunning\":true}", response.diagnostics[0].details);
+            }
+            finally
+            {
+                UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(250);
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator ExpiredDispatchWorkDoesNotExecuteLater()
+        {
+            var registryPath = TemporaryRegistryPath("operations-expired-not-executed");
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(75);
+                var request = StartPostInBackground(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.pendingDispatchTimeout\",\"requestId\":\"req-expired\"}");
+
+                yield return WaitForPendingDispatch();
+                yield return WaitForRequestDone(request);
+                UnityAgentKitMainThread.DrainForTests();
+                UnityAgentKitMainThread.DrainForTests();
+
+                Assert.AreEqual(0, UnityAgentKitMainThread.ExpiredDispatchExecutionCountForTests);
+                Assert.AreEqual(0, UnityAgentKitMainThread.PendingDispatchCountForTests);
+            }
+            finally
+            {
+                UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(250);
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
         [Test]
         public void RestartRecordChangesHostIdentityAndIncrementsEpochThroughHostBootstrap()
         {

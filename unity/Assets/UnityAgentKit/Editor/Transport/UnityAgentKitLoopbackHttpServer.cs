@@ -22,6 +22,7 @@ namespace UnityAgentKit.Editor
         }
 
         private static ListenerState _currentState;
+        private static int _activeHandlerCount;
 
         internal static bool IsRunning
         {
@@ -31,6 +32,8 @@ namespace UnityAgentKit.Editor
                 return state != null && state.listener.IsListening;
             }
         }
+
+        internal static int ActiveHandlerCountForTests => _activeHandlerCount;
 
         internal static string BuildProbeUrl(int port)
         {
@@ -66,6 +69,7 @@ namespace UnityAgentKit.Editor
         {
             var state = _currentState;
             _currentState = null;
+            _activeHandlerCount = 0;
 
             if (state != null)
             {
@@ -131,32 +135,40 @@ namespace UnityAgentKit.Editor
 
         private static void HandleContext(HttpListenerContext context, UnityAgentKitHostRecord record)
         {
-            var path = context.Request.Url != null ? context.Request.Url.AbsolutePath : string.Empty;
-            if (path == "/operations" && context.Request.HttpMethod == "POST")
+            Interlocked.Increment(ref _activeHandlerCount);
+            try
             {
-                HandleOperation(context, record);
-                return;
-            }
+                var path = context.Request.Url != null ? context.Request.Url.AbsolutePath : string.Empty;
+                if (path == "/operations" && context.Request.HttpMethod == "POST")
+                {
+                    HandleOperation(context, record);
+                    return;
+                }
 
-            if (path == "/operations")
+                if (path == "/operations")
+                {
+                    WriteJson(context.Response, 405, JsonUtility.ToJson(UnityAgentKitOperationRouter.MethodNotAllowed(record)));
+                    return;
+                }
+
+                if (path == "/probe" && context.Request.HttpMethod == "GET")
+                {
+                    WriteJson(context.Response, 200, JsonUtility.ToJson(CreateProbeResponse(record)));
+                    return;
+                }
+
+                if (path == "/probe")
+                {
+                    WriteJson(context.Response, 405, JsonUtility.ToJson(FailureProbe("http.method_not_allowed", "Method not allowed.")));
+                    return;
+                }
+
+                WriteJson(context.Response, 404, JsonUtility.ToJson(UnityAgentKitOperationRouter.HttpNotFound(record)));
+            }
+            finally
             {
-                WriteJson(context.Response, 405, JsonUtility.ToJson(UnityAgentKitOperationRouter.MethodNotAllowed(record)));
-                return;
+                Interlocked.Decrement(ref _activeHandlerCount);
             }
-
-            if (path == "/probe" && context.Request.HttpMethod == "GET")
-            {
-                WriteJson(context.Response, 200, JsonUtility.ToJson(CreateProbeResponse(record)));
-                return;
-            }
-
-            if (path == "/probe")
-            {
-                WriteJson(context.Response, 405, JsonUtility.ToJson(FailureProbe("http.method_not_allowed", "Method not allowed.")));
-                return;
-            }
-
-            WriteJson(context.Response, 404, JsonUtility.ToJson(UnityAgentKitOperationRouter.HttpNotFound(record)));
         }
 
         private static void HandleOperation(HttpListenerContext context, UnityAgentKitHostRecord record)

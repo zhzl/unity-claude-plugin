@@ -81,6 +81,18 @@ namespace UnityAgentKit.Editor
             return response;
         }
 
+        internal static UnityAgentKitOperationResponse DispatchTimeout(UnityAgentKitOperationRequest request, UnityAgentKitHostRecord record)
+        {
+            var startedAt = Now();
+            var operation = NormalizeOperation(request != null ? request.operation : string.Empty);
+            var requestId = request != null ? request.requestId ?? string.Empty : string.Empty;
+            var message = "Main-thread dispatch timed out.";
+            var response = Create("timeout", operation, requestId, record, message, string.Empty, new[] { Diagnostic("error", "host.dispatch_timeout", message, operation, requestId) }, "host.dispatch_timeout", message, startedAt);
+            response.metadata = "{\"mayStillBeRunning\":true}";
+            response.diagnostics[0].details = "{\"mayStillBeRunning\":true}";
+            return response;
+        }
+
         internal static UnityAgentKitOperationResponse EmptyBody(UnityAgentKitHostRecord record)
         {
             return Failed(InvalidRequestOperation, string.Empty, record, "protocol.empty_body", "Operation request body is empty.", Now());

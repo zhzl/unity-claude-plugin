@@ -19,6 +19,9 @@ namespace UnityAgentKit.Editor
             internal readonly UnityAgentKitOperationRequest request;
             internal readonly UnityAgentKitHostRecord record;
             internal readonly Action<UnityAgentKitOperationResponse> complete;
+            internal Timer timeoutTimer;
+            internal bool completed;
+            internal bool holdForTimeout;
         }
 
         private static readonly object PendingLock = new object();
@@ -27,10 +30,13 @@ namespace UnityAgentKit.Editor
         private static bool _drainRegistered;
         private static string _lastStopCode = string.Empty;
         private static int _capturedMainThreadId;
+        private static int _dispatchTimeoutMs = 250;
+        private static int _expiredDispatchExecutionCount;
 
         internal static bool IsDrainRegisteredForTests => _drainRegistered;
         internal static string LastStopCodeForTests => _lastStopCode;
         internal static int CapturedMainThreadIdForTests => _capturedMainThreadId;
+        internal static int ExpiredDispatchExecutionCountForTests => _expiredDispatchExecutionCount;
 
         internal static int PendingLifecycleWorkCountForTests
         {
@@ -62,11 +68,20 @@ namespace UnityAgentKit.Editor
             _drainRegistered = true;
         }
 
+        internal static void ConfigureDispatchTimeoutForTests(int timeoutMs)
+        {
+            _dispatchTimeoutMs = timeoutMs;
+        }
+
         internal static void Enqueue(UnityAgentKitOperationRequest request, UnityAgentKitHostRecord record, Action<UnityAgentKitOperationResponse> complete)
         {
+            var item = new PendingDispatch(request, record, complete);
+            item.holdForTimeout = UnityAgentKitOperationRouter.NormalizeOperation(request != null ? request.operation : string.Empty) == UnityAgentKitOperationRouter.PendingDispatchTimeoutOperation;
+            item.timeoutTimer = new Timer(_ => TryComplete(item, UnityAgentKitOperationRouter.DispatchTimeout(item.request, item.record)), null, _dispatchTimeoutMs, Timeout.Infinite);
+
             lock (PendingLock)
             {
-                PendingDispatches.Add(new PendingDispatch(request, record, complete));
+                PendingDispatches.Add(item);
             }
         }
 
@@ -85,13 +100,20 @@ namespace UnityAgentKit.Editor
 
         internal static void Stop(string reasonCode)
         {
+            List<PendingDispatch> pendingDispatches;
             EditorApplication.update -= Drain;
             _drainRegistered = false;
             _lastStopCode = string.IsNullOrEmpty(reasonCode) ? "host.stopped" : reasonCode;
             lock (PendingLock)
             {
                 PendingLifecycleWork.Clear();
+                pendingDispatches = new List<PendingDispatch>(PendingDispatches);
                 PendingDispatches.Clear();
+            }
+
+            foreach (var item in pendingDispatches)
+            {
+                item.timeoutTimer?.Dispose();
             }
         }
 
@@ -100,6 +122,8 @@ namespace UnityAgentKit.Editor
             Stop("host.stopped");
             _lastStopCode = string.Empty;
             _capturedMainThreadId = Thread.CurrentThread.ManagedThreadId;
+            _dispatchTimeoutMs = 250;
+            _expiredDispatchExecutionCount = 0;
         }
 
         private static void Drain()
@@ -118,24 +142,53 @@ namespace UnityAgentKit.Editor
 
             foreach (var item in work)
             {
-                UnityAgentKitOperationResponse response;
-                try
+                if (item.completed)
                 {
-                    response = UnityAgentKitOperationRouter.RunOnMainThread(item.request, item.record, _capturedMainThreadId);
+                    Interlocked.Increment(ref _expiredDispatchExecutionCount);
+                    continue;
                 }
-                catch (Exception error)
+
+                if (item.holdForTimeout)
                 {
-                    response = UnityAgentKitOperationRouter.DispatchException(item.request, item.record, error);
+                    continue;
                 }
 
                 try
                 {
-                    item.complete?.Invoke(response);
+                    var response = UnityAgentKitOperationRouter.RunOnMainThread(item.request, item.record, _capturedMainThreadId);
+                    TryComplete(item, response);
                 }
-                catch (Exception)
+                catch (Exception error)
                 {
+                    TryComplete(item, UnityAgentKitOperationRouter.DispatchException(item.request, item.record, error));
                 }
             }
+        }
+
+        private static bool TryComplete(PendingDispatch item, UnityAgentKitOperationResponse response)
+        {
+            lock (PendingLock)
+            {
+                if (item.completed)
+                {
+                    return false;
+                }
+
+                item.completed = true;
+                PendingDispatches.Remove(item);
+            }
+
+            item.timeoutTimer?.Dispose();
+
+            try
+            {
+                item.complete?.Invoke(response);
+            }
+            catch (Exception)
+            {
+            }
+
+            return true;
         }
     }
 }
