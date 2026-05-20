@@ -361,6 +361,116 @@ namespace UnityAgentKit.Editor.Tests
         }
 
         [Test]
+        public void OperationNameIsTrimmedBeforeRouting()
+        {
+            var record = TestHostRecord(49170);
+            var response = UnityAgentKitOperationRouter.Route(new UnityAgentKitOperationRequest
+            {
+                operation = " host.echo ",
+                requestId = "req-trim",
+                inputJson = "{\"text\":\"trimmed\"}"
+            }, record);
+
+            Assert.AreEqual("succeeded", response.status);
+            Assert.AreEqual("host.echo", response.operation);
+            Assert.AreEqual("req-trim", response.requestId);
+            Assert.AreEqual("host-router", response.hostId);
+            Assert.AreEqual(3, response.hostEpoch);
+            Assert.AreEqual("{\"text\":\"trimmed\"}", response.data);
+            Assert.AreEqual(string.Empty, response.code);
+            Assert.AreEqual(string.Empty, response.message);
+        }
+
+        [Test]
+        public void MissingOperationReturnsRejectedEnvelope()
+        {
+            var response = UnityAgentKitOperationRouter.Route(new UnityAgentKitOperationRequest
+            {
+                requestId = "req-missing",
+                inputJson = "{\"text\":\"missing\"}"
+            }, TestHostRecord(49171));
+
+            Assert.AreEqual("rejected", response.status);
+            Assert.AreEqual(string.Empty, response.operation);
+            Assert.AreEqual("req-missing", response.requestId);
+            Assert.AreEqual("operation.empty", response.code);
+            Assert.IsNotEmpty(response.message);
+            Assert.AreEqual(1, response.diagnostics.Length);
+            Assert.AreEqual("operation.empty", response.diagnostics[0].code);
+            Assert.AreEqual("warning", response.diagnostics[0].severity);
+        }
+
+        [Test]
+        public void EmptyOperationReturnsRejectedEnvelope()
+        {
+            var response = UnityAgentKitOperationRouter.Route(new UnityAgentKitOperationRequest
+            {
+                operation = "   ",
+                requestId = "req-empty"
+            }, TestHostRecord(49172));
+
+            Assert.AreEqual("rejected", response.status);
+            Assert.AreEqual(string.Empty, response.operation);
+            Assert.AreEqual("req-empty", response.requestId);
+            Assert.AreEqual("operation.empty", response.code);
+        }
+
+        [Test]
+        public void UnknownOperationReturnsRejectedEnvelopeWithCode()
+        {
+            var response = UnityAgentKitOperationRouter.Route(new UnityAgentKitOperationRequest
+            {
+                operation = "unknown.operation",
+                requestId = "req-unknown"
+            }, TestHostRecord(49173));
+
+            Assert.AreEqual("rejected", response.status);
+            Assert.AreEqual("unknown.operation", response.operation);
+            Assert.AreEqual("req-unknown", response.requestId);
+            Assert.AreEqual("operation.unknown", response.code);
+            Assert.AreEqual(1, response.diagnostics.Length);
+            Assert.AreEqual("operation.unknown", response.diagnostics[0].code);
+        }
+
+        [Test]
+        public void HostEchoRoutesWithoutMainThreadDispatch()
+        {
+            var response = UnityAgentKitOperationRouter.Route(new UnityAgentKitOperationRequest
+            {
+                operation = "host.echo",
+                requestId = "req-echo-router",
+                inputJson = "{\"value\":42}"
+            }, TestHostRecord(49174));
+
+            Assert.AreEqual("succeeded", response.status);
+            Assert.AreEqual("host.echo", response.operation);
+            Assert.AreEqual("req-echo-router", response.requestId);
+            Assert.AreEqual("{\"value\":42}", response.data);
+            Assert.AreEqual(0, response.diagnostics.Length);
+            Assert.IsNotEmpty(response.startedAt);
+            Assert.IsNotEmpty(response.completedAt);
+            Assert.GreaterOrEqual(response.durationMs, 0);
+        }
+
+        [Test]
+        public void ThreadCheckIsClassifiedAsDispatchRequiredWithoutExecuting()
+        {
+            var response = UnityAgentKitOperationRouter.Route(new UnityAgentKitOperationRequest
+            {
+                operation = " host.threadCheck ",
+                requestId = "req-thread-check"
+            }, TestHostRecord(49175));
+
+            Assert.AreEqual("rejected", response.status);
+            Assert.AreEqual("host.threadCheck", response.operation);
+            Assert.AreEqual("req-thread-check", response.requestId);
+            Assert.AreEqual("host.dispatch_required", response.code);
+            Assert.AreEqual(1, response.diagnostics.Length);
+            Assert.AreEqual("host.dispatch_required", response.diagnostics[0].code);
+            Assert.AreEqual(string.Empty, response.data);
+        }
+
+        [Test]
         public void BuildProbeUrlUsesAssignedPortAndCanonicalPath()
         {
             Assert.AreEqual("http://127.0.0.1:49152/", UnityAgentKitLoopbackHttpServer.BuildLoopbackPrefix(49152));
@@ -701,6 +811,22 @@ namespace UnityAgentKit.Editor.Tests
             {
                 UnityAgentKitHost.ResetForTests();
             }
+        }
+
+        private static UnityAgentKitHostRecord TestHostRecord(int port)
+        {
+            return new UnityAgentKitHostRecord
+            {
+                hostName = UnityAgentKitHostRegistry.HostName,
+                protocolVersion = UnityAgentKitHostRegistry.ProtocolVersion,
+                projectRoot = UnityAgentKitHostRegistry.GetProjectRoot(),
+                hostId = "host-router",
+                hostEpoch = 3,
+                port = port,
+                status = UnityAgentKitHostRegistry.ReadyStatus,
+                startedAt = "2026-05-20T10:00:00.0000000Z",
+                lastProbeAt = "2026-05-20T10:00:01.0000000Z"
+            };
         }
 
         private static UnityAgentKitProbeResponse ReadProbe(string url)
