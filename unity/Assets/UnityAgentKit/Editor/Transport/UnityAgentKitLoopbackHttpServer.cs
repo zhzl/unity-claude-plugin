@@ -21,8 +21,11 @@ namespace UnityAgentKit.Editor
             internal readonly UnityAgentKitHostRecord record;
         }
 
+        private static readonly ManualResetEventSlim AsyncWriteIdle = new ManualResetEventSlim(true);
+        private const int AsyncWriteFlushTimeoutMs = 200;
         private static ListenerState _currentState;
         private static int _activeHandlerCount;
+        private static int _pendingAsyncWriteCount;
 
         internal static bool IsRunning
         {
@@ -70,6 +73,9 @@ namespace UnityAgentKit.Editor
             var state = _currentState;
             _currentState = null;
 
+            UnityAgentKitMainThread.Stop(reasonCode);
+            WaitForAsyncWritesToFlush();
+
             if (state != null)
             {
                 try
@@ -88,8 +94,6 @@ namespace UnityAgentKit.Editor
                     Debug.LogWarning("[UnityAgentKit] Failed to stop loopback HTTP listener: " + error.Message);
                 }
             }
-
-            UnityAgentKitMainThread.Stop(reasonCode);
         }
 
         private static void StartListener(UnityAgentKitHostRecord record, int port)
@@ -251,6 +255,8 @@ namespace UnityAgentKit.Editor
 
         private static void QueueWriteJson(HttpListenerResponse response, int statusCode, string json)
         {
+            Interlocked.Increment(ref _pendingAsyncWriteCount);
+            AsyncWriteIdle.Reset();
             ThreadPool.QueueUserWorkItem(_ =>
             {
                 try
@@ -269,7 +275,25 @@ namespace UnityAgentKit.Editor
                 catch (IOException)
                 {
                 }
+                finally
+                {
+                    if (Interlocked.Decrement(ref _pendingAsyncWriteCount) == 0)
+                    {
+                        AsyncWriteIdle.Set();
+                    }
+                }
             });
+        }
+
+        private static void WaitForAsyncWritesToFlush()
+        {
+            if (Volatile.Read(ref _pendingAsyncWriteCount) == 0)
+            {
+                AsyncWriteIdle.Set();
+                return;
+            }
+
+            AsyncWriteIdle.Wait(AsyncWriteFlushTimeoutMs);
         }
 
         private static void DecrementActiveHandlerCount()

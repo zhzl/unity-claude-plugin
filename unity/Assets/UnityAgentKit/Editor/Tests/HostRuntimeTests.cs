@@ -1013,6 +1013,45 @@ namespace UnityAgentKit.Editor.Tests
             }
         }
 
+        [UnityTest]
+        public IEnumerator HostStopReturnsStoppedEnvelopeBeforeClosingListener()
+        {
+            var registryPath = TemporaryRegistryPath("operations-http-stop-pending");
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(1000);
+                var request = StartPostInBackground(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.pendingDispatchTimeout\",\"requestId\":\"req-http-stop\"}");
+
+                yield return WaitForPendingDispatch();
+                UnityAgentKitHost.StopForTests("host.stopped");
+                yield return WaitForRequestDone(request);
+
+                var requestError = request.GetError();
+                if (requestError != null)
+                {
+                    throw requestError;
+                }
+
+                var requestResult = request.GetResult();
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(requestResult.body);
+                Assert.AreEqual(200, requestResult.statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "failed", "host.pendingDispatchTimeout", "req-http-stop", record);
+                Assert.AreEqual("host.stopped", response.code);
+                Assert.AreEqual(1, response.diagnostics.Length);
+                Assert.AreEqual("host.stopped", response.diagnostics[0].code);
+                Assert.AreNotEqual("timeout", response.status);
+                Assert.AreNotEqual("host.dispatch_timeout", response.code);
+                Assert.AreEqual(0, UnityAgentKitMainThread.PendingDispatchCountForTests);
+            }
+            finally
+            {
+                UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(250);
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
         [Test]
         public void StopFailsPendingDispatchWork()
         {
