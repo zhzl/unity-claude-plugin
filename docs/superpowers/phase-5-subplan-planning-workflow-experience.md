@@ -184,6 +184,27 @@ Next Manual Action → /superpowers:subagent-driven-development docs/superpowers
 
 用户确认采用“在现有 5A plan 内完整补强”方案，不拆成 5A1 / 5A2。实际修订要求：修改 5A plan 主体任务、quality gate 和 completion evidence；同步 split landing 内嵌模板；修订后再跑 reviewing-specs。5A 未复审通过前不建议进入实现。
 
+## 5A-03 / 5A-04 ownership 新增经验
+
+Phase 5A execution plan set 暴露出第三类 subplan 体验问题：相邻 sibling plans 如果共享同一个 runtime behavior，强行拆开会导致验收证据跨界。
+
+本次触发点：
+
+- 5A-03 原计划只覆盖 host bootstrap + lifecycle cleanup，要求证明 old listener no longer responds。
+- 5A-04 原计划单独覆盖 canonical `GET /probe` HTTP contract。
+- 实际上，证明 old listener no longer responds 的最强、最自然证据就是通过真实 loopback HTTP endpoint 观察旧 listener 停止响应。
+- 若 5A-03 禁止使用 canonical `/probe`，计划作者会被迫选择较差方案：发明非历史设计的 internal endpoint、退回弱 port/object 状态检查，或让 5A-03 偷偷实现 5A-04 的 `/probe` 语义。
+
+本次确认的本地规则：
+
+1. 如果当前 execution plan 的强验证依赖后续 sibling plan 拥有的 canonical endpoint/protocol，优先调整 plan ownership，而不是发明内部 endpoint 或弱化证据。
+2. 两个强依赖同一 runtime behavior 才能可靠验收的功能，应合并到同一个 expanded plan，或在 execution index 中显式 folded ownership。
+3. 对 Phase 5A，5A-03 lifecycle cleanup 与 5A-04 canonical `GET /probe` 应合并或重分配为同一个 expanded plan；覆盖 `5A-LIFE-01`、`5A-LIFE-02`、`5A-REG-02`、`5A-HTTP-01`、`5A-HTTP-03`。
+4. 合并后仍需保持边界：不提前进入 5A-05 `/operations`、5A-06 dispatch/timeout、5A-07 TS rebind/client 或 5A-08 vertical smoke。
+5. 这种调整应发生在 plan-set / execution index 层，而不是在单个 plan 内用临时 endpoint、test-only route 或 wording workaround 修补。
+
+后续应停止当前 5A-03 窄修，先调整 execution index 和 expanded plan ownership，再重新运行 `reviewing-specs`。
+
 ## 后续补 skill 的候选规则
 
 等 Phase 5A → 5B → 至少一个后续 subplan 流程跑通后，考虑把以下规则补进 `superpowers:roadmap-management`：

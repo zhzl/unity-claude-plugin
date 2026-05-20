@@ -573,7 +573,7 @@ Phase 9 至少实现半自动一致性检查，覆盖：
   - safety model；
   - skill/schema 防漂移机制；
   - actual `/unity` skill materialization 与 skill/tool context budget 边界。
-- 当前阶段：Phase 5 split design、plan index 和 5A Host Runtime technical contract 已创建并审查通过，Phase 5A execution index 已创建；Phase 5A-01 TS result + MCP mapping foundation 已完成，覆盖 `5A-RESULT-01`、`5A-RESULT-02`、`5A-MCP-01`，最终 TS 测试命令 `cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/host-runtime.test.ts` 观察到 `tests 12`、`pass 12`、`fail 0`，最终 code review 为 PASS；Phase 5A-02 Unity DTO + registry contract 已完成，覆盖 `5A-DTO-01`、`5A-REG-01`、`5A-REG-02`，官方 Unity 证据为 `HostRuntimeTests` total 15、passed 15、failed 0，证据文件为 `unity/Library/UnityAgentKit/Phase5AHostRuntimeResults.xml`；Phase 5A 仍未完成，5A-03 through 5A-08 仍 pending，下一步是创建并审查 Phase 5A-03 strict execution plan。
+- 当前阶段：Phase 5 split design、plan index 和 5A Host Runtime technical contract 已创建并审查通过，Phase 5A execution index 已创建；Phase 5A-01 TS result + MCP mapping foundation 已完成，覆盖 `5A-RESULT-01`、`5A-RESULT-02`、`5A-MCP-01`，最终 TS 测试命令 `cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/host-runtime.test.ts` 观察到 `tests 12`、`pass 12`、`fail 0`，最终 code review 为 PASS；Phase 5A-02 Unity DTO + registry contract 已完成，覆盖 `5A-DTO-01`、`5A-REG-01`、`5A-REG-02`，官方 Unity 证据为 `HostRuntimeTests` total 15、passed 15、failed 0，证据文件为 `unity/Library/UnityAgentKit/Phase5AHostRuntimeResults.xml`；Phase 5A-03 Host bootstrap + lifecycle cleanup + GET /probe HTTP contract 已完成，覆盖 `5A-LIFE-01`、`5A-LIFE-02`、`5A-REG-02`、`5A-HTTP-01`、`5A-HTTP-03`，官方 Unity 证据为 `unity/Library/UnityAgentKit/Phase5A03HostLifecycleProbeResults.xml` total 33、passed 33、failed 0，最终 code review 为 PASS；Phase 5A 仍未完成，5A-04 已 folded into 5A-03，5A-05 through 5A-08 仍 pending。
 - Phase 1 已完成架构与边界蓝图规格验证，并记录 completion evidence。
 - Phase 2 已完成 Unity Agent Skill 体系设计规格和计划，并记录 completion evidence。
 - Phase 3 已完成 Public MCP Tool Action Design 规格和计划，并记录 completion evidence。
@@ -1159,7 +1159,7 @@ console_snapshot
 **Artifacts:**
 - **Spec:** `docs/superpowers/specs/2026-05-18-unity-agent-kit-phase-5-daily-loop-infrastructure-design.md`
 - **Plan:** `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md`
-- **Implementation Summary:** partial: Phase 5A-01 TS result + MCP mapping foundation and Phase 5A-02 Unity DTO + registry contract completed via `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-01-ts-result-mcp-mapping.md` and `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-02-unity-dto-registry-contract.md`; Phase 5A overall remains incomplete pending 5A-03 through 5A-08.
+- **Implementation Summary:** partial: Phase 5A-01 TS result + MCP mapping foundation、Phase 5A-02 Unity DTO + registry contract、Phase 5A-03 Host bootstrap + lifecycle cleanup + GET /probe HTTP contract 已完成，对应 plan 为 `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-01-ts-result-mcp-mapping.md`、`docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-02-unity-dto-registry-contract.md`、`docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-03-host-lifecycle-probe-contract.md`；Phase 5A overall remains incomplete; 5A-04 is folded into 5A-03, and 5A-05 through 5A-08 remain pending.
 - **Verification Evidence:** pending
 
 ---
@@ -1652,6 +1652,7 @@ Skill/schema consistency audit：
 
 ## Change Log
 
+- 2026-05-19：完成 Phase 5A-03 Host bootstrap + lifecycle cleanup + GET /probe HTTP contract，覆盖 `5A-LIFE-01`、`5A-LIFE-02`、`5A-REG-02`、`5A-HTTP-01`、`5A-HTTP-03`；记录官方 Unity 证据 `unity/Library/UnityAgentKit/Phase5A03HostLifecycleProbeResults.xml` total 33、passed 33、failed 0，最终 code review 为 PASS；Phase 5A 仍未完成，5A-04 已 folded into 5A-03，5A-05 through 5A-08 仍 pending。
 - 2026-05-19：完成 Phase 5A-02 Unity DTO + registry contract，记录官方 Unity 证据 `HostRuntimeTests` total 15、passed 15、failed 0；Phase 5A 仍未完成，5A-03 through 5A-08 仍 pending；下一步创建并审查 Phase 5A-03 strict execution plan。
 - 2026-05-19：完成 Phase 5A-01 TS result + MCP mapping foundation，记录 TS 测试证据 `tests 12`、`pass 12`、`fail 0` 和 code review PASS；Phase 5A 仍未完成，下一步创建并审查 Phase 5A-02 strict execution plan。
 - 2026-05-18：完成 Phase 5 split design、plan index 和 5A Host Runtime technical contract；Phase 5 进入 split-plan `planned` 状态，5A execution index 作为执行入口，下一步创建并审查 Phase 5A-01 strict execution plan。
