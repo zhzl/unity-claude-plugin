@@ -868,13 +868,15 @@ namespace UnityAgentKit.Editor.Tests
                 UnityAgentKitMainThread.DrainForTests();
                 yield return WaitForRequestDone(request);
 
-                if (request.error != null)
+                var requestError = request.GetError();
+                if (requestError != null)
                 {
-                    throw request.error;
+                    throw requestError;
                 }
 
-                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(request.result.body);
-                Assert.AreEqual(200, request.result.statusCode);
+                var requestResult = request.GetResult();
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(requestResult.body);
+                Assert.AreEqual(200, requestResult.statusCode);
                 AssertOperationEnvelopeMinimumFields(response, "succeeded", "host.threadCheck", "req-thread-http", record);
                 Assert.AreEqual(string.Empty, response.code);
                 Assert.AreEqual(0, response.diagnostics.Length);
@@ -1160,15 +1162,15 @@ namespace UnityAgentKit.Editor.Tests
             {
                 try
                 {
-                    request.result = Post(url, body);
+                    request.SetResult(Post(url, body));
                 }
                 catch (Exception error)
                 {
-                    request.error = error;
+                    request.SetError(error);
                 }
                 finally
                 {
-                    request.done = true;
+                    request.MarkDone();
                 }
             });
             request.thread.IsBackground = true;
@@ -1190,12 +1192,14 @@ namespace UnityAgentKit.Editor.Tests
         private static IEnumerator WaitForRequestDone(BackgroundHttpRequest request)
         {
             var deadline = DateTimeOffset.UtcNow.AddSeconds(2);
-            while (!request.done && DateTimeOffset.UtcNow < deadline)
+            while (!request.IsDone && DateTimeOffset.UtcNow < deadline)
             {
                 yield return null;
             }
 
-            Assert.IsTrue(request.done);
+            Assert.IsTrue(request.IsDone);
+            Assert.IsNotNull(request.thread);
+            Assert.IsTrue(request.thread.Join(1000));
         }
 
         private static HttpResult Get(string url)
@@ -1272,10 +1276,51 @@ namespace UnityAgentKit.Editor.Tests
 
         private sealed class BackgroundHttpRequest
         {
+            private readonly object syncRoot = new object();
+            private readonly ManualResetEventSlim doneSignal = new ManualResetEventSlim(false);
+            private Exception error;
+            private HttpResult result;
+
             internal Thread thread;
-            internal bool done;
-            internal Exception error;
-            internal HttpResult result;
+
+            internal bool IsDone => doneSignal.IsSet;
+
+            internal Exception GetError()
+            {
+                lock (syncRoot)
+                {
+                    return error;
+                }
+            }
+
+            internal HttpResult GetResult()
+            {
+                lock (syncRoot)
+                {
+                    return result;
+                }
+            }
+
+            internal void SetError(Exception value)
+            {
+                lock (syncRoot)
+                {
+                    error = value;
+                }
+            }
+
+            internal void SetResult(HttpResult value)
+            {
+                lock (syncRoot)
+                {
+                    result = value;
+                }
+            }
+
+            internal void MarkDone()
+            {
+                doneSignal.Set();
+            }
         }
 
         private struct HttpResult

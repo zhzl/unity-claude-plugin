@@ -190,7 +190,7 @@ namespace UnityAgentKit.Editor
             {
                 UnityAgentKitMainThread.Enqueue(request, record, response =>
                 {
-                    ThreadPool.QueueUserWorkItem(_ => WriteJson(context.Response, 200, JsonUtility.ToJson(response)));
+                    QueueWriteJson(context.Response, 200, JsonUtility.ToJson(response));
                 });
                 return;
             }
@@ -236,6 +236,29 @@ namespace UnityAgentKit.Editor
                 code = code ?? string.Empty,
                 message = message ?? string.Empty
             };
+        }
+
+        private static void QueueWriteJson(HttpListenerResponse response, int statusCode, string json)
+        {
+            ThreadPool.QueueUserWorkItem(_ =>
+            {
+                try
+                {
+                    WriteJson(response, statusCode, json);
+                }
+                catch (HttpListenerException)
+                {
+                }
+                catch (ObjectDisposedException)
+                {
+                }
+                catch (InvalidOperationException)
+                {
+                }
+                catch (IOException)
+                {
+                }
+            });
         }
 
         private static void WriteJson(HttpListenerResponse response, int statusCode, string json)
