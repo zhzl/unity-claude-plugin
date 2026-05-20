@@ -666,9 +666,9 @@ namespace UnityAgentKit.Editor.Tests
         }
 
         [Test]
-        public void UnknownRouteReturns404StructuredJson()
+        public void UnknownRouteReturns404StructuredOperationEnvelope()
         {
-            var registryPath = TemporaryRegistryPath("probe-unknown-route");
+            var registryPath = TemporaryRegistryPath("operations-unknown-route");
 
             try
             {
@@ -677,9 +677,10 @@ namespace UnityAgentKit.Editor.Tests
                 var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(result.body);
 
                 Assert.AreEqual(404, result.statusCode);
-                StringAssert.StartsWith("application/json", result.contentType);
                 AssertOperationEnvelopeMinimumFields(response, "failed", "host.invalidRequest", string.Empty, record);
                 Assert.AreEqual("http.not_found", response.code);
+                Assert.AreEqual(1, response.diagnostics.Length);
+                Assert.AreEqual("http.not_found", response.diagnostics[0].code);
             }
             finally
             {
@@ -702,6 +703,76 @@ namespace UnityAgentKit.Editor.Tests
                 StringAssert.StartsWith("application/json", result.contentType);
                 Assert.AreEqual("not_ready", response.status);
                 Assert.AreEqual("http.method_not_allowed", response.code);
+            }
+            finally
+            {
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void OperationsWrongMethodReturns405StructuredEnvelope()
+        {
+            var registryPath = TemporaryRegistryPath("operations-wrong-method");
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                var result = Get(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port));
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(result.body);
+
+                Assert.AreEqual(405, result.statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "failed", "host.invalidRequest", string.Empty, record);
+                Assert.AreEqual("http.method_not_allowed", response.code);
+                Assert.AreEqual(1, response.diagnostics.Length);
+                Assert.AreEqual("http.method_not_allowed", response.diagnostics[0].code);
+            }
+            finally
+            {
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void OperationsEndpointReturnsJsonContentTypeAndReadableUtf8Body()
+        {
+            var registryPath = TemporaryRegistryPath("operations-content-type");
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                var result = Post(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\" host.echo \",\"requestId\":\"req-framing\",\"inputJson\":\"{\\\"text\\\":\\\"utf8-✓\\\"}\"}");
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(result.body);
+
+                Assert.AreEqual(200, result.statusCode);
+                Assert.AreEqual("application/json; charset=utf-8", result.contentType);
+                Assert.AreEqual(System.Text.Encoding.UTF8.GetByteCount(result.body), result.contentLength);
+                AssertOperationEnvelopeMinimumFields(response, "succeeded", "host.echo", "req-framing", record);
+                Assert.AreEqual("{\"text\":\"utf8-✓\"}", response.data);
+            }
+            finally
+            {
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void ThreadCheckOverOperationsIsDispatchRequiredWithoutMainThreadResult()
+        {
+            var registryPath = TemporaryRegistryPath("operations-threadcheck-boundary");
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                var result = Post(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.threadCheck\",\"requestId\":\"req-thread-http\"}");
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(result.body);
+
+                Assert.AreEqual(200, result.statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "rejected", "host.threadCheck", "req-thread-http", record);
+                Assert.AreEqual("host.dispatch_required", response.code);
+                Assert.AreEqual(string.Empty, response.data);
+                Assert.AreEqual(1, response.diagnostics.Length);
+                Assert.AreEqual("host.dispatch_required", response.diagnostics[0].code);
             }
             finally
             {
