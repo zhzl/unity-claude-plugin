@@ -1,10 +1,12 @@
 using System;
+using System.Collections;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace UnityAgentKit.Editor.Tests
 {
@@ -852,23 +854,34 @@ namespace UnityAgentKit.Editor.Tests
             }
         }
 
-        [Test]
-        public void ThreadCheckOverOperationsIsDispatchRequiredWithoutMainThreadResult()
+        [UnityTest]
+        public IEnumerator HostThreadCheckOverOperationsRunsOnCapturedMainThread()
         {
-            var registryPath = TemporaryRegistryPath("operations-threadcheck-boundary");
+            var registryPath = TemporaryRegistryPath("operations-threadcheck-main-thread");
 
             try
             {
                 var record = UnityAgentKitHost.StartForTests(registryPath);
-                var result = Post(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.threadCheck\",\"requestId\":\"req-thread-http\"}");
-                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(result.body);
+                var request = StartPostInBackground(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.threadCheck\",\"requestId\":\"req-thread-http\"}");
 
-                Assert.AreEqual(200, result.statusCode);
-                AssertOperationEnvelopeMinimumFields(response, "rejected", "host.threadCheck", "req-thread-http", record);
-                Assert.AreEqual("host.dispatch_required", response.code);
-                Assert.AreEqual(string.Empty, response.data);
-                Assert.AreEqual(1, response.diagnostics.Length);
-                Assert.AreEqual("host.dispatch_required", response.diagnostics[0].code);
+                yield return WaitForPendingDispatch();
+                UnityAgentKitMainThread.DrainForTests();
+                yield return WaitForRequestDone(request);
+
+                if (request.error != null)
+                {
+                    throw request.error;
+                }
+
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(request.result.body);
+                Assert.AreEqual(200, request.result.statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "succeeded", "host.threadCheck", "req-thread-http", record);
+                Assert.AreEqual(string.Empty, response.code);
+                Assert.AreEqual(0, response.diagnostics.Length);
+                var data = JsonUtility.FromJson<UnityAgentKitThreadCheckResult>(response.data);
+                Assert.AreEqual(UnityAgentKitMainThread.CapturedMainThreadIdForTests, data.capturedMainThreadId);
+                Assert.AreEqual(data.capturedMainThreadId, data.executionThreadId);
+                Assert.IsTrue(data.ranOnMainThread);
             }
             finally
             {
@@ -1140,6 +1153,51 @@ namespace UnityAgentKit.Editor.Tests
             return JsonUtility.FromJson<UnityAgentKitProbeResponse>(Get(url).body);
         }
 
+        private static BackgroundHttpRequest StartPostInBackground(string url, string body)
+        {
+            var request = new BackgroundHttpRequest();
+            request.thread = new Thread(() =>
+            {
+                try
+                {
+                    request.result = Post(url, body);
+                }
+                catch (Exception error)
+                {
+                    request.error = error;
+                }
+                finally
+                {
+                    request.done = true;
+                }
+            });
+            request.thread.IsBackground = true;
+            request.thread.Start();
+            return request;
+        }
+
+        private static IEnumerator WaitForPendingDispatch()
+        {
+            var deadline = DateTimeOffset.UtcNow.AddSeconds(2);
+            while (UnityAgentKitMainThread.PendingDispatchCountForTests == 0 && DateTimeOffset.UtcNow < deadline)
+            {
+                yield return null;
+            }
+
+            Assert.Greater(UnityAgentKitMainThread.PendingDispatchCountForTests, 0);
+        }
+
+        private static IEnumerator WaitForRequestDone(BackgroundHttpRequest request)
+        {
+            var deadline = DateTimeOffset.UtcNow.AddSeconds(2);
+            while (!request.done && DateTimeOffset.UtcNow < deadline)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(request.done);
+        }
+
         private static HttpResult Get(string url)
         {
             return Request(url, "GET", string.Empty);
@@ -1210,6 +1268,14 @@ namespace UnityAgentKit.Editor.Tests
             {
                 listener.Stop();
             }
+        }
+
+        private sealed class BackgroundHttpRequest
+        {
+            internal Thread thread;
+            internal bool done;
+            internal Exception error;
+            internal HttpResult result;
         }
 
         private struct HttpResult

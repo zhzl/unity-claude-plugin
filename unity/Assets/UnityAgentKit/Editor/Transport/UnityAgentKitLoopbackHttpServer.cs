@@ -185,6 +185,16 @@ namespace UnityAgentKit.Editor
                 return;
             }
 
+            var operation = UnityAgentKitOperationRouter.NormalizeOperation(request.operation);
+            if (UnityAgentKitOperationRouter.RequiresMainThreadDispatch(operation))
+            {
+                UnityAgentKitMainThread.Enqueue(request, record, response =>
+                {
+                    ThreadPool.QueueUserWorkItem(_ => WriteJson(context.Response, 200, JsonUtility.ToJson(response)));
+                });
+                return;
+            }
+
             var response = UnityAgentKitOperationRouter.Route(request, record);
             var statusCode = response.status == "rejected" && response.code == "operation.empty" ? 400 : 200;
             WriteJson(context.Response, statusCode, JsonUtility.ToJson(response));
