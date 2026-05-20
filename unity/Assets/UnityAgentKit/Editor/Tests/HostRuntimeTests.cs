@@ -1013,35 +1013,87 @@ namespace UnityAgentKit.Editor.Tests
             }
         }
 
-        [UnityTest]
-        public IEnumerator StopCancelsPendingDispatchWithoutCompletingOldWork()
+        [Test]
+        public void StopFailsPendingDispatchWork()
         {
-            var registryPath = TemporaryRegistryPath("operations-timeout-stop-cancel");
+            UnityAgentKitMainThread.ResetForTests();
+            UnityAgentKitMainThread.RegisterDrain();
+            UnityAgentKitOperationResponse response = null;
 
-            try
+            UnityAgentKitMainThread.Enqueue(new UnityAgentKitOperationRequest
             {
-                var record = UnityAgentKitHost.StartForTests(registryPath);
-                UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(75);
-                var request = StartPostInBackground(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.pendingDispatchTimeout\",\"requestId\":\"req-stop-cancel\"}");
+                operation = "host.threadCheck",
+                requestId = "req-stop-pending"
+            }, TestHostRecord(49240), completed => response = completed);
 
-                yield return WaitForPendingDispatch();
-                UnityAgentKitHost.StopForTests("host.stopped");
+            UnityAgentKitMainThread.Stop("host.stopped");
 
-                Assert.AreEqual(0, UnityAgentKitMainThread.PendingDispatchCountForTests);
-                UnityAgentKitMainThread.DrainForTests();
-                yield return null;
-                yield return null;
-                Assert.AreEqual(0, UnityAgentKitMainThread.PendingDispatchCountForTests);
-                Assert.AreEqual(0, UnityAgentKitMainThread.ExpiredDispatchExecutionCountForTests);
-                Assert.GreaterOrEqual(UnityAgentKitLoopbackHttpServer.ActiveHandlerCountForTests, 0);
+            AssertOperationEnvelopeMinimumFields(response, "failed", "host.threadCheck", "req-stop-pending", TestHostRecord(49240));
+            Assert.AreEqual("host.stopped", response.code);
+            Assert.AreEqual(0, UnityAgentKitMainThread.PendingDispatchCountForTests);
+        }
 
-                yield return WaitForRequestDone(request);
-            }
-            finally
+        [Test]
+        public void StopFailsPendingWorkWithStoppedDiagnostic()
+        {
+            UnityAgentKitMainThread.ResetForTests();
+            UnityAgentKitMainThread.RegisterDrain();
+            UnityAgentKitOperationResponse response = null;
+
+            UnityAgentKitMainThread.Enqueue(new UnityAgentKitOperationRequest
             {
-                UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(250);
-                UnityAgentKitHost.ResetForTests();
-            }
+                operation = "host.threadCheck",
+                requestId = "req-stopped-diagnostic"
+            }, TestHostRecord(49241), completed => response = completed);
+
+            UnityAgentKitMainThread.Stop("host.stopped");
+
+            Assert.AreEqual("failed", response.status);
+            Assert.AreEqual("host.stopped", response.code);
+            Assert.AreEqual(1, response.diagnostics.Length);
+            Assert.AreEqual("host.stopped", response.diagnostics[0].code);
+            Assert.AreEqual("error", response.diagnostics[0].severity);
+        }
+
+        [Test]
+        public void ReloadStopFailsPendingWorkWithoutTimeoutStatus()
+        {
+            UnityAgentKitMainThread.ResetForTests();
+            UnityAgentKitMainThread.RegisterDrain();
+            UnityAgentKitOperationResponse response = null;
+
+            UnityAgentKitMainThread.Enqueue(new UnityAgentKitOperationRequest
+            {
+                operation = "host.threadCheck",
+                requestId = "req-reload-pending"
+            }, TestHostRecord(49242), completed => response = completed);
+
+            UnityAgentKitMainThread.Stop("host.stopped_for_reload");
+
+            AssertOperationEnvelopeMinimumFields(response, "failed", "host.threadCheck", "req-reload-pending", TestHostRecord(49242));
+            Assert.AreEqual("host.stopped_for_reload", response.code);
+            Assert.AreNotEqual("timeout", response.status);
+            Assert.AreNotEqual("host.dispatch_timeout", response.code);
+        }
+
+        [Test]
+        public void QuittingStopFailsPendingWorkWithEditorQuittingDiagnostic()
+        {
+            UnityAgentKitMainThread.ResetForTests();
+            UnityAgentKitMainThread.RegisterDrain();
+            UnityAgentKitOperationResponse response = null;
+
+            UnityAgentKitMainThread.Enqueue(new UnityAgentKitOperationRequest
+            {
+                operation = "host.threadCheck",
+                requestId = "req-quitting-pending"
+            }, TestHostRecord(49243), completed => response = completed);
+
+            UnityAgentKitMainThread.Stop("host.editor_quitting");
+
+            AssertOperationEnvelopeMinimumFields(response, "failed", "host.threadCheck", "req-quitting-pending", TestHostRecord(49243));
+            Assert.AreEqual("host.editor_quitting", response.code);
+            Assert.AreEqual("host.editor_quitting", response.diagnostics[0].code);
         }
 
         [Test]

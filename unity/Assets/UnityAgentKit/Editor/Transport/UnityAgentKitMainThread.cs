@@ -120,14 +120,13 @@ namespace UnityAgentKit.Editor
                 PendingDispatches.Clear();
                 foreach (var item in pendingDispatches)
                 {
-                    item.completed = true;
                     item.cancelled = true;
                 }
             }
 
             foreach (var item in pendingDispatches)
             {
-                item.timeoutTimer?.Dispose();
+                TryComplete(item, UnityAgentKitOperationRouter.Stopped(item.request, item.record, _lastStopCode), ownsItem: true);
             }
         }
 
@@ -196,7 +195,7 @@ namespace UnityAgentKit.Editor
             }
         }
 
-        private static bool TryComplete(PendingDispatch item, UnityAgentKitOperationResponse response)
+        private static bool TryComplete(PendingDispatch item, UnityAgentKitOperationResponse response, bool ownsItem = false)
         {
             lock (PendingLock)
             {
@@ -205,8 +204,13 @@ namespace UnityAgentKit.Editor
                     return false;
                 }
 
-                if (!PendingDispatches.Remove(item))
+                if (!ownsItem && !PendingDispatches.Remove(item))
                 {
+                    if (item.cancelled)
+                    {
+                        return false;
+                    }
+
                     item.completed = true;
                     return false;
                 }

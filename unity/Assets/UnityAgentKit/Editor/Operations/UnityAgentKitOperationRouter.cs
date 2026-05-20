@@ -93,6 +93,15 @@ namespace UnityAgentKit.Editor
             return response;
         }
 
+        internal static UnityAgentKitOperationResponse Stopped(UnityAgentKitOperationRequest request, UnityAgentKitHostRecord record, string reasonCode)
+        {
+            var startedAt = Now();
+            var operation = NormalizeOperation(request != null ? request.operation : string.Empty);
+            var requestId = request != null ? request.requestId ?? string.Empty : string.Empty;
+            var code = string.IsNullOrEmpty(reasonCode) ? "host.stopped" : reasonCode;
+            return Failed(operation, requestId, record, code, "Pending dispatch work was stopped.", startedAt);
+        }
+
         internal static UnityAgentKitOperationResponse EmptyBody(UnityAgentKitHostRecord record)
         {
             return Failed(InvalidRequestOperation, string.Empty, record, "protocol.empty_body", "Operation request body is empty.", Now());
