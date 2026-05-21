@@ -6,3 +6,4 @@
 /references
 /unity/*.csproj
 /.superpowers
+/unity/obj
