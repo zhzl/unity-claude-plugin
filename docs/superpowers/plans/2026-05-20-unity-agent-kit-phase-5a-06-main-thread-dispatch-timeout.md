@@ -16,6 +16,13 @@
 **Execution Index:** `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md`
 **Plan Card:** 5A-06 — Main-thread dispatch + host-level timeout
 
+**Current Status:** reopened / in progress
+
+- Tasks 1-5 represent historical / pre-redesign evidence for the initial 5A-06 implementation and repeated task 4.1 review/repair attempts.
+- Task 4.1 remediation is paused because repeated review rounds exposed an architecture-level loopback shutdown boundary issue.
+- The next open work is task 4.2 architecture redesign checkpoint before implementation resumes.
+- Do not restore roadmap completed wording until the redesign, implementation, spec review, code quality review, and final re-verification all pass.
+
 ---
 
 ## 提交策略
@@ -972,7 +979,52 @@ git add unity/Assets/UnityAgentKit/Editor/Transport/UnityAgentKitMainThread.cs u
 git commit -m "feat: fail pending dispatch work on host stop"
 ```
 
+## 任务 4.1：Stop-window HTTP shutdown remediation（paused / superseded patch loop）
+
+Task 4.1 的 patch/remediation loop 已暂停并被 task 4.2 architecture redesign checkpoint 取代；以下步骤只保留为 pre-redesign failure-mode evidence，不能按原样执行或据此恢复 completed wording。
+
+**文件：**
+- 修改：`unity/Assets/UnityAgentKit/Editor/Transport/UnityAgentKitLoopbackHttpServer.cs`
+- 修改：`unity/Assets/UnityAgentKit/Editor/Transport/UnityAgentKitMainThread.cs`（如需 enqueue instrumentation）
+- 修改：`unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeDispatchTests.cs`（task 4.1 的新/修改 dispatch remediation tests 应放在此文件）
+
+`unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeDispatchTests.cs` 定义的是 partial `UnityAgentKit.Editor.Tests.HostRuntimeTests`，所以 task 4.1 的最终验证必须继续使用 `-testFilter UnityAgentKit.Editor.Tests.HostRuntimeTests`，以便 remediation evidence 保持在同一个 `HostRuntimeTests` suite 中。
+
+- [ ] **步骤 1：编写失败测试：closing window accepted request must return `failed + host.stopped` envelope rather than connection abort。**
+- [ ] **步骤 2：编写失败测试：stop-window request must be proven not to enter normal dispatch queue（使用 test-only enqueue counter/hook 或 requestId 观测，不能只断言最终 pending count 为 0）。**
+- [ ] **步骤 3：编写失败测试：HTTP pending dispatch on reload/quitting returns `host.stopped_for_reload` / `host.editor_quitting` and never timeout/abort。**
+- [ ] **步骤 4：替换当前阻塞 HTTP handler 的 stop-window test；测试不得通过阻塞 HTTP handler、`Thread.Sleep`、busy wait、`Task.Wait` 制造竞态。允许暂停 Stop 流程 hook 或其他非 handler 阻塞 instrumentation。**
+- [ ] **步骤 5：修复 shutdown flow：已被 `HttpListener` 接收并进入 `HandleContext` 的 `/operations` dispatch 在 stopping/closing 阶段仍返回 stopped envelope；不要在 closing gate 后直接 abort 已接收的 dispatch request。**
+- [ ] **步骤 6：明确/修复 strict stopped envelope + flush-before-close 语义：当前目标是 strict stopped envelope / flush-before-close semantics。listener close must wait for async stopped writes and active handlers without blocking Unity main thread。若执行者无法实现 strict 语义，必须先停止实现、上报该阻塞，并先更新 plan/roadmap 记录新的 accepted boundary 与未满足点；在 spec review、code quality review 和文档同步完成之前，不得把 best-effort boundary 解释为 task 4.1 已完成。**
+- [ ] **步骤 7：运行 targeted Unity tests 验证失败后通过。**
+- [ ] **步骤 8：运行完整 `HostRuntimeTests` partial suite，并更新 `unity/Library/UnityAgentKit/Phase5A06Task41StopWindowRemediationResults.xml`，确保完整验证命令仍使用 `-testFilter UnityAgentKit.Editor.Tests.HostRuntimeTests`、`result="Passed"`、`failed="0"`，且 evidence names present；`unity/Library/UnityAgentKit/Phase5A06MainThreadDispatchTimeoutResults.xml` 继续保留为 pre-redesign historical evidence。**
+- [ ] **步骤 9：重新进行任务 4.1 规格审查和代码质量审查；该 patch-loop completion path 已被 task 4.2 取代，不能作为 roadmap completed 口径依据。**
+
+## 任务 4.2：Loopback shutdown architecture redesign checkpoint
+
+**目标：** 先重设计 loopback server shutdown architecture，再恢复实现。该 checkpoint 必须明确 shutdown state、accepted request boundary、wake/exit/close/drain 顺序，并用 red tests 固化行为；不得继续 task 4.1 patch loop。
+
+**设计规格：** `docs/superpowers/specs/2026-05-21-unity-agent-kit-phase-5a-06-loopback-shutdown-redesign.md`
+
+**文件：**
+- 设计：`unity/Assets/UnityAgentKit/Editor/Transport/UnityAgentKitLoopbackHttpServer.cs`
+- 设计：`unity/Assets/UnityAgentKit/Editor/Transport/UnityAgentKitMainThread.cs`
+- 测试：`unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeDispatchTests.cs`（仍作为 partial `UnityAgentKit.Editor.Tests.HostRuntimeTests`）
+- 最终证据：`unity/Library/UnityAgentKit/Phase5A06Task41StopWindowRemediationResults.xml`
+
+- [ ] **步骤 1：记录当前 failure modes。** 覆盖 accepted stop-window request connection abort、closing gate 后误 abort、normal dispatch queue 误入队、reload/quitting pending dispatch 变成 timeout/abort、listener close race、async write 被提前关闭、active handler drain 不稳定等已暴露问题。
+- [ ] **步骤 2：设计 strict shutdown state / boundary。** 明确 accepting、stopping、listener-loop-exited、closing、closed 等状态；显式定义 `GetContext` 前的 accept reservation、`GetContext` 后 body 完整可读取的 `/operations POST` stopped-envelope 责任，以及 non-guarantee routes / incomplete-stalled body 可以 rejected/aborted 且不进入 drain ownership。
+- [ ] **步骤 3：设计 deterministic wake request、wake failure fallback 和 listener-loop-exited signal。** Stop 必须可确定唤醒 listener loop，并等待/观察 listener loop 退出信号；wake failure fallback 只能解除 non-guarantee accept blocking，不能扩大 stopped envelope guarantees；不得依赖 `Thread.Sleep`、busy wait、阻塞 HTTP handler 或 Unity main thread。
+- [ ] **步骤 4：设计 background closer / nonblocking Unity main thread。** listener close、guaranteed operation handler drain、guaranteed async stopped writes flush 必须在后台完成或通过非阻塞信号协调；Unity main thread 不能被 `Task.Wait`、同步 wait handle 或长阻塞占用。
+- [ ] **步骤 5：设计 stable drain of guaranteed operation handlers + guaranteed async writes。** 明确 guarantee-range `/operations` handler 计数、已接受 dispatch request 的 completion ownership、stopped envelope 写入完成信号、timer disposal、late timeout 抑制、non-guarantee routes 不进入 drain ownership，以及 close 前 flush/drain 的终止条件。
+- [ ] **步骤 6：先写 red tests。** 覆盖 accept reservation before `GetContext`、stop-window stopped envelope、deterministic wake、listener-loop-exited signal、background closer nonblocking main thread、guaranteed operation handlers + guaranteed async writes stable drain、non-guarantee routes 不阻塞 close、reload/quitting stopped codes 和 no timeout/abort。
+- [ ] **步骤 7：再做 production changes。** 只实现 task 4.2 设计所需的最小 shutdown architecture；不得引入 TS client、MCP public tools、vertical smoke、workflow timeout 或 public action logic。
+- [ ] **步骤 8：运行完整 `HostRuntimeTests` 验证。** 使用 `-testFilter UnityAgentKit.Editor.Tests.HostRuntimeTests`，最终 evidence 写入 `unity/Library/UnityAgentKit/Phase5A06Task41StopWindowRemediationResults.xml`；`unity/Library/UnityAgentKit/Phase5A06MainThreadDispatchTimeoutResults.xml` 继续只作为 pre-redesign historical evidence。
+- [ ] **步骤 9：完成 spec / code-quality review 后再同步 roadmap。** 只有 redesign、red/green evidence、完整 HostRuntimeTests、规格审查和代码质量审查全部通过后，才允许恢复 5A-06 completion wording；当前不得标记完成。
+
 ## 任务 5：Final 5A-06 verification and scope guard
+
+任务 5 的既有验证仅代表 architecture redesign 之前的历史证据；task 4.2 完成后必须重新运行任务 5 或完成 task 4.2 的 final re-verification，不能把当前任务 5 视为最终完成证据。
 
 **文件：**
 - 验证：`unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeTests.cs`
@@ -1069,3 +1121,4 @@ git status --short
 - **上游约束覆盖：** Roadmap/contract/index constraints are mapped to boundary裁决, upstream summary, reference input mapping, Plan Card Coverage, and final scope guard.
 - **参考输入映射：** Each reference input lists adopted content, excluded content, exclusion reason, and landing tasks.
 - **验证强度：** Behavior is proven through Unity DTO deserialization and real HTTP `/operations` coroutine tests, not only file or symbol existence. Scope guard is explicitly non-behavioral and only protects sibling-plan boundaries.
+- **补充说明：** task 4.1 及其之前的 self-check coverage 代表 pre-redesign historical coverage；当前 reopen scope 是 task 4.2 loopback shutdown architecture redesign checkpoint。
