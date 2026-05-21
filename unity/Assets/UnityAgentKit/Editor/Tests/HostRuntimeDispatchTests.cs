@@ -1,5 +1,8 @@
 using System;
 using System.Collections;
+using System.IO;
+using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 using NUnit.Framework;
 using UnityEngine;
@@ -9,6 +12,82 @@ namespace UnityAgentKit.Editor.Tests
 {
     public sealed partial class HostRuntimeTests
     {
+        private sealed class CompletedAsyncResult : IAsyncResult
+        {
+            private readonly ManualResetEvent _waitHandle = new ManualResetEvent(true);
+
+            public object AsyncState => null;
+            public WaitHandle AsyncWaitHandle => _waitHandle;
+            public bool CompletedSynchronously => false;
+            public bool IsCompleted => true;
+        }
+
+        private sealed class CompletedReadWithoutCallbackStream : Stream
+        {
+            private readonly byte[] _payload;
+            private bool _endReadCalled;
+
+            public CompletedReadWithoutCallbackStream(byte[] payload)
+            {
+                _payload = payload;
+            }
+
+            public int EndReadCallCount { get; private set; }
+
+            public override bool CanRead => true;
+            public override bool CanSeek => false;
+            public override bool CanWrite => false;
+            public override long Length => throw new NotSupportedException();
+
+            public override long Position
+            {
+                get => throw new NotSupportedException();
+                set => throw new NotSupportedException();
+            }
+
+            public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
+            {
+                Array.Copy(_payload, 0, buffer, offset, Math.Min(count, _payload.Length));
+                return new CompletedAsyncResult();
+            }
+
+            public override int EndRead(IAsyncResult asyncResult)
+            {
+                if (_endReadCalled)
+                {
+                    throw new InvalidOperationException("EndRead called more than once.");
+                }
+
+                _endReadCalled = true;
+                EndReadCallCount += 1;
+                return _payload.Length;
+            }
+
+            public override int Read(byte[] buffer, int offset, int count)
+            {
+                throw new NotSupportedException();
+            }
+
+            public override void Flush()
+            {
+            }
+
+            public override long Seek(long offset, SeekOrigin origin)
+            {
+                throw new NotSupportedException();
+            }
+
+            public override void SetLength(long value)
+            {
+                throw new NotSupportedException();
+            }
+
+            public override void Write(byte[] buffer, int offset, int count)
+            {
+                throw new NotSupportedException();
+            }
+        }
+
         [Test]
         public void ThreadCheckOperationIsMarkedAsMainThreadDispatch()
         {
@@ -333,70 +412,383 @@ namespace UnityAgentKit.Editor.Tests
         }
 
         [Test]
-        public void StopWindowRejectsNewDispatchRequestsWithoutEnqueueing()
+        public void AcceptedOperationStoppedBeforeAdmissionReturnsStoppedEnvelope()
         {
-            var registryPath = TemporaryRegistryPath("operations-http-stop-window-reject");
-            BackgroundHttpRequest stopWindowRequest = null;
-            Thread releaseThread = null;
-            using (var handlerStarted = new ManualResetEventSlim(false))
-            using (var releaseHandler = new ManualResetEventSlim(false))
-            using (var stopFlushStarted = new ManualResetEventSlim(false))
+            var registryPath = TemporaryRegistryPath("operations-http-accepted-before-admission-stop");
+            var acceptedBeforeAdmission = new ManualResetEventSlim(false);
+            var releaseAdmission = new ManualResetEventSlim(false);
+            BackgroundHttpRequest request = null;
+
+            try
             {
-                try
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                UnityAgentKitLoopbackHttpServer.AcceptedContextBeforeAdmissionHookForTests = () =>
                 {
-                    var record = UnityAgentKitHost.StartForTests(registryPath);
-                    UnityAgentKitLoopbackHttpServer.HandlerStartedForTests = () =>
-                    {
-                        handlerStarted.Set();
-                        releaseHandler.Wait(1000);
-                    };
-                    UnityAgentKitLoopbackHttpServer.BeforeStopFlushHookForTests = () => stopFlushStarted.Set();
-                    UnityAgentKitLoopbackHttpServer.BeginStopHookForTests = () =>
-                    {
-                        stopWindowRequest = StartPostInBackground(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.threadCheck\",\"requestId\":\"req-stop-window\"}");
-                        Assert.IsTrue(handlerStarted.Wait(1000), "Expected stop-window request to enter handler during Stop.");
-                        releaseThread = new Thread(() =>
-                        {
-                            stopFlushStarted.Wait(1000);
-                            releaseHandler.Set();
-                        });
-                        releaseThread.IsBackground = true;
-                        releaseThread.Start();
-                    };
+                    acceptedBeforeAdmission.Set();
+                    Assert.IsTrue(releaseAdmission.Wait(1000), "Expected test to release accepted request admission.");
+                };
+                request = StartPostInBackground(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.threadCheck\",\"requestId\":\"req-accepted-before-admission-stop\"}");
 
-                    UnityAgentKitHost.StopForTests("host.stopped");
+                Assert.IsTrue(acceptedBeforeAdmission.Wait(1000), "Expected listener to accept request before admission.");
+                UnityAgentKitHost.StopForTests("host.stopped");
+                releaseAdmission.Set();
 
-                    Assert.NotNull(stopWindowRequest);
-                    Assert.IsTrue(stopWindowRequest.thread.Join(1000), "Expected stop-window request to complete before assertion.");
-                    Assert.IsTrue(stopWindowRequest.IsDone);
-                    Assert.IsNull(stopWindowRequest.GetError());
+                Assert.IsTrue(request.WaitUntilDone(1000), "Expected accepted request to complete after stop.");
+                Assert.IsNull(request.GetError());
 
-                    var stopWindowResult = stopWindowRequest.GetResult();
-                    var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(stopWindowResult.body);
-                    Assert.AreEqual(200, stopWindowResult.statusCode);
-                    AssertOperationEnvelopeMinimumFields(response, "failed", "host.threadCheck", "req-stop-window", record);
-                    Assert.AreEqual("host.stopped", response.code);
-                    Assert.AreEqual(1, response.diagnostics.Length);
-                    Assert.AreEqual("host.stopped", response.diagnostics[0].code);
-                    Assert.AreNotEqual("timeout", response.status);
-                    Assert.AreNotEqual("host.dispatch_timeout", response.code);
-                    Assert.AreEqual(0, UnityAgentKitMainThread.PendingDispatchCountForTests);
-                    Assert.AreEqual(0, UnityAgentKitLoopbackHttpServer.ActiveHandlerCountForTests);
-                }
-                finally
+                var result = request.GetResult();
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(result.body);
+                Assert.AreEqual(200, result.statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "failed", "host.threadCheck", "req-accepted-before-admission-stop", record);
+                Assert.AreEqual("host.stopped", response.code);
+                Assert.AreEqual(1, response.diagnostics.Length);
+                Assert.AreEqual("host.stopped", response.diagnostics[0].code);
+            }
+            finally
+            {
+                UnityAgentKitLoopbackHttpServer.AcceptedContextBeforeAdmissionHookForTests = null;
+                releaseAdmission.Set();
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void ReadChunkWithTimeoutTreatsSignaledReadAsCompleteWithoutCallback()
+        {
+            var stream = new CompletedReadWithoutCallbackStream(Encoding.UTF8.GetBytes("ok"));
+            var chunk = new byte[8];
+
+            var bytesRead = UnityAgentKitLoopbackHttpServer.ReadChunkWithTimeout(stream, chunk, 250);
+
+            Assert.AreEqual(2, bytesRead);
+            Assert.AreEqual("ok", Encoding.UTF8.GetString(chunk, 0, bytesRead));
+            Assert.AreEqual(1, stream.EndReadCallCount);
+        }
+
+        [Test]
+        public void CompleteReadableAcceptedOperationTransfersToGuaranteedOwnershipBeforeStoppedEnvelope()
+        {
+            var registryPath = TemporaryRegistryPath("operations-complete-body-guaranteed-stop");
+            var bodyRead = new ManualResetEventSlim(false);
+            var releaseClassification = new ManualResetEventSlim(false);
+            BackgroundHttpRequest request = null;
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                UnityAgentKitMainThread.ResetEnqueueInstrumentationForTests();
+                UnityAgentKitLoopbackHttpServer.AfterCompleteOperationBodyReadHookForTests = () =>
                 {
-                    stopFlushStarted.Set();
-                    releaseHandler.Set();
-                    if (releaseThread != null)
-                    {
-                        releaseThread.Join(1000);
-                    }
+                    bodyRead.Set();
+                    Assert.IsTrue(releaseClassification.Wait(1000), "Expected test to release operation ownership transfer.");
+                };
 
-                    UnityAgentKitLoopbackHttpServer.BeginStopHookForTests = null;
-                    UnityAgentKitLoopbackHttpServer.BeforeStopFlushHookForTests = null;
-                    UnityAgentKitLoopbackHttpServer.HandlerStartedForTests = null;
-                    UnityAgentKitHost.ResetForTests();
-                }
+                request = StartPostInBackground(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.threadCheck\",\"requestId\":\"req-complete-body-stop\"}");
+
+                Assert.IsTrue(bodyRead.Wait(1000), "Expected complete request body to be read before stopping.");
+                UnityAgentKitHost.StopForTests("host.stopped");
+                Assert.AreEqual(1, UnityAgentKitLoopbackHttpServer.AcceptReservationCountForTests, "Complete body classification remains protected by accept reservation before transfer.");
+                releaseClassification.Set();
+
+                Assert.IsTrue(request.WaitUntilDone(1000), "Expected stopped envelope response for complete readable accepted operation.");
+                Assert.IsNull(request.GetError());
+
+                var result = request.GetResult();
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(result.body);
+                Assert.AreEqual(200, result.statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "failed", "host.threadCheck", "req-complete-body-stop", record);
+                Assert.AreEqual("host.stopped", response.code);
+                Assert.IsFalse(UnityAgentKitMainThread.WasRequestIdEnqueuedForTests("req-complete-body-stop"));
+                Assert.AreEqual(0, UnityAgentKitLoopbackHttpServer.GuaranteedOperationHandlerCountForTests);
+            }
+            finally
+            {
+                UnityAgentKitLoopbackHttpServer.AfterCompleteOperationBodyReadHookForTests = null;
+                releaseClassification.Set();
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void StopWaitsForAcceptReservationBeforeClosingListener()
+        {
+            var registryPath = TemporaryRegistryPath("stop-waits-for-accept-reservation");
+            var beforeGetContext = new ManualResetEventSlim(false);
+            var releaseGetContext = new ManualResetEventSlim(false);
+
+            try
+            {
+                UnityAgentKitLoopbackHttpServer.BeforeGetContextHookForTests = () =>
+                {
+                    beforeGetContext.Set();
+                    Assert.IsTrue(releaseGetContext.Wait(1000), "Expected test to release GetContext entry.");
+                };
+
+                UnityAgentKitHost.StartForTests(registryPath);
+
+                Assert.IsTrue(beforeGetContext.Wait(1000), "Expected listener to hold accept reservation before GetContext.");
+                Assert.AreEqual(1, UnityAgentKitLoopbackHttpServer.AcceptReservationCountForTests);
+
+                UnityAgentKitHost.StopForTests("host.stopped");
+
+                Assert.IsFalse(UnityAgentKitLoopbackHttpServer.WaitForListenerClosedForTests(100), "Close worker must wait while accept reservation is held.");
+                releaseGetContext.Set();
+                Assert.IsTrue(UnityAgentKitLoopbackHttpServer.WaitForListenerClosedForTests(1000), "Expected listener to close after accept reservation release.");
+            }
+            finally
+            {
+                UnityAgentKitLoopbackHttpServer.BeforeGetContextHookForTests = null;
+                releaseGetContext.Set();
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void StopRequestsWakeAndSignalsListenerLoopExited()
+        {
+            var registryPath = TemporaryRegistryPath("stop-wake-loop-exit");
+
+            try
+            {
+                UnityAgentKitHost.StartForTests(registryPath);
+
+                UnityAgentKitHost.StopForTests("host.stopped");
+
+                Assert.IsTrue(UnityAgentKitLoopbackHttpServer.WakeRequestCountForTests >= 1, "Stop must issue a deterministic wake request.");
+                Assert.IsTrue(UnityAgentKitLoopbackHttpServer.WaitForListenerLoopExitedForTests(1000), "Expected listener loop exit signal after Stop wake.");
+                Assert.IsTrue(UnityAgentKitLoopbackHttpServer.WaitForListenerClosedForTests(1000), "Expected close worker to close after listener loop exit.");
+            }
+            finally
+            {
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void IncompleteAcceptedOperationBodyDoesNotBlockFinalClose()
+        {
+            var registryPath = TemporaryRegistryPath("operations-incomplete-body-non-guarantee");
+            TcpClient client = null;
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                client = StartPartialOperationsPost(record.port, "{\"operation\":\"host.threadCheck\"", 200);
+
+                Assert.IsTrue(UnityAgentKitLoopbackHttpServer.WaitForAcceptedContextForTests(1000), "Expected listener to accept partial request.");
+                UnityAgentKitHost.StopForTests("host.stopped");
+
+                Assert.IsTrue(UnityAgentKitLoopbackHttpServer.WaitForListenerClosedForTests(1000), "Incomplete body must not hold drain ownership or block final close.");
+                Assert.AreEqual(0, UnityAgentKitLoopbackHttpServer.GuaranteedOperationHandlerCountForTests);
+                Assert.AreEqual(0, UnityAgentKitLoopbackHttpServer.GuaranteedAsyncWriteCountForTests);
+            }
+            finally
+            {
+                client?.Close();
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator WakeFallbackDoesNotCloseGuaranteedStoppedWrite()
+        {
+            var registryPath = TemporaryRegistryPath("wake-fallback-preserves-guaranteed-write");
+            var guaranteedWriteHeld = new ManualResetEventSlim(false);
+            var releaseGuaranteedWrite = new ManualResetEventSlim(false);
+            BackgroundHttpRequest request = null;
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                UnityAgentKitLoopbackHttpServer.BeforeGuaranteedAsyncWriteForTests = () =>
+                {
+                    guaranteedWriteHeld.Set();
+                    Assert.IsTrue(releaseGuaranteedWrite.Wait(1000), "Expected test to release guaranteed write.");
+                };
+
+                request = StartPostInBackground(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.pendingDispatchTimeout\",\"requestId\":\"req-wake-fallback-write\"}");
+                yield return WaitForPendingDispatch();
+                UnityAgentKitHost.StopForTests("host.stopped");
+
+                Assert.IsTrue(guaranteedWriteHeld.Wait(1000), "Expected stopped envelope write to be held.");
+                UnityAgentKitLoopbackHttpServer.ForceWakeFailureFallbackForTests();
+                Assert.IsFalse(UnityAgentKitLoopbackHttpServer.WaitForListenerClosedForTests(100), "Fallback must not close while guaranteed stopped write is held.");
+
+                releaseGuaranteedWrite.Set();
+                Assert.IsTrue(UnityAgentKitLoopbackHttpServer.WaitForListenerClosedForTests(1000));
+            }
+            finally
+            {
+                UnityAgentKitLoopbackHttpServer.BeforeGuaranteedAsyncWriteForTests = null;
+                releaseGuaranteedWrite.Set();
+                UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(250);
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void ClosingWindowAcceptedDirectOperationReturnsStoppedEnvelope()
+        {
+            var registryPath = TemporaryRegistryPath("operations-http-stop-window-direct-envelope");
+            BackgroundHttpRequest stopWindowRequest = null;
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                UnityAgentKitLoopbackHttpServer.AfterBeginClosingHookForTests = () =>
+                {
+                    stopWindowRequest = StartPostInBackground(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.echo\",\"requestId\":\"req-stop-window-direct\",\"inputJson\":\"{\\\"text\\\":\\\"closing\\\"}\"}");
+                    Assert.IsTrue(stopWindowRequest.WaitUntilDone(1000), "Expected closing-window direct request to complete before listener close.");
+                };
+
+                UnityAgentKitHost.StopForTests("host.stopped");
+
+                Assert.NotNull(stopWindowRequest);
+                Assert.IsTrue(stopWindowRequest.IsDone);
+                Assert.IsNull(stopWindowRequest.GetError());
+
+                var stopWindowResult = stopWindowRequest.GetResult();
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(stopWindowResult.body);
+                Assert.AreEqual(200, stopWindowResult.statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "failed", "host.echo", "req-stop-window-direct", record);
+                Assert.AreEqual("host.stopped", response.code);
+                Assert.AreEqual(1, response.diagnostics.Length);
+                Assert.AreEqual("host.stopped", response.diagnostics[0].code);
+                Assert.AreNotEqual("succeeded", response.status);
+            }
+            finally
+            {
+                UnityAgentKitLoopbackHttpServer.AfterBeginClosingHookForTests = null;
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void ClosingWindowAcceptedDispatchReturnsStoppedEnvelopeBeforeListenerClose()
+        {
+            var registryPath = TemporaryRegistryPath("operations-http-stop-window-closing-envelope");
+            BackgroundHttpRequest stopWindowRequest = null;
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                UnityAgentKitLoopbackHttpServer.AfterBeginClosingHookForTests = () =>
+                {
+                    stopWindowRequest = StartPostInBackground(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.threadCheck\",\"requestId\":\"req-stop-window-closing\"}");
+                    Assert.IsTrue(stopWindowRequest.WaitUntilDone(1000), "Expected closing-window request to complete before listener close.");
+                };
+
+                UnityAgentKitHost.StopForTests("host.stopped");
+
+                Assert.NotNull(stopWindowRequest);
+                Assert.IsTrue(stopWindowRequest.IsDone);
+                Assert.IsNull(stopWindowRequest.GetError());
+
+                var stopWindowResult = stopWindowRequest.GetResult();
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(stopWindowResult.body);
+                Assert.AreEqual(200, stopWindowResult.statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "failed", "host.threadCheck", "req-stop-window-closing", record);
+                Assert.AreEqual("host.stopped", response.code);
+                Assert.AreEqual(1, response.diagnostics.Length);
+                Assert.AreEqual("host.stopped", response.diagnostics[0].code);
+                Assert.AreNotEqual("timeout", response.status);
+                Assert.AreNotEqual("host.dispatch_timeout", response.code);
+                Assert.AreEqual(0, UnityAgentKitLoopbackHttpServer.ActiveHandlerCountForTests);
+            }
+            finally
+            {
+                UnityAgentKitLoopbackHttpServer.AfterBeginClosingHookForTests = null;
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void StopWindowDispatchDoesNotEnterNormalDispatchQueue()
+        {
+            var registryPath = TemporaryRegistryPath("operations-http-stop-window-no-enqueue");
+            BackgroundHttpRequest stopWindowRequest = null;
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                UnityAgentKitMainThread.ResetEnqueueInstrumentationForTests();
+                UnityAgentKitLoopbackHttpServer.AfterBeginClosingHookForTests = () =>
+                {
+                    stopWindowRequest = StartPostInBackground(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.threadCheck\",\"requestId\":\"req-stop-window-no-enqueue\"}");
+                    Assert.IsTrue(stopWindowRequest.WaitUntilDone(1000), "Expected stop-window request to complete before listener close.");
+                };
+
+                UnityAgentKitHost.StopForTests("host.stopped");
+
+                Assert.NotNull(stopWindowRequest);
+                Assert.IsNull(stopWindowRequest.GetError());
+                Assert.IsFalse(UnityAgentKitMainThread.WasRequestIdEnqueuedForTests("req-stop-window-no-enqueue"));
+                Assert.AreEqual(0, UnityAgentKitMainThread.PendingDispatchCountForTests);
+            }
+            finally
+            {
+                UnityAgentKitLoopbackHttpServer.AfterBeginClosingHookForTests = null;
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator HttpPendingDispatchOnReloadReturnsStoppedEnvelope()
+        {
+            var registryPath = TemporaryRegistryPath("operations-http-reload-pending");
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(1000);
+                var request = StartPostInBackground(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.pendingDispatchTimeout\",\"requestId\":\"req-http-reload-pending\"}");
+
+                yield return WaitForPendingDispatch();
+                UnityAgentKitHost.StopForReloadForTests();
+                yield return WaitForRequestDone(request);
+
+                Assert.IsNull(request.GetError());
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(request.GetResult().body);
+                Assert.AreEqual(200, request.GetResult().statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "failed", "host.pendingDispatchTimeout", "req-http-reload-pending", record);
+                Assert.AreEqual("host.stopped_for_reload", response.code);
+                Assert.AreNotEqual("timeout", response.status);
+                Assert.AreNotEqual("host.dispatch_timeout", response.code);
+            }
+            finally
+            {
+                UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(250);
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator HttpPendingDispatchOnEditorQuittingReturnsStoppedEnvelope()
+        {
+            var registryPath = TemporaryRegistryPath("operations-http-quitting-pending");
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(1000);
+                var request = StartPostInBackground(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.pendingDispatchTimeout\",\"requestId\":\"req-http-quitting-pending\"}");
+
+                yield return WaitForPendingDispatch();
+                UnityAgentKitHost.StopForQuittingForTests();
+                yield return WaitForRequestDone(request);
+
+                Assert.IsNull(request.GetError());
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(request.GetResult().body);
+                Assert.AreEqual(200, request.GetResult().statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "failed", "host.pendingDispatchTimeout", "req-http-quitting-pending", record);
+                Assert.AreEqual("host.editor_quitting", response.code);
+                Assert.AreNotEqual("timeout", response.status);
+                Assert.AreNotEqual("host.dispatch_timeout", response.code);
+            }
+            finally
+            {
+                UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(250);
+                UnityAgentKitHost.ResetForTests();
             }
         }
 
@@ -527,6 +919,21 @@ namespace UnityAgentKit.Editor.Tests
             return request;
         }
 
+        private static TcpClient StartPartialOperationsPost(int port, string partialBody, int declaredContentLength)
+        {
+            var client = new TcpClient("127.0.0.1", port);
+            var payload = System.Text.Encoding.UTF8.GetBytes(
+                "POST /operations HTTP/1.1\r\n" +
+                "Host: 127.0.0.1:" + port + "\r\n" +
+                "Content-Type: application/json\r\n" +
+                "Content-Length: " + declaredContentLength + "\r\n" +
+                "Connection: keep-alive\r\n" +
+                "\r\n" +
+                partialBody);
+            client.GetStream().Write(payload, 0, payload.Length);
+            return client;
+        }
+
         private static IEnumerator WaitForPendingDispatch()
         {
             var deadline = DateTimeOffset.UtcNow.AddSeconds(2);
@@ -561,6 +968,16 @@ namespace UnityAgentKit.Editor.Tests
             internal Thread thread;
 
             internal bool IsDone => doneSignal.IsSet;
+
+            internal bool WaitUntilDone(int millisecondsTimeout)
+            {
+                if (!doneSignal.Wait(millisecondsTimeout))
+                {
+                    return false;
+                }
+
+                return thread == null || thread.Join(millisecondsTimeout);
+            }
 
             internal Exception GetError()
             {

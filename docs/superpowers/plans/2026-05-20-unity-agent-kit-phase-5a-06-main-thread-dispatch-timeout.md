@@ -16,12 +16,12 @@
 **Execution Index:** `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md`
 **Plan Card:** 5A-06 — Main-thread dispatch + host-level timeout
 
-**Current Status:** reopened / in progress
+**Current Status:** completed for 5A-06 sync / historical for pre-redesign tasks
 
-- Tasks 1-5 represent historical / pre-redesign evidence for the initial 5A-06 implementation and repeated task 4.1 review/repair attempts.
-- Task 4.1 remediation is paused because repeated review rounds exposed an architecture-level loopback shutdown boundary issue.
-- The next open work is task 4.2 architecture redesign checkpoint before implementation resumes.
-- Do not restore roadmap completed wording until the redesign, implementation, spec review, code quality review, and final re-verification all pass.
+- Tasks 1-5 and task 4.1 represent historical / pre-redesign evidence for the initial 5A-06 implementation and repeated task 4.1 review/repair attempts.
+- Task 4.1 remediation remains historical context only; the patch loop stays superseded by task 4.2.
+- Task 4.2 redesign、implementation、spec review、code quality review 和 final re-verification 已全部通过；final evidence 为 `unity/Library/UnityAgentKit/Phase5A06Task41StopWindowRemediationResults.xml`（`result="Passed"`、`total="78"`、`passed="78"`、`failed="0"`）。
+- Roadmap completion wording may be restored for 5A-06 only within the documented partial Phase 5 state; Phase 5A / Phase 5 overall still remain incomplete because 5A-07 through 5A-08 are pending.
 
 ---
 
@@ -1002,9 +1002,12 @@ Task 4.1 的 patch/remediation loop 已暂停并被 task 4.2 architecture redesi
 
 ## 任务 4.2：Loopback shutdown architecture redesign checkpoint
 
+**状态：** 已完成；作为 5A-06 final remediation path 生效。
+
 **目标：** 先重设计 loopback server shutdown architecture，再恢复实现。该 checkpoint 必须明确 shutdown state、accepted request boundary、wake/exit/close/drain 顺序，并用 red tests 固化行为；不得继续 task 4.1 patch loop。
 
 **设计规格：** `docs/superpowers/specs/2026-05-21-unity-agent-kit-phase-5a-06-loopback-shutdown-redesign.md`
+**实现计划：** `docs/superpowers/plans/2026-05-21-unity-agent-kit-phase-5a-06-loopback-shutdown-redesign.md`
 
 **文件：**
 - 设计：`unity/Assets/UnityAgentKit/Editor/Transport/UnityAgentKitLoopbackHttpServer.cs`
@@ -1012,19 +1015,19 @@ Task 4.1 的 patch/remediation loop 已暂停并被 task 4.2 architecture redesi
 - 测试：`unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeDispatchTests.cs`（仍作为 partial `UnityAgentKit.Editor.Tests.HostRuntimeTests`）
 - 最终证据：`unity/Library/UnityAgentKit/Phase5A06Task41StopWindowRemediationResults.xml`
 
-- [ ] **步骤 1：记录当前 failure modes。** 覆盖 accepted stop-window request connection abort、closing gate 后误 abort、normal dispatch queue 误入队、reload/quitting pending dispatch 变成 timeout/abort、listener close race、async write 被提前关闭、active handler drain 不稳定等已暴露问题。
-- [ ] **步骤 2：设计 strict shutdown state / boundary。** 明确 accepting、stopping、listener-loop-exited、closing、closed 等状态；显式定义 `GetContext` 前的 accept reservation、`GetContext` 后 body 完整可读取的 `/operations POST` stopped-envelope 责任，以及 non-guarantee routes / incomplete-stalled body 可以 rejected/aborted 且不进入 drain ownership。
-- [ ] **步骤 3：设计 deterministic wake request、wake failure fallback 和 listener-loop-exited signal。** Stop 必须可确定唤醒 listener loop，并等待/观察 listener loop 退出信号；wake failure fallback 只能解除 non-guarantee accept blocking，不能扩大 stopped envelope guarantees；不得依赖 `Thread.Sleep`、busy wait、阻塞 HTTP handler 或 Unity main thread。
-- [ ] **步骤 4：设计 background closer / nonblocking Unity main thread。** listener close、guaranteed operation handler drain、guaranteed async stopped writes flush 必须在后台完成或通过非阻塞信号协调；Unity main thread 不能被 `Task.Wait`、同步 wait handle 或长阻塞占用。
-- [ ] **步骤 5：设计 stable drain of guaranteed operation handlers + guaranteed async writes。** 明确 guarantee-range `/operations` handler 计数、已接受 dispatch request 的 completion ownership、stopped envelope 写入完成信号、timer disposal、late timeout 抑制、non-guarantee routes 不进入 drain ownership，以及 close 前 flush/drain 的终止条件。
-- [ ] **步骤 6：先写 red tests。** 覆盖 accept reservation before `GetContext`、stop-window stopped envelope、deterministic wake、listener-loop-exited signal、background closer nonblocking main thread、guaranteed operation handlers + guaranteed async writes stable drain、non-guarantee routes 不阻塞 close、reload/quitting stopped codes 和 no timeout/abort。
-- [ ] **步骤 7：再做 production changes。** 只实现 task 4.2 设计所需的最小 shutdown architecture；不得引入 TS client、MCP public tools、vertical smoke、workflow timeout 或 public action logic。
-- [ ] **步骤 8：运行完整 `HostRuntimeTests` 验证。** 使用 `-testFilter UnityAgentKit.Editor.Tests.HostRuntimeTests`，最终 evidence 写入 `unity/Library/UnityAgentKit/Phase5A06Task41StopWindowRemediationResults.xml`；`unity/Library/UnityAgentKit/Phase5A06MainThreadDispatchTimeoutResults.xml` 继续只作为 pre-redesign historical evidence。
-- [ ] **步骤 9：完成 spec / code-quality review 后再同步 roadmap。** 只有 redesign、red/green evidence、完整 HostRuntimeTests、规格审查和代码质量审查全部通过后，才允许恢复 5A-06 completion wording；当前不得标记完成。
+- [x] **步骤 1：记录当前 failure modes。** 已在 redesign spec/plan 中固化 accepted stop-window request connection abort、closing gate 后误 abort、normal dispatch queue 误入队、reload/quitting pending dispatch 变成 timeout/abort、listener close race、async write 被提前关闭、active handler drain 不稳定等问题。
+- [x] **步骤 2：设计 strict shutdown state / boundary。** 已明确 accepting、stopping、listener-loop-exited、closing、closed 等状态，以及 `GetContext` 前 accept reservation、body 完整可读取 `/operations POST` 的 stopped-envelope ownership 和 non-guarantee boundary。
+- [x] **步骤 3：设计 deterministic wake request、wake failure fallback 和 listener-loop-exited signal。** 已完成并通过最终验证。
+- [x] **步骤 4：设计 background closer / nonblocking Unity main thread。** 已完成并通过最终验证。
+- [x] **步骤 5：设计 stable drain of guaranteed operation handlers + guaranteed async writes。** 已完成并通过最终验证。
+- [x] **步骤 6：先写 red tests。** 已在 `UnityAgentKit.Editor.Tests.HostRuntimeTests` partial suite 中覆盖 accept reservation、stop-window stopped envelope、deterministic wake、listener-loop-exited、background closer、guaranteed handler/write drain、non-guarantee close boundary、reload/quitting stopped codes 与 no timeout/abort。
+- [x] **步骤 7：再做 production changes。** 已按 task 4.2 最小 shutdown architecture 完成实现，且未引入 TS client、MCP public tools、vertical smoke、workflow timeout 或 public action logic。
+- [x] **步骤 8：运行完整 `HostRuntimeTests` 验证。** final evidence 已写入 `unity/Library/UnityAgentKit/Phase5A06Task41StopWindowRemediationResults.xml`；`unity/Library/UnityAgentKit/Phase5A06MainThreadDispatchTimeoutResults.xml` 继续只作为 pre-redesign historical evidence。
+- [x] **步骤 9：完成 spec / code-quality review 后再同步 roadmap。** 相关 review 与 roadmap 同步已完成。
 
 ## 任务 5：Final 5A-06 verification and scope guard
 
-任务 5 的既有验证仅代表 architecture redesign 之前的历史证据；task 4.2 完成后必须重新运行任务 5 或完成 task 4.2 的 final re-verification，不能把当前任务 5 视为最终完成证据。
+任务 5 的既有验证属于 pre-redesign historical evidence；当前 final completion evidence 已由 task 4.2 final re-verification 取代，见 `docs/superpowers/plans/2026-05-21-unity-agent-kit-phase-5a-06-loopback-shutdown-redesign.md` 与 `unity/Library/UnityAgentKit/Phase5A06Task41StopWindowRemediationResults.xml`。
 
 **文件：**
 - 验证：`unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeTests.cs`

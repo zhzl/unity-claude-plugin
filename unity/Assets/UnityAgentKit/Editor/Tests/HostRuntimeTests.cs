@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -856,6 +857,7 @@ namespace UnityAgentKit.Editor.Tests
                 Assert.AreEqual(record.hostId, ReadProbe(url).hostId);
 
                 UnityAgentKitHost.StopForReloadForTests();
+                Assert.IsTrue(UnityAgentKitLoopbackHttpServer.WaitForListenerClosedForTests(1000), "Expected listener close to finish after reload stop.");
 
                 Assert.IsFalse(UnityAgentKitHost.IsStartedForTests);
                 Assert.IsNull(UnityAgentKitHost.CurrentRecordForTests);
@@ -879,6 +881,7 @@ namespace UnityAgentKit.Editor.Tests
                 UnityAgentKitMainThread.EnqueueLifecycleWorkForTests("quit-cleanup");
 
                 UnityAgentKitHost.StopForQuittingForTests();
+                Assert.IsTrue(UnityAgentKitLoopbackHttpServer.WaitForListenerClosedForTests(1000), "Expected listener close to finish after editor quitting stop.");
 
                 Assert.IsFalse(UnityAgentKitLoopbackHttpServer.IsRunning);
                 Assert.IsFalse(UnityAgentKitMainThread.IsDrainRegisteredForTests);
@@ -887,6 +890,147 @@ namespace UnityAgentKit.Editor.Tests
             }
             finally
             {
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void StoppingWindowDirectOperationReturnsStoppedEnvelope()
+        {
+            var registryPath = TemporaryRegistryPath("stop-window-direct-operation");
+            HttpResult result = default;
+            var resultCaptured = false;
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                UnityAgentKitLoopbackHttpServer.BeginStopHookForTests = () =>
+                {
+                    result = Post(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), "{\"operation\":\"host.echo\",\"requestId\":\"req-stop-window-echo\",\"inputJson\":\"{\\\"text\\\":\\\"stopping\\\"}\"}");
+                    resultCaptured = true;
+                };
+
+                UnityAgentKitHost.StopForTests("host.stopped");
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(result.body);
+
+                Assert.IsTrue(resultCaptured, "Expected stop hook to capture the direct operation response.");
+                Assert.AreEqual(200, result.statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "failed", "host.echo", "req-stop-window-echo", record);
+                Assert.AreEqual("host.stopped", response.code);
+                Assert.AreEqual(1, response.diagnostics.Length);
+                Assert.AreEqual("host.stopped", response.diagnostics[0].code);
+            }
+            finally
+            {
+                UnityAgentKitLoopbackHttpServer.BeginStopHookForTests = null;
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void StopFlushWaitsForAsyncWritesEnqueuedAfterInitialAsyncIdleCheck()
+        {
+            var registryPath = TemporaryRegistryPath("stop-flush-async-after-active");
+            var asyncWriteEnqueued = new ManualResetEventSlim(false);
+            var releaseActiveHandlerDone = new ManualResetEventSlim(false);
+            var activeHandlerEntered = false;
+            var injectedAsyncWrite = false;
+
+            try
+            {
+                UnityAgentKitHost.StartForTests(registryPath);
+                InvokeLoopbackCounterForTests("IncrementActiveHandlerCount");
+                activeHandlerEntered = true;
+                UnityAgentKitLoopbackHttpServer.BeforeActiveHandlersIdleWaitHookForTests = () =>
+                {
+                    if (injectedAsyncWrite)
+                    {
+                        return;
+                    }
+
+                    injectedAsyncWrite = true;
+                    SetPendingAsyncWriteCountForTests(1);
+                    asyncWriteEnqueued.Set();
+                };
+
+                var releaseThread = new Thread(() =>
+                {
+                    asyncWriteEnqueued.Wait(1000);
+                    InvokeLoopbackCounterForTests("DecrementActiveHandlerCount");
+                    releaseActiveHandlerDone.Set();
+                })
+                {
+                    IsBackground = true,
+                    Name = "UnityAgentKitStopFlushAsyncAfterActiveTestRelease"
+                };
+                releaseThread.Start();
+
+                UnityAgentKitHost.StopForTests("host.stopped");
+
+                Assert.IsTrue(asyncWriteEnqueued.Wait(1000), "Expected close flow to begin the active handler idle wait.");
+                Assert.IsTrue(releaseActiveHandlerDone.Wait(1000), "Expected active handler release thread to complete.");
+                Assert.IsFalse(UnityAgentKitLoopbackHttpServer.WaitForListenerClosedForTests(100), "Listener must not close while an async write remains pending.");
+
+                SetPendingAsyncWriteCountForTests(0);
+                activeHandlerEntered = false;
+                Assert.IsTrue(UnityAgentKitLoopbackHttpServer.WaitForListenerClosedForTests(1000), "Expected listener close to finish after async write release.");
+            }
+            finally
+            {
+                UnityAgentKitLoopbackHttpServer.BeforeActiveHandlersIdleWaitHookForTests = null;
+                if (activeHandlerEntered)
+                {
+                    InvokeLoopbackCounterForTests("DecrementActiveHandlerCount");
+                }
+
+                SetPendingAsyncWriteCountForTests(0);
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void StopOnCapturedMainThreadDoesNotWaitForActiveHandlersToFlush()
+        {
+            var registryPath = TemporaryRegistryPath("stop-main-thread-nonblocking");
+            var releaseActiveHandler = new ManualResetEventSlim(false);
+            var releaseThreadDone = new ManualResetEventSlim(false);
+            var activeHandlerEntered = false;
+            var stopReturnedBeforeRelease = false;
+
+            try
+            {
+                UnityAgentKitHost.StartForTests(registryPath);
+                InvokeLoopbackCounterForTests("IncrementActiveHandlerCount");
+                activeHandlerEntered = true;
+                var releaseThread = new Thread(() =>
+                {
+                    releaseActiveHandler.Wait(1000);
+                    InvokeLoopbackCounterForTests("DecrementActiveHandlerCount");
+                    releaseThreadDone.Set();
+                })
+                {
+                    IsBackground = true,
+                    Name = "UnityAgentKitStopNonblockingTestRelease"
+                };
+                releaseThread.Start();
+
+                UnityAgentKitHost.StopForTests("host.stopped");
+                stopReturnedBeforeRelease = !releaseThreadDone.IsSet;
+                activeHandlerEntered = false;
+                releaseActiveHandler.Set();
+
+                Assert.IsTrue(releaseThreadDone.Wait(1000), "Expected active handler release thread to complete.");
+                Assert.IsTrue(UnityAgentKitLoopbackHttpServer.WaitForListenerClosedForTests(1000), "Expected listener close to finish after active handler release.");
+                Assert.IsTrue(stopReturnedBeforeRelease, "Stop must return on the captured Unity main thread before waiting active handlers idle.");
+            }
+            finally
+            {
+                releaseActiveHandler.Set();
+                if (activeHandlerEntered)
+                {
+                    InvokeLoopbackCounterForTests("DecrementActiveHandlerCount");
+                }
+
                 UnityAgentKitHost.ResetForTests();
             }
         }
@@ -903,6 +1047,7 @@ namespace UnityAgentKit.Editor.Tests
                 Assert.IsTrue(UnityAgentKitMainThread.IsDrainRegisteredForTests);
 
                 UnityAgentKitHost.StopForTests("host.stopped");
+                Assert.IsTrue(UnityAgentKitLoopbackHttpServer.WaitForListenerClosedForTests(1000), "Expected listener close to finish after host stop.");
 
                 Assert.IsFalse(UnityAgentKitLoopbackHttpServer.IsRunning);
                 Assert.IsFalse(UnityAgentKitMainThread.IsDrainRegisteredForTests);
@@ -931,6 +1076,7 @@ namespace UnityAgentKit.Editor.Tests
                 Assert.AreEqual(first.hostId, ReadProbe(firstUrl).hostId);
 
                 UnityAgentKitLoopbackHttpServer.Start(second);
+                Assert.IsTrue(UnityAgentKitLoopbackHttpServer.WaitForListenerClosedForTests(1000), "Expected old listener close to finish before asserting old probe failure.");
 
                 AssertRequestFails(firstUrl);
                 Assert.AreEqual(second.hostId, ReadProbe(secondUrl).hostId);
@@ -954,6 +1100,7 @@ namespace UnityAgentKit.Editor.Tests
                 Assert.AreEqual(record.hostId, ReadProbe(url).hostId);
 
                 UnityAgentKitHost.StopForTests("host.stopped");
+                Assert.IsTrue(UnityAgentKitLoopbackHttpServer.WaitForListenerClosedForTests(1000), "Expected listener close to finish before asserting old probe failure.");
 
                 AssertRequestFails(url);
             }
@@ -978,6 +1125,28 @@ namespace UnityAgentKit.Editor.Tests
             finally
             {
                 UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        private static void InvokeLoopbackCounterForTests(string methodName)
+        {
+            typeof(UnityAgentKitLoopbackHttpServer)
+                .GetMethod(methodName, System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)
+                .Invoke(null, null);
+        }
+
+        private static void SetPendingAsyncWriteCountForTests(int count)
+        {
+            Assert.GreaterOrEqual(count, 0);
+
+            while (UnityAgentKitLoopbackHttpServer.GuaranteedAsyncWriteCountForTests < count)
+            {
+                InvokeLoopbackCounterForTests("IncrementGuaranteedAsyncWriteCount");
+            }
+
+            while (UnityAgentKitLoopbackHttpServer.GuaranteedAsyncWriteCountForTests > count)
+            {
+                InvokeLoopbackCounterForTests("DecrementGuaranteedAsyncWriteCount");
             }
         }
 

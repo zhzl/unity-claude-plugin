@@ -28,6 +28,7 @@ namespace UnityAgentKit.Editor
         private static readonly object PendingLock = new object();
         private static readonly List<string> PendingLifecycleWork = new List<string>();
         private static readonly List<PendingDispatch> PendingDispatches = new List<PendingDispatch>();
+        private static readonly List<string> EnqueuedRequestIdsForTests = new List<string>();
         private static bool _drainRegistered;
         private static bool _isAcceptingDispatches;
         private static string _lastStopCode = string.Empty;
@@ -38,6 +39,7 @@ namespace UnityAgentKit.Editor
         internal static bool IsDrainRegisteredForTests => _drainRegistered;
         internal static string LastStopCodeForTests => _lastStopCode;
         internal static int CapturedMainThreadIdForTests => _capturedMainThreadId;
+        internal static bool IsCapturedMainThread => _capturedMainThreadId != 0 && Thread.CurrentThread.ManagedThreadId == _capturedMainThreadId;
         internal static int ExpiredDispatchExecutionCountForTests => _expiredDispatchExecutionCount;
 
         internal static int PendingLifecycleWorkCountForTests
@@ -59,6 +61,22 @@ namespace UnityAgentKit.Editor
                 {
                     return PendingDispatches.Count;
                 }
+            }
+        }
+
+        internal static void ResetEnqueueInstrumentationForTests()
+        {
+            lock (PendingLock)
+            {
+                EnqueuedRequestIdsForTests.Clear();
+            }
+        }
+
+        internal static bool WasRequestIdEnqueuedForTests(string requestId)
+        {
+            lock (PendingLock)
+            {
+                return EnqueuedRequestIdsForTests.Contains(requestId ?? string.Empty);
             }
         }
 
@@ -97,6 +115,7 @@ namespace UnityAgentKit.Editor
                     item.holdForTimeout = UnityAgentKitOperationRouter.NormalizeOperation(request != null ? request.operation : string.Empty) == UnityAgentKitOperationRouter.PendingDispatchTimeoutOperation;
                     item.timeoutTimer = new Timer(_ => TryComplete(item, UnityAgentKitOperationRouter.DispatchTimeout(item.request, item.record)), null, Timeout.Infinite, Timeout.Infinite);
                     PendingDispatches.Add(item);
+                    EnqueuedRequestIdsForTests.Add(request != null ? request.requestId ?? string.Empty : string.Empty);
                 }
             }
 
@@ -168,6 +187,7 @@ namespace UnityAgentKit.Editor
             _capturedMainThreadId = Thread.CurrentThread.ManagedThreadId;
             _dispatchTimeoutMs = 250;
             _expiredDispatchExecutionCount = 0;
+            ResetEnqueueInstrumentationForTests();
         }
 
         private static void Drain()

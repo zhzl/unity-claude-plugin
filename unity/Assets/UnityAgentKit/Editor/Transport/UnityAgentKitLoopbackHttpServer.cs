@@ -11,9 +11,22 @@ namespace UnityAgentKit.Editor
     {
         private sealed class ListenerState
         {
-            private readonly object _handlerAdmissionGate = new object();
+            private const int ListenerLoopExitWaitMilliseconds = 500;
+
+            private readonly object _ownershipGate = new object();
+            private readonly ManualResetEventSlim _acceptReservationsIdle = new ManualResetEventSlim(true);
+            private readonly ManualResetEventSlim _guaranteedHandlersIdle = new ManualResetEventSlim(true);
+            private readonly ManualResetEventSlim _guaranteedAsyncWritesIdle = new ManualResetEventSlim(true);
+            private readonly ManualResetEventSlim _listenerLoopExited = new ManualResetEventSlim(false);
+            private readonly ManualResetEventSlim _acceptedContextSeen = new ManualResetEventSlim(false);
+            private readonly ManualResetEventSlim _closeIdle = new ManualResetEventSlim(true);
+            private int _acceptReservationCount;
+            private int _getContextReservationCount;
+            private int _guaranteedHandlerCount;
+            private int _guaranteedAsyncWriteCount;
             private int _isStopping;
-            private int _isClosing;
+            private int _isClosed;
+            private int _wakeRequestCount;
             private string _stopReason = string.Empty;
 
             internal ListenerState(HttpListener listener, UnityAgentKitHostRecord record)
@@ -25,49 +38,287 @@ namespace UnityAgentKit.Editor
             internal readonly HttpListener listener;
             internal readonly UnityAgentKitHostRecord record;
 
+            internal int AcceptReservationCount => Volatile.Read(ref _acceptReservationCount);
+            internal int GetContextReservationCount => Volatile.Read(ref _getContextReservationCount);
+            internal int GuaranteedHandlerCount => Volatile.Read(ref _guaranteedHandlerCount);
+            internal int GuaranteedAsyncWriteCount => Volatile.Read(ref _guaranteedAsyncWriteCount);
+            internal int WakeRequestCount => Volatile.Read(ref _wakeRequestCount);
             internal bool IsStopping => Volatile.Read(ref _isStopping) != 0;
-
             internal string StopReason => Volatile.Read(ref _stopReason) ?? string.Empty;
 
             internal void BeginStopping(string reasonCode)
             {
                 Volatile.Write(ref _stopReason, string.IsNullOrEmpty(reasonCode) ? "host.stopped" : reasonCode);
                 Interlocked.Exchange(ref _isStopping, 1);
+                _closeIdle.Reset();
             }
 
-            internal bool TryEnterHandler()
+            internal bool TryEnterAcceptReservation()
             {
-                lock (_handlerAdmissionGate)
+                lock (_ownershipGate)
                 {
-                    if (_isClosing != 0)
+                    if (Volatile.Read(ref _isClosed) != 0)
                     {
                         return false;
                     }
 
-                    IncrementActiveHandlerCount();
+                    _acceptReservationsIdle.Reset();
+                    _acceptReservationCount++;
+                    return true;
+                }
+            }
+
+            internal void LeaveAcceptReservation()
+            {
+                lock (_ownershipGate)
+                {
+                    if (_acceptReservationCount <= 0)
+                    {
+                        throw new InvalidOperationException("Accept reservation count underflow.");
+                    }
+
+                    _acceptReservationCount--;
+                    if (_acceptReservationCount == 0)
+                    {
+                        _acceptReservationsIdle.Set();
+                    }
+                }
+            }
+
+            internal void EnterGetContextReservation()
+            {
+                lock (_ownershipGate)
+                {
+                    if (_getContextReservationCount >= _acceptReservationCount)
+                    {
+                        throw new InvalidOperationException("GetContext reservation count overflow.");
+                    }
+
+                    _getContextReservationCount++;
+                }
+            }
+
+            internal void LeaveGetContextReservation()
+            {
+                lock (_ownershipGate)
+                {
+                    if (_getContextReservationCount <= 0)
+                    {
+                        throw new InvalidOperationException("GetContext reservation count underflow.");
+                    }
+
+                    _getContextReservationCount--;
+                }
+            }
+
+            internal void AdmitAcceptedOperationContext()
+            {
+                lock (_ownershipGate)
+                {
+                    if (_acceptReservationCount <= 0)
+                    {
+                        throw new InvalidOperationException("Accept reservation count underflow.");
+                    }
+
+                    _acceptReservationCount--;
+                    if (_acceptReservationCount == 0)
+                    {
+                        _acceptReservationsIdle.Set();
+                    }
+
+                    _guaranteedHandlersIdle.Reset();
+                    _guaranteedHandlerCount++;
+                }
+            }
+
+            internal void ReleaseGuaranteedHandler()
+            {
+                lock (_ownershipGate)
+                {
+                    if (_guaranteedHandlerCount <= 0)
+                    {
+                        throw new InvalidOperationException("Guaranteed handler count underflow.");
+                    }
+
+                    _guaranteedHandlerCount--;
+                    if (_guaranteedHandlerCount == 0)
+                    {
+                        _guaranteedHandlersIdle.Set();
+                    }
+                }
+            }
+
+            internal void TrackGuaranteedAsyncWrite()
+            {
+                lock (_ownershipGate)
+                {
+                    _guaranteedAsyncWritesIdle.Reset();
+                    _guaranteedAsyncWriteCount++;
+                }
+            }
+
+            internal void ReleaseGuaranteedAsyncWrite()
+            {
+                lock (_ownershipGate)
+                {
+                    if (_guaranteedAsyncWriteCount <= 0)
+                    {
+                        throw new InvalidOperationException("Guaranteed async write count underflow.");
+                    }
+
+                    _guaranteedAsyncWriteCount--;
+                    if (_guaranteedAsyncWriteCount == 0)
+                    {
+                        _guaranteedAsyncWritesIdle.Set();
+                    }
+                }
+            }
+
+            internal bool TryEnterHandler()
+            {
+                lock (_ownershipGate)
+                {
+                    _guaranteedHandlersIdle.Reset();
+                    _guaranteedHandlerCount++;
+                    return !IsStopping;
+                }
+            }
+
+            internal void RequestWake()
+            {
+                Interlocked.Increment(ref _wakeRequestCount);
+                if (record == null)
+                {
+                    return;
                 }
 
+                ThreadPool.QueueUserWorkItem(_ =>
+                {
+                    try
+                    {
+                        var request = (HttpWebRequest)WebRequest.Create(BuildWakeUrl(record.port));
+                        request.Method = "GET";
+                        request.Timeout = 250;
+                        request.ReadWriteTimeout = 250;
+                        using (var response = (HttpWebResponse)request.GetResponse())
+                        {
+                        }
+                    }
+                    catch (WebException)
+                    {
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                    }
+                });
+            }
+
+            internal void MarkListenerLoopExited()
+            {
+                _listenerLoopExited.Set();
+            }
+
+            internal bool WaitForListenerLoopExited(int millisecondsTimeout)
+            {
+                return _listenerLoopExited.Wait(millisecondsTimeout);
+            }
+
+            internal void MarkAcceptedContextSeen()
+            {
+                _acceptedContextSeen.Set();
+            }
+
+            internal bool WaitForAcceptedContext(int millisecondsTimeout)
+            {
+                return _acceptedContextSeen.Wait(millisecondsTimeout);
+            }
+
+            internal bool ForceNonGuaranteeWakeFallbackForTests()
+            {
+                return TryCloseListenerForPendingGetContext();
+            }
+
+            internal void WaitUntilSafeToClose()
+            {
+                if (WaitForListenerLoopExited(ListenerLoopExitWaitMilliseconds))
+                {
+                    WaitForOwnershipIdle();
+                    return;
+                }
+
+                while (!WaitForListenerLoopExited(0))
+                {
+                    if (TryCloseListenerForPendingGetContext())
+                    {
+                        WaitForListenerLoopExited(ListenerLoopExitWaitMilliseconds);
+                        continue;
+                    }
+
+                    WaitForOwnershipIdle();
+                    if (WaitForListenerLoopExited(0))
+                    {
+                        break;
+                    }
+                }
+
+                WaitForOwnershipIdle();
+            }
+
+            private bool TryCloseListenerForPendingGetContext()
+            {
+                lock (_ownershipGate)
+                {
+                    if (_acceptReservationCount <= 0 || _acceptReservationCount != _getContextReservationCount)
+                    {
+                        return false;
+                    }
+
+                    if (_guaranteedHandlerCount != 0 || _guaranteedAsyncWriteCount != 0)
+                    {
+                        return false;
+                    }
+                }
+
+                listener.Close();
                 return true;
             }
 
-            internal void BeginClosing()
+            private void WaitForOwnershipIdle()
             {
-                lock (_handlerAdmissionGate)
+                WaitForIdle(_acceptReservationsIdle, () => _acceptReservationCount, _ownershipGate);
+                WaitForIdle(_guaranteedHandlersIdle, () => _guaranteedHandlerCount, _ownershipGate);
+                WaitForIdle(_guaranteedAsyncWritesIdle, () => _guaranteedAsyncWriteCount, _ownershipGate);
+            }
+
+            internal void MarkClosed()
+            {
+                lock (_ownershipGate)
                 {
-                    _isClosing = 1;
+                    _isClosed = 1;
                 }
+
+                _closeIdle.Set();
+            }
+
+            internal bool WaitForClosed(int millisecondsTimeout)
+            {
+                return _closeIdle.Wait(millisecondsTimeout);
             }
         }
 
-        private static readonly ManualResetEventSlim AsyncWriteIdle = new ManualResetEventSlim(true);
-        private static readonly ManualResetEventSlim ActiveHandlersIdle = new ManualResetEventSlim(true);
-        private const int AsyncWriteFlushTimeoutMs = 200;
+        private static readonly ManualResetEventSlim ListenerCloseIdle = new ManualResetEventSlim(true);
         private static ListenerState _currentState;
-        private static int _activeHandlerCount;
-        private static int _pendingAsyncWriteCount;
+        private static ListenerState _lastStateForTests;
+        private static int _pendingListenerCloseCount;
         internal static Action BeginStopHookForTests;
         internal static Action BeforeStopFlushHookForTests;
+        internal static Action AfterBeginClosingHookForTests;
+        internal static Action AcceptedContextBeforeAdmissionHookForTests;
         internal static Action HandlerStartedForTests;
+        internal static Action BeforeActiveHandlersIdleWaitHookForTests;
+        internal static Action BeforeGetContextHookForTests;
+        internal static Action AfterCompleteOperationBodyReadHookForTests;
+        internal static Action BeforeGuaranteedAsyncWriteForTests;
 
         internal static bool IsRunning
         {
@@ -78,7 +329,73 @@ namespace UnityAgentKit.Editor
             }
         }
 
-        internal static int ActiveHandlerCountForTests => Volatile.Read(ref _activeHandlerCount);
+        internal static int ActiveHandlerCountForTests
+        {
+            get
+            {
+                var state = _currentState ?? _lastStateForTests;
+                return state != null ? state.GuaranteedHandlerCount : 0;
+            }
+        }
+
+        internal static int AcceptReservationCountForTests
+        {
+            get
+            {
+                var state = _currentState ?? _lastStateForTests;
+                return state != null ? state.AcceptReservationCount : 0;
+            }
+        }
+
+        internal static int GuaranteedOperationHandlerCountForTests
+        {
+            get
+            {
+                var state = _currentState ?? _lastStateForTests;
+                return state != null ? state.GuaranteedHandlerCount : 0;
+            }
+        }
+
+        internal static int GuaranteedAsyncWriteCountForTests
+        {
+            get
+            {
+                var state = _currentState ?? _lastStateForTests;
+                return state != null ? state.GuaranteedAsyncWriteCount : 0;
+            }
+        }
+
+        internal static int WakeRequestCountForTests
+        {
+            get
+            {
+                var state = _currentState ?? _lastStateForTests;
+                return state != null ? state.WakeRequestCount : 0;
+            }
+        }
+
+        internal static bool WaitForListenerClosedForTests(int millisecondsTimeout)
+        {
+            return ListenerCloseIdle.Wait(millisecondsTimeout);
+        }
+
+        internal static bool WaitForListenerLoopExitedForTests(int millisecondsTimeout)
+        {
+            var state = _currentState ?? _lastStateForTests;
+            return state == null || state.WaitForListenerLoopExited(millisecondsTimeout);
+        }
+
+        internal static bool WaitForAcceptedContextForTests(int millisecondsTimeout)
+        {
+            var state = _currentState ?? _lastStateForTests;
+            return state != null && state.WaitForAcceptedContext(millisecondsTimeout);
+        }
+
+        internal static bool ForceWakeFailureFallbackForTests()
+        {
+            var state = _currentState ?? _lastStateForTests;
+            return state != null && state.ForceNonGuaranteeWakeFallbackForTests();
+        }
 
         internal static string BuildProbeUrl(int port)
         {
@@ -88,6 +405,11 @@ namespace UnityAgentKit.Editor
         internal static string BuildOperationsUrl(int port)
         {
             return "http://127.0.0.1:" + port + "/operations";
+        }
+
+        internal static string BuildWakeUrl(int port)
+        {
+            return "http://127.0.0.1:" + port + "/__unity_agent_kit_stop_wake";
         }
 
         internal static string BuildLoopbackPrefix(int port)
@@ -114,32 +436,48 @@ namespace UnityAgentKit.Editor
         {
             var state = _currentState;
             _currentState = null;
+            _lastStateForTests = state;
             state?.BeginStopping(reasonCode);
             BeginStopHookForTests?.Invoke();
 
             UnityAgentKitMainThread.Stop(reasonCode);
             BeforeStopFlushHookForTests?.Invoke();
-            WaitForPendingWorkToFlush();
 
             if (state != null)
             {
-                state.BeginClosing();
-                WaitForPendingWorkToFlush();
+                AfterBeginClosingHookForTests?.Invoke();
+                state.RequestWake();
+                ScheduleListenerClose(state);
+            }
+        }
 
-                try
+        private static void ScheduleListenerClose(ListenerState state)
+        {
+            Interlocked.Increment(ref _pendingListenerCloseCount);
+            ListenerCloseIdle.Reset();
+            ThreadPool.QueueUserWorkItem(_ => CloseListenerWhenIdle(state));
+        }
+
+        private static void CloseListenerWhenIdle(ListenerState state)
+        {
+            try
+            {
+                BeforeActiveHandlersIdleWaitHookForTests?.Invoke();
+                state.WaitUntilSafeToClose();
+                state.listener.Close();
+            }
+            catch (HttpListenerException)
+            {
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+            finally
+            {
+                state.MarkClosed();
+                if (Interlocked.Decrement(ref _pendingListenerCloseCount) == 0)
                 {
-                    state.listener.Stop();
-                    state.listener.Close();
-                }
-                catch (HttpListenerException)
-                {
-                }
-                catch (ObjectDisposedException)
-                {
-                }
-                catch (Exception error)
-                {
-                    Debug.LogWarning("[UnityAgentKit] Failed to stop loopback HTTP listener: " + error.Message);
+                    ListenerCloseIdle.Set();
                 }
             }
         }
@@ -152,6 +490,7 @@ namespace UnityAgentKit.Editor
             listener.Start();
             var state = new ListenerState(listener, record);
             _currentState = state;
+            _lastStateForTests = state;
             UnityAgentKitMainThread.RegisterDrain();
             var thread = new Thread(() => ListenLoop(state))
             {
@@ -163,83 +502,120 @@ namespace UnityAgentKit.Editor
 
         private static void ListenLoop(ListenerState state)
         {
-            while (state.listener.IsListening)
-            {
-                try
-                {
-                    HandleContext(state.listener.GetContext(), state);
-                }
-                catch (HttpListenerException)
-                {
-                    return;
-                }
-                catch (ObjectDisposedException)
-                {
-                    return;
-                }
-                catch (Exception error)
-                {
-                    Debug.LogWarning("[UnityAgentKit] Loopback HTTP listener error: " + error.Message);
-                }
-            }
-        }
-
-        private static void HandleContext(HttpListenerContext context, ListenerState state)
-        {
-            if (state != null)
-            {
-                if (!state.TryEnterHandler())
-                {
-                    AbortResponse(context.Response);
-                    return;
-                }
-            }
-            else
-            {
-                IncrementActiveHandlerCount();
-            }
-
             try
             {
-                HandlerStartedForTests?.Invoke();
-                var record = state != null ? state.record : null;
-                var path = context.Request.Url != null ? context.Request.Url.AbsolutePath : string.Empty;
-                if (path == "/operations" && context.Request.HttpMethod == "POST")
+                while (state.listener.IsListening)
                 {
-                    HandleOperation(context, state);
-                    return;
-                }
+                    if (!state.TryEnterAcceptReservation())
+                    {
+                        return;
+                    }
 
-                if (path == "/operations")
-                {
-                    WriteJson(context.Response, 405, JsonUtility.ToJson(UnityAgentKitOperationRouter.MethodNotAllowed(record)));
-                    return;
-                }
+                    var reservationHeld = true;
+                    var enteredGetContext = false;
+                    try
+                    {
+                        BeforeGetContextHookForTests?.Invoke();
+                        state.EnterGetContextReservation();
+                        enteredGetContext = true;
+                        HttpListenerContext context;
+                        try
+                        {
+                            context = state.listener.GetContext();
+                            state.MarkAcceptedContextSeen();
+                        }
+                        finally
+                        {
+                            if (enteredGetContext)
+                            {
+                                state.LeaveGetContextReservation();
+                                enteredGetContext = false;
+                            }
+                        }
 
-                if (path == "/probe" && context.Request.HttpMethod == "GET")
-                {
-                    WriteJson(context.Response, 200, JsonUtility.ToJson(CreateProbeResponse(record)));
-                    return;
-                }
+                        AcceptedContextBeforeAdmissionHookForTests?.Invoke();
+                        HandleAcceptedContext(context, state, ref reservationHeld);
+                        if (state.IsStopping)
+                        {
+                            return;
+                        }
+                    }
+                    finally
+                    {
+                        if (enteredGetContext)
+                        {
+                            state.LeaveGetContextReservation();
+                        }
 
-                if (path == "/probe")
-                {
-                    WriteJson(context.Response, 405, JsonUtility.ToJson(FailureProbe("http.method_not_allowed", "Method not allowed.")));
-                    return;
+                        if (reservationHeld)
+                        {
+                            state.LeaveAcceptReservation();
+                        }
+                    }
                 }
-
-                WriteJson(context.Response, 404, JsonUtility.ToJson(UnityAgentKitOperationRouter.HttpNotFound(record)));
+            }
+            catch (HttpListenerException)
+            {
+            }
+            catch (ObjectDisposedException)
+            {
             }
             finally
             {
-                DecrementActiveHandlerCount();
+                state.MarkListenerLoopExited();
             }
         }
 
-        private static void HandleOperation(HttpListenerContext context, ListenerState state)
+        private static void HandleAcceptedContext(HttpListenerContext context, ListenerState state, ref bool reservationHeld)
+        {
+            var path = context.Request.Url != null ? context.Request.Url.AbsolutePath : string.Empty;
+            if (path == "/__unity_agent_kit_stop_wake")
+            {
+                state.LeaveAcceptReservation();
+                reservationHeld = false;
+                AbortResponse(context.Response);
+                return;
+            }
+
+            if (path == "/operations" && context.Request.HttpMethod == "POST")
+            {
+                HandleAcceptedOperationContext(context, state, ref reservationHeld);
+                return;
+            }
+
+            state.LeaveAcceptReservation();
+            reservationHeld = false;
+            HandleNonOperationContext(context, state);
+        }
+
+        private static void HandleAcceptedOperationContext(HttpListenerContext context, ListenerState state, ref bool reservationHeld)
         {
             var record = state != null ? state.record : null;
-            var body = ReadRequestBody(context.Request);
+            string body;
+            if (!TryReadCompleteBody(context.Request, out body))
+            {
+                state.LeaveAcceptReservation();
+                reservationHeld = false;
+                AbortResponse(context.Response);
+                return;
+            }
+
+            AfterCompleteOperationBodyReadHookForTests?.Invoke();
+            state.AdmitAcceptedOperationContext();
+            reservationHeld = false;
+            try
+            {
+                HandleReadableAcceptedOperation(context, state, body, record);
+            }
+            finally
+            {
+                state.ReleaseGuaranteedHandler();
+            }
+        }
+
+        private static void HandleReadableAcceptedOperation(HttpListenerContext context, ListenerState state, string body, UnityAgentKitHostRecord record)
+        {
+            HandlerStartedForTests?.Invoke();
             if (string.IsNullOrWhiteSpace(body))
             {
                 WriteJson(context.Response, 400, JsonUtility.ToJson(UnityAgentKitOperationRouter.EmptyBody(record)));
@@ -264,17 +640,17 @@ namespace UnityAgentKit.Editor
             }
 
             var operation = UnityAgentKitOperationRouter.NormalizeOperation(request.operation);
+            if (state != null && state.IsStopping && !string.IsNullOrEmpty(operation))
+            {
+                WriteJson(context.Response, 200, JsonUtility.ToJson(UnityAgentKitOperationRouter.Stopped(request, record, state.StopReason)));
+                return;
+            }
+
             if (UnityAgentKitOperationRouter.RequiresMainThreadDispatch(operation))
             {
-                if (state != null && state.IsStopping)
-                {
-                    WriteJson(context.Response, 200, JsonUtility.ToJson(UnityAgentKitOperationRouter.Stopped(request, record, state.StopReason)));
-                    return;
-                }
-
                 UnityAgentKitMainThread.Enqueue(request, record, response =>
                 {
-                    QueueWriteJson(context.Response, 200, JsonUtility.ToJson(response));
+                    QueueWriteJson(state, context.Response, 200, JsonUtility.ToJson(response));
                 });
                 return;
             }
@@ -284,11 +660,169 @@ namespace UnityAgentKit.Editor
             WriteJson(context.Response, statusCode, JsonUtility.ToJson(response));
         }
 
-        private static string ReadRequestBody(HttpListenerRequest request)
+        private static void HandleNonOperationContext(HttpListenerContext context, ListenerState state)
         {
-            using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+            var record = state != null ? state.record : null;
+            var path = context.Request.Url != null ? context.Request.Url.AbsolutePath : string.Empty;
+            if (path == "/operations")
             {
-                return reader.ReadToEnd();
+                WriteJson(context.Response, 405, JsonUtility.ToJson(UnityAgentKitOperationRouter.MethodNotAllowed(record)));
+                return;
+            }
+
+            if (path == "/probe" && context.Request.HttpMethod == "GET")
+            {
+                WriteJson(context.Response, 200, JsonUtility.ToJson(CreateProbeResponse(record)));
+                return;
+            }
+
+            if (path == "/probe")
+            {
+                WriteJson(context.Response, 405, JsonUtility.ToJson(FailureProbe("http.method_not_allowed", "Method not allowed.")));
+                return;
+            }
+
+            WriteJson(context.Response, 404, JsonUtility.ToJson(UnityAgentKitOperationRouter.HttpNotFound(record)));
+        }
+
+        private static bool TryReadCompleteBody(HttpListenerRequest request, out string body)
+        {
+            body = string.Empty;
+            var stream = request.InputStream;
+
+            try
+            {
+                body = ReadRequestBody(request, stream);
+                return true;
+            }
+            catch (IOException)
+            {
+                CloseRequestInputStream(stream);
+                return false;
+            }
+            catch (ObjectDisposedException)
+            {
+                CloseRequestInputStream(stream);
+                return false;
+            }
+            catch (NotSupportedException)
+            {
+                CloseRequestInputStream(stream);
+                return false;
+            }
+            catch (InvalidOperationException)
+            {
+                CloseRequestInputStream(stream);
+                return false;
+            }
+        }
+
+        private static string ReadRequestBody(HttpListenerRequest request, Stream stream)
+        {
+            using (var buffer = new MemoryStream())
+            {
+                var chunk = new byte[1024];
+                while (true)
+                {
+                    var bytesRead = ReadChunkWithTimeout(stream, chunk, 250);
+                    if (bytesRead <= 0)
+                    {
+                        break;
+                    }
+
+                    buffer.Write(chunk, 0, bytesRead);
+                }
+
+                return (request.ContentEncoding ?? Encoding.UTF8).GetString(buffer.ToArray());
+            }
+        }
+
+        internal static int ReadChunkWithTimeout(Stream stream, byte[] chunk, int timeoutMs)
+        {
+            IAsyncResult asyncResult = null;
+            WaitHandle asyncWaitHandle = null;
+            var endReadPending = false;
+
+            try
+            {
+                asyncResult = stream.BeginRead(chunk, 0, chunk.Length, null, null);
+                endReadPending = true;
+                asyncWaitHandle = asyncResult.AsyncWaitHandle;
+                if (asyncWaitHandle != null && asyncWaitHandle.WaitOne(timeoutMs))
+                {
+                    var bytesRead = stream.EndRead(asyncResult);
+                    endReadPending = false;
+                    return bytesRead;
+                }
+
+                CloseRequestInputStream(stream);
+                if (endReadPending && asyncWaitHandle != null && asyncWaitHandle.WaitOne(timeoutMs))
+                {
+                    EndTimedOutRead(stream, asyncResult);
+                    endReadPending = false;
+                }
+
+                throw new IOException("Timed out while reading request body.");
+            }
+            finally
+            {
+                CloseAsyncWaitHandle(asyncWaitHandle);
+            }
+        }
+
+        private static void EndTimedOutRead(Stream stream, IAsyncResult asyncResult)
+        {
+            try
+            {
+                stream.EndRead(asyncResult);
+            }
+            catch (IOException)
+            {
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+            catch (NotSupportedException)
+            {
+            }
+            catch (InvalidOperationException)
+            {
+            }
+        }
+
+        private static void CloseAsyncWaitHandle(WaitHandle asyncWaitHandle)
+        {
+            if (asyncWaitHandle == null)
+            {
+                return;
+            }
+
+            try
+            {
+                asyncWaitHandle.Close();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+        }
+
+        private static void CloseRequestInputStream(Stream stream)
+        {
+            try
+            {
+                stream.Close();
+            }
+            catch (IOException)
+            {
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+            catch (NotSupportedException)
+            {
+            }
+            catch (InvalidOperationException)
+            {
             }
         }
 
@@ -322,14 +856,20 @@ namespace UnityAgentKit.Editor
             };
         }
 
-        private static void QueueWriteJson(HttpListenerResponse response, int statusCode, string json)
+        private static void QueueWriteJson(ListenerState state, HttpListenerResponse response, int statusCode, string json)
         {
-            Interlocked.Increment(ref _pendingAsyncWriteCount);
-            AsyncWriteIdle.Reset();
+            if (state == null)
+            {
+                WriteJson(response, statusCode, json);
+                return;
+            }
+
+            state.TrackGuaranteedAsyncWrite();
             ThreadPool.QueueUserWorkItem(_ =>
             {
                 try
                 {
+                    BeforeGuaranteedAsyncWriteForTests?.Invoke();
                     WriteJson(response, statusCode, json);
                 }
                 catch (HttpListenerException)
@@ -346,69 +886,54 @@ namespace UnityAgentKit.Editor
                 }
                 finally
                 {
-                    if (Interlocked.Decrement(ref _pendingAsyncWriteCount) == 0)
-                    {
-                        AsyncWriteIdle.Set();
-                    }
+                    state.ReleaseGuaranteedAsyncWrite();
                 }
             });
         }
 
-        private static void WaitForPendingWorkToFlush()
-        {
-            var deadline = DateTime.UtcNow.AddMilliseconds(AsyncWriteFlushTimeoutMs);
-            WaitForIdle(AsyncWriteIdle, () => Volatile.Read(ref _pendingAsyncWriteCount) == 0, deadline);
-            WaitForIdle(ActiveHandlersIdle, () => Volatile.Read(ref _activeHandlerCount) == 0, deadline);
-        }
-
-        private static void WaitForIdle(ManualResetEventSlim idleEvent, Func<bool> isIdle, DateTime deadline)
+        private static void WaitForIdle(ManualResetEventSlim idleEvent, Func<int> countAccessor, object ownershipGate)
         {
             while (true)
             {
-                if (isIdle())
+                lock (ownershipGate)
                 {
-                    idleEvent.Set();
-                    return;
+                    if (countAccessor() == 0)
+                    {
+                        return;
+                    }
                 }
 
-                var remainingMs = (int)Math.Max(0, (deadline - DateTime.UtcNow).TotalMilliseconds);
-                if (remainingMs == 0)
-                {
-                    return;
-                }
-
-                idleEvent.Wait(remainingMs);
+                idleEvent.Wait();
             }
         }
 
         private static void IncrementActiveHandlerCount()
         {
-            ActiveHandlersIdle.Reset();
-            Interlocked.Increment(ref _activeHandlerCount);
+            var state = _currentState ?? _lastStateForTests;
+            if (state == null)
+            {
+                return;
+            }
+
+            state.TryEnterHandler();
         }
 
         private static void DecrementActiveHandlerCount()
         {
-            while (true)
-            {
-                var current = Volatile.Read(ref _activeHandlerCount);
-                if (current <= 0)
-                {
-                    ActiveHandlersIdle.Set();
-                    return;
-                }
+            var state = _currentState ?? _lastStateForTests;
+            state?.ReleaseGuaranteedHandler();
+        }
 
-                var updated = Interlocked.CompareExchange(ref _activeHandlerCount, current - 1, current);
-                if (updated == current)
-                {
-                    if (current == 1)
-                    {
-                        ActiveHandlersIdle.Set();
-                    }
+        private static void IncrementGuaranteedAsyncWriteCount()
+        {
+            var state = _currentState ?? _lastStateForTests;
+            state?.TrackGuaranteedAsyncWrite();
+        }
 
-                    return;
-                }
-            }
+        private static void DecrementGuaranteedAsyncWriteCount()
+        {
+            var state = _currentState ?? _lastStateForTests;
+            state?.ReleaseGuaranteedAsyncWrite();
         }
 
         private static void AbortResponse(HttpListenerResponse response)
