@@ -23,6 +23,15 @@
 | 验证策略 | 混合验证：真实临时 registry 文件、本地 Node HTTP server、可控 `HostTransport` adapter。 |
 | 模块方案 | 采用四模块方案：`registry.ts`、`transport.ts`、`http-client.ts`、`rebind.ts`。 |
 | Continuity failure 映射 | public result 统一使用 `status: "lost"`，具体原因放在 diagnostic `code`。 |
+| Pre-operation identity mismatch | Operation sent 前的 probe identity mismatch 允许 single bounded rebind；仍失败后返回 `lost + host.identity_mismatch` 或更具体 diagnostic。 |
+| Envelope metadata | `succeeded`、`failed`、`rejected`、`lost`、`timeout` 路径都必须保留 Technical Contract 指定 envelope metadata。 |
+| Registry missing 可观察性 | `host.registry_missing` diagnostic 必须通过 `details` 或 `evidence` 暴露 `missing_before_seen` / `missing_after_seen` classification。 |
+| Transport seam | `transport.ts` 只做低层 HTTP transport 结果，禁止判断 registry identity、rebind policy、public result status 或 Unity envelope semantic validity。 |
+| Timeout 边界 | `host.request_timeout` 是 transport/request timeout，不产生 workflow timeout code、polling/job evidence 或 5B completion fields。 |
+| HTTP status failure | Non-2xx HTTP status 映射为 `failed + host.http_status_failure`；response body 只保留为 diagnostic details/evidence，不作为 Unity operation envelope 消费。 |
+| Supported host status | 5A-07 只支持 `ready` 和 `not_ready`；其他 status 视为 unsupported / invalid shape。 |
+| Final result owner | `http-client.ts` 只映射单个 trusted envelope；`rebind.ts` 拥有 operation lifecycle finalization 和 post-response drift override。 |
+| MCP scope guard | 除路径 guard 外，任何路径都不得创建 MCP public tool registration code、tool registry/export wiring 或 public action dispatch wiring。 |
 | 依赖 | 不新增 npm dependency；使用 Node 内置能力。 |
 
 ---
@@ -73,7 +82,8 @@ registry.ts
 transport.ts
   → 定义最小 HostTransport seam
   → 提供 Node HTTP implementation
-  → 只负责 GET /probe、POST /operations、request timeout / transport failure 的低层结果
+  → 只负责 GET /probe、POST /operations、JSON parse failure、HTTP status failure、request timeout 和 transport unavailable 的低层结果
+  → 禁止判断 registry identity、rebind policy、public result status 或 Unity envelope semantic validity
 
 http-client.ts
   → 使用 registry + transport 执行 active validation 和 operation invoke
@@ -132,7 +142,7 @@ lastProbeAt?
 - `hostId` 是 non-empty string；
 - `hostEpoch` 是 integer >= 0；
 - `port` 是 integer > 0；
-- `status` 是 supported status；
+- `status` 是 supported status；5A-07 只支持 `ready` 和 `not_ready`，其他 status 视为 unsupported / invalid shape；
 - `startedAt` 是 non-empty string；
 - `lastProbeAt?` 类型有效。
 
@@ -157,9 +167,12 @@ unexpected_fs_error
 
 - seam 只表达 `probe` 与 `invokeOperation`；
 - 不做通用 HTTP framework；
-- 不理解 rebind policy；
-- 不把 Unity envelope 直接映射成 public result；
-- 只返回低层 transport 成功、request timeout、transport unavailable、HTTP parse failure 等结果。
+- 只返回低层 transport 成功、JSON parse failure、HTTP status failure、request timeout、transport unavailable 等结果；
+- 不判断 registry identity；
+- 不判断 rebind policy；
+- 不判断 public result status；
+- 不判断 Unity envelope semantic validity；
+- 不把 Unity envelope 直接映射成 public result。
 
 Node implementation 使用 Node 内置能力实现 loopback HTTP，不新增依赖。它必须支持 bounded request timeout，并区分：
 
@@ -169,6 +182,8 @@ request_timeout
 invalid_json_response
 http_status_failure
 ```
+
+`http_status_failure` 表示 host transport 可达但返回 non-2xx HTTP status。`http-client.ts` 必须把它映射为 public result `failed` + diagnostic code `host.http_status_failure`；response body 只保留为 diagnostic `details` 或 `evidence`，不得作为 Unity operation envelope 消费。
 
 ### `http-client.ts`
 
@@ -191,11 +206,21 @@ Probe classification：
 ready
 not_ready
 protocol_mismatch
+unsupported_status
 probe_invalid_shape
 identity_mismatch
 transport_unavailable
 request_timeout
 ```
+
+5A-07 supported host status set 固定为：
+
+```text
+ready
+not_ready
+```
+
+其他 registry/probe status 视为 unsupported / invalid shape，不进入 ready host path。
 
 Operation envelope mapping：
 
@@ -207,6 +232,23 @@ Operation envelope mapping：
 - invalid envelope → public result `failed` + `host.invalid_envelope`；
 - unknown status → fail closed，public result `failed` + `host.invalid_envelope`。
 
+`succeeded`、`failed`、`rejected`、`lost`、`timeout` 路径都必须保留 Technical Contract 指定 envelope metadata：
+
+```text
+operation
+requestId
+hostId
+hostEpoch
+summary
+data
+diagnostics
+startedAt
+completedAt
+durationMs
+code
+message
+```
+
 ### `rebind.ts`
 
 职责：执行 bounded pre-operation rebind 和 operation lifecycle classification。
@@ -214,10 +256,15 @@ Operation envelope mapping：
 核心规则：
 
 - 只允许 operation sent 前 single/bounded rebind；
+- operation sent 前的 active probe identity mismatch 允许 reread registry + reprobe once；
+- 若 single rebind 后仍 identity mismatch，返回 `lost + host.identity_mismatch` 或更具体 diagnostic；
 - 不允许 infinite retry；
 - operation 一旦 sent，不能 replay 到新 host；
 - in-flight transport failure 后只 reread registry 用于 classification；
-- response 后必须检查 registry identity drift；
+- `http-client.ts` 只映射单个 trusted Unity envelope 到 public result；
+- `http-client.ts` 不执行 post-response registry reread，不做 operation lifecycle finalization；
+- `rebind.ts` 拥有 operation lifecycle finalization；
+- `rebind.ts` 在 response 后检查 registry identity drift，并可把 mapped success/failed/rejected/timeout/lost result 替换为 `lost + host.stale_instance`；
 - post-response drift 后不能返回 success；
 - continuity failure 的 public result 使用 `status: "lost"`。
 
@@ -262,42 +309,48 @@ registry record
 
 规则：
 
-- `status != ready` 不等于 transport failure；保留 `host.not_ready`；
+- `status == not_ready` 不等于 transport failure；保留 `host.not_ready`；
+- unsupported registry/probe status 视为 invalid shape，不进入 ready host path；
 - probe response shape 错误返回 `host.probe_invalid_shape`；
-- identity 或 active validation fields 不一致返回 `status: lost` + `host.identity_mismatch`；
+- operation sent 前的 identity 或 active validation fields 不一致允许 single bounded rebind；
+- single rebind 后仍不一致时返回 `status: lost` + `host.identity_mismatch` 或更具体 diagnostic；
 - transport/request timeout 不映射为 workflow timeout。
 
-### 3. Operation invoke
+### 3. Operation invoke single-envelope mapping
 
 ```text
 valid active host
 → transport.invokeOperation(record.port, operation request)
 → parse operation envelope
 → validate status/code/diagnostics/minimum envelope fields
-→ map to UnityAgentKitPublicResult
-→ re-read registry for post-response identity drift
+→ map single trusted envelope to UnityAgentKitPublicResult
 ```
 
 规则：
 
+- `http-client.ts` 只映射单个 trusted Unity envelope 到 public result；
+- `http-client.ts` 不执行 post-response registry reread；
+- `http-client.ts` 不做 operation lifecycle finalization；
 - Unity envelope `timeout + host.dispatch_timeout` 映射为 public result `status: "timeout"`；
 - Transport timeout 映射为 diagnostic `host.request_timeout`，不是 workflow timeout；
+- Non-2xx HTTP status 映射为 public result `failed` + diagnostic `host.http_status_failure`，response body 只作为 diagnostic details/evidence；
 - Invalid envelope 映射为 `status: "failed"` + `host.invalid_envelope`；
-- Unknown status fail-closed；
-- response 后 registry identity 变化时，最终返回 `status: "lost"` + `host.stale_instance`。
+- Unknown status fail-closed。
 
-### 4. Rebind
+### 4. Rebind lifecycle finalization
 
 ```text
 executeWithRebind(operation)
 → read registry
 → active probe
-→ if pre-operation stale/not_ready/transport issue allows rebind:
+→ if pre-operation stale/not_ready/transport issue/identity mismatch allows rebind:
      reread registry once
      reprobe once
-→ send operation once
+→ send operation once through http-client single-envelope mapping
 → no replay after send
+→ reread registry for post-response identity drift
 → classify in-flight failure or post-response drift
+→ finalize public result
 ```
 
 规则：
@@ -305,7 +358,9 @@ executeWithRebind(operation)
 - bounded rebind 只发生在 operation sent 前；
 - operation sent 后不 replay；
 - in-flight failure 只允许 reread registry 分类；
-- post-response identity drift 覆盖 success；
+- `http-client.ts` 只映射单个 trusted envelope；
+- `rebind.ts` 拥有 operation lifecycle finalization；
+- post-response identity drift 可覆盖 mapped result；
 - diagnostic priority 保留最具体原因。
 
 ---
@@ -316,8 +371,8 @@ executeWithRebind(operation)
 
 | 场景 | public status | diagnostic code | 说明 |
 |---|---|---|---|
-| registry 不存在且从未见过 | `lost` | `host.registry_missing` | host 尚未可用或 Unity 未启动 |
-| registry 之前见过后消失 | `lost` | `host.registry_missing` | continuity 断裂，priority 高于普通 missing |
+| registry 不存在且从未见过 | `lost` | `host.registry_missing` | host 尚未可用或 Unity 未启动；diagnostic `details` 或 `evidence` 必须包含 `classification: "missing_before_seen"` |
+| registry 之前见过后消失 | `lost` | `host.registry_missing` | continuity 断裂，priority 高于普通 missing；diagnostic `details` 或 `evidence` 必须包含 `classification: "missing_after_seen"` |
 | invalid JSON | `failed` | `host.registry_invalid_json` | 本地 registry 文件损坏 |
 | invalid shape | `failed` | `host.registry_invalid_shape` | 字段缺失或类型错误 |
 | invalid port | `failed` | `host.registry_invalid_port` | port 非可用正整数 |
@@ -333,6 +388,7 @@ executeWithRebind(operation)
 | identity mismatch | `lost` | `host.identity_mismatch` | registry 指向的 host 和 probe 响应不是同一 continuity |
 | transport unavailable | `lost` | `host.transport_unavailable` | 连接失败、ECONNREFUSED、socket failure |
 | request timeout | `timeout` | `host.request_timeout` | TS request/socket deadline，非 workflow timeout |
+| non-2xx HTTP status | `failed` | `host.http_status_failure` | transport 可达但协议 status 失败；response body 只保留为 diagnostic details/evidence，不作为 Unity operation envelope 消费 |
 
 ### Operation envelope diagnostics
 
@@ -361,8 +417,8 @@ executeWithRebind(operation)
 | 类型 | 5A-07 行为 |
 |---|---|
 | Host-level timeout | Unity envelope 已返回 `timeout + host.dispatch_timeout`；TS 保留并映射为 `status: "timeout"` |
-| Transport/request timeout | TS transport deadline；返回 `status: "timeout"` + `host.request_timeout` |
-| Workflow timeout | 5A-07 不产生；只保留 future-safe fields，不设置 workflow timeout code |
+| Transport/request timeout | TS transport deadline；返回 `status: "timeout"` + `host.request_timeout`；不包含 workflow timeout code、workflow polling/job evidence 或 5B completion fields |
+| Workflow timeout | 5A-07 不产生；只保留 existing future-safe fields，不主动设置 workflow timeout code、workflow polling/job evidence 或 5B completion fields |
 
 ---
 
@@ -383,7 +439,8 @@ executeWithRebind(operation)
 
 - `host.not_ready` 不被 transport unavailable 覆盖；
 - `host.restarted` 不被 registry missing after seen 覆盖；
-- `host.stale_instance` 不被 generic failure 覆盖。
+- `host.stale_instance` 不被 generic failure 覆盖；
+- `host.registry_missing` 的 diagnostic `details` 或 `evidence` 保留 `missing_before_seen` / `missing_after_seen` classification。
 
 ---
 
@@ -417,18 +474,22 @@ continuityIdentityUsesHostIdAndHostEpoch
 probeActiveHostValidatesRegistryAndProbeIdentity
 probeActiveHostRejectsNotReadyProbe
 probeActiveHostRejectsProtocolMismatch
+probeActiveHostRejectsUnsupportedStatus
 probeActiveHostRejectsInvalidProbeShape
-probeActiveHostRejectsIdentityMismatch
+probeActiveHostRejectsIdentityMismatchAfterSingleRebindFails
 invokeOperationMapsSucceededEnvelopeToPublicResult
+invokeOperationPreservesFailedRejectedLostAndTimeoutEnvelopeMetadata
 invokeOperationMapsHostTimeoutEnvelopeToTimeoutResult
 invokeOperationRejectsInvalidEnvelope
 invokeOperationFailsClosedOnUnknownStatus
 transportRequestTimeoutMapsToRequestTimeoutDiagnostic
 transportUnavailableMapsToTransportDiagnostic
+httpStatusFailureMapsToFailedDiagnostic
+httpStatusFailureBodyIsOnlyDiagnosticEvidence
 transportTimeoutDoesNotMapToWorkflowTimeout
 ```
 
-证明：`/probe` 和 `/operations` 是真实 HTTP request/response；TS 校验 active validation fields；invalid/unknown envelope 不会假成功；request timeout 与 workflow timeout 分离。
+证明：`/probe` 和 `/operations` 是真实 HTTP request/response；TS 校验 active validation fields 和 supported status set；invalid/unknown envelope 不会假成功；non-2xx HTTP status 不被当作 Unity operation envelope 消费；主要 envelope status path 保留 Technical Contract 指定 metadata；request timeout 与 workflow timeout 分离。
 
 ### 3. Rebind/no-replay tests
 
@@ -437,11 +498,13 @@ transportTimeoutDoesNotMapToWorkflowTimeout
 ```text
 preOperationProbeNotReadyAllowsSingleRebind
 initialProbeStaleRebindsOnceToReadyHost
+preOperationIdentityMismatchAllowsSingleRebind
 preOperationRetryPreservesMostSpecificError
 preOperationRebindDoesNotLoopIndefinitely
 inFlightOperationTransportFailureDoesNotReplay
 inFlightOperationFailureWithHostRestartDoesNotReplayToNewHost
 operationFailureRereadsRegistryOnlyForClassification
+httpClientMapsOnlyTrustedEnvelopeAndDoesNotFinalizeLifecycle
 postResponseIdentityDriftReturnsStaleInstance
 postResponseMissingRegistryReturnsStaleInstance
 oldHostSuccessEnvelopeIsNotCurrentSuccess
@@ -458,11 +521,12 @@ preservesHostRestartedOverRegistryMissingAfterSeen
 preservesStaleInstanceOverGenericFailure
 hostTimeoutEnvelopeMapsToTimeoutResult
 transportRequestTimeoutMapsToTransportDiagnostic
+transportRequestTimeoutDoesNotProduceWorkflowTimeoutEvidence
 invalidEnvelopeMapsToErrorResult
 unknownStatusFailsClosed
 ```
 
-证明：TS 保留最具体 diagnostic；host-level timeout、transport timeout、workflow timeout 三者边界稳定。
+证明：TS 保留最具体 diagnostic；registry missing classification 可公开观察；host-level timeout、transport timeout、workflow timeout 三者边界稳定；transport/request timeout 不产生 workflow timeout code、workflow polling/job evidence 或 5B completion fields。
 
 ### 5. Scope guard
 
@@ -475,6 +539,8 @@ plugins/unity-agent-kit/src/tools
 plugins/unity-agent-kit/skills/unity.md
 ```
 
+语义 guard：任何路径都不得创建 MCP public tool registration code、tool registry/export wiring 或 public action dispatch wiring。
+
 证明：5A-07 没有提前进入 5A-08、MCP public tool registration 或 `/unity` skill。
 
 ---
@@ -483,12 +549,13 @@ plugins/unity-agent-kit/skills/unity.md
 
 5A-07 完成前必须满足：
 
-- `plugins/unity-agent-kit/src/host/registry.ts` 覆盖 strict registry validation 和 missing-before/after-seen classification；
-- `plugins/unity-agent-kit/src/host/transport.ts` 覆盖 Node HTTP probe/invoke、request timeout 和 transport unavailable；
-- `plugins/unity-agent-kit/src/host/http-client.ts` 覆盖 active validation、operation envelope validation、public result mapping、unknown status fail-closed；
-- `plugins/unity-agent-kit/src/host/rebind.ts` 覆盖 bounded pre-operation rebind、in-flight no replay、post-response identity drift 和 diagnostic priority；
+- `plugins/unity-agent-kit/src/host/registry.ts` 覆盖 strict registry validation 和 missing-before/after-seen classification，并通过 diagnostic `details` 或 `evidence` 公开该 classification；
+- `plugins/unity-agent-kit/src/host/transport.ts` 覆盖 Node HTTP probe/invoke、JSON parse failure、HTTP status failure、request timeout 和 transport unavailable，且不承担 registry identity、rebind policy、public result status 或 Unity envelope semantic validity 判断；
+- `plugins/unity-agent-kit/src/host/http-client.ts` 覆盖 active validation、operation envelope validation、public result mapping、unknown status fail-closed，并在 `succeeded`、`failed`、`rejected`、`lost`、`timeout` 路径保留 Technical Contract 指定 envelope metadata；
+- `plugins/unity-agent-kit/src/host/rebind.ts` 覆盖 bounded pre-operation rebind、pre-operation identity mismatch single rebind、in-flight no replay、post-response identity drift 和 diagnostic priority；
 - `tests/host-runtime.test.ts` 通过固定 TS 命令；
-- scope guard 证明没有创建 5A-08、MCP public tool 或 `/unity` skill 文件；
+- transport/request timeout tests 证明结果不包含 workflow timeout code、workflow polling/job evidence 或 5B completion fields；
+- scope guard 证明没有创建 5A-08、MCP public tool 或 `/unity` skill 文件，且任何路径都没有创建 MCP public tool registration code、tool registry/export wiring 或 public action dispatch wiring；
 - 5A-07 计划和实现不得把 Phase 5A 或 Phase 5 标记 completed。
 
 ---

@@ -28,15 +28,15 @@
 | 5A-03 | Host bootstrap + lifecycle cleanup + GET /probe HTTP contract | 5A-LIFE-01, 5A-LIFE-02, 5A-REG-02, 5A-HTTP-01, 5A-HTTP-03 | 2 | 5A-02 | `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-03-host-lifecycle-probe-contract.md` | completed |
 | 5A-04 | Folded into 5A-03 | covered by 5A-03 | 2 | 5A-02 | `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-03-host-lifecycle-probe-contract.md` | folded |
 | 5A-05 | POST /operations envelope + router | 5A-DTO-02, 5A-HTTP-02, 5A-HTTP-03, 5A-OPS-01, 5A-OPS-02 | 3 | 5A-01, 5A-02, 5A-03 | `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-05-operations-envelope-router.md` | completed |
-| 5A-06 | Main-thread dispatch + host-level timeout | 5A-DISPATCH-01, 5A-DISPATCH-02, 5A-OPS-02, 5A-TIMEOUT-01, 5A-TIMEOUT-02 | 4 | 5A-05 | `docs/superpowers/plans/2026-05-20-unity-agent-kit-phase-5a-06-main-thread-dispatch-timeout.md` | planned |
-| 5A-07 | TS registry/probe/invoke/rebind classification | 5A-REG-03, 5A-REBIND-01, 5A-REBIND-02, 5A-REBIND-03, 5A-REBIND-04, 5A-TIMEOUT-02 | 5 | 5A-03, 5A-05, 5A-06 | pending | candidate |
+| 5A-06 | Main-thread dispatch + host-level timeout | 5A-DISPATCH-01, 5A-DISPATCH-02, 5A-OPS-02, 5A-TIMEOUT-01, 5A-TIMEOUT-02 | 4 | 5A-05 | `docs/superpowers/plans/2026-05-20-unity-agent-kit-phase-5a-06-main-thread-dispatch-timeout.md` | completed |
+| 5A-07 | TS registry/probe/invoke/rebind classification | 5A-REG-03, 5A-REBIND-01, 5A-REBIND-02, 5A-REBIND-03, 5A-REBIND-04, 5A-TIMEOUT-02 | 5 | 5A-03, 5A-05, 5A-06 | `docs/superpowers/plans/2026-05-21-unity-agent-kit-phase-5a-07-ts-host-client-rebind.md` | completed |
 | 5A-08 | Vertical smoke + completion evidence | 5A-EVIDENCE-01, 5A-EVIDENCE-02, 5A-EVIDENCE-03, 5A-EVIDENCE-04 | 6 | 5A-01, 5A-02, 5A-03, 5A-05, 5A-06, 5A-07 | pending | candidate |
 
 ## Current Next Manual Action
 
-Phase 5A-05 POST `/operations` envelope + router has completed implementation and final review. Evidence: `HostRuntimeTests` result XML `unity/Library/UnityAgentKit/Phase5A05OperationsRouterResults.xml` shows `result="Passed"`, `total="48"`, `passed="48"`, `failed="0"`; final code review verdict was PASS; scope guard confirmed committed diff `6ca74dc..HEAD` changed only the 5A-05 Unity operation router/transport/test files plus required Unity `.meta` files, and the forbidden 5A-06 symbols guard produced no output.
+Phase 5A-07 TS registry/probe/invoke/rebind classification has completed TS non-live implementation and verification. Evidence: `cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/host-runtime.test.ts` passed with registry validation, active probe validation, operation envelope mapping, bounded pre-operation rebind, in-flight no replay, post-response stale classification, diagnostic priority, timeout layering, and scope guard coverage. Phase 5A and Phase 5 remain incomplete because 5A-08 vertical smoke + completion evidence is pending.
 
-Next action: review the strict expanded execution plan for 5A-06 Main-thread dispatch + host-level timeout, then choose an execution flow.
+Next action: write and review the strict expanded execution plan for 5A-08 Vertical smoke + completion evidence, then choose an execution flow.
 
 Do not execute this index or the technical contract.
 
