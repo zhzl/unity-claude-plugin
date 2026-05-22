@@ -386,6 +386,13 @@ project_command_report
 
 首版不实现完整 artifact store、retention 或 cleanup 子系统。
 
+验证与临时输出路径约束：
+
+- Unity Agent Kit 显式生成的 artifact metadata / payload root 保持为 repo 根目录下 `.ai-debug/unity-agent-kit/artifacts/`。
+- Unity Test Runner 结果 XML、临时 evidence 和本项目显式生成的测试 fixture 统一写入 repo 根目录下 `.ai-debug/unity-agent-kit/test-results/`，或按功能细分到 `.ai-debug/unity-agent-kit/<feature>/`。
+- Unity test 命令必须使用绝对 `-testResults` 路径，或使用不重复 `unity/` 前缀的 project-relative path；禁止使用 `-projectPath unity` 搭配 `-testResults unity/Library/...` 生成 `unity/unity/...`。
+- 不移动 Unity 自管缓存目录，例如 `unity/Library/`、`unity/Temp/`、`unity/Logs/`。
+
 ### 15. Skill-guided 调用体系
 
 Skills 是调用指导层。
@@ -1654,6 +1661,7 @@ Skill/schema consistency audit：
 
 ## Change Log
 
+- 2026-05-22：统一 Unity Agent Kit 显式测试输出路径：Unity Test Runner 结果 XML、临时 evidence 和测试 fixture 写入 repo 根目录 `.ai-debug/unity-agent-kit/test-results/` 或 `.ai-debug/unity-agent-kit/<feature>/`，避免 `-projectPath unity` 搭配 `-testResults unity/Library/...` 生成 `unity/unity/...`；Unity 自管 `Library/`、`Temp/`、`Logs/` 不移动。
 - 2026-05-22：完成 Phase 5B Artifact / Resource / Timeout / Completion 基础设施，覆盖 typed resource/job/nextStep public-result contract、deterministic artifact metadata layout、safe Resource URI parsing、safe relative path resolution、internal file-backed Resource readback、generic content validity、timeout continuation helper、completion semantics helpers 和 Unity internal artifact contract smoke。TS evidence 命令 `cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/artifact-resource-contract.test.ts tests/timeout-completion-contract.test.ts tests/host-runtime.test.ts` 通过并输出 `fail 0`；Unity `HostRuntimeArtifactTests` 和 `HostRuntimeTests` regression 均通过并输出 `failed="0"`；scope boundary 保持 no public MCP tools、no MCP Resource handlers、no `/unity` skill、no validation-reports readback、no real screenshot/test/console workflow、no final daily loop E2E。Phase 5 remains incomplete because Phase 5C-5E and final daily loop E2E remain pending。
 - 2026-05-22：记录 Phase 5A Host Runtime hardening，作为 Phase 5A completed 后、Phase 5B 前的补丁 evidence；覆盖 TS envelope trust boundary、Unity dispatch timeout claim race、`/operations` body read bounds、optional result field preservation 和 docs cleanup。final verification 通过：TS tests `tests 65`、`pass 65`、`fail 0`；Unity `HostRuntimeTests` `total="82"`、`passed="82"`、`failed="0"`；Unity vertical smoke `total="1"`、`passed="1"`、`failed="0"`；Node vertical smoke stdout `tests 1`、`pass 1`、`fail 0`；scope/docs checks 分别输出 `PASS Phase 5A hardening scope boundary` 和 `PASS Phase 5A hardening docs`；`git diff --check` 无输出。Phase 5A remains completed；Phase 5 remains incomplete because Phase 5B-5E and final daily loop E2E remain pending。
 - 2026-05-21：完成 Phase 5A-08 Vertical smoke + completion evidence，覆盖 `5A-EVIDENCE-01`、`5A-EVIDENCE-02`、`5A-EVIDENCE-03`、`5A-EVIDENCE-04`。TS non-live evidence `cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/host-runtime.test.ts` 通过，`tests 60`、`pass 60`、`fail 0`；Unity `HostRuntimeTests` 通过，`total="78"`、`passed="78"`、`failed="0"`；Unity `HostRuntimeVerticalSmokeTests` 通过，`total="1"`、`passed="1"`、`failed="0"`，并由 Unity 启动真实 loopback host、运行 `phase5a-vertical-smoke.test.ts`、验证 `host.threadCheck` 在 captured Unity main thread 执行、TS 映射 envelope/public result/MCP payload、Unity 停止 host 并验证 cleanup。Phase 5A completed；Phase 5 remains incomplete because Phase 5B-5E and final daily loop E2E remain pending。
