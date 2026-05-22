@@ -38,7 +38,17 @@ export function validateArtifactMetadata(value: unknown, resource: ParsedUnityRe
     return fail("validation_failed", "artifact.validation_status_not_valid", "Artifact metadata validationStatus is not valid.");
   }
 
-  const payloadRelativePath = payloadPathFromMetadata(metadata, resource);
+  const reportLocator = validateOptionalReportLocator(metadata.reportLocator);
+  if (!reportLocator.ok) {
+    return fail("validation_failed", "artifact.report_locator_invalid_shape", "Artifact metadata reportLocator must match the expected shape when present.");
+  }
+
+  const relativePath = validateOptionalRelativePath(metadata.relativePath);
+  if (!relativePath.ok) {
+    return fail("validation_failed", "artifact.relative_path_invalid_shape", "Artifact metadata relativePath must be a string when present.");
+  }
+
+  const payloadRelativePath = payloadPathFromMetadata(resource, relativePath.value, reportLocator.value);
   if (payloadRelativePath === null) {
     return fail("path_outside_artifact_root", "artifact.locator_invalid", "Artifact metadata locator is invalid for the resource type.");
   }
@@ -47,34 +57,87 @@ export function validateArtifactMetadata(value: unknown, resource: ParsedUnityRe
     return fail("validation_failed", "artifact.size_invalid", "Artifact metadata sizeBytes must be greater than zero.");
   }
 
-  return { ok: true, metadata: metadata as unknown as UnityAgentKitArtifactMetadata, payloadRelativePath };
+  const sanitizedMetadata = {
+    schemaVersion: 1,
+    id: resource.id,
+    type: resource.type,
+    uri: resource.uri,
+    createdAt: metadata.createdAt,
+    validationStatus: metadata.validationStatus,
+    producerTool: metadata.producerTool,
+    producerAction: metadata.producerAction,
+    diagnostics: metadata.diagnostics,
+    ...(relativePath.value === undefined ? {} : { relativePath: relativePath.value }),
+    ...(reportLocator.value === undefined ? {} : { reportLocator: reportLocator.value }),
+    ...(metadata.hostId === undefined ? {} : { hostId: metadata.hostId }),
+    ...(metadata.hostEpoch === undefined ? {} : { hostEpoch: metadata.hostEpoch }),
+    ...(metadata.producerJobId === undefined ? {} : { producerJobId: metadata.producerJobId }),
+    ...(metadata.sizeBytes === undefined ? {} : { sizeBytes: metadata.sizeBytes }),
+  } satisfies UnityAgentKitArtifactMetadata;
+
+  return { ok: true, metadata: sanitizedMetadata, payloadRelativePath };
 }
 
-function payloadPathFromMetadata(metadata: Record<string, unknown>, resource: ParsedUnityResource): string | null {
+function payloadPathFromMetadata(
+  resource: ParsedUnityResource,
+  relativePath: string | undefined,
+  reportLocator: UnityAgentKitArtifactMetadata["reportLocator"] | undefined,
+): string | null {
   if (resource.type === "test_report") {
-    const locator = metadata.reportLocator;
-    if (typeof locator !== "object" || locator === null) {
-      return null;
-    }
-
-    const reportLocator = locator as Record<string, unknown>;
-    if (reportLocator.kind !== "artifact_relative_path" || typeof reportLocator.relativePath !== "string") {
-      return null;
-    }
-
-    if (!reportLocator.relativePath.startsWith("test-reports/") || !isSafeArtifactRelativePath(reportLocator.relativePath)) {
+    if (
+      reportLocator === undefined ||
+      !reportLocator.relativePath.startsWith("test-reports/") ||
+      !isSafeArtifactRelativePath(reportLocator.relativePath)
+    ) {
       return null;
     }
 
     return reportLocator.relativePath;
   }
 
-  if (typeof metadata.relativePath !== "string" || !isSafeArtifactRelativePath(metadata.relativePath)) {
+  if (relativePath === undefined || !isSafeArtifactRelativePath(relativePath)) {
     return null;
   }
 
   const expectedPrefix = resource.type === "screenshot" ? "screenshots/" : "console-snapshots/";
-  return metadata.relativePath.startsWith(expectedPrefix) ? metadata.relativePath : null;
+  return relativePath.startsWith(expectedPrefix) ? relativePath : null;
+}
+
+function validateOptionalRelativePath(value: unknown): { ok: true; value: string | undefined } | { ok: false } {
+  if (value === undefined) {
+    return { ok: true, value: undefined };
+  }
+
+  if (typeof value !== "string") {
+    return { ok: false };
+  }
+
+  return { ok: true, value };
+}
+
+function validateOptionalReportLocator(
+  value: unknown,
+): { ok: true; value: UnityAgentKitArtifactMetadata["reportLocator"] | undefined } | { ok: false } {
+  if (value === undefined) {
+    return { ok: true, value: undefined };
+  }
+
+  if (typeof value !== "object" || value === null) {
+    return { ok: false };
+  }
+
+  const reportLocator = value as Record<string, unknown>;
+  if (reportLocator.kind !== "artifact_relative_path" || typeof reportLocator.relativePath !== "string") {
+    return { ok: false };
+  }
+
+  return {
+    ok: true,
+    value: {
+      kind: "artifact_relative_path",
+      relativePath: reportLocator.relativePath,
+    },
+  };
 }
 
 function fail(reason: UnityAgentKitReadbackFailureReason, code: string, message: string): MetadataValidationResult {

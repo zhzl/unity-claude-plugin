@@ -332,6 +332,25 @@ test("resourceReadbackUsesReportLocatorOnlyUnderTestReports", async () => {
   });
 });
 
+test("resourceReadbackRejectsInvalidIrrelevantLocatorFields", async () => {
+  await withArtifactProject(async (projectRoot, artifactRoot) => {
+    await writeArtifactFixture(
+      artifactRoot,
+      "metadata/screenshots/shot-1.json",
+      screenshotMetadata({ reportLocator: 123 }),
+      "screenshots/shot-1.txt",
+      "synthetic image",
+    );
+
+    const result = await readUnityResource(projectRoot, "unity://screenshots/shot-1");
+
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.equal(result.reason, "validation_failed");
+    }
+  });
+});
+
 test("resourceReadbackDoesNotScanPayloadDirectoriesWhenMetadataIsMissing", async () => {
   await withArtifactProject(async (projectRoot, artifactRoot) => {
     const payloadPath = path.join(artifactRoot, "screenshots", "shot-1.txt");
