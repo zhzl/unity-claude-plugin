@@ -293,6 +293,8 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/host-
 
 要求：新增 dispatch claim 和 body bound tests 通过，整体 `failed="0"`。
 
+body deadline 的 production constants 固定为 64 KiB / 2 秒；测试可以使用 deterministic test-only synchronization 观察 listener close / reservation release，避免每次验证都等待完整 2 秒。测试不得降低 production bounds，也不得阻塞 Unity main thread 或 HTTP handler。
+
 ### Vertical smoke regression
 
 ```bash
