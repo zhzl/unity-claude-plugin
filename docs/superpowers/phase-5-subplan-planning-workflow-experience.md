@@ -289,3 +289,25 @@ Roadmap
 ## 当前结论
 
 Phase 5A 已跑通第一轮真实接力：5A technical contract → 5A execution index → 5A-01 expanded strict execution plan → review → subagent-driven implementation → evidence → current-truth sync。下一步应基于同一流程创建并审查 5A-02 Unity DTO + registry contract strict execution plan；等 5A 至少再跑通 5A-02 或后续一个 runtime-facing sibling plan 后，再决定哪些规则迁移到通用 superpowers skill。
+
+## 5B cohesive subplan 直接 executable plan 新增经验
+
+2026-05-22，Phase 5B brainstorming 暴露出第四类 subplan 体验问题：不能把 Phase 5A 的 technical contract → execution index → expanded strict execution plan 重流程自动套用到每一个后续 subplan。
+
+本次触发点：
+
+- Phase 5B 已收敛为 contract-first 基础设施层：Artifact / Resource / Timeout / Completion。
+- 已确认 5B 不实现 MCP Resource handlers、public MCP tools、`/unity` skill、真实 screenshot/test/console workflow、generic job store、validation reports 或 final daily loop E2E。
+- 5B 的实现范围是 cohesive infrastructure patch：TS contract/readback/helpers + Unity internal artifact contract smoke。
+- 在这种范围下，继续创建 technical contract、execution index 和 wave plans 会增加流程开销，并让一个可由单份 strict implementation plan 覆盖的 subplan 变得不必要复杂。
+
+本次确认的本地规则：
+
+1. Phase 5 后续 subplan 不应默认复制 5A 的 large-subplan execution-index workflow。
+2. 如果 subplan scope 是单一 cohesive infrastructure patch，design spec 批准后可以直接调用 `superpowers:writing-plans` 创建 executable implementation plan。
+3. 直接 implementation plan 必须在头部记录拆分检查：已检查；无需拆分。
+4. 如果 implementation plan 自检发现范围包含多个独立交付单元、超过 large-subplan hard stop，或 strict writing-plans 无法保持足够细节，应停止并回到拆分决策。
+5. Technical contract / execution index / sibling plans 只在 subplan 规模接近 5A、包含多个独立 waves，或任务间需要长期 current-truth coordination 时使用。
+6. 对当前 Phase 5B，推荐路径是：brainstorming 写 design spec → 用户批准 spec → 直接 writing-plans 写一份 executable implementation plan。
+
+后续应把 Phase 5B Design 5 修正为：不创建 5B execution index；spec 批准后直接输出 `docs/superpowers/plans/2026-05-22-unity-agent-kit-phase-5b-artifact-resource-timeout-completion.md` 这类 executable implementation plan。Phase 5 plan index 可以把 Phase 5B execution entry 指向该 direct executable plan，或明确标注无需 execution index。
