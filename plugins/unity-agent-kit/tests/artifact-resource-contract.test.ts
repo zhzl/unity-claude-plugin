@@ -351,6 +351,58 @@ test("resourceReadbackRejectsInvalidIrrelevantLocatorFields", async () => {
   });
 });
 
+test("resourceReadbackSanitizesIrrelevantValidShapedReportLocatorFromScreenshotMetadata", async () => {
+  await withArtifactProject(async (projectRoot, artifactRoot) => {
+    await writeArtifactFixture(
+      artifactRoot,
+      "metadata/screenshots/shot-1.json",
+      screenshotMetadata({
+        reportLocator: {
+          kind: "artifact_relative_path",
+          relativePath: "../secret.txt",
+        },
+      }),
+      "screenshots/shot-1.txt",
+      "synthetic image",
+    );
+
+    const result = await readUnityResource(projectRoot, "unity://screenshots/shot-1");
+
+    assert.equal(result.ok, true, JSON.stringify(result));
+    if (!result.ok) {
+      return;
+    }
+
+    assert.equal(result.metadata.relativePath, "screenshots/shot-1.txt");
+    assert.equal("reportLocator" in result.metadata, false);
+  });
+});
+
+test("resourceReadbackSanitizesIrrelevantValidShapedRelativePathFromReportMetadata", async () => {
+  await withArtifactProject(async (projectRoot, artifactRoot) => {
+    await writeArtifactFixture(
+      artifactRoot,
+      "metadata/test-reports/report-1.json",
+      reportMetadata({ relativePath: "../secret.txt" }),
+      "test-reports/report-1.txt",
+      "synthetic report",
+    );
+
+    const result = await readUnityResource(projectRoot, "unity://test-reports/report-1");
+
+    assert.equal(result.ok, true, JSON.stringify(result));
+    if (!result.ok) {
+      return;
+    }
+
+    assert.deepEqual(result.metadata.reportLocator, {
+      kind: "artifact_relative_path",
+      relativePath: "test-reports/report-1.txt",
+    });
+    assert.equal("relativePath" in result.metadata, false);
+  });
+});
+
 test("resourceReadbackDoesNotScanPayloadDirectoriesWhenMetadataIsMissing", async () => {
   await withArtifactProject(async (projectRoot, artifactRoot) => {
     const payloadPath = path.join(artifactRoot, "screenshots", "shot-1.txt");

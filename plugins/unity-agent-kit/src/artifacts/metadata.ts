@@ -57,26 +57,44 @@ export function validateArtifactMetadata(value: unknown, resource: ParsedUnityRe
     return fail("validation_failed", "artifact.size_invalid", "Artifact metadata sizeBytes must be greater than zero.");
   }
 
+  const sanitizedMetadata = sanitizedMetadataForResource(resource, metadata, relativePath.value, reportLocator.value);
+
+  return { ok: true, metadata: sanitizedMetadata, payloadRelativePath };
+}
+
+function sanitizedMetadataForResource(
+  resource: ParsedUnityResource,
+  metadata: Record<string, unknown>,
+  relativePath: string | undefined,
+  reportLocator: UnityAgentKitArtifactMetadata["reportLocator"] | undefined,
+): UnityAgentKitArtifactMetadata {
   const sanitizedMetadata = {
     schemaVersion: 1,
     id: resource.id,
     type: resource.type,
     uri: resource.uri,
-    createdAt: metadata.createdAt,
-    validationStatus: metadata.validationStatus,
-    producerTool: metadata.producerTool,
-    producerAction: metadata.producerAction,
-    diagnostics: metadata.diagnostics,
-    ...(relativePath.value === undefined ? {} : { relativePath: relativePath.value }),
-    ...(reportLocator.value === undefined ? {} : { reportLocator: reportLocator.value }),
-    ...(metadata.hostId === undefined ? {} : { hostId: metadata.hostId }),
-    ...(metadata.hostEpoch === undefined ? {} : { hostEpoch: metadata.hostEpoch }),
-    ...(metadata.producerJobId === undefined ? {} : { producerJobId: metadata.producerJobId }),
-    ...(metadata.sizeBytes === undefined ? {} : { sizeBytes: metadata.sizeBytes }),
+    createdAt: metadata.createdAt as string,
+    validationStatus: metadata.validationStatus as UnityAgentKitArtifactMetadata["validationStatus"],
+    producerTool: metadata.producerTool as string,
+    producerAction: metadata.producerAction as string,
+    diagnostics: metadata.diagnostics as UnityAgentKitDiagnostic[],
+    ...(metadata.hostId === undefined ? {} : { hostId: metadata.hostId as string }),
+    ...(metadata.hostEpoch === undefined ? {} : { hostEpoch: metadata.hostEpoch as number }),
+    ...(metadata.producerJobId === undefined ? {} : { producerJobId: metadata.producerJobId as string }),
+    ...(metadata.sizeBytes === undefined ? {} : { sizeBytes: metadata.sizeBytes as number }),
   } satisfies UnityAgentKitArtifactMetadata;
 
-  return { ok: true, metadata: sanitizedMetadata, payloadRelativePath };
+  if (resource.type === "test_report") {
+    return reportLocator === undefined
+      ? sanitizedMetadata
+      : { ...sanitizedMetadata, reportLocator };
+  }
+
+  return relativePath === undefined
+    ? sanitizedMetadata
+    : { ...sanitizedMetadata, relativePath };
 }
+
 
 function payloadPathFromMetadata(
   resource: ParsedUnityResource,
