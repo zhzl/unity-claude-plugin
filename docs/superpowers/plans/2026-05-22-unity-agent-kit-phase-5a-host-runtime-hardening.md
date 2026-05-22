@@ -436,7 +436,7 @@ EOF
 - 修改：`unity/Assets/UnityAgentKit/Editor/Transport/UnityAgentKitMainThread.cs`
 - 修改：`unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeDispatchTests.cs`
 
-- [ ] **步骤 1：编写失败的 claimed dispatch timeout race test**
+- [x] **步骤 1：编写失败的 claimed dispatch timeout race test**
 
 在 `unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeDispatchTests.cs` 中，放在 `ExpiredDispatchWorkDoesNotExecuteLater` 后面：
 
@@ -480,7 +480,7 @@ public void ClaimedDispatchCannotBeCompletedByTimeoutBeforeExecution()
 }
 ```
 
-- [ ] **步骤 2：运行 Unity targeted test 验证 red**
+- [x] **步骤 2：运行 Unity targeted test 验证 red**
 
 运行：
 
@@ -498,7 +498,7 @@ public void ClaimedDispatchCannotBeCompletedByTimeoutBeforeExecution()
 
 证明：该 red 固化 claimed dispatch ownership 缺口。
 
-- [ ] **步骤 3：实现 atomic claim 与 deterministic timeout helper**
+- [x] **步骤 3：实现 atomic claim 与 deterministic timeout helper**
 
 在 `UnityAgentKitMainThread.cs` 的 `PendingDispatch` 中新增 `claimed`：
 
@@ -641,7 +641,7 @@ private static bool TryComplete(PendingDispatch item, UnityAgentKitOperationResp
 
 Keep `Stop` behavior with `ownsItem: true` for copied pending dispatches.
 
-- [ ] **步骤 4：运行 targeted Unity test 验证通过**
+- [x] **步骤 4：运行 targeted Unity test 验证通过**
 
 运行：
 
@@ -659,7 +659,7 @@ Keep `Stop` behavior with `ownsItem: true` for copied pending dispatches.
 
 证明：该检查证明 claimed dispatch 不会被 timeout callback 抢先完成，避免 timeout 后仍执行的 race。
 
-- [ ] **步骤 5：运行现有 dispatch timeout tests 验证回归**
+- [x] **步骤 5：运行现有 dispatch timeout tests 验证回归**
 
 运行：
 
@@ -671,7 +671,7 @@ Keep `Stop` behavior with `ownsItem: true` for copied pending dispatches.
 
 证明：该检查证明 existing `PendingDispatchTimeoutReturnsHostTimeout`、`PendingDispatchTimeoutDoesNotBlockMainThreadOrHandler`、`ExpiredDispatchWorkDoesNotExecuteLater`、stop/reload/quitting pending behavior 未回归。
 
-- [ ] **步骤 6：Commit**
+- [x] **步骤 6：Commit**
 
 ```bash
 git add unity/Assets/UnityAgentKit/Editor/Transport/UnityAgentKitMainThread.cs unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeDispatchTests.cs
