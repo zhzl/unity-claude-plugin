@@ -502,12 +502,39 @@ test("invokeOperationRejectsMismatchedEnvelopeHostEpoch", async () => {
 test("invokeOperationPreservesPublicResultOptionalFields", async () => {
   const record = sampleHostRecord();
   const optionalFields = {
-    evidence: { phase: "5A-hardening" },
-    resource: { uri: "unity://opaque/resource" },
-    resources: [{ uri: "unity://opaque/resource-1" }],
+    evidence: { phase: "5B-contract" },
+    resource: {
+      uri: "unity://screenshots/shot-opaque",
+      type: "screenshot",
+      artifactId: "shot-opaque",
+      validationStatus: "valid",
+      summary: "Opaque host screenshot reference using the Phase 5B shape.",
+    },
+    resources: [
+      {
+        uri: "unity://console-snapshots/console-opaque",
+        type: "console_snapshot",
+        artifactId: "console-opaque",
+        validationStatus: "uncertain",
+        summary: "Opaque host console snapshot reference using the Phase 5B shape.",
+      },
+    ],
     metadata: { owner: "unity-host", timeoutLayer: "host" },
-    job: { id: "opaque-job" },
-    nextStep: { action: "opaque-next" },
+    job: {
+      jobId: "job-opaque",
+      tool: "unity_test",
+      action: "run_and_collect",
+      state: "running",
+      createdAt: "2026-05-22T10:00:00.000Z",
+      lastKnownContinuity: "current",
+    },
+    nextStep: {
+      kind: "check_job_status",
+      tool: "unity_test",
+      action: "get_status",
+      jobId: "job-opaque",
+      reason: "The host reported an opaque running job with a Phase 5B next step.",
+    },
     safeToRetry: false,
     mayStillBeRunning: true,
   };
@@ -1155,16 +1182,18 @@ test("mapPublicResultToMcpToolResultPreservesEnvelopeMetadata", () => {
 test("mapPublicResultToMcpToolResultPreservesResourceReferences", () => {
   const resource = {
     uri: "unity://screenshots/shot-1",
-    name: "shot-1.png",
-    mimeType: "image/png",
-    description: "Game View screenshot.",
-    metadata: { artifactId: "shot-1" },
+    type: "screenshot",
+    artifactId: "shot-1",
+    validationStatus: "valid",
+    summary: "Game View screenshot.",
   };
   const resources = [
     {
       uri: "unity://console-snapshots/console-1",
-      name: "console-1.json",
-      mimeType: "application/json",
+      type: "console_snapshot",
+      artifactId: "console-1",
+      validationStatus: "uncertain",
+      summary: "Console snapshot.",
     },
   ];
   const publicResult = samplePublicResult({
@@ -1185,10 +1214,19 @@ test("mapPublicResultToMcpToolResultPreservesResourceReferences", () => {
 });
 
 test("mapPublicResultPreservesFutureWorkflowFields", () => {
-  const job = { jobId: "job-1", status: "running" };
+  const job = {
+    jobId: "job-1",
+    tool: "unity_test",
+    action: "run_and_verify",
+    state: "running",
+    createdAt: "2026-05-22T10:00:00.000Z",
+    lastKnownContinuity: "current",
+  };
   const nextStep = {
+    kind: "check_job_status",
     tool: "unity_test",
     action: "get_status",
+    jobId: "job-1",
     reason: "Poll the existing test job instead of starting another run.",
   };
   const publicResult = samplePublicResult({
@@ -1214,6 +1252,7 @@ test("mapPublicResultPreservesFutureWorkflowFields", () => {
 
 test("publicResultMappingPreservesSafeToRetryAndNextStep", () => {
   const nextStep = {
+    kind: "read_state",
     tool: "unity_playmode",
     action: "get_state",
     reason: "Poll PlayMode state before retrying.",
