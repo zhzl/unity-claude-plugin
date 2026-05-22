@@ -409,6 +409,129 @@ test("invokeOperationMapsSucceededEnvelopeToPublicResult", async () => {
   assert.equal(result.hostEpoch, 3);
 });
 
+test("invokeOperationRejectsMismatchedEnvelopeOperation", async () => {
+  const record = sampleHostRecord();
+  const result = await invokeOperationOnce(
+    record,
+    fakeTransport({ ok: true, statusCode: 200, body: succeededEnvelope({ operation: "host.threadCheck" }) }),
+    {
+      operation: "host.echo",
+      requestId: "req-echo",
+    },
+  );
+
+  assert.equal(result.status, "failed");
+  assert.equal(result.operation, "host.echo");
+  assert.equal(result.requestId, "req-echo");
+  assert.equal(result.hostId, "host-a");
+  assert.equal(result.hostEpoch, 3);
+  assert.equal(result.diagnostics[0].code, "host.invalid_envelope");
+  assert.deepEqual(result.diagnostics[0].details, {
+    expectedOperation: "host.echo",
+    actualOperation: "host.threadCheck",
+  });
+});
+
+test("invokeOperationRejectsMismatchedEnvelopeRequestId", async () => {
+  const record = sampleHostRecord();
+  const result = await invokeOperationOnce(
+    record,
+    fakeTransport({ ok: true, statusCode: 200, body: succeededEnvelope({ requestId: "req-other" }) }),
+    {
+      operation: "host.echo",
+      requestId: "req-echo",
+    },
+  );
+
+  assert.equal(result.status, "failed");
+  assert.equal(result.operation, "host.echo");
+  assert.equal(result.requestId, "req-echo");
+  assert.equal(result.diagnostics[0].code, "host.invalid_envelope");
+  assert.deepEqual(result.diagnostics[0].details, {
+    expectedRequestId: "req-echo",
+    actualRequestId: "req-other",
+  });
+});
+
+test("invokeOperationRejectsMismatchedEnvelopeHostId", async () => {
+  const record = sampleHostRecord();
+  const result = await invokeOperationOnce(
+    record,
+    fakeTransport({ ok: true, statusCode: 200, body: succeededEnvelope({ hostId: "host-other" }) }),
+    {
+      operation: "host.echo",
+      requestId: "req-echo",
+    },
+  );
+
+  assert.equal(result.status, "lost");
+  assert.equal(result.operation, "host.echo");
+  assert.equal(result.requestId, "req-echo");
+  assert.equal(result.hostId, "host-a");
+  assert.equal(result.hostEpoch, 3);
+  assert.equal(result.diagnostics[0].code, "host.identity_mismatch");
+  assert.deepEqual(result.diagnostics[0].details, {
+    expectedHostId: "host-a",
+    actualHostId: "host-other",
+  });
+});
+
+test("invokeOperationRejectsMismatchedEnvelopeHostEpoch", async () => {
+  const record = sampleHostRecord();
+  const result = await invokeOperationOnce(
+    record,
+    fakeTransport({ ok: true, statusCode: 200, body: succeededEnvelope({ hostEpoch: 4 }) }),
+    {
+      operation: "host.echo",
+      requestId: "req-echo",
+    },
+  );
+
+  assert.equal(result.status, "lost");
+  assert.equal(result.operation, "host.echo");
+  assert.equal(result.requestId, "req-echo");
+  assert.equal(result.hostId, "host-a");
+  assert.equal(result.hostEpoch, 3);
+  assert.equal(result.diagnostics[0].code, "host.identity_mismatch");
+  assert.deepEqual(result.diagnostics[0].details, {
+    expectedHostEpoch: 3,
+    actualHostEpoch: 4,
+  });
+});
+
+test("invokeOperationPreservesPublicResultOptionalFields", async () => {
+  const record = sampleHostRecord();
+  const optionalFields = {
+    evidence: { phase: "5A-hardening" },
+    resource: { uri: "unity://opaque/resource" },
+    resources: [{ uri: "unity://opaque/resource-1" }],
+    metadata: { owner: "unity-host", timeoutLayer: "host" },
+    job: { id: "opaque-job" },
+    nextStep: { action: "opaque-next" },
+    safeToRetry: false,
+    mayStillBeRunning: true,
+  };
+
+  const result = await invokeOperationOnce(
+    record,
+    fakeTransport({ ok: true, statusCode: 200, body: succeededEnvelope(optionalFields) }),
+    {
+      operation: "host.echo",
+      requestId: "req-echo",
+    },
+  );
+
+  assert.equal(result.status, "succeeded");
+  assert.deepEqual(result.evidence, optionalFields.evidence);
+  assert.deepEqual(result.resource, optionalFields.resource);
+  assert.deepEqual(result.resources, optionalFields.resources);
+  assert.deepEqual(result.metadata, optionalFields.metadata);
+  assert.deepEqual(result.job, optionalFields.job);
+  assert.deepEqual(result.nextStep, optionalFields.nextStep);
+  assert.equal(result.safeToRetry, false);
+  assert.equal(result.mayStillBeRunning, true);
+});
+
 test("invokeOperationPreservesFailedRejectedLostAndTimeoutEnvelopeMetadata", async () => {
   const record = sampleHostRecord();
   for (const status of ["failed", "rejected", "lost", "timeout"] as const) {
@@ -417,7 +540,12 @@ test("invokeOperationPreservesFailedRejectedLostAndTimeoutEnvelopeMetadata", asy
       fakeTransport({
         ok: true,
         statusCode: 200,
-        body: succeededEnvelope({ status, code: `host.${status}`, message: `${status} message` }),
+        body: succeededEnvelope({
+          status,
+          requestId: `req-${status}`,
+          code: `host.${status}`,
+          message: `${status} message`,
+        }),
       }),
       {
         operation: "host.echo",
@@ -446,6 +574,8 @@ test("invokeOperationMapsHostTimeoutEnvelopeToTimeoutResult", async () => {
       statusCode: 200,
       body: succeededEnvelope({
         status: "timeout",
+        operation: "host.pendingDispatchTimeout",
+        requestId: "req-timeout",
         code: "host.dispatch_timeout",
         diagnostics: [
           {
@@ -512,7 +642,7 @@ test("preOperationProbeNotReadyAllowsSingleRebind", async () => {
     transport: transportWithProbeAndInvoke([
       { ok: true, statusCode: 200, body: { ...first, status: "not_ready", code: "host.not_ready", message: "busy" } },
       { ok: true, statusCode: 200, body: second },
-    ], [{ ok: true, statusCode: 200, body: succeededEnvelope({ hostId: "host-b", hostEpoch: 2 }) }]),
+    ], [{ ok: true, statusCode: 200, body: succeededEnvelope({ hostId: "host-b", hostEpoch: 2, requestId: "req-rebind-not-ready" }) }]),
     request: { operation: "host.echo", requestId: "req-rebind-not-ready" },
   });
 
@@ -530,7 +660,7 @@ test("preOperationIdentityMismatchAllowsSingleRebind", async () => {
     transport: transportWithProbeAndInvoke([
       { ok: true, statusCode: 200, body: { ...first, hostId: "other-host" } },
       { ok: true, statusCode: 200, body: second },
-    ], [{ ok: true, statusCode: 200, body: succeededEnvelope({ hostId: "host-b", hostEpoch: 2 }) }]),
+    ], [{ ok: true, statusCode: 200, body: succeededEnvelope({ hostId: "host-b", hostEpoch: 2, requestId: "req-rebind-identity" }) }]),
     request: { operation: "host.echo", requestId: "req-rebind-identity" },
   });
 
@@ -617,7 +747,7 @@ test("operationFailureRereadsRegistryOnlyForClassification", async () => {
 
 test("httpClientMapsOnlyTrustedEnvelopeAndDoesNotFinalizeLifecycle", async () => {
   const record = sampleHostRecord({ hostId: "host-a", hostEpoch: 1 });
-  const result = await invokeOperationOnce(record, fakeTransport({ ok: true, statusCode: 200, body: succeededEnvelope({ hostId: "host-a", hostEpoch: 1 }) }), {
+  const result = await invokeOperationOnce(record, fakeTransport({ ok: true, statusCode: 200, body: succeededEnvelope({ hostId: "host-a", hostEpoch: 1, requestId: "req-trusted-only" }) }), {
     operation: "host.echo",
     requestId: "req-trusted-only",
   });

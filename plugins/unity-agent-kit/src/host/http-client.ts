@@ -35,6 +35,22 @@ export type ActiveProbeResult =
       result: UnityAgentKitPublicResult;
     };
 
+interface OperationEnvelopeContext {
+  record: UnityAgentKitHostRecord;
+  request: UnityAgentKitOperationRequest;
+}
+
+const optionalPublicResultFields = [
+  "evidence",
+  "resource",
+  "resources",
+  "metadata",
+  "job",
+  "nextStep",
+  "safeToRetry",
+  "mayStillBeRunning",
+] as const;
+
 export async function probeActiveHost(
   record: UnityAgentKitHostRecord,
   transport: HostTransport,
@@ -175,9 +191,40 @@ export function mapTransportFailureToPublicResult(
   }
 }
 
-export function mapEnvelopeToPublicResult(envelope: unknown): UnityAgentKitPublicResult {
+export function mapEnvelopeToPublicResult(
+  envelope: unknown,
+  context: OperationEnvelopeContext,
+): UnityAgentKitPublicResult {
   if (!isTrustedEnvelope(envelope)) {
-    return invalidEnvelopeResult("Host operation response has an invalid envelope.");
+    return invalidEnvelopeResult(context, "Host operation response has an invalid envelope.");
+  }
+
+  if (envelope.operation !== context.request.operation) {
+    return invalidEnvelopeResult(context, "Host operation response operation does not match the request.", {
+      expectedOperation: context.request.operation,
+      actualOperation: envelope.operation,
+    });
+  }
+
+  if (envelope.requestId !== context.request.requestId) {
+    return invalidEnvelopeResult(context, "Host operation response requestId does not match the request.", {
+      expectedRequestId: context.request.requestId,
+      actualRequestId: envelope.requestId,
+    });
+  }
+
+  if (envelope.hostId !== context.record.hostId) {
+    return identityMismatchResult(context, "Host operation response hostId does not match the registry record.", {
+      expectedHostId: context.record.hostId,
+      actualHostId: envelope.hostId,
+    });
+  }
+
+  if (envelope.hostEpoch !== context.record.hostEpoch) {
+    return identityMismatchResult(context, "Host operation response hostEpoch does not match the registry record.", {
+      expectedHostEpoch: context.record.hostEpoch,
+      actualHostEpoch: envelope.hostEpoch,
+    });
   }
 
   return definePublicResult({
@@ -196,6 +243,7 @@ export function mapEnvelopeToPublicResult(envelope: unknown): UnityAgentKitPubli
     durationMs: envelope.durationMs,
     code: envelope.code,
     message: envelope.message,
+    ...readOptionalPublicResultFields(envelope.raw),
   });
 }
 
@@ -205,7 +253,9 @@ export async function invokeOperationOnce(
   request: UnityAgentKitOperationRequest,
 ): Promise<UnityAgentKitPublicResult> {
   const response = await transport.invokeOperation(record.port, request);
-  return response.ok ? mapEnvelopeToPublicResult(response.body) : mapTransportFailureToPublicResult(response, request.operation, request.requestId);
+  return response.ok
+    ? mapEnvelopeToPublicResult(response.body, { record, request })
+    : mapTransportFailureToPublicResult(response, request.operation, request.requestId);
 }
 
 function invalidProbeResult(record: UnityAgentKitHostRecord, message: string): UnityAgentKitPublicResult {
@@ -224,16 +274,54 @@ function invalidProbeResult(record: UnityAgentKitHostRecord, message: string): U
   });
 }
 
-function invalidEnvelopeResult(message: string): UnityAgentKitPublicResult {
+function invalidEnvelopeResult(
+  context: OperationEnvelopeContext,
+  message: string,
+  details?: Record<string, unknown>,
+): UnityAgentKitPublicResult {
   return definePublicResult({
     status: "failed",
     tool: "unity_editor",
-    action: "host.operation",
+    action: context.request.operation,
+    operation: context.request.operation,
+    requestId: context.request.requestId,
+    hostId: context.record.hostId,
+    hostEpoch: context.record.hostEpoch,
     summary: message,
     code: "host.invalid_envelope",
     message,
-    diagnostics: [diagnostic("host.invalid_envelope", message)],
+    diagnostics: [diagnostic("host.invalid_envelope", message, details)],
   });
+}
+
+function identityMismatchResult(
+  context: OperationEnvelopeContext,
+  message: string,
+  details: Record<string, unknown>,
+): UnityAgentKitPublicResult {
+  return definePublicResult({
+    status: "lost",
+    tool: "unity_editor",
+    action: context.request.operation,
+    operation: context.request.operation,
+    requestId: context.request.requestId,
+    hostId: context.record.hostId,
+    hostEpoch: context.record.hostEpoch,
+    summary: message,
+    code: "host.identity_mismatch",
+    message,
+    diagnostics: [diagnostic("host.identity_mismatch", message, details)],
+  });
+}
+
+function readOptionalPublicResultFields(envelope: Record<string, unknown>): Partial<UnityAgentKitPublicResult> {
+  const fields: Partial<UnityAgentKitPublicResult> = {};
+  for (const field of optionalPublicResultFields) {
+    if (field in envelope) {
+      fields[field] = envelope[field] as never;
+    }
+  }
+  return fields;
 }
 
 function diagnostic(code: string, message: string, details?: unknown): UnityAgentKitDiagnostic {
@@ -276,6 +364,7 @@ function matchesActiveIdentity(record: UnityAgentKitHostRecord, probe: HostProbe
 }
 
 function isTrustedEnvelope(value: unknown): value is {
+  raw: Record<string, unknown>;
   status: ReturnType<typeof readStatus>;
   operation: string;
   requestId: string;
@@ -297,7 +386,7 @@ function isTrustedEnvelope(value: unknown): value is {
   const envelope = value as Record<string, unknown>;
   const status = readStatus(envelope.status);
 
-  return (
+  if (!(
     status !== null &&
     typeof envelope.operation === "string" &&
     envelope.operation.length > 0 &&
@@ -319,7 +408,12 @@ function isTrustedEnvelope(value: unknown): value is {
     Number.isFinite(envelope.durationMs) &&
     (envelope.code === undefined || typeof envelope.code === "string") &&
     (envelope.message === undefined || typeof envelope.message === "string")
-  );
+  )) {
+    return false;
+  }
+
+  (envelope as Record<string, unknown> & { raw: Record<string, unknown> }).raw = envelope;
+  return true;
 }
 
 function readStatus(value: unknown): UnityAgentKitPublicResult["status"] | null {
