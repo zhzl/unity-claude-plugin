@@ -58,6 +58,17 @@ Phase 5A completed only after:
 
 ## Phase 5A Completion Evidence
 
+Phase 5A-08 Vertical smoke + completion evidence 已完成 and closes the Phase 5A Host Runtime foundation. Evidence groups covered:
+
+- registry: minimum `UnityAgentKitHostRecord`, project root from `Application.dataPath`, existing epoch increment, new hostId on restart/reload, strict TS registry validation, and registry failure classification.
+- lifecycle: compiling/updating skip start, update tick retry, beforeAssemblyReload stop, Editor quitting stop, Start stops old listener, Stop closes listener, deterministic wake, listener-loop-exited signal, cleanup of pending work, old listener no longer responds.
+- HTTP protocol: canonical `GET /probe`, canonical `POST /operations`, structured 404/405/400 envelopes, JSON content type/framing, 127.0.0.1 URL helpers, request context preservation.
+- dispatch/timeout: `host.threadCheck`, captured Unity main thread, dispatch exception diagnostics, non-blocking pending dispatch hook, host-level timeout with may-still-be-running, stop/reload pending failure not timeout.
+- TS client: ready/not_ready, invalid registry/probe shapes, stable diagnostic codes, bounded pre-operation rebind, in-flight no replay, post-response stale/lost, old hostId / hostEpoch continuity is invalidated, lost or rebind decision.
+- result/envelope: DTO JSON round-trip, operation normalization, status/code table, failure metadata preservation, invalid envelope mapping, unknown status fail-closed.
+- vertical smoke: Unity writes registry → TS reads registry → TS probes `/probe` → TS invokes real `/operations` → Unity dispatches to captured Unity main thread via `host.threadCheck` → TS maps envelope/public result and MCP payload.
+- MCP payload mapping foundation: `structuredContent` preserves full public result; `content` is summary only; `isError` follows `status !== "succeeded"`.
+
 ## Phase 5A Host Runtime Hardening Evidence
 
 Phase 5A remains completed. Phase 5A Host Runtime hardening after completion and before Phase 5B covers:
@@ -69,14 +80,3 @@ Phase 5A remains completed. Phase 5A Host Runtime hardening after completion and
 - documentation cleanup: folded 5A-04 wording is explicit.
 
 Phase 5 remains incomplete because Phase 5B-5E and final daily loop E2E remain pending.
-
-Phase 5A-08 Vertical smoke + completion evidence 已完成 and closes the Phase 5A Host Runtime foundation. Evidence groups covered:
-
-- registry: minimum `UnityAgentKitHostRecord`, project root from `Application.dataPath`, existing epoch increment, new hostId on restart/reload, strict TS registry validation, and registry failure classification.
-- lifecycle: compiling/updating skip start, update tick retry, beforeAssemblyReload stop, Editor quitting stop, Start stops old listener, Stop closes listener, deterministic wake, listener-loop-exited signal, cleanup of pending work, old listener no longer responds.
-- HTTP protocol: canonical `GET /probe`, canonical `POST /operations`, structured 404/405/400 envelopes, JSON content type/framing, 127.0.0.1 URL helpers, request context preservation.
-- dispatch/timeout: `host.threadCheck`, captured Unity main thread, dispatch exception diagnostics, non-blocking pending dispatch hook, host-level timeout with may-still-be-running, stop/reload pending failure not timeout.
-- TS client: ready/not_ready, invalid registry/probe shapes, stable diagnostic codes, bounded pre-operation rebind, in-flight no replay, post-response stale/lost, old hostId / hostEpoch continuity is invalidated, lost or rebind decision.
-- result/envelope: DTO JSON round-trip, operation normalization, status/code table, failure metadata preservation, invalid envelope mapping, unknown status fail-closed.
-- vertical smoke: Unity writes registry → TS reads registry → TS probes `/probe` → TS invokes real `/operations` → Unity dispatches to captured Unity main thread via `host.threadCheck` → TS maps envelope/public result and MCP payload.
-- MCP payload mapping foundation: `structuredContent` preserves full public result; `content` is summary only; `isError` follows `status !== "succeeded"`.
