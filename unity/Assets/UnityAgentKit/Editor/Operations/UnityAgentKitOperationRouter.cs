@@ -122,6 +122,11 @@ namespace UnityAgentKit.Editor
             return Failed(InvalidRequestOperation, string.Empty, record, "http.method_not_allowed", "Method not allowed.", Now());
         }
 
+        internal static UnityAgentKitOperationResponse RequestBodyTooLarge(UnityAgentKitHostRecord record)
+        {
+            return Failed("host.operation", string.Empty, record, "http.request_body_too_large", "Operation request body is too large.", Now());
+        }
+
         private static UnityAgentKitOperationResponse Succeeded(string operation, string requestId, UnityAgentKitHostRecord record, string summary, string data, string startedAt)
         {
             return Create("succeeded", operation, requestId, record, summary, data, Array.Empty<UnityAgentKitDiagnostic>(), string.Empty, string.Empty, startedAt);

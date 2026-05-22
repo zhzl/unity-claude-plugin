@@ -9,6 +9,21 @@ namespace UnityAgentKit.Editor
 {
     internal static class UnityAgentKitLoopbackHttpServer
     {
+        internal const int MaxOperationRequestBodyBytes = 64 * 1024;
+        internal const int OperationRequestBodyDeadlineMs = 2000;
+        private const int RequestBodyChunkTimeoutMs = 250;
+
+        private enum BodyReadFailure
+        {
+            None,
+            TooLarge,
+            Incomplete
+        }
+
+        private sealed class RequestBodyTooLargeException : Exception
+        {
+        }
+
         private sealed class ListenerState
         {
             private const int ListenerLoopExitWaitMilliseconds = 500;
@@ -592,11 +607,19 @@ namespace UnityAgentKit.Editor
         {
             var record = state != null ? state.record : null;
             string body;
-            if (!TryReadCompleteBody(context.Request, out body))
+            BodyReadFailure bodyReadFailure;
+            if (!TryReadCompleteBody(context.Request, out body, out bodyReadFailure))
             {
                 state.LeaveAcceptReservation();
                 reservationHeld = false;
-                AbortResponse(context.Response);
+                if (bodyReadFailure == BodyReadFailure.TooLarge)
+                {
+                    WriteJson(context.Response, 400, JsonUtility.ToJson(UnityAgentKitOperationRouter.RequestBodyTooLarge(record)));
+                }
+                else
+                {
+                    AbortResponse(context.Response);
+                }
                 return;
             }
 
@@ -685,49 +708,73 @@ namespace UnityAgentKit.Editor
             WriteJson(context.Response, 404, JsonUtility.ToJson(UnityAgentKitOperationRouter.HttpNotFound(record)));
         }
 
-        private static bool TryReadCompleteBody(HttpListenerRequest request, out string body)
+        private static bool TryReadCompleteBody(HttpListenerRequest request, out string body, out BodyReadFailure failure)
         {
             body = string.Empty;
+            failure = BodyReadFailure.None;
             var stream = request.InputStream;
 
             try
             {
-                body = ReadRequestBody(request, stream);
+                var deadline = DateTimeOffset.UtcNow.AddMilliseconds(OperationRequestBodyDeadlineMs);
+                if (request.ContentLength64 > MaxOperationRequestBodyBytes)
+                {
+                    DrainRequestBody(stream, deadline);
+                    failure = BodyReadFailure.TooLarge;
+                    return false;
+                }
+
+                body = ReadRequestBody(request, stream, deadline);
                 return true;
+            }
+            catch (RequestBodyTooLargeException)
+            {
+                failure = BodyReadFailure.TooLarge;
+                return false;
             }
             catch (IOException)
             {
+                failure = BodyReadFailure.Incomplete;
                 CloseRequestInputStream(stream);
                 return false;
             }
             catch (ObjectDisposedException)
             {
+                failure = BodyReadFailure.Incomplete;
                 CloseRequestInputStream(stream);
                 return false;
             }
             catch (NotSupportedException)
             {
+                failure = BodyReadFailure.Incomplete;
                 CloseRequestInputStream(stream);
                 return false;
             }
             catch (InvalidOperationException)
             {
+                failure = BodyReadFailure.Incomplete;
                 CloseRequestInputStream(stream);
                 return false;
             }
         }
 
-        private static string ReadRequestBody(HttpListenerRequest request, Stream stream)
+        private static string ReadRequestBody(HttpListenerRequest request, Stream stream, DateTimeOffset deadline)
         {
             using (var buffer = new MemoryStream())
             {
                 var chunk = new byte[1024];
                 while (true)
                 {
-                    var bytesRead = ReadChunkWithTimeout(stream, chunk, 250);
+                    var bytesRead = ReadRequestBodyChunk(stream, chunk, deadline);
                     if (bytesRead <= 0)
                     {
                         break;
+                    }
+
+                    if (buffer.Length + bytesRead > MaxOperationRequestBodyBytes)
+                    {
+                        DrainRequestBody(stream, deadline, chunk);
+                        throw new RequestBodyTooLargeException();
                     }
 
                     buffer.Write(chunk, 0, bytesRead);
@@ -735,6 +782,30 @@ namespace UnityAgentKit.Editor
 
                 return (request.ContentEncoding ?? Encoding.UTF8).GetString(buffer.ToArray());
             }
+        }
+
+        private static void DrainRequestBody(Stream stream, DateTimeOffset deadline)
+        {
+            DrainRequestBody(stream, deadline, new byte[1024]);
+        }
+
+        private static void DrainRequestBody(Stream stream, DateTimeOffset deadline, byte[] chunk)
+        {
+            while (ReadRequestBodyChunk(stream, chunk, deadline) > 0)
+            {
+            }
+        }
+
+        private static int ReadRequestBodyChunk(Stream stream, byte[] chunk, DateTimeOffset deadline)
+        {
+            var remainingMs = (int)Math.Ceiling((deadline - DateTimeOffset.UtcNow).TotalMilliseconds);
+            if (remainingMs <= 0)
+            {
+                throw new IOException("Timed out while reading request body.");
+            }
+
+            var timeoutMs = Math.Min(RequestBodyChunkTimeoutMs, remainingMs);
+            return ReadChunkWithTimeout(stream, chunk, timeoutMs);
         }
 
         internal static int ReadChunkWithTimeout(Stream stream, byte[] chunk, int timeoutMs)

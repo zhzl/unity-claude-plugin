@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -630,6 +631,75 @@ namespace UnityAgentKit.Editor.Tests
             }
         }
 
+        [Test]
+        public void OperationsRejectsContentLengthOverBodyLimit()
+        {
+            var registryPath = TemporaryRegistryPath("operations-content-length-too-large");
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                var body = "{\"operation\":\"host.echo\",\"requestId\":\"req-too-large\",\"inputJson\":\"" + new string('x', UnityAgentKitLoopbackHttpServer.MaxOperationRequestBodyBytes) + "\"}";
+                var result = Post(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), body);
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(result.body);
+
+                Assert.AreEqual(400, result.statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "failed", "host.operation", string.Empty, record);
+                Assert.AreEqual("http.request_body_too_large", response.code);
+            }
+            finally
+            {
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void OperationsRejectsBodyThatExceedsLimitWhileReading()
+        {
+            var registryPath = TemporaryRegistryPath("operations-stream-too-large");
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                var result = PostChunkedOperationsBody(
+                    record.port,
+                    new string('x', UnityAgentKitLoopbackHttpServer.MaxOperationRequestBodyBytes + 1));
+                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(result.body);
+
+                Assert.AreEqual(400, result.statusCode);
+                AssertOperationEnvelopeMinimumFields(response, "failed", "host.operation", string.Empty, record);
+                Assert.AreEqual("http.request_body_too_large", response.code);
+            }
+            finally
+            {
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void SlowOperationBodyDoesNotBlockListenerClosePastDeadline()
+        {
+            var registryPath = TemporaryRegistryPath("operations-slow-body-deadline");
+            TcpClient client = null;
+
+            try
+            {
+                var record = UnityAgentKitHost.StartForTests(registryPath);
+                client = StartPartialOperationsPost(record.port, "{\"operation\":\"host.threadCheck\"", UnityAgentKitLoopbackHttpServer.MaxOperationRequestBodyBytes);
+
+                Assert.IsTrue(UnityAgentKitLoopbackHttpServer.WaitForAcceptedContextForTests(1000), "Expected listener to accept slow request.");
+                UnityAgentKitHost.StopForTests("host.stopped");
+                Assert.IsTrue(UnityAgentKitLoopbackHttpServer.WaitForListenerClosedForTests(UnityAgentKitLoopbackHttpServer.OperationRequestBodyDeadlineMs + 1000), "Expected slow body deadline to release listener close.");
+                Assert.AreEqual(0, UnityAgentKitLoopbackHttpServer.AcceptReservationCountForTests);
+                AssertProbeUnavailable(UnityAgentKitLoopbackHttpServer.BuildProbeUrl(record.port));
+            }
+            finally
+            {
+                client?.Close();
+                UnityAgentKitHost.ResetForTests();
+            }
+        }
+
         [UnityTest]
         public IEnumerator WakeFallbackDoesNotCloseGuaranteedStoppedWrite()
         {
@@ -973,6 +1043,121 @@ namespace UnityAgentKit.Editor.Tests
                 partialBody);
             client.GetStream().Write(payload, 0, payload.Length);
             return client;
+        }
+
+        private static HttpResult PostChunkedOperationsBody(int port, string body)
+        {
+            using (var client = new TcpClient("127.0.0.1", port))
+            using (var stream = client.GetStream())
+            {
+                var header = "POST /operations HTTP/1.1\r\n" +
+                    "Host: 127.0.0.1:" + port + "\r\n" +
+                    "Content-Type: application/json; charset=utf-8\r\n" +
+                    "Transfer-Encoding: chunked\r\n" +
+                    "Connection: close\r\n\r\n";
+                var headerBytes = Encoding.ASCII.GetBytes(header);
+                stream.Write(headerBytes, 0, headerBytes.Length);
+
+                var bodyBytes = Encoding.UTF8.GetBytes(body);
+                var chunkHeader = Encoding.ASCII.GetBytes(bodyBytes.Length.ToString("x") + "\r\n");
+                stream.Write(chunkHeader, 0, chunkHeader.Length);
+                stream.Write(bodyBytes, 0, bodyBytes.Length);
+                var chunkEnd = Encoding.ASCII.GetBytes("\r\n0\r\n\r\n");
+                stream.Write(chunkEnd, 0, chunkEnd.Length);
+                stream.Flush();
+
+                return ReadRawHttpResponse(stream);
+            }
+        }
+
+        private static HttpResult ReadRawHttpResponse(NetworkStream stream)
+        {
+            using (var reader = new StreamReader(stream, Encoding.UTF8, false, 1024, true))
+            {
+                var statusLine = reader.ReadLine();
+                Assert.IsNotNull(statusLine, "Expected HTTP status line.");
+                var parts = statusLine.Split(' ');
+                var statusCode = int.Parse(parts[1]);
+                var contentType = "application/json";
+                var chunked = false;
+                string line;
+                while (!string.IsNullOrEmpty(line = reader.ReadLine()))
+                {
+                    var separatorIndex = line.IndexOf(':');
+                    if (separatorIndex < 0)
+                    {
+                        continue;
+                    }
+
+                    var headerName = line.Substring(0, separatorIndex).Trim();
+                    var headerValue = line.Substring(separatorIndex + 1).Trim();
+                    if (string.Equals(headerName, "Content-Type", StringComparison.OrdinalIgnoreCase))
+                    {
+                        contentType = headerValue;
+                    }
+                    else if (string.Equals(headerName, "Transfer-Encoding", StringComparison.OrdinalIgnoreCase) &&
+                        headerValue.IndexOf("chunked", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        chunked = true;
+                    }
+                }
+
+                var body = chunked ? ReadChunkedResponseBody(reader) : reader.ReadToEnd();
+                return new HttpResult
+                {
+                    statusCode = statusCode,
+                    contentType = contentType,
+                    body = body,
+                };
+            }
+        }
+
+        private static string ReadChunkedResponseBody(StreamReader reader)
+        {
+            var builder = new StringBuilder();
+            while (true)
+            {
+                var chunkSizeLine = reader.ReadLine();
+                Assert.IsNotNull(chunkSizeLine, "Expected chunk size line.");
+                var chunkSize = int.Parse(chunkSizeLine, System.Globalization.NumberStyles.HexNumber);
+                if (chunkSize == 0)
+                {
+                    while (!string.IsNullOrEmpty(reader.ReadLine()))
+                    {
+                    }
+
+                    break;
+                }
+
+                var chunk = new char[chunkSize];
+                var totalRead = 0;
+                while (totalRead < chunkSize)
+                {
+                    var charsRead = reader.Read(chunk, totalRead, chunkSize - totalRead);
+                    Assert.Greater(charsRead, 0, "Expected chunk body characters.");
+                    totalRead += charsRead;
+                }
+
+                builder.Append(chunk, 0, totalRead);
+                Assert.AreEqual("", reader.ReadLine(), "Expected chunk terminator line.");
+            }
+
+            return builder.ToString();
+        }
+
+        private static void AssertProbeUnavailable(string url)
+        {
+            var request = (HttpWebRequest)WebRequest.Create(url);
+            request.Method = "GET";
+            request.Timeout = 250;
+            request.ReadWriteTimeout = 250;
+
+            Assert.Throws<WebException>(() =>
+            {
+                using (request.GetResponse())
+                {
+                }
+            });
         }
 
         private static IEnumerator WaitForPendingDispatch()
