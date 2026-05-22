@@ -840,7 +840,7 @@ EOF
 - 创建：`plugins/unity-agent-kit/src/artifacts/metadata.ts`
 - 创建：`plugins/unity-agent-kit/src/resources/readback.ts`
 
-- [ ] **步骤 1：编写失败的 metadata/readback tests**
+- [x] **步骤 1：编写失败的 metadata/readback tests**
 
 在 `plugins/unity-agent-kit/tests/artifact-resource-contract.test.ts` 的 imports 中追加：
 
@@ -1034,7 +1034,7 @@ test("resourceReadbackRejectsUnsafeReportLocatorAndUnsupportedValidationReports"
 });
 ```
 
-- [ ] **步骤 2：运行测试验证 red**
+- [x] **步骤 2：运行测试验证 red**
 
 运行：
 
@@ -1046,7 +1046,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/artif
 
 证明：该 red 证明内部 file-backed Resource readback 尚未实现，metadata missing / file missing / validation failure 等语义没有载体。
 
-- [ ] **步骤 3：实现 metadata validation**
+- [x] **步骤 3：实现 metadata validation**
 
 创建 `plugins/unity-agent-kit/src/artifacts/metadata.ts`：
 
@@ -1160,7 +1160,7 @@ function isDiagnostic(value: unknown): value is UnityAgentKitDiagnostic {
 }
 ```
 
-- [ ] **步骤 4：实现 internal Resource readback API**
+- [x] **步骤 4：实现 internal Resource readback API**
 
 创建 `plugins/unity-agent-kit/src/resources/readback.ts`：
 
@@ -1272,7 +1272,7 @@ function formatErrorMessage(error: unknown): string {
 }
 ```
 
-- [ ] **步骤 5：运行 TS readback tests 验证通过**
+- [x] **步骤 5：运行 TS readback tests 验证通过**
 
 运行：
 
@@ -1284,7 +1284,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/artif
 
 证明：该检查证明 Resource readback 通过 URI type + generated ID deterministic metadata path lookup，不扫描 payload directory；metadata/file mismatch 不会变 success；reportLocator 只接受 `test-reports/` 下 safe relative path；generic content validity 只要求 metadata/schema/locator/file readable/content non-empty/size/validationStatus/diagnostics，不进入 PNG/TestRunner/console schema；normal file-backed readback 不要求 live host。
 
-- [ ] **步骤 6：Commit**
+- [x] **步骤 6：Commit**
 
 ```bash
 git add plugins/unity-agent-kit/src/artifacts/metadata.ts plugins/unity-agent-kit/src/resources/readback.ts plugins/unity-agent-kit/tests/artifact-resource-contract.test.ts
@@ -1303,7 +1303,7 @@ EOF
 - 创建：`plugins/unity-agent-kit/src/workflows/timeout.ts`
 - 创建：`plugins/unity-agent-kit/src/workflows/completion.ts`
 
-- [ ] **步骤 1：编写失败的 timeout/completion tests**
+- [x] **步骤 1：编写失败的 timeout/completion tests**
 
 创建 `plugins/unity-agent-kit/tests/timeout-completion-contract.test.ts`：
 
@@ -1464,7 +1464,7 @@ test("artifactCompleteRequiresSuccessfulReadbackAndJobReportRequiresReadableRepo
 });
 ```
 
-- [ ] **步骤 2：运行测试验证 red**
+- [x] **步骤 2：运行测试验证 red**
 
 运行：
 
@@ -1476,7 +1476,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/timeo
 
 证明：该 red 证明 workflow-level timeout/completion semantics 尚未有 TS 基础设施载体。
 
-- [ ] **步骤 3：实现 timeout policy 和 timeout continuation helper**
+- [x] **步骤 3：实现 timeout policy 和 timeout continuation helper**
 
 创建 `plugins/unity-agent-kit/src/workflows/timeout.ts`：
 
@@ -1568,7 +1568,7 @@ export function timeoutContinuationResult(input: TimeoutContinuationInput): Unit
 }
 ```
 
-- [ ] **步骤 4：实现 completion helpers**
+- [x] **步骤 4：实现 completion helpers**
 
 创建 `plugins/unity-agent-kit/src/workflows/completion.ts`：
 
@@ -1709,7 +1709,7 @@ export function resourceReadFailureResult(input: BaseCompletionInput & { readbac
 }
 ```
 
-- [ ] **步骤 5：运行 timeout/completion tests 验证通过**
+- [x] **步骤 5：运行 timeout/completion tests 验证通过**
 
 运行：
 
@@ -1721,7 +1721,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/timeo
 
 证明：该检查证明 workflow-level timeout result 带 `nextStep`、`safeToRetry`、`mayStillBeRunning` 和 diagnostics；completion helpers 不把 request accepted、state settled 或 completed job without report 伪装成 verified success；artifact success 依赖 successful Resource readback。
 
-- [ ] **步骤 6：运行 combined TS contract tests**
+- [x] **步骤 6：运行 combined TS contract tests**
 
 运行：
 
@@ -1733,7 +1733,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/artif
 
 证明：该检查证明 Phase 5B 新 TS contract 不破坏 Phase 5A host-runtime tests。
 
-- [ ] **步骤 7：Commit**
+- [x] **步骤 7：Commit**
 
 ```bash
 git add plugins/unity-agent-kit/src/workflows/timeout.ts plugins/unity-agent-kit/src/workflows/completion.ts plugins/unity-agent-kit/tests/timeout-completion-contract.test.ts
@@ -1751,7 +1751,7 @@ EOF
 - 创建：`unity/Assets/UnityAgentKit/Editor/Artifacts/UnityAgentKitArtifactContracts.cs`
 - 创建：`unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeArtifactTests.cs`
 
-- [ ] **步骤 1：编写失败的 Unity artifact smoke tests**
+- [x] **步骤 1：编写失败的 Unity artifact smoke tests**
 
 创建 `unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeArtifactTests.cs`：
 
@@ -1905,7 +1905,7 @@ namespace UnityAgentKit.Editor.Tests
 }
 ```
 
-- [ ] **步骤 2：运行 Unity tests 验证 red**
+- [x] **步骤 2：运行 Unity tests 验证 red**
 
 运行：
 
@@ -1917,7 +1917,7 @@ namespace UnityAgentKit.Editor.Tests
 
 证明：该 red 证明 Unity producer-side artifact contract smoke 尚未实现。
 
-- [ ] **步骤 3：实现 Unity artifact contract writer**
+- [x] **步骤 3：实现 Unity artifact contract writer**
 
 创建目录 `unity/Assets/UnityAgentKit/Editor/Artifacts/`，再创建 `unity/Assets/UnityAgentKit/Editor/Artifacts/UnityAgentKitArtifactContracts.cs`：
 
@@ -2141,7 +2141,7 @@ namespace UnityAgentKit.Editor
 }
 ```
 
-- [ ] **步骤 4：运行 Unity artifact tests 验证通过**
+- [x] **步骤 4：运行 Unity artifact tests 验证通过**
 
 运行：
 
@@ -2153,7 +2153,7 @@ namespace UnityAgentKit.Editor
 
 证明：该检查证明 Unity 能按 contract 解析 artifact root、按固定 metadata layout 写 fixed synthetic artifact + metadata、设置 basic validation status、拒绝 unsafe relative path，并且没有实现真实 screenshot/test/console producer、producer lifecycle、job simulation 或 fake workflow state。
 
-- [ ] **步骤 5：运行 existing Unity host runtime tests 验证未回归**
+- [x] **步骤 5：运行 existing Unity host runtime tests 验证未回归**
 
 运行：
 
@@ -2165,7 +2165,7 @@ namespace UnityAgentKit.Editor
 
 证明：该检查证明 Phase 5B Unity artifact smoke 不破坏 Phase 5A Host Runtime foundation。
 
-- [ ] **步骤 6：Commit**
+- [x] **步骤 6：Commit**
 
 ```bash
 git add unity/Assets/UnityAgentKit/Editor/Artifacts/UnityAgentKitArtifactContracts.cs unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeArtifactTests.cs
@@ -2184,7 +2184,7 @@ EOF
 - 修改：`docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md`
 - 修改：`docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md`
 
-- [ ] **步骤 1：添加 Phase 5B scope guard test**
+- [x] **步骤 1：添加 Phase 5B scope guard test**
 
 在 `plugins/unity-agent-kit/tests/artifact-resource-contract.test.ts` 末尾追加：
 
@@ -2213,7 +2213,7 @@ test("phase5bScopeGuardDoesNotCreatePublicMcpToolsOrUnitySkill", async () => {
 });
 ```
 
-- [ ] **步骤 2：运行 full TS evidence**
+- [x] **步骤 2：运行 full TS evidence**
 
 运行：
 
@@ -2225,7 +2225,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/artif
 
 证明：该检查证明 Phase 5B TS Resource/contract tests、timeout/completion tests 和 existing host-runtime tests 全部通过；scope guard 确认未创建 MCP public tools、MCP Resource handlers、`/unity` skill 或 validation-reports readback。
 
-- [ ] **步骤 3：运行 Unity artifact evidence**
+- [x] **步骤 3：运行 Unity artifact evidence**
 
 运行：
 
@@ -2237,7 +2237,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/artif
 
 证明：该检查证明 Unity internal/test-only artifact contract smoke 通过。
 
-- [ ] **步骤 4：运行 Unity Host Runtime regression evidence**
+- [x] **步骤 4：运行 Unity Host Runtime regression evidence**
 
 运行：
 
@@ -2249,7 +2249,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/artif
 
 证明：该检查证明 Phase 5B 未破坏 Phase 5A Host Runtime foundation。
 
-- [ ] **步骤 5：运行 diff check**
+- [x] **步骤 5：运行 diff check**
 
 运行：
 
@@ -2261,7 +2261,7 @@ git diff --check
 
 证明：该检查证明待提交 diff 不含 whitespace error。
 
-- [ ] **步骤 6：同步 Phase 5 plan index**
+- [x] **步骤 6：同步 Phase 5 plan index**
 
 在 `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md` 中，将 Subplans 表的 Phase 5B row 改为：
 
@@ -2277,7 +2277,7 @@ Phase 5B Artifact / Resource / Timeout / Completion completed with evidence. Pha
 Next action: create/review Phase 5C Core Diagnostics Workflows artifacts before implementing Phase 5C. Do not mark Roadmap Phase 5 completed from Phase 5B evidence alone.
 ```
 
-- [ ] **步骤 7：同步 Roadmap Phase 5 partial evidence**
+- [x] **步骤 7：同步 Roadmap Phase 5 partial evidence**
 
 在 `docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md` 中做事实性状态同步，不修改 Goal、Non-goals、Shared Constraints 或 phase 顺序：
 
@@ -2296,7 +2296,7 @@ Phase 5B Artifact / Resource / Timeout / Completion completed with evidence: TS 
 - 2026-05-22：完成 Phase 5B Artifact / Resource / Timeout / Completion 基础设施，覆盖 typed resource/job/nextStep public-result contract、deterministic artifact metadata layout、safe Resource URI parsing、safe relative path resolution、internal file-backed Resource readback、generic content validity、timeout continuation helper、completion semantics helpers 和 Unity internal artifact contract smoke。TS evidence 命令 `cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/artifact-resource-contract.test.ts tests/timeout-completion-contract.test.ts tests/host-runtime.test.ts` 通过并输出 `fail 0`；Unity `HostRuntimeArtifactTests` 和 `HostRuntimeTests` regression 均通过并输出 `failed="0"`；scope boundary 保持 no public MCP tools、no MCP Resource handlers、no `/unity` skill、no validation-reports readback、no real screenshot/test/console workflow、no final daily loop E2E。Phase 5 remains incomplete because Phase 5C-5E and final daily loop E2E remain pending。
 ```
 
-- [ ] **步骤 8：运行 docs/state check**
+- [x] **步骤 8：运行 docs/state check**
 
 运行：
 
@@ -2325,7 +2325,7 @@ PY
 
 证明：该检查证明 Phase 5B evidence 已记录，Phase 5A remains completed，Phase 5 remains incomplete / partial，next handoff 指向 Phase 5C，没有 public MCP tools / `/unity` skill / Phase 5 completed wording。
 
-- [ ] **步骤 9：最终 full evidence rerun**
+- [x] **步骤 9：最终 full evidence rerun**
 
 运行：
 
@@ -2340,7 +2340,7 @@ git diff --check
 
 证明：该检查证明 Phase 5B completion evidence 同步后，代码、Unity smoke、docs/state 和 diff check 全部保持通过。
 
-- [ ] **步骤 10：Commit**
+- [x] **步骤 10：Commit**
 
 ```bash
 git add plugins/unity-agent-kit/tests/artifact-resource-contract.test.ts docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md
