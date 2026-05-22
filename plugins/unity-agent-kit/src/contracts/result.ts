@@ -28,14 +28,23 @@ export interface UnityAgentKitDiagnostic {
 export type UnityAgentKitResourceType = "screenshot" | "test_report" | "console_snapshot";
 export type UnityAgentKitValidationStatus = "valid" | "invalid" | "uncertain";
 
-export interface UnityAgentKitResourceReference {
+interface UnityAgentKitResourceReferenceBase {
   uri: string;
-  type: UnityAgentKitResourceType;
-  artifactId?: string;
-  reportId?: string;
   validationStatus: UnityAgentKitValidationStatus;
   summary: string;
 }
+
+export type UnityAgentKitResourceReference =
+  | (UnityAgentKitResourceReferenceBase & {
+      type: "test_report";
+      reportId: string;
+      artifactId?: never;
+    })
+  | (UnityAgentKitResourceReferenceBase & {
+      type: "screenshot" | "console_snapshot";
+      artifactId: string;
+      reportId?: never;
+    });
 
 export type UnityAgentKitJobState =
   | "accepted"
