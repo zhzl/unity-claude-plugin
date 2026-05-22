@@ -578,7 +578,7 @@ Phase 9 至少实现半自动一致性检查，覆盖：
 - Phase 2 已完成 Unity Agent Skill 体系设计规格和计划，并记录 completion evidence。
 - Phase 3 已完成 Public MCP Tool Action Design 规格和计划，并记录 completion evidence。
 - Phase 4 已完成 Async / Job / Workflow / Artifact Semantics 规格验证和计划执行，并记录 completion evidence。
-- **Next Manual Action:** Phase 5A completed；下一步创建并审查 Phase 5B Artifact / Resource / Timeout / Completion subplan artifacts。Phase 5 remains incomplete because Phase 5B-5E and final daily loop E2E remain pending。
+- **Next Manual Action:** Phase 5B Artifact / Resource / Timeout / Completion completed with evidence；下一步创建并审查 Phase 5C Core Diagnostics Workflows artifacts。Phase 5 remains incomplete because Phase 5C-5E and final daily loop E2E remain pending。
 - 当前不实现 Phase 6/7/8 能力域。
 
 ## Blockers
