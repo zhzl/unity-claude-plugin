@@ -342,6 +342,44 @@ namespace UnityAgentKit.Editor.Tests
             }
         }
 
+        [Test]
+        public void ClaimedDispatchCannotBeCompletedByTimeoutBeforeExecution()
+        {
+            UnityAgentKitMainThread.ResetForTests();
+            UnityAgentKitMainThread.RegisterDrain();
+            UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(1000);
+            UnityAgentKitOperationResponse response = null;
+            var timeoutAttempted = false;
+            var record = TestHostRecord(49245);
+
+            try
+            {
+                UnityAgentKitMainThread.BeforeRunClaimedDispatchForTests = requestId =>
+                {
+                    timeoutAttempted = UnityAgentKitMainThread.ForceDispatchTimeoutForTests(requestId);
+                };
+
+                UnityAgentKitMainThread.Enqueue(new UnityAgentKitOperationRequest
+                {
+                    operation = "host.threadCheck",
+                    requestId = "req-claimed-race"
+                }, record, completed => response = completed);
+
+                UnityAgentKitMainThread.DrainForTests();
+
+                Assert.IsTrue(timeoutAttempted == false, "Claimed dispatch must not be completed by timeout.");
+                AssertOperationEnvelopeMinimumFields(response, "succeeded", "host.threadCheck", "req-claimed-race", record);
+                Assert.AreEqual(0, UnityAgentKitMainThread.ExpiredDispatchExecutionCountForTests);
+                Assert.AreEqual(0, UnityAgentKitMainThread.PendingDispatchCountForTests);
+            }
+            finally
+            {
+                UnityAgentKitMainThread.BeforeRunClaimedDispatchForTests = null;
+                UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(250);
+                UnityAgentKitMainThread.ResetForTests();
+            }
+        }
+
         [UnityTest]
         public IEnumerator HostStopReturnsStoppedEnvelopeBeforeClosingListener()
         {
