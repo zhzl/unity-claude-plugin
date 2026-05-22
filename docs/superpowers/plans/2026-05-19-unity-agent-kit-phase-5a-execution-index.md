@@ -40,7 +40,7 @@ Phase 5A-08 Vertical smoke + completion evidence 已完成。Evidence:
 2. Canonical handoff command string: `"${UNITY_EDITOR}" -batchmode -quit -projectPath unity -runTests -testPlatform EditMode -testResults unity/Library/UnityAgentKit/Phase5AHostRuntimeResults.xml -testFilter UnityAgentKit.Editor.Tests.HostRuntimeTests`; local Unity 2022.3.61f1 evidence used the same command without `-quit` because `-quit` exits before Test Runner in this environment, and passed with `total="78"`, `passed="78"`, `failed="0"`; covers DTO, registry, lifecycle cleanup, HTTP protocol, main-thread dispatch, non-blocking pending dispatch hook, host-level timeout, stop/reload pending failure, and result envelope behavior.
 3. Canonical handoff command string: `"${UNITY_EDITOR}" -batchmode -quit -projectPath unity -runTests -testPlatform EditMode -testResults unity/Library/UnityAgentKit/Phase5AVerticalSmokeResults.xml -testFilter UnityAgentKit.Editor.Tests.HostRuntimeVerticalSmokeTests`; local Unity 2022.3.61f1 evidence used the same command without `-quit` because `-quit` exits before Test Runner in this environment, and passed with `total="1"`, `passed="1"`, `failed="0"`; `HostRuntimeVerticalSmokeTests` starts the live Unity host, runs `phase5a-vertical-smoke.test.ts`, proves `host.threadCheck` runs on the captured Unity main thread, maps the envelope to public result and MCP payload, then stops the host and verifies cleanup.
 
-Phase 5A completed because all active sibling execution plans and final vertical smoke evidence passed. Phase 5 remains incomplete because Phase 5B-5E and final daily loop E2E remain pending.
+Phase 5A completed because 5A-01, 5A-02, 5A-03, 5A-05, 5A-06, 5A-07, and 5A-08 completed; 5A-04 folded into 5A-03; all active sibling execution plans and final vertical smoke evidence passed. Phase 5 remains incomplete because Phase 5B-5E and final daily loop E2E remain pending.
 
 Next action: create/review the Phase 5B Artifact / Resource / Timeout / Completion subplan artifacts before implementing Phase 5B.
 
@@ -57,6 +57,18 @@ Phase 5A completed only after:
 5. Roadmap Phase 5 remains incomplete until 5B-5E and final daily loop E2E also pass.
 
 ## Phase 5A Completion Evidence
+
+## Phase 5A Host Runtime Hardening Evidence
+
+Phase 5A remains completed. Phase 5A Host Runtime hardening after completion and before Phase 5B covers:
+
+- TS envelope trust boundary: operation, requestId, hostId, and hostEpoch must match the request and active host record before a Unity operation envelope is trusted.
+- dispatch timeout claim race: main-thread dispatch work is atomically claimed before execution so timeout cannot also complete it.
+- body read bounds: `/operations` request bodies are bounded by 64 KiB and a 2 second production deadline.
+- optional result field preservation: existing public-result optional fields are opaque pass-through only, with no Phase 5B resource/job schema.
+- documentation cleanup: folded 5A-04 wording is explicit.
+
+Phase 5 remains incomplete because Phase 5B-5E and final daily loop E2E remain pending.
 
 Phase 5A-08 Vertical smoke + completion evidence 已完成 and closes the Phase 5A Host Runtime foundation. Evidence groups covered:
 

@@ -1,5 +1,7 @@
 # Unity Agent Kit Phase 5A-08 Vertical Smoke + Completion Evidence 实现计划
 
+> Status: executed / completed. This checklist retained as historical execution plan text; current truth lives in `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md`, `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md`, and `docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md`.
+
 > **面向 AI 代理的工作者：** 必需子技能：使用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 逐任务实现此计划。步骤使用复选框（`- [ ]`）语法来跟踪进度。
 
 **目标：** 为 Phase 5A Host Runtime 交付 live vertical smoke、最终 TS/Unity evidence 和 Phase 5A completion evidence，同步证明 5A-EVIDENCE-01 至 5A-EVIDENCE-04。

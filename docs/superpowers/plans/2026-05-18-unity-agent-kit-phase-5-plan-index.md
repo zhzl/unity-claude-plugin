@@ -19,7 +19,7 @@ This index keeps Phase 5 as a single roadmap phase while splitting execution int
 
 | Subplan | Scope | Contract | Execution Index | Status | Execution Status | Completion Evidence | Upgrade Check |
 |---|---|---|---|---|---|---|---|
-| Phase 5A | Host Runtime 基础设施 | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md` | `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md` | completed | completed | completed: 5A-01 through 5A-08 completed; final evidence includes `host-runtime.test.ts` tests 60/pass 60/fail 0, `HostRuntimeTests` total 78/passed 78/failed 0, and `HostRuntimeVerticalSmokeTests` total 1/passed 1/failed 0 | stays subplan |
+| Phase 5A | Host Runtime 基础设施 | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md` | `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md` | completed | completed | completed: 5A-01, 5A-02, 5A-03, 5A-05, 5A-06, 5A-07, and 5A-08 completed; 5A-04 folded into 5A-03; post-completion Host Runtime hardening evidence recorded before Phase 5B | stays subplan |
 | Phase 5B | Artifact / Resource / Timeout / Completion 基础设施 | pending | pending | pending | pending | pending | stays subplan |
 | Phase 5C | Core Diagnostics Workflows | pending | pending | pending | pending | pending | stays subplan |
 | Phase 5D | Test / PlayMode / Screenshot Workflows | pending | pending | pending | pending | pending | stays subplan |
@@ -67,7 +67,13 @@ Phase 5 completed only after all subplans + final E2E evidence pass.
 
 ## Phase 5A Completion Evidence
 
-Phase 5A completed after 5A-01 through 5A-08 completed and final evidence passed. Phase 5 remains incomplete because Phase 5B-5E and final daily loop E2E remain pending.
+Phase 5A completed after 5A-01, 5A-02, 5A-03, 5A-05, 5A-06, 5A-07, and 5A-08 completed; 5A-04 folded into 5A-03; final evidence passed. Phase 5 remains incomplete because Phase 5B-5E and final daily loop E2E remain pending.
+
+## Phase 5A Host Runtime Hardening Evidence
+
+Phase 5A remains completed. Phase 5A Host Runtime hardening was applied after completion and before Phase 5B to close review-found runtime gaps without implementing Phase 5B. Evidence covers TS envelope trust boundary, Unity dispatch timeout claim race, `/operations` body read bounds, optional result field preservation, and documentation cleanup.
+
+Phase 5 remains incomplete because Phase 5B-5E and final daily loop E2E remain pending.
 
 Canonical handoff commands:
 
