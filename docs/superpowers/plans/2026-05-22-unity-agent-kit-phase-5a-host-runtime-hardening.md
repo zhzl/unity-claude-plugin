@@ -60,7 +60,7 @@
 - 修改：`plugins/unity-agent-kit/tests/host-runtime.test.ts`
 - 修改：`plugins/unity-agent-kit/src/host/http-client.ts`
 
-- [ ] **步骤 1：编写失败的 TS trust boundary tests**
+- [x] **步骤 1：编写失败的 TS trust boundary tests**
 
 在 `plugins/unity-agent-kit/tests/host-runtime.test.ts` 中，放在 `invokeOperationMapsSucceededEnvelopeToPublicResult` 后面：
 
@@ -189,7 +189,7 @@ test("invokeOperationPreservesPublicResultOptionalFields", async () => {
 });
 ```
 
-- [ ] **步骤 2：运行 TS tests 验证 red**
+- [x] **步骤 2：运行 TS tests 验证 red**
 
 运行：
 
@@ -201,7 +201,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/host-
 
 证明：该 red 证明当前 TS client 会信任 mismatch envelope 或丢失 optional fields。
 
-- [ ] **步骤 3：实现 envelope context validation 和 optional fields pass-through**
+- [x] **步骤 3：实现 envelope context validation 和 optional fields pass-through**
 
 在 `plugins/unity-agent-kit/src/host/http-client.ts` 中替换 `mapEnvelopeToPublicResult`、`invokeOperationOnce` 和相关 helper。保留既有 `transport.ts` / `rebind.ts` 边界。
 
@@ -406,7 +406,7 @@ return true;
 
 Do not add validation for `resource` / `job` / `nextStep` internals.
 
-- [ ] **步骤 4：运行 TS tests 验证通过**
+- [x] **步骤 4：运行 TS tests 验证通过**
 
 运行：
 
@@ -418,7 +418,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/host-
 
 证明：该检查证明 TS operation envelope 不再信任 request/host mismatch，且 existing public-result optional fields 不再被 host mapping 丢弃。
 
-- [ ] **步骤 5：Commit**
+- [x] **步骤 5：Commit**
 
 ```bash
 git add plugins/unity-agent-kit/src/host/http-client.ts plugins/unity-agent-kit/tests/host-runtime.test.ts
