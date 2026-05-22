@@ -114,10 +114,16 @@ Phase 5B artifact root 使用仓库根目录：
 
 ```text
 .ai-debug/unity-agent-kit/artifacts/
+├─ metadata/
+│  ├─ screenshots/{artifactId}.json
+│  ├─ test-reports/{reportId}.json
+│  └─ console-snapshots/{artifactId}.json
 ├─ screenshots/
 ├─ test-reports/
 └─ console-snapshots/
 ```
+
+TS readback 通过 URI type + generated ID 直接定位 metadata path，不扫描 payload 目录猜 artifact。metadata 中的 `relativePath` / `reportLocator` 再指向 payload。
 
 ### Unity-side producer smoke
 
@@ -203,13 +209,18 @@ Rules:
 最小 metadata 语义：
 
 ```ts
+interface UnityAgentKitReportLocator {
+  kind: "artifact_relative_path";
+  relativePath: string;
+}
+
 interface UnityAgentKitArtifactMetadata {
   schemaVersion: 1;
   id: string;
   type: "screenshot" | "test_report" | "console_snapshot";
   uri: string;
   relativePath?: string;
-  reportLocator?: string;
+  reportLocator?: UnityAgentKitReportLocator;
   createdAt: string;
   validationStatus: "valid" | "invalid" | "uncertain";
   hostId?: string;
@@ -224,11 +235,35 @@ interface UnityAgentKitArtifactMetadata {
 
 Rules:
 
-- `relativePath` 必须是 artifact root 内的 safe relative path。
-- `reportLocator` 只允许 controlled report location，不允许任意绝对路径。
 - `metadata` 是 ID 到 file/report locator 的 trusted binding。
-- metadata missing 时，不能扫描文件夹猜 artifact。
+- metadata path 固定为：
+  - `metadata/screenshots/{artifactId}.json`
+  - `metadata/test-reports/{reportId}.json`
+  - `metadata/console-snapshots/{artifactId}.json`
+- metadata missing 时，不能扫描 payload 目录猜 artifact。
 - file exists but metadata missing = orphaned evidence，不升级为 valid artifact。
+- `relativePath` 必须是 artifact root 内的 safe relative path。
+- `reportLocator.kind` 在 Phase 5B 只允许 `artifact_relative_path`。
+- `reportLocator.relativePath` 必须是 artifact root 内的 safe relative path，并且必须以 `test-reports/` 开头。
+- `relativePath` 和 `reportLocator.relativePath` 都不允许 absolute path、`../`、Windows drive path 或 encoded traversal。
+- Phase 5B synthetic report 内容只需 generic readable + non-empty；真实 TestRunner report schema 留给 Phase 5D。
+
+### Generic content validity
+
+Phase 5B 的 `content valid` 是 generic infrastructure validity，不是 action-specific payload validation。
+
+Generic valid 只要求：
+
+- metadata schema valid。
+- URI type/id 与 metadata 一致。
+- locator safe。
+- file/report readable。
+- content non-empty。
+- `sizeBytes > 0` where applicable。
+- `validationStatus == "valid"`。
+- diagnostics shape valid。
+
+Phase 5B 不验证 PNG dimensions、TestRunner report schema、console log entry schema 或 action-specific business correctness；这些 validation 留给 Phase 5C / 5D。
 
 ### Read failure classification
 
@@ -250,6 +285,9 @@ Rules:
 - traversal attempt 返回 rejected 或 read failure result，不读文件。
 - `validationStatus != valid` 时不能当作 completed artifact。
 - host rebind 后，metadata + file/report readable 可 recover；running job continuity 不 recover。
+- Phase 5B file-backed Resource readback does not require a live Unity host。
+- Existing metadata + readable file/report can be read without probing host。
+- `host_unavailable` is reserved for future locator types or producer flows that require live host access；normal Phase 5B file-backed readback tests should not emit it。
 
 ## Job / NextStep / Timeout contract
 
@@ -367,9 +405,9 @@ Rules:
 
 ## Completion rule helpers
 
-Phase 5B 在 TS 侧实现通用 completion helpers，不实现 action-specific evaluator。
+Phase 5B 在 TS 侧实现通用 completion semantics，不实现 action-specific evaluator。
 
-建议 helper 语义：
+以下 helper 名称是语义示例，不是 mandatory API names：
 
 ```text
 requestAcceptedResult(...)
@@ -381,14 +419,16 @@ uncertainEvidenceResult(...)
 resourceReadFailureResult(...)
 ```
 
+Mandatory 的是规则和行为测试。implementation plan 应选择最小 helper API，防止 accepted、settled、artifact、job、timeout 和 uncertain semantics 漂移，而不是为了补齐 helper 名称创建过多抽象。
+
 ### Completion rules
 
-1. `requestAcceptedResult(...)` 可以返回 `status: "succeeded"`，但 summary/evidence 必须明确 request accepted, not completed。
-2. `stateSettledResult(...)` 只证明状态收敛，不证明业务成功。
-3. `artifactCompleteResult(...)` 只有 metadata exists、URI supported、relative path safe、file/report exists、content valid、`validationStatus == "valid"` 且 Resource readback succeeds 时才能作为成功证据。
-4. `jobReportRequiredResult(...)` 规定 job state completed 不等于 public success；没有 readable report 不能 verified success。
-5. `timeoutContinuationResult(...)` 必须包含 `mayStillBeRunning`、`safeToRetry`、`nextStep` 和 diagnostics。
-6. `uncertainEvidenceResult(...)` 用于证据不足时保持 `uncertain`，不把 missing evidence 报成 success。
+1. Request accepted 可以返回 `status: "succeeded"`，但 summary/evidence 必须明确 request accepted, not completed。
+2. State settled 只证明状态收敛，不证明业务成功。
+3. Artifact complete 只有 metadata exists、URI supported、safe locator、file/report readable、generic content valid、`validationStatus == "valid"` 且 Resource readback succeeds 时才能作为成功证据。
+4. Job report required rule 规定 job state completed 不等于 public success；没有 readable report 不能 verified success。
+5. Timeout continuation rule 必须包含 `mayStillBeRunning`、`safeToRetry`、`nextStep` 和 diagnostics。
+6. Uncertain evidence rule 用于证据不足时保持 `uncertain`，不把 missing evidence 报成 success。
 
 ## v2 reference mapping
 
@@ -452,7 +492,8 @@ plugins/unity-agent-kit/tests/timeout-completion-contract.test.ts
 职责：
 
 - 行为测试，不只检查符号存在。
-- 覆盖 URI parsing、safe readback、traversal rejection、metadata/file mismatch、completion helpers、timeout nextStep。
+- 使用 fixed synthetic metadata/files 验证三类 readback，不引入 producer lifecycle、job simulation、fake workflow state 或 action-specific producer behavior。
+- 覆盖 URI parsing、safe readback、traversal rejection、metadata/file mismatch、reportLocator safe relative path、generic content validity、completion semantics、timeout nextStep。
 
 ### Unity C# internal smoke
 
@@ -465,9 +506,10 @@ unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeArtifactTests.cs
 
 - internal/test-only artifact contract smoke。
 - 解析 `.ai-debug/unity-agent-kit/artifacts/`。
-- 写 synthetic artifact + metadata。
+- 写 fixed synthetic artifact payload 和对应 metadata。
 - basic validation status。
 - 不实现真实 screenshot/test/console producer。
+- 不引入 producer lifecycle、job simulation、fake workflow state 或 action-specific producer behavior。
 - 不注册 public action。
 
 ## Implementation plan handoff
@@ -498,7 +540,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/artif
 
 要求：fail 0。
 
-证明：URI parsing 只接受支持类型；traversal / malformed IDs 被拒绝；metadata/file mismatch 不会变 success；unsupported `validation-reports` 不被实现；timeout result 带 nextStep / safeToRetry / mayStillBeRunning；completion helpers 不把 accepted/settled 当 verified success。
+证明：URI parsing 只接受支持类型；traversal / malformed IDs 被拒绝；metadata storage layout deterministic；metadata/file mismatch 不会变 success；reportLocator 只接受 `test-reports/` 下 safe relative path；generic content validity 不进入 PNG/TestRunner/console schema；unsupported `validation-reports` 不被实现；normal file-backed readback 不要求 live host；timeout result 带 nextStep / safeToRetry / mayStillBeRunning；completion behavior 不把 accepted/settled 当 verified success。
 
 ### Unity evidence
 
@@ -510,7 +552,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/artif
 
 要求：XML 中 `failed="0"`。
 
-证明：Unity 能按 contract 解析 artifact root、写 synthetic artifact + metadata、设置 basic validation status、拒绝或标 invalid unsafe relative path，并且没有实现真实 screenshot/test/console producer。
+证明：Unity 能按 contract 解析 artifact root、按固定 metadata layout 写 fixed synthetic artifact + metadata、设置 basic validation status、拒绝或标 invalid unsafe relative path，并且没有实现真实 screenshot/test/console producer、producer lifecycle、job simulation 或 fake workflow state。
 
 ### Scope boundary check
 
