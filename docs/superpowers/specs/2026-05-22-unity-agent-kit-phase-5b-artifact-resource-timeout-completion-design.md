@@ -2,7 +2,7 @@
 
 ## 状态
 
-- 状态：设计已批准，等待实现计划。
+- 状态：设计已批准，Phase 5B implementation completed with evidence；Phase 5 remains incomplete because Phase 5C-5E and final daily loop E2E remain pending。
 - 日期：2026-05-22
 - Roadmap：`docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md`
 - Phase：Phase 5 / Phase 5B subplan
@@ -12,7 +12,7 @@
 
 ## 背景
 
-Phase 5A Host Runtime foundation 和 Phase 5A post-completion Host Runtime hardening 已完成并提交。Phase 5A remains completed。Phase 5 remains incomplete because Phase 5B-5E and final daily loop E2E remain pending。
+Phase 5A Host Runtime foundation、Phase 5A post-completion Host Runtime hardening 和 Phase 5B Artifact / Resource / Timeout / Completion implementation 已完成并提交。Phase 5A remains completed。Phase 5 remains incomplete because Phase 5C-5E and final daily loop E2E remain pending。
 
 Phase 5B 是 Phase 5C / 5D / 5E 的共享基础设施层。它把 Phase 5A 中 opaque pass-through 的 `resource`、`resources`、`job`、`nextStep`、`safeToRetry` 和 `mayStillBeRunning` 收敛为可测试的通用契约，同时不提前实现 Phase 5C / 5D / 5E 的 public workflow、MCP Resource handlers 或 `/unity` skill。
 
