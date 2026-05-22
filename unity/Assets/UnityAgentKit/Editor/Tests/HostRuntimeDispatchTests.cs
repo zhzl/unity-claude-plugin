@@ -23,6 +23,22 @@ namespace UnityAgentKit.Editor.Tests
             public bool IsCompleted => true;
         }
 
+        private sealed class CompletedReadResult : IAsyncResult
+        {
+            private readonly ManualResetEvent _waitHandle = new ManualResetEvent(true);
+
+            internal CompletedReadResult(int bytesRead)
+            {
+                BytesRead = bytesRead;
+            }
+
+            internal int BytesRead { get; }
+            public object AsyncState => null;
+            public WaitHandle AsyncWaitHandle => _waitHandle;
+            public bool CompletedSynchronously => false;
+            public bool IsCompleted => true;
+        }
+
         private sealed class CompletedReadWithoutCallbackStream : Stream
         {
             private readonly byte[] _payload;
@@ -86,6 +102,99 @@ namespace UnityAgentKit.Editor.Tests
             public override void Write(byte[] buffer, int offset, int count)
             {
                 throw new NotSupportedException();
+            }
+        }
+
+        private sealed class OversizedBodyStream : Stream
+        {
+            private readonly int _fullChunkSize;
+            private int _fullChunksRemaining;
+            private bool _overflowChunkPending;
+            private bool _readPastOverflow;
+
+            public OversizedBodyStream(int fullChunks, int fullChunkSize)
+            {
+                _fullChunksRemaining = fullChunks;
+                _fullChunkSize = fullChunkSize;
+                _overflowChunkPending = true;
+            }
+
+            public bool ReadPastOverflow => _readPastOverflow;
+            public int EndReadCallCount { get; private set; }
+            public int CloseCallCount { get; private set; }
+
+            public override bool CanRead => true;
+            public override bool CanSeek => false;
+            public override bool CanWrite => false;
+            public override long Length => throw new NotSupportedException();
+
+            public override long Position
+            {
+                get => throw new NotSupportedException();
+                set => throw new NotSupportedException();
+            }
+
+            public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
+            {
+                var bytesRead = 0;
+                if (_fullChunksRemaining > 0)
+                {
+                    bytesRead = Math.Min(count, _fullChunkSize);
+                    for (var index = 0; index < bytesRead; index++)
+                    {
+                        buffer[offset + index] = (byte)'x';
+                    }
+
+                    _fullChunksRemaining -= 1;
+                }
+                else if (_overflowChunkPending)
+                {
+                    bytesRead = 1;
+                    buffer[offset] = (byte)'y';
+                    _overflowChunkPending = false;
+                }
+                else
+                {
+                    _readPastOverflow = true;
+                }
+
+                return new CompletedReadResult(bytesRead);
+            }
+
+            public override int EndRead(IAsyncResult asyncResult)
+            {
+                EndReadCallCount += 1;
+                return ((CompletedReadResult)asyncResult).BytesRead;
+            }
+
+            public override int Read(byte[] buffer, int offset, int count)
+            {
+                throw new NotSupportedException();
+            }
+
+            public override void Flush()
+            {
+            }
+
+            public override long Seek(long offset, SeekOrigin origin)
+            {
+                throw new NotSupportedException();
+            }
+
+            public override void SetLength(long value)
+            {
+                throw new NotSupportedException();
+            }
+
+            public override void Write(byte[] buffer, int offset, int count)
+            {
+                throw new NotSupportedException();
+            }
+
+            public override void Close()
+            {
+                CloseCallCount += 1;
+                base.Close();
             }
         }
 
@@ -639,8 +748,10 @@ namespace UnityAgentKit.Editor.Tests
             try
             {
                 var record = UnityAgentKitHost.StartForTests(registryPath);
-                var body = "{\"operation\":\"host.echo\",\"requestId\":\"req-too-large\",\"inputJson\":\"" + new string('x', UnityAgentKitLoopbackHttpServer.MaxOperationRequestBodyBytes) + "\"}";
-                var result = Post(UnityAgentKitLoopbackHttpServer.BuildOperationsUrl(record.port), body);
+                var result = PostOperationsHeadersOnly(
+                    record.port,
+                    UnityAgentKitLoopbackHttpServer.MaxOperationRequestBodyBytes + 1,
+                    1000);
                 var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(result.body);
 
                 Assert.AreEqual(400, result.statusCode);
@@ -656,24 +767,23 @@ namespace UnityAgentKit.Editor.Tests
         [Test]
         public void OperationsRejectsBodyThatExceedsLimitWhileReading()
         {
-            var registryPath = TemporaryRegistryPath("operations-stream-too-large");
+            var fullChunkCount = UnityAgentKitLoopbackHttpServer.MaxOperationRequestBodyBytes / 1024;
+            var stream = new OversizedBodyStream(fullChunkCount, 1024);
+            var method = typeof(UnityAgentKitLoopbackHttpServer).GetMethod(
+                "ReadRequestBody",
+                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic,
+                null,
+                new[] { typeof(Stream), typeof(Encoding), typeof(DateTimeOffset) },
+                null);
 
-            try
-            {
-                var record = UnityAgentKitHost.StartForTests(registryPath);
-                var result = PostChunkedOperationsBody(
-                    record.port,
-                    new string('x', UnityAgentKitLoopbackHttpServer.MaxOperationRequestBodyBytes + 1));
-                var response = JsonUtility.FromJson<UnityAgentKitOperationResponse>(result.body);
-
-                Assert.AreEqual(400, result.statusCode);
-                AssertOperationEnvelopeMinimumFields(response, "failed", "host.operation", string.Empty, record);
-                Assert.AreEqual("http.request_body_too_large", response.code);
-            }
-            finally
-            {
-                UnityAgentKitHost.ResetForTests();
-            }
+            Assert.NotNull(method, "Expected private stream body reader overload.");
+            var invocation = Assert.Throws<System.Reflection.TargetInvocationException>(() =>
+                method.Invoke(null, new object[] { stream, Encoding.UTF8, DateTimeOffset.UtcNow.AddSeconds(2) }));
+            Assert.NotNull(invocation.InnerException);
+            Assert.AreEqual("RequestBodyTooLargeException", invocation.InnerException.GetType().Name);
+            Assert.AreEqual(fullChunkCount + 1, stream.EndReadCallCount, "Reader must stop immediately at the overflowing chunk.");
+            Assert.IsFalse(stream.ReadPastOverflow, "Reader must not continue reading after the cumulative limit is exceeded.");
+            Assert.GreaterOrEqual(stream.CloseCallCount, 1, "Oversized read must close the input stream.");
         }
 
         [Test]
@@ -1045,25 +1155,19 @@ namespace UnityAgentKit.Editor.Tests
             return client;
         }
 
-        private static HttpResult PostChunkedOperationsBody(int port, string body)
+        private static HttpResult PostOperationsHeadersOnly(int port, int declaredContentLength, int readTimeoutMs)
         {
             using (var client = new TcpClient("127.0.0.1", port))
             using (var stream = client.GetStream())
             {
+                stream.ReadTimeout = readTimeoutMs;
                 var header = "POST /operations HTTP/1.1\r\n" +
                     "Host: 127.0.0.1:" + port + "\r\n" +
                     "Content-Type: application/json; charset=utf-8\r\n" +
-                    "Transfer-Encoding: chunked\r\n" +
+                    "Content-Length: " + declaredContentLength + "\r\n" +
                     "Connection: close\r\n\r\n";
                 var headerBytes = Encoding.ASCII.GetBytes(header);
                 stream.Write(headerBytes, 0, headerBytes.Length);
-
-                var bodyBytes = Encoding.UTF8.GetBytes(body);
-                var chunkHeader = Encoding.ASCII.GetBytes(bodyBytes.Length.ToString("x") + "\r\n");
-                stream.Write(chunkHeader, 0, chunkHeader.Length);
-                stream.Write(bodyBytes, 0, bodyBytes.Length);
-                var chunkEnd = Encoding.ASCII.GetBytes("\r\n0\r\n\r\n");
-                stream.Write(chunkEnd, 0, chunkEnd.Length);
                 stream.Flush();
 
                 return ReadRawHttpResponse(stream);

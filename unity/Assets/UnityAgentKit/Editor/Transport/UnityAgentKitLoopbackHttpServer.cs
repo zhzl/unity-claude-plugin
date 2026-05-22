@@ -719,7 +719,7 @@ namespace UnityAgentKit.Editor
                 var deadline = DateTimeOffset.UtcNow.AddMilliseconds(OperationRequestBodyDeadlineMs);
                 if (request.ContentLength64 > MaxOperationRequestBodyBytes)
                 {
-                    DrainRequestBody(stream, deadline);
+                    CloseRequestInputStream(stream);
                     failure = BodyReadFailure.TooLarge;
                     return false;
                 }
@@ -730,6 +730,7 @@ namespace UnityAgentKit.Editor
             catch (RequestBodyTooLargeException)
             {
                 failure = BodyReadFailure.TooLarge;
+                CloseRequestInputStream(stream);
                 return false;
             }
             catch (IOException)
@@ -760,6 +761,11 @@ namespace UnityAgentKit.Editor
 
         private static string ReadRequestBody(HttpListenerRequest request, Stream stream, DateTimeOffset deadline)
         {
+            return ReadRequestBody(stream, request.ContentEncoding ?? Encoding.UTF8, deadline);
+        }
+
+        private static string ReadRequestBody(Stream stream, Encoding encoding, DateTimeOffset deadline)
+        {
             using (var buffer = new MemoryStream())
             {
                 var chunk = new byte[1024];
@@ -773,26 +779,14 @@ namespace UnityAgentKit.Editor
 
                     if (buffer.Length + bytesRead > MaxOperationRequestBodyBytes)
                     {
-                        DrainRequestBody(stream, deadline, chunk);
+                        CloseRequestInputStream(stream);
                         throw new RequestBodyTooLargeException();
                     }
 
                     buffer.Write(chunk, 0, bytesRead);
                 }
 
-                return (request.ContentEncoding ?? Encoding.UTF8).GetString(buffer.ToArray());
-            }
-        }
-
-        private static void DrainRequestBody(Stream stream, DateTimeOffset deadline)
-        {
-            DrainRequestBody(stream, deadline, new byte[1024]);
-        }
-
-        private static void DrainRequestBody(Stream stream, DateTimeOffset deadline, byte[] chunk)
-        {
-            while (ReadRequestBodyChunk(stream, chunk, deadline) > 0)
-            {
+                return (encoding ?? Encoding.UTF8).GetString(buffer.ToArray());
             }
         }
 
