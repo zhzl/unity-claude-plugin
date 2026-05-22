@@ -14,6 +14,7 @@ import {
   resolveArtifactRelativePath,
 } from "../src/artifacts/paths.ts";
 import { formatUnityResourceUri, parseUnityResourceUri } from "../src/resources/uri.ts";
+import { readUnityResource } from "../src/resources/readback.ts";
 
 const emptyDiagnostics: UnityAgentKitDiagnostic[] = [];
 
@@ -208,4 +209,186 @@ test("artifactPathsUseDeterministicMetadataLayoutAndRejectTraversal", () => {
     ok: false,
     reason: "path_outside_artifact_root",
   });
+});
+
+async function withArtifactProject(testBody: (projectRoot: string, artifactRoot: string) => Promise<void>): Promise<void> {
+  const projectRoot = await mkdtemp(path.join(os.tmpdir(), "unity-agent-kit-phase5b-"));
+  const artifactRoot = artifactRootForProject(projectRoot);
+  try {
+    await testBody(projectRoot, artifactRoot);
+  } finally {
+    await rm(projectRoot, { recursive: true, force: true });
+  }
+}
+
+async function writeJsonFile(filePath: string, value: unknown): Promise<void> {
+  await writeFile(filePath, JSON.stringify(value, null, 2), "utf8");
+}
+
+async function writeArtifactFixture(
+  artifactRoot: string,
+  metadataRelativePath: string,
+  metadata: Record<string, unknown>,
+  payloadRelativePath: string,
+  payload: string,
+): Promise<void> {
+  const payloadPath = path.join(artifactRoot, ...payloadRelativePath.split("/"));
+  const metadataPath = path.join(artifactRoot, ...metadataRelativePath.split("/"));
+  await writeFile(payloadPath, payload, { encoding: "utf8", flag: "w" }).catch(async (error: NodeJS.ErrnoException) => {
+    if (error.code !== "ENOENT") {
+      throw error;
+    }
+    await import("node:fs/promises").then(async ({ mkdir }) => {
+      await mkdir(path.dirname(payloadPath), { recursive: true });
+      await writeFile(payloadPath, payload, "utf8");
+    });
+  });
+  await import("node:fs/promises").then(async ({ mkdir }) => mkdir(path.dirname(metadataPath), { recursive: true }));
+  await writeJsonFile(metadataPath, metadata);
+}
+
+function screenshotMetadata(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    schemaVersion: 1,
+    id: "shot-1",
+    type: "screenshot",
+    uri: "unity://screenshots/shot-1",
+    relativePath: "screenshots/shot-1.txt",
+    createdAt: "2026-05-22T10:00:00.000Z",
+    validationStatus: "valid",
+    hostId: "host-a",
+    hostEpoch: 3,
+    producerTool: "unity_screenshot",
+    producerAction: "capture_game_view",
+    sizeBytes: 12,
+    diagnostics: [],
+    ...overrides,
+  };
+}
+
+function reportMetadata(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    schemaVersion: 1,
+    id: "report-1",
+    type: "test_report",
+    uri: "unity://test-reports/report-1",
+    reportLocator: {
+      kind: "artifact_relative_path",
+      relativePath: "test-reports/report-1.txt",
+    },
+    createdAt: "2026-05-22T10:00:00.000Z",
+    validationStatus: "valid",
+    producerTool: "unity_test",
+    producerAction: "run_and_collect",
+    sizeBytes: 13,
+    diagnostics: [],
+    ...overrides,
+  };
+}
+
+test("resourceReadbackSucceedsForExistingMetadataAndReadableFileWithoutLiveHost", async () => {
+  await withArtifactProject(async (projectRoot, artifactRoot) => {
+    await writeArtifactFixture(
+      artifactRoot,
+      "metadata/screenshots/shot-1.json",
+      screenshotMetadata(),
+      "screenshots/shot-1.txt",
+      "synthetic image",
+    );
+
+    const result = await readUnityResource(projectRoot, "unity://screenshots/shot-1");
+
+    assert.equal(result.ok, true, JSON.stringify(result));
+    if (!result.ok) {
+      return;
+    }
+    assert.equal(result.resource.uri, "unity://screenshots/shot-1");
+    assert.equal(result.resource.type, "screenshot");
+    assert.equal(result.resource.artifactId, "shot-1");
+    assert.equal(result.resource.validationStatus, "valid");
+    assert.equal(Buffer.from(result.contentBytes).toString("utf8"), "synthetic image");
+  });
+});
+
+test("resourceReadbackUsesReportLocatorOnlyUnderTestReports", async () => {
+  await withArtifactProject(async (projectRoot, artifactRoot) => {
+    await writeArtifactFixture(
+      artifactRoot,
+      "metadata/test-reports/report-1.json",
+      reportMetadata(),
+      "test-reports/report-1.txt",
+      "synthetic report",
+    );
+
+    const result = await readUnityResource(projectRoot, "unity://test-reports/report-1");
+
+    assert.equal(result.ok, true, JSON.stringify(result));
+    if (!result.ok) {
+      return;
+    }
+    assert.equal(result.resource.type, "test_report");
+    assert.equal(result.resource.reportId, "report-1");
+    assert.equal(Buffer.from(result.contentBytes).toString("utf8"), "synthetic report");
+  });
+});
+
+test("resourceReadbackDoesNotScanPayloadDirectoriesWhenMetadataIsMissing", async () => {
+  await withArtifactProject(async (projectRoot, artifactRoot) => {
+    const payloadPath = path.join(artifactRoot, "screenshots", "shot-1.txt");
+    await import("node:fs/promises").then(async ({ mkdir }) => mkdir(path.dirname(payloadPath), { recursive: true }));
+    await writeFile(payloadPath, "orphaned evidence", "utf8");
+
+    const result = await readUnityResource(projectRoot, "unity://screenshots/shot-1");
+
+    assert.deepEqual(result.ok ? result : { ok: result.ok, reason: result.reason }, {
+      ok: false,
+      reason: "metadata_missing",
+    });
+  });
+});
+
+test("resourceReadbackClassifiesFileMissingAndValidationFailures", async () => {
+  await withArtifactProject(async (projectRoot, artifactRoot) => {
+    const metadataPath = path.join(artifactRoot, "metadata", "screenshots", "shot-1.json");
+    await import("node:fs/promises").then(async ({ mkdir }) => mkdir(path.dirname(metadataPath), { recursive: true }));
+    await writeJsonFile(metadataPath, screenshotMetadata({ sizeBytes: 12 }));
+
+    const missingFile = await readUnityResource(projectRoot, "unity://screenshots/shot-1");
+    assert.equal(missingFile.ok, false);
+    if (!missingFile.ok) {
+      assert.equal(missingFile.reason, "file_missing");
+    }
+
+    await writeJsonFile(metadataPath, screenshotMetadata({ validationStatus: "uncertain" }));
+    const uncertain = await readUnityResource(projectRoot, "unity://screenshots/shot-1");
+    assert.equal(uncertain.ok, false);
+    if (!uncertain.ok) {
+      assert.equal(uncertain.reason, "validation_failed");
+    }
+  });
+});
+
+test("resourceReadbackRejectsUnsafeReportLocatorAndUnsupportedValidationReports", async () => {
+  await withArtifactProject(async (projectRoot, artifactRoot) => {
+    const metadataPath = path.join(artifactRoot, "metadata", "test-reports", "report-1.json");
+    await import("node:fs/promises").then(async ({ mkdir }) => mkdir(path.dirname(metadataPath), { recursive: true }));
+    await writeJsonFile(metadataPath, reportMetadata({
+      reportLocator: {
+        kind: "artifact_relative_path",
+        relativePath: "screenshots/not-a-report.txt",
+      },
+    }));
+
+    const invalidLocator = await readUnityResource(projectRoot, "unity://test-reports/report-1");
+    assert.equal(invalidLocator.ok, false);
+    if (!invalidLocator.ok) {
+      assert.equal(invalidLocator.reason, "path_outside_artifact_root");
+    }
+  });
+
+  const unsupported = await readUnityResource(os.tmpdir(), "unity://validation-reports/report-1");
+  assert.equal(unsupported.ok, false);
+  if (!unsupported.ok) {
+    assert.equal(unsupported.reason, "unsupported_type");
+  }
 });
