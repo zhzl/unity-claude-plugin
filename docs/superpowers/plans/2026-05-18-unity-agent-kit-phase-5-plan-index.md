@@ -19,7 +19,7 @@ This index keeps Phase 5 as a single roadmap phase while splitting execution int
 
 | Subplan | Scope | Contract | Execution Index | Status | Execution Status | Completion Evidence | Upgrade Check |
 |---|---|---|---|---|---|---|---|
-| Phase 5A | Host Runtime 基础设施 | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md` | `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md` | in-progress | in-progress | partial: 5A-01 and 5A-02 completed; 5A-03 through 5A-08 pending | stays subplan |
+| Phase 5A | Host Runtime 基础设施 | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md` | `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md` | completed | completed | completed: 5A-01 through 5A-08 completed; final evidence includes `host-runtime.test.ts` tests 60/pass 60/fail 0, `HostRuntimeTests` total 78/passed 78/failed 0, and `HostRuntimeVerticalSmokeTests` total 1/passed 1/failed 0 | stays subplan |
 | Phase 5B | Artifact / Resource / Timeout / Completion 基础设施 | pending | pending | pending | pending | pending | stays subplan |
 | Phase 5C | Core Diagnostics Workflows | pending | pending | pending | pending | pending | stays subplan |
 | Phase 5D | Test / PlayMode / Screenshot Workflows | pending | pending | pending | pending | pending | stays subplan |
@@ -65,6 +65,28 @@ Technical contract is not executable. Do not pass `docs/superpowers/plans/2026-0
 
 Phase 5 completed only after all subplans + final E2E evidence pass.
 
+## Phase 5A Completion Evidence
+
+Phase 5A completed after 5A-01 through 5A-08 completed and final evidence passed. Phase 5 remains incomplete because Phase 5B-5E and final daily loop E2E remain pending.
+
+Canonical handoff commands:
+
+```bash
+cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/host-runtime.test.ts
+"${UNITY_EDITOR}" -batchmode -quit -projectPath unity -runTests -testPlatform EditMode -testResults unity/Library/UnityAgentKit/Phase5AHostRuntimeResults.xml -testFilter UnityAgentKit.Editor.Tests.HostRuntimeTests
+"${UNITY_EDITOR}" -batchmode -quit -projectPath unity -runTests -testPlatform EditMode -testResults unity/Library/UnityAgentKit/Phase5AVerticalSmokeResults.xml -testFilter UnityAgentKit.Editor.Tests.HostRuntimeVerticalSmokeTests
+```
+
+Local Unity 2022.3.61f1 evidence used the same Unity commands without `-quit` because `-quit` exits before Test Runner in this environment.
+
+Evidence summary:
+
+- `HostRuntimeTests` passed and covers DTO, registry, lifecycle cleanup, HTTP protocol, main-thread dispatch, non-blocking pending dispatch hook, host-level timeout, stop/reload pending failure, and result envelope behavior.
+- `HostRuntimeVerticalSmokeTests` passed and runs `phase5a-vertical-smoke.test.ts` against the live Unity host.
+- `host.threadCheck` ran on the captured Unity main thread.
+- TS mapped the Unity envelope to public result and MCP payload.
+- TS evidence proves old hostId / hostEpoch continuity is invalidated and returns lost or rebind decision rather than trusting stale success.
+
 Roadmap Phase 5 must not be marked `completed` from this index alone. Completion requires:
 
 1. Phase 5A Host Runtime completed with evidence from all active sibling execution plans.
@@ -82,12 +104,6 @@ If a subplan gains an independent roadmap goal, cross-phase dependency, standalo
 
 ## Next Manual Action
 
-Phase 5A is partially in progress: 5A-01 and 5A-02 are completed, and 5A-03 through 5A-08 remain pending. Create/review the next expanded strict execution plan. Start from:
+Phase 5A Host Runtime foundation completed with evidence. Phase 5 remains incomplete because Phase 5B-5E and final daily loop E2E remain pending.
 
-```text
-/superpowers:writing-plans Create strict execution plan for Phase 5A-03 Host bootstrap + lifecycle cleanup using docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md and docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md
-```
-
-Partial 5A-01 evidence: expanded plan `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-01-ts-result-mcp-mapping.md`; final verification command `cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/host-runtime.test.ts`; observed result `tests 12`, `pass 12`, `fail 0`; final code review result PASS.
-
-Partial 5A-02 evidence: expanded plan `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-02-unity-dto-registry-contract.md`; requirement coverage `5A-DTO-01`, `5A-REG-01`, `5A-REG-02`; official Unity evidence command `"D:/Program Files/Unity 2022.3.61f1/Editor/Unity.exe" -batchmode -quit -projectPath "D:/ai/unity-claude-plugin/unity" -runTests -testPlatform EditMode -testResults "D:/ai/unity-claude-plugin/unity/Library/UnityAgentKit/Phase5AHostRuntimeResults.xml" -testFilter UnityAgentKit.Editor.Tests.HostRuntimeTests`; observed result `HostRuntimeTests` total 15, passed 15, failed 0; evidence file `unity/Library/UnityAgentKit/Phase5AHostRuntimeResults.xml`; spec review PASS; code quality review PASS; final review PASS.
+Next action: create/review Phase 5B Artifact / Resource / Timeout / Completion artifacts before implementing Phase 5B. Do not mark Roadmap Phase 5 completed from Phase 5A evidence alone.

@@ -30,13 +30,19 @@
 | 5A-05 | POST /operations envelope + router | 5A-DTO-02, 5A-HTTP-02, 5A-HTTP-03, 5A-OPS-01, 5A-OPS-02 | 3 | 5A-01, 5A-02, 5A-03 | `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-05-operations-envelope-router.md` | completed |
 | 5A-06 | Main-thread dispatch + host-level timeout | 5A-DISPATCH-01, 5A-DISPATCH-02, 5A-OPS-02, 5A-TIMEOUT-01, 5A-TIMEOUT-02 | 4 | 5A-05 | `docs/superpowers/plans/2026-05-20-unity-agent-kit-phase-5a-06-main-thread-dispatch-timeout.md` | completed |
 | 5A-07 | TS registry/probe/invoke/rebind classification | 5A-REG-03, 5A-REBIND-01, 5A-REBIND-02, 5A-REBIND-03, 5A-REBIND-04, 5A-TIMEOUT-02 | 5 | 5A-03, 5A-05, 5A-06 | `docs/superpowers/plans/2026-05-21-unity-agent-kit-phase-5a-07-ts-host-client-rebind.md` | completed |
-| 5A-08 | Vertical smoke + completion evidence | 5A-EVIDENCE-01, 5A-EVIDENCE-02, 5A-EVIDENCE-03, 5A-EVIDENCE-04 | 6 | 5A-01, 5A-02, 5A-03, 5A-05, 5A-06, 5A-07 | pending | candidate |
+| 5A-08 | Vertical smoke + completion evidence | 5A-EVIDENCE-01, 5A-EVIDENCE-02, 5A-EVIDENCE-03, 5A-EVIDENCE-04 | 6 | 5A-01, 5A-02, 5A-03, 5A-05, 5A-06, 5A-07 | `docs/superpowers/plans/2026-05-21-unity-agent-kit-phase-5a-08-vertical-smoke-completion-evidence.md` | completed |
 
 ## Current Next Manual Action
 
-Phase 5A-07 TS registry/probe/invoke/rebind classification has completed TS non-live implementation and verification. Evidence: `cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/host-runtime.test.ts` passed with registry validation, active probe validation, operation envelope mapping, bounded pre-operation rebind, in-flight no replay, post-response stale classification, diagnostic priority, timeout layering, and scope guard coverage. Phase 5A and Phase 5 remain incomplete because 5A-08 vertical smoke + completion evidence is pending.
+Phase 5A-08 Vertical smoke + completion evidence 已完成。Evidence:
 
-Next action: write and review the strict expanded execution plan for 5A-08 Vertical smoke + completion evidence, then choose an execution flow.
+1. `cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/host-runtime.test.ts` passed with `tests 60`, `pass 60`, `fail 0`; covers result mapping, registry validation, TS client simulations, timeout classification, MCP payload preservation, and 5A-08 scope guard.
+2. Canonical handoff command string: `"${UNITY_EDITOR}" -batchmode -quit -projectPath unity -runTests -testPlatform EditMode -testResults unity/Library/UnityAgentKit/Phase5AHostRuntimeResults.xml -testFilter UnityAgentKit.Editor.Tests.HostRuntimeTests`; local Unity 2022.3.61f1 evidence used the same command without `-quit` because `-quit` exits before Test Runner in this environment, and passed with `total="78"`, `passed="78"`, `failed="0"`; covers DTO, registry, lifecycle cleanup, HTTP protocol, main-thread dispatch, non-blocking pending dispatch hook, host-level timeout, stop/reload pending failure, and result envelope behavior.
+3. Canonical handoff command string: `"${UNITY_EDITOR}" -batchmode -quit -projectPath unity -runTests -testPlatform EditMode -testResults unity/Library/UnityAgentKit/Phase5AVerticalSmokeResults.xml -testFilter UnityAgentKit.Editor.Tests.HostRuntimeVerticalSmokeTests`; local Unity 2022.3.61f1 evidence used the same command without `-quit` because `-quit` exits before Test Runner in this environment, and passed with `total="1"`, `passed="1"`, `failed="0"`; `HostRuntimeVerticalSmokeTests` starts the live Unity host, runs `phase5a-vertical-smoke.test.ts`, proves `host.threadCheck` runs on the captured Unity main thread, maps the envelope to public result and MCP payload, then stops the host and verifies cleanup.
+
+Phase 5A completed because all active sibling execution plans and final vertical smoke evidence passed. Phase 5 remains incomplete because Phase 5B-5E and final daily loop E2E remain pending.
+
+Next action: create/review the Phase 5B Artifact / Resource / Timeout / Completion subplan artifacts before implementing Phase 5B.
 
 Do not execute this index or the technical contract.
 
@@ -49,3 +55,16 @@ Phase 5A completed only after:
 3. `HostRuntimeVerticalSmokeTests` drives the live Node smoke test and passes.
 4. Phase 5 plan index records completion evidence.
 5. Roadmap Phase 5 remains incomplete until 5B-5E and final daily loop E2E also pass.
+
+## Phase 5A Completion Evidence
+
+Phase 5A-08 Vertical smoke + completion evidence 已完成 and closes the Phase 5A Host Runtime foundation. Evidence groups covered:
+
+- registry: minimum `UnityAgentKitHostRecord`, project root from `Application.dataPath`, existing epoch increment, new hostId on restart/reload, strict TS registry validation, and registry failure classification.
+- lifecycle: compiling/updating skip start, update tick retry, beforeAssemblyReload stop, Editor quitting stop, Start stops old listener, Stop closes listener, deterministic wake, listener-loop-exited signal, cleanup of pending work, old listener no longer responds.
+- HTTP protocol: canonical `GET /probe`, canonical `POST /operations`, structured 404/405/400 envelopes, JSON content type/framing, 127.0.0.1 URL helpers, request context preservation.
+- dispatch/timeout: `host.threadCheck`, captured Unity main thread, dispatch exception diagnostics, non-blocking pending dispatch hook, host-level timeout with may-still-be-running, stop/reload pending failure not timeout.
+- TS client: ready/not_ready, invalid registry/probe shapes, stable diagnostic codes, bounded pre-operation rebind, in-flight no replay, post-response stale/lost, old hostId / hostEpoch continuity is invalidated, lost or rebind decision.
+- result/envelope: DTO JSON round-trip, operation normalization, status/code table, failure metadata preservation, invalid envelope mapping, unknown status fail-closed.
+- vertical smoke: Unity writes registry → TS reads registry → TS probes `/probe` → TS invokes real `/operations` → Unity dispatches to captured Unity main thread via `host.threadCheck` → TS maps envelope/public result and MCP payload.
+- MCP payload mapping foundation: `structuredContent` preserves full public result; `content` is summary only; `isError` follows `status !== "succeeded"`.

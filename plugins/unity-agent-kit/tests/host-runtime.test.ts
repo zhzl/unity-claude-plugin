@@ -181,6 +181,11 @@ async function assertPathDoesNotExist(pathUrl: URL): Promise<void> {
   assert.fail(`Expected path not to exist: ${pathUrl.href}`);
 }
 
+async function assertPathExists(pathUrl: URL): Promise<void> {
+  const details = await stat(pathUrl);
+  assert.ok(details.isFile() || details.isDirectory(), `Expected path to exist: ${pathUrl.href}`);
+}
+
 test("packageJsonUsesStripTypesNodeTestScript", async () => {
   const packageJson = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
 
@@ -795,11 +800,20 @@ test("transportRequestTimeoutDoesNotProduceWorkflowTimeoutEvidence", () => {
   assert.equal(result.metadata?.timeoutLayer, undefined);
 });
 
-test("phase5a07ScopeGuardDoesNotCreateVerticalSmokeOrMcpRegistration", async () => {
-  const forbiddenPaths = [
+test("phase5a08ScopeGuardAllowsOnlyVerticalSmokeEvidenceFiles", async () => {
+  const requiredEvidencePaths = [
     new URL("phase5a-vertical-smoke.test.ts", import.meta.url),
     new URL("../../../unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeVerticalSmokeTests.cs", import.meta.url),
+  ];
+
+  for (const requiredPath of requiredEvidencePaths) {
+    await assertPathExists(requiredPath);
+  }
+
+  const forbiddenPaths = [
     new URL("../src/tools", import.meta.url),
+    new URL("../src/mcp", import.meta.url),
+    new URL("../src/actions", import.meta.url),
     new URL("../skills/unity.md", import.meta.url),
   ];
 
