@@ -36,6 +36,7 @@ namespace UnityAgentKit.Editor
         private static int _capturedMainThreadId;
         private static int _dispatchTimeoutMs = 250;
         private static int _expiredDispatchExecutionCount;
+        private static PendingDispatch _currentClaimedDispatchForTests;
 
         internal static Action<string> BeforeRunClaimedDispatchForTests;
 
@@ -80,6 +81,20 @@ namespace UnityAgentKit.Editor
             lock (PendingLock)
             {
                 return EnqueuedRequestIdsForTests.Contains(requestId ?? string.Empty);
+            }
+        }
+
+        internal static bool IsCurrentClaimedDispatchForTests(string requestId)
+        {
+            lock (PendingLock)
+            {
+                if (_currentClaimedDispatchForTests == null)
+                {
+                    return false;
+                }
+
+                var currentRequestId = _currentClaimedDispatchForTests.request != null ? _currentClaimedDispatchForTests.request.requestId ?? string.Empty : string.Empty;
+                return currentRequestId == (requestId ?? string.Empty);
             }
         }
 
@@ -172,6 +187,15 @@ namespace UnityAgentKit.Editor
                         break;
                     }
                 }
+
+                if (item == null && _currentClaimedDispatchForTests != null)
+                {
+                    var currentRequestId = _currentClaimedDispatchForTests.request != null ? _currentClaimedDispatchForTests.request.requestId ?? string.Empty : string.Empty;
+                    if (currentRequestId == (requestId ?? string.Empty))
+                    {
+                        item = _currentClaimedDispatchForTests;
+                    }
+                }
             }
 
             return item != null && TryComplete(item, UnityAgentKitOperationRouter.DispatchTimeout(item.request, item.record));
@@ -191,6 +215,7 @@ namespace UnityAgentKit.Editor
                 PendingLifecycleWork.Clear();
                 pendingDispatches = new List<PendingDispatch>(PendingDispatches);
                 PendingDispatches.Clear();
+                _currentClaimedDispatchForTests = null;
                 foreach (var item in pendingDispatches)
                 {
                     item.cancelled = true;
@@ -210,13 +235,20 @@ namespace UnityAgentKit.Editor
             _capturedMainThreadId = Thread.CurrentThread.ManagedThreadId;
             _dispatchTimeoutMs = 250;
             _expiredDispatchExecutionCount = 0;
+            _currentClaimedDispatchForTests = null;
             BeforeRunClaimedDispatchForTests = null;
             ResetEnqueueInstrumentationForTests();
         }
 
         private static void Drain()
         {
-            while (true)
+            var claimableCount = CountClaimableDispatches();
+            if (claimableCount == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < claimableCount; i += 1)
             {
                 var item = TryClaimNextDispatch();
                 if (item == null)
@@ -224,6 +256,7 @@ namespace UnityAgentKit.Editor
                     return;
                 }
 
+                SetCurrentClaimedDispatchForTests(item);
                 BeforeRunClaimedDispatchForTests?.Invoke(item.request != null ? item.request.requestId ?? string.Empty : string.Empty);
 
                 try
@@ -235,6 +268,27 @@ namespace UnityAgentKit.Editor
                 {
                     TryComplete(item, UnityAgentKitOperationRouter.DispatchException(item.request, item.record, error), ownsItem: true);
                 }
+                finally
+                {
+                    ClearCurrentClaimedDispatchForTests(item);
+                }
+            }
+        }
+
+        private static int CountClaimableDispatches()
+        {
+            lock (PendingLock)
+            {
+                var count = 0;
+                for (var i = 0; i < PendingDispatches.Count; i += 1)
+                {
+                    if (!PendingDispatches[i].holdForTimeout)
+                    {
+                        count += 1;
+                    }
+                }
+
+                return count;
             }
         }
 
@@ -257,6 +311,25 @@ namespace UnityAgentKit.Editor
             }
 
             return null;
+        }
+
+        private static void SetCurrentClaimedDispatchForTests(PendingDispatch item)
+        {
+            lock (PendingLock)
+            {
+                _currentClaimedDispatchForTests = item;
+            }
+        }
+
+        private static void ClearCurrentClaimedDispatchForTests(PendingDispatch item)
+        {
+            lock (PendingLock)
+            {
+                if (ReferenceEquals(_currentClaimedDispatchForTests, item))
+                {
+                    _currentClaimedDispatchForTests = null;
+                }
+            }
         }
 
         private static bool TryComplete(PendingDispatch item, UnityAgentKitOperationResponse response, bool ownsItem = false)

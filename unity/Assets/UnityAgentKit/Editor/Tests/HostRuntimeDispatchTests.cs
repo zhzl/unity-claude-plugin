@@ -349,14 +349,16 @@ namespace UnityAgentKit.Editor.Tests
             UnityAgentKitMainThread.RegisterDrain();
             UnityAgentKitMainThread.ConfigureDispatchTimeoutForTests(1000);
             UnityAgentKitOperationResponse response = null;
-            var timeoutAttempted = false;
+            var timeoutCompletedClaimedDispatch = false;
+            var helperObservedClaimedDispatch = false;
             var record = TestHostRecord(49245);
 
             try
             {
                 UnityAgentKitMainThread.BeforeRunClaimedDispatchForTests = requestId =>
                 {
-                    timeoutAttempted = UnityAgentKitMainThread.ForceDispatchTimeoutForTests(requestId);
+                    helperObservedClaimedDispatch = UnityAgentKitMainThread.IsCurrentClaimedDispatchForTests(requestId);
+                    timeoutCompletedClaimedDispatch = UnityAgentKitMainThread.ForceDispatchTimeoutForTests(requestId);
                 };
 
                 UnityAgentKitMainThread.Enqueue(new UnityAgentKitOperationRequest
@@ -367,7 +369,8 @@ namespace UnityAgentKit.Editor.Tests
 
                 UnityAgentKitMainThread.DrainForTests();
 
-                Assert.IsTrue(timeoutAttempted == false, "Claimed dispatch must not be completed by timeout.");
+                Assert.IsTrue(helperObservedClaimedDispatch, "Timeout helper must observe the current claimed dispatch.");
+                Assert.IsFalse(timeoutCompletedClaimedDispatch, "Claimed dispatch must not be completed by timeout.");
                 AssertOperationEnvelopeMinimumFields(response, "succeeded", "host.threadCheck", "req-claimed-race", record);
                 Assert.AreEqual(0, UnityAgentKitMainThread.ExpiredDispatchExecutionCountForTests);
                 Assert.AreEqual(0, UnityAgentKitMainThread.PendingDispatchCountForTests);
