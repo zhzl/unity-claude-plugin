@@ -8,6 +8,12 @@ import {
   type UnityAgentKitDiagnostic,
   type UnityAgentKitPublicResult,
 } from "../src/contracts/result.ts";
+import {
+  artifactRootForProject,
+  metadataRelativePathForParsedResource,
+  resolveArtifactRelativePath,
+} from "../src/artifacts/paths.ts";
+import { formatUnityResourceUri, parseUnityResourceUri } from "../src/resources/uri.ts";
 
 const emptyDiagnostics: UnityAgentKitDiagnostic[] = [];
 
@@ -111,4 +117,95 @@ test("publicResultRejectsMalformedResourceJobAndNextStepShapes", () => {
     })),
     /nextStep/i,
   );
+});
+
+test("resourceUriParsingAcceptsOnlyPhase5BSupportedTypes", () => {
+  assert.deepEqual(parseUnityResourceUri("unity://screenshots/shot-1"), {
+    ok: true,
+    resource: {
+      uri: "unity://screenshots/shot-1",
+      collection: "screenshots",
+      type: "screenshot",
+      id: "shot-1",
+      artifactId: "shot-1",
+    },
+  });
+  assert.deepEqual(parseUnityResourceUri("unity://test-reports/report-1"), {
+    ok: true,
+    resource: {
+      uri: "unity://test-reports/report-1",
+      collection: "test-reports",
+      type: "test_report",
+      id: "report-1",
+      reportId: "report-1",
+    },
+  });
+  assert.deepEqual(parseUnityResourceUri("unity://console-snapshots/console-1"), {
+    ok: true,
+    resource: {
+      uri: "unity://console-snapshots/console-1",
+      collection: "console-snapshots",
+      type: "console_snapshot",
+      id: "console-1",
+      artifactId: "console-1",
+    },
+  });
+
+  assert.equal(formatUnityResourceUri("screenshot", "shot-2"), "unity://screenshots/shot-2");
+  assert.equal(formatUnityResourceUri("test_report", "report-2"), "unity://test-reports/report-2");
+  assert.equal(formatUnityResourceUri("console_snapshot", "console-2"), "unity://console-snapshots/console-2");
+});
+
+test("resourceUriParsingRejectsMalformedUnsupportedAndPathLikeIds", () => {
+  for (const uri of [
+    "unity://validation-reports/report-1",
+    "unity://screenshots/",
+    "unity://screenshots/../secret",
+    "unity://screenshots/%2e%2e%2fsecret",
+    "unity://screenshots/C:%5Csecret",
+    "unity://screenshots/shot/extra",
+    "file:///tmp/shot-1",
+  ]) {
+    const parsed = parseUnityResourceUri(uri);
+    assert.equal(parsed.ok, false, uri);
+  }
+});
+
+test("artifactPathsUseDeterministicMetadataLayoutAndRejectTraversal", () => {
+  const projectRoot = path.join(os.tmpdir(), "phase5b-project");
+  const artifactRoot = artifactRootForProject(projectRoot);
+  assert.equal(
+    artifactRoot,
+    path.join(projectRoot, ".ai-debug", "unity-agent-kit", "artifacts"),
+  );
+
+  const screenshot = parseUnityResourceUri("unity://screenshots/shot-1");
+  assert.equal(screenshot.ok, true);
+  if (screenshot.ok) {
+    assert.equal(metadataRelativePathForParsedResource(screenshot.resource), "metadata/screenshots/shot-1.json");
+  }
+
+  const report = parseUnityResourceUri("unity://test-reports/report-1");
+  assert.equal(report.ok, true);
+  if (report.ok) {
+    assert.equal(metadataRelativePathForParsedResource(report.resource), "metadata/test-reports/report-1.json");
+  }
+
+  assert.equal(resolveArtifactRelativePath(artifactRoot, "screenshots/shot-1.txt").ok, true);
+  assert.deepEqual(resolveArtifactRelativePath(artifactRoot, "../outside.txt"), {
+    ok: false,
+    reason: "path_outside_artifact_root",
+  });
+  assert.deepEqual(resolveArtifactRelativePath(artifactRoot, "screenshots/%2e%2e/secret.txt"), {
+    ok: false,
+    reason: "path_outside_artifact_root",
+  });
+  assert.deepEqual(resolveArtifactRelativePath(artifactRoot, "C:/secret.txt"), {
+    ok: false,
+    reason: "path_outside_artifact_root",
+  });
+  assert.deepEqual(resolveArtifactRelativePath(artifactRoot, "screenshots\\shot-1.txt"), {
+    ok: false,
+    reason: "path_outside_artifact_root",
+  });
 });
