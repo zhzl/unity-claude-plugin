@@ -20,7 +20,7 @@ This index keeps Phase 5 as a single roadmap phase while splitting execution int
 | Subplan | Scope | Contract | Execution Index | Status | Execution Status | Completion Evidence | Upgrade Check |
 |---|---|---|---|---|---|---|---|
 | Phase 5A | Host Runtime 基础设施 | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md` | `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md` | completed | completed | completed: 5A-01, 5A-02, 5A-03, 5A-05, 5A-06, 5A-07, and 5A-08 completed; 5A-04 folded into 5A-03; post-completion Host Runtime hardening evidence recorded before Phase 5B | stays subplan |
-| Phase 5B | Artifact / Resource / Timeout / Completion 基础设施 | pending | pending | pending | pending | pending | stays subplan |
+| Phase 5B | Artifact / Resource / Timeout / Completion 基础设施 | `docs/superpowers/specs/2026-05-22-unity-agent-kit-phase-5b-artifact-resource-timeout-completion-design.md` | `docs/superpowers/plans/2026-05-22-unity-agent-kit-phase-5b-artifact-resource-timeout-completion.md` | completed | completed | completed: TS artifact/resource contract tests, timeout/completion tests, existing host-runtime tests, Unity `HostRuntimeArtifactTests`, Unity `HostRuntimeTests`, scope boundary check, and `git diff --check` passed; Phase 5 remains incomplete because Phase 5C-5E and final daily loop E2E remain pending | stays subplan |
 | Phase 5C | Core Diagnostics Workflows | pending | pending | pending | pending | pending | stays subplan |
 | Phase 5D | Test / PlayMode / Screenshot Workflows | pending | pending | pending | pending | pending | stays subplan |
 | Phase 5E | MCP / `/unity` Skill / E2E / Completion Evidence | pending | pending | pending | pending | pending | stays subplan |
@@ -110,6 +110,6 @@ If a subplan gains an independent roadmap goal, cross-phase dependency, standalo
 
 ## Next Manual Action
 
-Phase 5A Host Runtime foundation completed with evidence. Phase 5 remains incomplete because Phase 5B-5E and final daily loop E2E remain pending.
+Phase 5B Artifact / Resource / Timeout / Completion completed with evidence. Phase 5 remains incomplete because Phase 5C-5E and final daily loop E2E remain pending.
 
-Next action: create/review Phase 5B Artifact / Resource / Timeout / Completion artifacts before implementing Phase 5B. Do not mark Roadmap Phase 5 completed from Phase 5A evidence alone.
+Next action: create/review Phase 5C Core Diagnostics Workflows artifacts before implementing Phase 5C. Do not mark Roadmap Phase 5 completed from Phase 5B evidence alone.

@@ -29,6 +29,29 @@ function baseResult(overrides: Partial<UnityAgentKitPublicResult> = {}): UnityAg
   };
 }
 
+async function pathExists(repoRelativePath: string): Promise<boolean> {
+  try {
+    await stat(new URL(`../../../${repoRelativePath}`, import.meta.url));
+    return true;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return false;
+    }
+
+    throw error;
+  }
+}
+
+test("phase5bScopeGuardDoesNotCreatePublicMcpToolsOrUnitySkill", async () => {
+  assert.equal(await pathExists("plugins/unity-agent-kit/src/tools"), false);
+  assert.equal(await pathExists("plugins/unity-agent-kit/src/mcp"), false);
+  assert.equal(await pathExists("plugins/unity-agent-kit/skills/unity"), false);
+  assert.equal(await pathExists("plugins/unity-agent-kit/skills/unity.md"), false);
+
+  const validationReports = parseUnityResourceUri("unity://validation-reports/report-1");
+  assert.equal(validationReports.ok, false);
+});
+
 test("publicResultAcceptsPhase5BResourceJobAndNextStepShapes", () => {
   const result = definePublicResult(baseResult({
     status: "timeout",
