@@ -1177,7 +1177,7 @@ EOF
 - 验证：`unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeVerticalSmokeTests.cs`
 - 验证：docs / roadmap / scope boundary
 
-- [ ] **步骤 1：运行 TS evidence**
+- [x] **步骤 1：运行 TS evidence**
 
 运行：
 
@@ -1189,7 +1189,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/host-
 
 证明：覆盖 TS envelope trust boundary、registry validation、rebind classification、timeout classification、MCP payload preservation 和 optional fields pass-through。
 
-- [ ] **步骤 2：运行 Unity HostRuntime hardening/full suite evidence**
+- [x] **步骤 2：运行 Unity HostRuntime hardening/full suite evidence**
 
 运行：
 
@@ -1207,7 +1207,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/host-
 
 证明：覆盖 Unity DTO、registry、lifecycle cleanup、HTTP protocol、main-thread dispatch、dispatch claim race、host-level timeout、body read bounds、stop/reload pending failure 和 result envelope behavior。
 
-- [ ] **步骤 3：运行 Unity vertical smoke regression**
+- [x] **步骤 3：运行 Unity vertical smoke regression**
 
 运行：
 
@@ -1225,7 +1225,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/host-
 
 证明：hardening 未破坏 Unity writes registry → TS reads registry → probe `/probe` → invoke `/operations` → main-thread `host.threadCheck` → MCP payload mapping → cleanup 的 live path。
 
-- [ ] **步骤 4：运行 scope boundary check**
+- [x] **步骤 4：运行 scope boundary check**
 
 运行：
 
@@ -1256,7 +1256,7 @@ NODE
 
 证明：hardening 未实现 public MCP tools、`/unity` skill、Phase 5B workflow/resource/artifact/final E2E。
 
-- [ ] **步骤 5：运行 docs check**
+- [x] **步骤 5：运行 docs check**
 
 运行任务 4 步骤 1 的 docs check。
 
@@ -1264,7 +1264,7 @@ NODE
 
 证明：docs 记录 hardening evidence，同时 Phase 5A remains completed，Phase 5 remains incomplete / `continue-5b`。
 
-- [ ] **步骤 6：运行 diff whitespace check**
+- [x] **步骤 6：运行 diff whitespace check**
 
 运行：
 
@@ -1274,7 +1274,7 @@ git diff --check
 
 预期：PASS，无 whitespace error。CRLF normalization warnings 不算失败，但最终汇报中要注明。
 
-- [ ] **步骤 7：最终汇报边界**
+- [x] **步骤 7：最终汇报边界**
 
 最终汇报必须包含：
 
@@ -1284,7 +1284,7 @@ Phase 5 remains incomplete because Phase 5B-5E and final daily loop E2E remain p
 No Phase 5B-5E, MCP public tools, /unity skill, workflow timeout, artifact/resource store, or final daily loop E2E were implemented.
 ```
 
-- [ ] **步骤 8：Commit**
+- [x] **步骤 8：Commit**
 
 如果任务 1-4 已分别 commit，则本步骤只在有最终验证文档或 follow-up 修改时执行。否则创建合并 commit：
 
