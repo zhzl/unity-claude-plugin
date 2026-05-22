@@ -1022,7 +1022,7 @@ EOF
 - 修改：`docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md`
 - 修改：`docs/superpowers/plans/2026-05-21-unity-agent-kit-phase-5a-08-vertical-smoke-completion-evidence.md`
 
-- [ ] **步骤 1：编写 docs check 并验证 red**
+- [x] **步骤 1：编写 docs check 并验证 red**
 
 运行：
 
@@ -1080,7 +1080,7 @@ NODE
 
 证明：该 red 证明 docs 尚未记录 hardening evidence，且仍可能存在 misleading folded wording。
 
-- [ ] **步骤 2：更新 Phase 5 plan index**
+- [x] **步骤 2：更新 Phase 5 plan index**
 
 在 `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md` 中：
 
@@ -1100,7 +1100,7 @@ Phase 5A remains completed. Phase 5A Host Runtime hardening was applied after co
 Phase 5 remains incomplete because Phase 5B-5E and final daily loop E2E remain pending.
 ```
 
-- [ ] **步骤 3：更新 Phase 5A execution index**
+- [x] **步骤 3：更新 Phase 5A execution index**
 
 在 `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md` 中 `## Phase 5A Completion Evidence` 后追加：
 
@@ -1118,7 +1118,7 @@ Phase 5A remains completed. Post-completion hardening before Phase 5B covers:
 Phase 5 remains incomplete because Phase 5B-5E and final daily loop E2E remain pending.
 ```
 
-- [ ] **步骤 4：更新 roadmap**
+- [x] **步骤 4：更新 roadmap**
 
 在 `docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md` 中：
 
@@ -1138,7 +1138,7 @@ Phase 5A Host Runtime hardening 已在 Phase 5A completed 后、Phase 5B 前记�
 
 5. 确认 Phase Summary 中 Phase 5 row 仍为 `partial | continue-5b`。
 
-- [ ] **步骤 5：更新 5A-08 plan 顶部 status note**
+- [x] **步骤 5：更新 5A-08 plan 顶部 status note**
 
 在 `docs/superpowers/plans/2026-05-21-unity-agent-kit-phase-5a-08-vertical-smoke-completion-evidence.md` 标题后加入：
 
@@ -1148,7 +1148,7 @@ Phase 5A Host Runtime hardening 已在 Phase 5A completed 后、Phase 5B 前记�
 
 不要把整份历史 checklist 改成新实现计划。
 
-- [ ] **步骤 6：运行 docs check 验证通过**
+- [x] **步骤 6：运行 docs check 验证通过**
 
 运行任务 4 步骤 1 的 Node docs check。
 
@@ -1156,7 +1156,7 @@ Phase 5A Host Runtime hardening 已在 Phase 5A completed 后、Phase 5B 前记�
 
 证明：该检查证明 docs 已记录 hardening evidence、folded wording 不再误导、Phase 5A remains completed、Phase 5 remains incomplete / `continue-5b`。
 
-- [ ] **步骤 7：Commit**
+- [x] **步骤 7：Commit**
 
 ```bash
 git add docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md docs/superpowers/plans/2026-05-21-unity-agent-kit-phase-5a-08-vertical-smoke-completion-evidence.md
