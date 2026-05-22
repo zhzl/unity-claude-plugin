@@ -689,7 +689,7 @@ EOF
 - 修改：`unity/Assets/UnityAgentKit/Editor/Transport/UnityAgentKitLoopbackHttpServer.cs`
 - 修改：`unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeDispatchTests.cs`
 
-- [ ] **步骤 1：编写失败的 body bound tests**
+- [x] **步骤 1：编写失败的 body bound tests**
 
 在 `HostRuntimeDispatchTests.cs` 中，放在 `IncompleteAcceptedOperationBodyDoesNotBlockFinalClose` 后面：
 
@@ -818,7 +818,7 @@ private static HttpResult ReadRawHttpResponse(NetworkStream stream)
 
 This helper proves cumulative read enforcement because chunked requests have no `ContentLength64` pre-check.
 
-- [ ] **步骤 2：运行 body bound tests 验证 red**
+- [x] **步骤 2：运行 body bound tests 验证 red**
 
 运行：
 
@@ -830,7 +830,7 @@ This helper proves cumulative read enforcement because chunked requests have no 
 
 证明：该 red 证明当前 `/operations` body 没有 Phase 5A hardening bounds。
 
-- [ ] **步骤 3：实现 body read constants、result classification 和 oversized envelope**
+- [x] **步骤 3：实现 body read constants、result classification 和 oversized envelope**
 
 在 `UnityAgentKitLoopbackHttpServer.cs` class 内新增 constants：
 
@@ -990,7 +990,7 @@ internal static UnityAgentKitOperationResponse RequestBodyTooLarge(UnityAgentKit
 
 If this helper file is touched, include it in the task commit and final summary.
 
-- [ ] **步骤 4：运行 body bound targeted tests 验证通过**
+- [x] **步骤 4：运行 body bound targeted tests 验证通过**
 
 运行：
 
@@ -1002,7 +1002,7 @@ If this helper file is touched, include it in the task commit and final summary.
 
 证明：该检查证明 oversized body 被 structured 400 拒绝，slow/incomplete body 不会拖住 listener close 超过 deadline。
 
-- [ ] **步骤 5：Commit**
+- [x] **步骤 5：Commit**
 
 ```bash
 git add unity/Assets/UnityAgentKit/Editor/Transport/UnityAgentKitLoopbackHttpServer.cs unity/Assets/UnityAgentKit/Editor/Operations/UnityAgentKitOperationRouter.cs unity/Assets/UnityAgentKit/Editor/Tests/HostRuntimeDispatchTests.cs
