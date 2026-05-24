@@ -74,4 +74,19 @@ namespace UnityAgentKit.Editor
         public int executionThreadId;
         public bool ranOnMainThread;
     }
+
+    [Serializable]
+    public sealed class UnityAgentKitEditorStatusResult
+    {
+        public string projectRoot = string.Empty;
+        public string unityVersion = string.Empty;
+        public bool isCompiling;
+        public bool isUpdating;
+        public bool isPlaying;
+        public bool isPlayingOrWillChangePlaymode;
+        public bool isPlayModeChanging;
+        public bool isReady;
+        public int capturedMainThreadId;
+        public int executionThreadId;
+    }
 }

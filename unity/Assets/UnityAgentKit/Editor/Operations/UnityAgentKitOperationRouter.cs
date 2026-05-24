@@ -7,6 +7,7 @@ namespace UnityAgentKit.Editor
         internal const string InvalidRequestOperation = "host.invalidRequest";
         internal const string EchoOperation = "host.echo";
         internal const string ThreadCheckOperation = "host.threadCheck";
+        internal const string EditorStatusGetOperation = "editor.status.get";
         internal const string ThrowOperation = "host.throw";
         internal const string PendingDispatchTimeoutOperation = "host.pendingDispatchTimeout";
 
@@ -31,7 +32,7 @@ namespace UnityAgentKit.Editor
                 return Succeeded(operation, requestId, record, "Echo completed.", request != null ? request.inputJson ?? string.Empty : string.Empty, startedAt);
             }
 
-            if (operation == ThreadCheckOperation)
+            if (RequiresMainThreadDispatch(operation))
             {
                 return Rejected(operation, requestId, record, "host.dispatch_required", "Operation requires main-thread dispatch.", startedAt);
             }
@@ -42,7 +43,7 @@ namespace UnityAgentKit.Editor
         internal static bool RequiresMainThreadDispatch(string operation)
         {
             var normalized = NormalizeOperation(operation);
-            return normalized == ThreadCheckOperation || normalized == ThrowOperation || normalized == PendingDispatchTimeoutOperation;
+            return normalized == ThreadCheckOperation || normalized == EditorStatusGetOperation || normalized == ThrowOperation || normalized == PendingDispatchTimeoutOperation;
         }
 
         internal static UnityAgentKitOperationResponse RunOnMainThread(UnityAgentKitOperationRequest request, UnityAgentKitHostRecord record, int capturedMainThreadId)
@@ -60,6 +61,12 @@ namespace UnityAgentKit.Editor
                     ranOnMainThread = capturedMainThreadId == System.Threading.Thread.CurrentThread.ManagedThreadId
                 };
                 return Succeeded(operation, requestId, record, "Thread check completed.", UnityEngine.JsonUtility.ToJson(result), startedAt);
+            }
+
+            if (operation == EditorStatusGetOperation)
+            {
+                var result = UnityAgentKitEditorDiagnostics.ReadStatus(capturedMainThreadId);
+                return Succeeded(operation, requestId, record, "Editor status read.", UnityEngine.JsonUtility.ToJson(result), startedAt);
             }
 
             if (operation == ThrowOperation)
