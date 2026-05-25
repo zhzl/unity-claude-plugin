@@ -79,7 +79,7 @@
 - 创建：`plugins/unity-agent-kit/tests/compile-workflows.test.ts`
 - 读取参考：`plugins/unity-agent-kit/tests/editor-workflows.test.ts`
 
-- [ ] **步骤 1：编写失败的 compile workflow tests**
+- [x] **步骤 1：编写失败的 compile workflow tests**
 
 创建 `plugins/unity-agent-kit/tests/compile-workflows.test.ts`：
 
@@ -455,7 +455,7 @@ test("waitForCompileIdleReturnsReadStateTimeoutWithoutClaimingCompileFailure", a
 });
 ```
 
-- [ ] **步骤 2：运行测试验证 red**
+- [x] **步骤 2：运行测试验证 red**
 
 运行：
 
@@ -467,7 +467,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/compi
 
 证明：该 red 证明 5C-02 的 TS compile workflow 入口尚未存在。
 
-- [ ] **步骤 3：Commit**
+- [x] **步骤 3：Commit**
 
 仅在用户授权 commit 时运行：
 
