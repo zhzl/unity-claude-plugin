@@ -136,6 +136,8 @@ namespace UnityAgentKit.Editor.Tests
 
             var roundTrip = JsonUtility.FromJson<UnityAgentKitCompileRequestResult>(JsonUtility.ToJson(result));
 
+            Assert.AreEqual("D:/repo/unity", roundTrip.projectRoot);
+            Assert.AreEqual("2022.3.61f1", roundTrip.unityVersion);
             Assert.IsTrue(roundTrip.requested);
             Assert.AreEqual(string.Empty, roundTrip.noOpReason);
             Assert.IsTrue(roundTrip.usedAssetDatabaseRefresh);
@@ -144,6 +146,8 @@ namespace UnityAgentKit.Editor.Tests
             Assert.AreEqual(5, roundTrip.invalidationTokenAfterRequest);
             Assert.IsFalse(roundTrip.isCompiling);
             Assert.IsFalse(roundTrip.isUpdating);
+            Assert.AreEqual(7, roundTrip.capturedMainThreadId);
+            Assert.AreEqual(7, roundTrip.executionThreadId);
         }
 
         [Test]
@@ -198,7 +202,40 @@ namespace UnityAgentKit.Editor.Tests
         }
 
         [Test]
-        public void CompileRequestBusyGuardReturnsNoOpWithoutRefreshOrRequest()
+        public void CompileRequestOperationReturnsResultOnMainThread()
+        {
+            var record = TestHostRecord();
+            var currentThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+            const string requestId = "req-compile-request";
+
+            var response = UnityAgentKitOperationRouter.RunOnMainThread(new UnityAgentKitOperationRequest
+            {
+                operation = "compile.request",
+                requestId = requestId
+            }, record, currentThreadId);
+
+            AssertOperationEnvelopeMinimumFields(response, "succeeded", "compile.request", requestId, record);
+            Assert.AreEqual(string.Empty, response.code);
+            Assert.AreEqual(0, response.diagnostics.Length);
+
+            var data = JsonUtility.FromJson<UnityAgentKitCompileRequestResult>(response.data);
+            Assert.AreEqual(UnityAgentKitHostRegistry.GetProjectRoot(), data.projectRoot);
+            Assert.AreEqual(Application.unityVersion, data.unityVersion);
+            Assert.AreEqual(currentThreadId, data.capturedMainThreadId);
+            Assert.AreEqual(currentThreadId, data.executionThreadId);
+            Assert.GreaterOrEqual(data.invalidationTokenAfterRequest, data.invalidationTokenBeforeRequest);
+
+            if (!data.requested)
+            {
+                Assert.AreEqual("already_compiling_or_updating", data.noOpReason);
+                Assert.IsFalse(data.usedAssetDatabaseRefresh);
+                Assert.IsFalse(data.usedCompilationPipeline);
+            }
+        }
+
+        [TestCase(true, false)]
+        [TestCase(false, true)]
+        public void CompileRequestBusyGuardReturnsNoOpWithoutRefreshOrRequest(bool isCompiling, bool isUpdating)
         {
             UnityAgentKitCompileDiagnostics.ResetForTests();
             var refreshCalls = 0;
@@ -206,8 +243,8 @@ namespace UnityAgentKit.Editor.Tests
             var result = UnityAgentKitCompileDiagnostics.RequestCompileForTests(
                 string.Empty,
                 7,
-                isCompiling: true,
-                isUpdating: false,
+                isCompiling: isCompiling,
+                isUpdating: isUpdating,
                 refreshAssetDatabase: () => refreshCalls += 1,
                 requestScriptCompilation: () => requestCalls += 1);
 
@@ -218,8 +255,8 @@ namespace UnityAgentKit.Editor.Tests
             Assert.AreEqual(0, refreshCalls);
             Assert.AreEqual(0, requestCalls);
             Assert.AreEqual(result.invalidationTokenBeforeRequest, result.invalidationTokenAfterRequest);
-            Assert.IsTrue(result.isCompiling);
-            Assert.IsFalse(result.isUpdating);
+            Assert.AreEqual(isCompiling, result.isCompiling);
+            Assert.AreEqual(isUpdating, result.isUpdating);
         }
 
         [Test]
