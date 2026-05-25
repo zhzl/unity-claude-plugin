@@ -1563,7 +1563,7 @@ EOF
 - 修改：`docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md`
 - 修改：`docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md`
 
-- [ ] **步骤 1：更新 5C execution index 的 5C-02 row**
+- [x] **步骤 1：更新 5C execution index 的 5C-02 row**
 
 在 `docs/superpowers/plans/2026-05-23-unity-agent-kit-phase-5c-execution-index.md` 的 Candidate Plan Cards table 中，把 5C-02 row 的 `Status` 从 `draft` 或 `plan-card` 改为 `completed`，并在文件中追加 5C-02 evidence section：
 
@@ -1582,7 +1582,7 @@ Phase 5C remains incomplete because 5C-03 and 5C-04 are not completed. Phase 5 r
 
 Use the actual test counts from command output if they differ from the examples above.
 
-- [ ] **步骤 2：同步 parent Phase 5 index 的 plan-ready 状态且不越界完成**
+- [x] **步骤 2：同步 parent Phase 5 index 的 plan-ready 状态且不越界完成**
 
 在 `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md` 中把 Phase 5C row 同步为 `execution-planned` / `plan-ready`，因为 5C execution index 和当前 5C-02 expanded plan 已通过 plan-set review；同时 completion evidence 必须继续说明 5C-03/5C-04 未完成，Phase 5C 和 Phase 5 不 completed:
 
@@ -1592,7 +1592,7 @@ Use the actual test counts from command output if they differ from the examples 
 
 Do not set Phase 5C `Status` to `completed` in this task.
 
-- [ ] **步骤 3：更新 roadmap partial evidence**
+- [x] **步骤 3：更新 roadmap partial evidence**
 
 在 `docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md` 中只记录 5C-02 partial completion evidence 和 next manual action：
 
@@ -1602,7 +1602,7 @@ Do not set Phase 5C `Status` to `completed` in this task.
 
 Next Manual Action must point to creating/reviewing the 5C-03 expanded execution plan. Do not mark Phase 5 completed.
 
-- [ ] **步骤 4：运行 docs/state checks**
+- [x] **步骤 4：运行 docs/state checks**
 
 运行：
 
@@ -1614,7 +1614,7 @@ git diff -- docs/superpowers/plans/2026-05-23-unity-agent-kit-phase-5c-execution
 
 证明：该检查证明 documentation state 只记录 5C-02 完成事实，不把 Phase 5C 或 Phase 5 提前标记 completed。
 
-- [ ] **步骤 5：Commit**
+- [x] **步骤 5：Commit**
 
 仅在用户授权 commit 时运行：
 
