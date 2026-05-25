@@ -21,7 +21,7 @@ This index keeps Phase 5 as a single roadmap phase while splitting execution int
 |---|---|---|---|---|---|---|---|
 | Phase 5A | Host Runtime 基础设施 | `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5a-host-runtime.md` | `docs/superpowers/plans/2026-05-19-unity-agent-kit-phase-5a-execution-index.md` | completed | completed | completed: 5A-01, 5A-02, 5A-03, 5A-05, 5A-06, 5A-07, and 5A-08 completed; 5A-04 folded into 5A-03; post-completion Host Runtime hardening evidence recorded before Phase 5B | stays subplan |
 | Phase 5B | Artifact / Resource / Timeout / Completion 基础设施 | `docs/superpowers/specs/2026-05-22-unity-agent-kit-phase-5b-artifact-resource-timeout-completion-design.md` | `docs/superpowers/plans/2026-05-22-unity-agent-kit-phase-5b-artifact-resource-timeout-completion.md` | completed | completed | completed: TS artifact/resource contract tests, timeout/completion tests, existing host-runtime tests, Unity `HostRuntimeArtifactTests`, Unity `HostRuntimeTests`, scope boundary check, and `git diff --check` passed; Phase 5 remains incomplete because Phase 5C-5E and final daily loop E2E remain pending | stays subplan |
-| Phase 5C | Core Diagnostics Workflows | `docs/superpowers/specs/2026-05-23-unity-agent-kit-phase-5c-core-diagnostics-workflows-design.md` | `docs/superpowers/plans/2026-05-23-unity-agent-kit-phase-5c-execution-index.md` | contract-ready | plan-cards-pending | 5C-01 completed; 5C-02, 5C-03, and 5C-04 not completed; Phase 5 remains incomplete because Phase 5C-5E and final daily loop E2E remain pending | stays subplan |
+| Phase 5C | Core Diagnostics Workflows | `docs/superpowers/specs/2026-05-23-unity-agent-kit-phase-5c-core-diagnostics-workflows-design.md` | `docs/superpowers/plans/2026-05-23-unity-agent-kit-phase-5c-execution-index.md` | execution-planned | plan-ready | 5C-01 and 5C-02 completed; 5C-03 and 5C-04 not completed; Phase 5 remains incomplete because Phase 5C-5E and final daily loop E2E remain pending | stays subplan |
 | Phase 5D | Test / PlayMode / Screenshot Workflows | pending | pending | pending | pending | pending | stays subplan |
 | Phase 5E | MCP / `/unity` Skill / E2E / Completion Evidence | pending | pending | pending | pending | pending | stays subplan |
 
@@ -110,6 +110,6 @@ If a subplan gains an independent roadmap goal, cross-phase dependency, standalo
 
 ## Next Manual Action
 
-5C-01 Editor status/readiness completed with evidence. Phase 5C remains incomplete because 5C-02, 5C-03, and 5C-04 are not completed. Phase 5 remains incomplete because Phase 5C-5E and final daily loop E2E remain pending.
+5C-02 Compile state/request/wait idle completed with evidence. Phase 5C remains incomplete because 5C-03 and 5C-04 are not completed. Phase 5 remains incomplete because Phase 5C-5E and final daily loop E2E remain pending.
 
-Next action: create/review the 5C-02 expanded execution plan. Do not mark Roadmap Phase 5 completed from 5C-01 or Phase 5B evidence alone.
+Next action: create/review the 5C-03 expanded execution plan. Do not mark Roadmap Phase 5 completed from 5C-02 or Phase 5B evidence alone.

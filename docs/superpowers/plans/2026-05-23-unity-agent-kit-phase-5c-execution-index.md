@@ -35,7 +35,7 @@ Manual `reviewing-specs` found no must-fix issues. The following concerns are ac
 | Plan | Scope | Requirement IDs | Wave | Depends on | Expanded Plan | Status |
 |---|---|---|---|---|---|---|
 | 5C-01 | Editor status snapshot + `wait_ready` TS workflow | 5C-EDITOR-01, 5C-EDITOR-02, 5C-EDITOR-03, 5C-HOST-01, 5C-SCOPE-01 | 1 | Phase 5A, Phase 5B | `docs/superpowers/plans/2026-05-23-unity-agent-kit-phase-5c-01-editor-status-readiness.md` | completed |
-| 5C-02 | Compile state/request/wait idle | 5C-COMPILE-STATE-01, 5C-COMPILE-REQUEST-01, 5C-COMPILE-IDLE-01, 5C-HOST-01, 5C-SCOPE-01 | 2 | Phase 5A, Phase 5B | `docs/superpowers/plans/2026-05-24-unity-agent-kit-phase-5c-02-compile-state-request-idle.md` | draft |
+| 5C-02 | Compile state/request/wait idle | 5C-COMPILE-STATE-01, 5C-COMPILE-REQUEST-01, 5C-COMPILE-IDLE-01, 5C-HOST-01, 5C-SCOPE-01 | 2 | Phase 5A, Phase 5B | `docs/superpowers/plans/2026-05-24-unity-agent-kit-phase-5c-02-compile-state-request-idle.md` | completed |
 | 5C-03 | Compile report + `compile_and_check` attribution | 5C-COMPILE-REPORT-01, 5C-COMPILE-REPORT-02, 5C-COMPILE-CHECK-01, 5C-TIMEOUT-01, 5C-HOST-01 | 3 | 5C-02 | pending | plan-card |
 | 5C-04 | Console count/snapshot/clear + cursor/resource | 5C-CONSOLE-COUNT-01, 5C-CONSOLE-SNAPSHOT-01, 5C-CONSOLE-CURSOR-01, 5C-CONSOLE-CLEAR-01, 5C-RESOURCE-01, 5C-HOST-01, 5C-SCOPE-01 | 2 | Phase 5A, Phase 5B | pending | plan-card |
 
@@ -63,7 +63,7 @@ Manual `reviewing-specs` found no must-fix issues. The following concerns are ac
 
 ## Current Next Manual Action
 
-Review `docs/superpowers/plans/2026-05-24-unity-agent-kit-phase-5c-02-compile-state-request-idle.md` for `5C-02` compile state/request/wait idle. Do not mark `5C-02` ready or completed from this index update, and do not execute this index or the Phase 5C technical contract.
+Create/review the `5C-03` expanded execution plan for compile report + `compile_and_check` attribution. Do not mark `5C-03` or `5C-04` completed from this index update, and do not execute this index or the Phase 5C technical contract.
 
 ## Completion Rule
 
@@ -91,6 +91,17 @@ Phase 5C completed only after:
 
 Phase 5C remains incomplete because 5C-02, 5C-03, and 5C-04 are not completed. Phase 5 remains incomplete because Phase 5C, Phase 5D, Phase 5E, and final daily loop E2E are not completed.
 
+## Phase 5C-02 Completion Evidence
+
+5C-02 Compile state/request/wait idle completed with evidence:
+
+1. `cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/editor-workflows.test.ts tests/compile-workflows.test.ts tests/host-runtime.test.ts tests/artifact-resource-contract.test.ts tests/timeout-completion-contract.test.ts` passed with `pass 113` and `fail 0`.
+2. `"D:/Program Files/Unity 2022.3.61f1/Editor/Unity.exe" -batchmode -projectPath "D:/ai/unity-claude-plugin/unity" -runTests -testPlatform EditMode -testResults "D:/ai/unity-claude-plugin/.ai-debug/unity-agent-kit/test-results/phase5c-02-compile-state-request-idle.xml" -testFilter UnityAgentKit.Editor.Tests.CoreDiagnosticsTests` passed with `total="11"`, `passed="11"`, and `failed="0"`.
+3. Scope guard passed: no public MCP tools / registration / action-dispatch surface, MCP Resource handlers, `/unity` skill, console diagnostics/workflows, compile report / collector / `compile_and_check`, Phase 5D test/playmode/screenshot workflows, or Phase 5E final daily loop E2E files were created by 5C-02.
+4. `git -c core.autocrlf=false diff --check` passed with no output.
+
+Phase 5C remains incomplete because 5C-03 and 5C-04 are not completed. Phase 5 remains incomplete because Phase 5C, Phase 5D, Phase 5E, and final daily loop E2E are not completed.
+
 ## Phase 5 plan index sync rule
 
-While this index has draft or plan-card rows, the parent Phase 5 plan index must keep Phase 5C at `contract-ready` with `Execution Status` set to `plan-cards-pending`. Move Phase 5C to `execution-planned` and `plan-ready` only after this index and the active expanded plan have passed plan-set review.
+While this index has plan-card rows, the parent Phase 5 plan index may move Phase 5C to `execution-planned` with `Execution Status` set to `plan-ready` after this index and the current active expanded execution plan have passed plan-set review. Phase 5C itself must remain incomplete until 5C-03 and 5C-04 complete with evidence.
