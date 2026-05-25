@@ -1242,7 +1242,7 @@ EOF
 - 修改：`unity/Assets/UnityAgentKit/Editor/Operations/UnityAgentKitOperationRouter.cs`
 - 测试：`unity/Assets/UnityAgentKit/Editor/Tests/CoreDiagnosticsTests.cs`
 
-- [ ] **步骤 1：添加 Unity compile DTOs**
+- [x] **步骤 1：添加 Unity compile DTOs**
 
 在 `unity/Assets/UnityAgentKit/Editor/Models/UnityAgentKitModels.cs` 的 `UnityAgentKitEditorStatusResult` 后追加：
 
@@ -1288,7 +1288,7 @@ EOF
 
 保留文件顶部已有 `using System;`。
 
-- [ ] **步骤 2：实现 Unity compile diagnostics short operations**
+- [x] **步骤 2：实现 Unity compile diagnostics short operations**
 
 创建 `unity/Assets/UnityAgentKit/Editor/Diagnostics/UnityAgentKitCompileDiagnostics.cs`：
 
@@ -1404,7 +1404,7 @@ namespace UnityAgentKit.Editor
 
 `inputJson` is accepted for operation envelope stability but does not affect 5C-02 behavior. Do not parse compile success options in 5C-02; compile success belongs to 5C-03.
 
-- [ ] **步骤 3：Route compile operations through main-thread dispatch**
+- [x] **步骤 3：Route compile operations through main-thread dispatch**
 
 在 `unity/Assets/UnityAgentKit/Editor/Operations/UnityAgentKitOperationRouter.cs` 中添加 operation 常量：
 
@@ -1442,7 +1442,7 @@ namespace UnityAgentKit.Editor
 
 不要在 `Route` 中直接读取 Unity compile APIs；direct route must keep returning `host.dispatch_required` through the existing generic main-thread guard behavior。
 
-- [ ] **步骤 4：运行 Unity CoreDiagnostics tests 验证通过**
+- [x] **步骤 4：运行 Unity CoreDiagnostics tests 验证通过**
 
 运行：
 
@@ -1454,7 +1454,7 @@ namespace UnityAgentKit.Editor
 
 证明：该检查证明 Unity C# 能在主线程短操作中读取真实 compile/update 状态，busy 时不重复请求编译，idle 时调用 refresh/request seam 并递增 invalidation token。
 
-- [ ] **步骤 5：运行 HostRuntime dispatch tests 防回归**
+- [x] **步骤 5：运行 HostRuntime dispatch tests 防回归**
 
 运行：
 
@@ -1466,7 +1466,7 @@ namespace UnityAgentKit.Editor
 
 证明：该检查证明新增 compile operations 没有破坏现有 `/operations` envelope、main-thread dispatch、host timeout、stop/reload behavior。
 
-- [ ] **步骤 6：Commit**
+- [x] **步骤 6：Commit**
 
 仅在用户授权 commit 时运行：
 
