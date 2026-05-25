@@ -89,7 +89,7 @@ Phase 5C completed only after:
 3. Scope guard passed: no `plugins/unity-agent-kit/src/tools`, no `plugins/unity-agent-kit/src/mcp`, no `plugins/unity-agent-kit/skills/unity`, no `plugins/unity-agent-kit/skills/unity.md`, no compile diagnostics file, and no console diagnostics file were created by 5C-01.
 4. `git -c core.autocrlf=false diff --check` passed with no output.
 
-Phase 5C remains incomplete because 5C-02, 5C-03, and 5C-04 are not completed. Phase 5 remains incomplete because Phase 5C, Phase 5D, Phase 5E, and final daily loop E2E are not completed.
+Phase 5C remains incomplete because 5C-03 and 5C-04 are not completed. Phase 5 remains incomplete because Phase 5C, Phase 5D, Phase 5E, and final daily loop E2E are not completed.
 
 ## Phase 5C-02 Completion Evidence
 
