@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import {
   getCompileState,
   requestCompile,
@@ -150,6 +151,13 @@ function options(record: UnityAgentKitHostRecord, transport: HostTransport, read
 function diagnosticCount(result: { diagnostics: { code?: string }[] }, code: string): number {
   return result.diagnostics.filter((diagnostic) => diagnostic.code === code).length;
 }
+
+test("compile workflow exports CompileRequestOptions as the public request type", async () => {
+  const source = await readFile(new URL("../src/workflows/compile.ts", import.meta.url), "utf8");
+
+  assert.match(source, /export interface CompileRequestOptions extends CompileActionOptions \{/);
+  assert.match(source, /options: CompileRequestOptions = \{\}/);
+});
 
 test("parseCompileStateDataAcceptsJsonStringAndRejectsInvalidShape", () => {
   const state = compileState();

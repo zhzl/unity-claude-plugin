@@ -27,7 +27,7 @@ export interface CompileActionOptions {
   requestId?: string;
 }
 
-export interface RequestCompileOptions extends CompileActionOptions {
+export interface CompileRequestOptions extends CompileActionOptions {
   reason?: string;
 }
 
@@ -59,7 +59,7 @@ export async function getCompileState(
 
 export async function requestCompile(
   workflow: CompileWorkflowOptions,
-  options: RequestCompileOptions = {},
+  options: CompileRequestOptions = {},
 ): Promise<UnityAgentKitPublicResult> {
   const requestId = options.requestId ?? `compile-request-${Date.now()}`;
   const hostResult = await executeWithRebindAwareness({
