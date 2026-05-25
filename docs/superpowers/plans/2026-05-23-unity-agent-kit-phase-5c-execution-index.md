@@ -35,7 +35,7 @@ Manual `reviewing-specs` found no must-fix issues. The following concerns are ac
 | Plan | Scope | Requirement IDs | Wave | Depends on | Expanded Plan | Status |
 |---|---|---|---|---|---|---|
 | 5C-01 | Editor status snapshot + `wait_ready` TS workflow | 5C-EDITOR-01, 5C-EDITOR-02, 5C-EDITOR-03, 5C-HOST-01, 5C-SCOPE-01 | 1 | Phase 5A, Phase 5B | `docs/superpowers/plans/2026-05-23-unity-agent-kit-phase-5c-01-editor-status-readiness.md` | completed |
-| 5C-02 | Compile state/request/wait idle | 5C-COMPILE-STATE-01, 5C-COMPILE-REQUEST-01, 5C-COMPILE-IDLE-01, 5C-HOST-01, 5C-SCOPE-01 | 2 | Phase 5A, Phase 5B | pending | plan-card |
+| 5C-02 | Compile state/request/wait idle | 5C-COMPILE-STATE-01, 5C-COMPILE-REQUEST-01, 5C-COMPILE-IDLE-01, 5C-HOST-01, 5C-SCOPE-01 | 2 | Phase 5A, Phase 5B | `docs/superpowers/plans/2026-05-24-unity-agent-kit-phase-5c-02-compile-state-request-idle.md` | draft |
 | 5C-03 | Compile report + `compile_and_check` attribution | 5C-COMPILE-REPORT-01, 5C-COMPILE-REPORT-02, 5C-COMPILE-CHECK-01, 5C-TIMEOUT-01, 5C-HOST-01 | 3 | 5C-02 | pending | plan-card |
 | 5C-04 | Console count/snapshot/clear + cursor/resource | 5C-CONSOLE-COUNT-01, 5C-CONSOLE-SNAPSHOT-01, 5C-CONSOLE-CURSOR-01, 5C-CONSOLE-CLEAR-01, 5C-RESOURCE-01, 5C-HOST-01, 5C-SCOPE-01 | 2 | Phase 5A, Phase 5B | pending | plan-card |
 
@@ -63,7 +63,7 @@ Manual `reviewing-specs` found no must-fix issues. The following concerns are ac
 
 ## Current Next Manual Action
 
-Create and review the expanded execution plan for `5C-02` compile state/request/wait idle. Do not mark `5C-02` ready or completed from this index update, and do not execute this index or the Phase 5C technical contract.
+Review `docs/superpowers/plans/2026-05-24-unity-agent-kit-phase-5c-02-compile-state-request-idle.md` for `5C-02` compile state/request/wait idle. Do not mark `5C-02` ready or completed from this index update, and do not execute this index or the Phase 5C technical contract.
 
 ## Completion Rule
 
