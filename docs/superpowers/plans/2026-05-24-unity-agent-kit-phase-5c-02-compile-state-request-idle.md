@@ -1494,7 +1494,7 @@ EOF
 - 检查：Phase 5D test/playmode/screenshot workflows forbidden surface
 - 检查：Phase 5E final daily loop E2E forbidden surface
 
-- [ ] **步骤 1：运行 TS focused verification**
+- [x] **步骤 1：运行 TS focused verification**
 
 运行：
 
@@ -1506,7 +1506,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/edito
 
 证明：该检查证明 5C-02 TS workflow 与 5C-01、Phase 5A、Phase 5B TS contracts 同时成立。
 
-- [ ] **步骤 2：运行 Unity focused verification**
+- [x] **步骤 2：运行 Unity focused verification**
 
 运行：
 
@@ -1518,7 +1518,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/edito
 
 证明：该检查证明 Unity compile state/request operations 可在真实 Unity EditMode runner 中执行，且 request seam 覆盖 busy guard 和 idle request evidence。
 
-- [ ] **步骤 3：运行 scope guard**
+- [x] **步骤 3：运行 scope guard**
 
 运行：
 
@@ -1530,7 +1530,7 @@ test ! -e plugins/unity-agent-kit/src/tools && test ! -e plugins/unity-agent-kit
 
 证明：该检查证明 5C-02 没有越界创建 public MCP tools / registration / action-dispatch surface、MCP Resource handlers、`/unity` skill、console diagnostics/workflows、compile report / collector / `compile_and_check`、Phase 5D test/playmode/screenshot workflows 或 Phase 5E final daily loop E2E files。
 
-- [ ] **步骤 4：运行 diff formatting check**
+- [x] **步骤 4：运行 diff formatting check**
 
 运行：
 
@@ -1542,7 +1542,7 @@ git -c core.autocrlf=false diff --check
 
 证明：该检查证明新增/修改文件没有 trailing whitespace 或 patch formatting 问题。
 
-- [ ] **步骤 5：Commit**
+- [x] **步骤 5：Commit**
 
 仅在用户授权 commit 时运行：
 
