@@ -8,6 +8,8 @@ namespace UnityAgentKit.Editor
         internal const string EchoOperation = "host.echo";
         internal const string ThreadCheckOperation = "host.threadCheck";
         internal const string EditorStatusGetOperation = "editor.status.get";
+        internal const string CompileStateGetOperation = "compile.state.get";
+        internal const string CompileRequestOperation = "compile.request";
         internal const string ThrowOperation = "host.throw";
         internal const string PendingDispatchTimeoutOperation = "host.pendingDispatchTimeout";
 
@@ -43,7 +45,12 @@ namespace UnityAgentKit.Editor
         internal static bool RequiresMainThreadDispatch(string operation)
         {
             var normalized = NormalizeOperation(operation);
-            return normalized == ThreadCheckOperation || normalized == EditorStatusGetOperation || normalized == ThrowOperation || normalized == PendingDispatchTimeoutOperation;
+            return normalized == ThreadCheckOperation ||
+                normalized == EditorStatusGetOperation ||
+                normalized == CompileStateGetOperation ||
+                normalized == CompileRequestOperation ||
+                normalized == ThrowOperation ||
+                normalized == PendingDispatchTimeoutOperation;
         }
 
         internal static UnityAgentKitOperationResponse RunOnMainThread(UnityAgentKitOperationRequest request, UnityAgentKitHostRecord record, int capturedMainThreadId)
@@ -67,6 +74,18 @@ namespace UnityAgentKit.Editor
             {
                 var result = UnityAgentKitEditorDiagnostics.ReadStatus(capturedMainThreadId);
                 return Succeeded(operation, requestId, record, "Editor status read.", UnityEngine.JsonUtility.ToJson(result), startedAt);
+            }
+
+            if (operation == CompileStateGetOperation)
+            {
+                var result = UnityAgentKitCompileDiagnostics.ReadState(capturedMainThreadId);
+                return Succeeded(operation, requestId, record, "Compile state read.", UnityEngine.JsonUtility.ToJson(result), startedAt);
+            }
+
+            if (operation == CompileRequestOperation)
+            {
+                var result = UnityAgentKitCompileDiagnostics.RequestCompile(request != null ? request.inputJson ?? string.Empty : string.Empty, capturedMainThreadId);
+                return Succeeded(operation, requestId, record, result.requested ? "Compile request accepted." : "Compile request skipped because Unity is already compiling or updating.", UnityEngine.JsonUtility.ToJson(result), startedAt);
             }
 
             if (operation == ThrowOperation)

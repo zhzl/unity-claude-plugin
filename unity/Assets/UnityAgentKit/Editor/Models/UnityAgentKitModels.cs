@@ -89,4 +89,42 @@ namespace UnityAgentKit.Editor
         public int capturedMainThreadId;
         public int executionThreadId;
     }
+
+    [Serializable]
+    public sealed class UnityAgentKitCompileStateResult
+    {
+        public string projectRoot = string.Empty;
+        public string unityVersion = string.Empty;
+        public bool isCompiling;
+        public bool isUpdating;
+        public bool isIdle;
+        public int invalidationToken;
+        public bool hasRecentCompileReport;
+        public string recentCompileReportId = string.Empty;
+        public int capturedMainThreadId;
+        public int executionThreadId;
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitCompileRequestInput
+    {
+        public string reason = string.Empty;
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitCompileRequestResult
+    {
+        public string projectRoot = string.Empty;
+        public string unityVersion = string.Empty;
+        public bool requested;
+        public string noOpReason = string.Empty;
+        public bool usedAssetDatabaseRefresh;
+        public bool usedCompilationPipeline;
+        public int invalidationTokenBeforeRequest;
+        public int invalidationTokenAfterRequest;
+        public bool isCompiling;
+        public bool isUpdating;
+        public int capturedMainThreadId;
+        public int executionThreadId;
+    }
 }
