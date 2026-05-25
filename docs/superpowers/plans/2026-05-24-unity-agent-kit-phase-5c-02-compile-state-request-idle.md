@@ -1038,7 +1038,7 @@ EOF
 - 修改：`unity/Assets/UnityAgentKit/Editor/Operations/UnityAgentKitOperationRouter.cs`
 - 创建：`unity/Assets/UnityAgentKit/Editor/Diagnostics/UnityAgentKitCompileDiagnostics.cs`
 
-- [ ] **步骤 1：编写失败的 Unity compile diagnostics tests**
+- [x] **步骤 1：编写失败的 Unity compile diagnostics tests**
 
 在 `unity/Assets/UnityAgentKit/Editor/Tests/CoreDiagnosticsTests.cs` 的 `EditorStatusOperationReturnsRealSnapshotOnMainThread` 测试后追加：
 
@@ -1208,7 +1208,7 @@ EOF
         }
 ```
 
-- [ ] **步骤 2：运行 Unity tests 验证 red**
+- [x] **步骤 2：运行 Unity tests 验证 red**
 
 运行：
 
@@ -1220,7 +1220,7 @@ EOF
 
 证明：该 red 证明 Unity C# 侧尚未实现 5C-02 compile diagnostics operations。
 
-- [ ] **步骤 3：Commit**
+- [x] **步骤 3：Commit**
 
 仅在用户授权 commit 时运行：
 
