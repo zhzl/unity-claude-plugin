@@ -489,7 +489,7 @@ EOF
 - 测试：`plugins/unity-agent-kit/tests/compile-workflows.test.ts`
 - 读取参考：`plugins/unity-agent-kit/src/workflows/editor.ts`
 
-- [ ] **步骤 1：实现 compile diagnostics contract**
+- [x] **步骤 1：实现 compile diagnostics contract**
 
 创建 `plugins/unity-agent-kit/src/diagnostics/compile.ts`：
 
@@ -779,7 +779,7 @@ function isOptionalInteger(value: unknown): value is number | undefined {
 }
 ```
 
-- [ ] **步骤 2：实现 compile workflows**
+- [x] **步骤 2：实现 compile workflows**
 
 创建 `plugins/unity-agent-kit/src/workflows/compile.ts`：
 
@@ -992,7 +992,7 @@ function defaultSleep(ms: number): Promise<void> {
 }
 ```
 
-- [ ] **步骤 3：运行 TS compile tests 验证通过**
+- [x] **步骤 3：运行 TS compile tests 验证通过**
 
 运行：
 
@@ -1004,7 +1004,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/compi
 
 证明：该检查证明 TS 能把 trusted Unity host compile state/request envelope 映射为 `unity_compile` result，并且 `wait_for_idle` 在 TS 层完成 polling、idle judgment 和 timeout continuation。
 
-- [ ] **步骤 4：运行现有 TS contract tests 防回归**
+- [x] **步骤 4：运行现有 TS contract tests 防回归**
 
 运行：
 
@@ -1016,7 +1016,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/edito
 
 证明：该检查证明 5C-02 没有破坏 5C-01 editor workflows、Phase 5A host/runtime trust boundary 或 Phase 5B resource/timeout/completion contract。
 
-- [ ] **步骤 5：Commit**
+- [x] **步骤 5：Commit**
 
 仅在用户授权 commit 时运行：
 
