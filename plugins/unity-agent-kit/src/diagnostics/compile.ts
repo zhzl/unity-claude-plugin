@@ -15,6 +15,7 @@ export interface CompileStateSnapshot {
   isIdle: boolean;
   invalidationToken: number;
   hasRecentCompileReport: boolean;
+  recentCompileReportId?: string;
   capturedMainThreadId?: number;
   executionThreadId?: number;
 }
@@ -49,8 +50,9 @@ export function parseCompileStateData(data: unknown): CompileStateSnapshot | nul
     typeof value.isCompiling === "boolean" &&
     typeof value.isUpdating === "boolean" &&
     typeof value.isIdle === "boolean" &&
-    isInteger(value.invalidationToken) &&
+    isNonNegativeInteger(value.invalidationToken) &&
     typeof value.hasRecentCompileReport === "boolean" &&
+    isOptionalString(value.recentCompileReportId) &&
     isOptionalInteger(value.capturedMainThreadId) &&
     isOptionalInteger(value.executionThreadId)
   )) {
@@ -65,6 +67,7 @@ export function parseCompileStateData(data: unknown): CompileStateSnapshot | nul
     isIdle: value.isIdle,
     invalidationToken: value.invalidationToken,
     hasRecentCompileReport: value.hasRecentCompileReport,
+    ...(value.recentCompileReportId === undefined ? {} : { recentCompileReportId: value.recentCompileReportId }),
     ...(value.capturedMainThreadId === undefined ? {} : { capturedMainThreadId: value.capturedMainThreadId }),
     ...(value.executionThreadId === undefined ? {} : { executionThreadId: value.executionThreadId }),
   };
@@ -86,8 +89,8 @@ export function parseCompileRequestData(data: unknown): CompileRequestSnapshot |
     typeof value.noOpReason === "string" &&
     typeof value.usedAssetDatabaseRefresh === "boolean" &&
     typeof value.usedCompilationPipeline === "boolean" &&
-    isInteger(value.invalidationTokenBeforeRequest) &&
-    isInteger(value.invalidationTokenAfterRequest) &&
+    isNonNegativeInteger(value.invalidationTokenBeforeRequest) &&
+    isNonNegativeInteger(value.invalidationTokenAfterRequest) &&
     typeof value.isCompiling === "boolean" &&
     typeof value.isUpdating === "boolean" &&
     isOptionalInteger(value.capturedMainThreadId) &&
@@ -345,6 +348,14 @@ function isInteger(value: unknown): value is number {
   return typeof value === "number" && Number.isInteger(value);
 }
 
+function isNonNegativeInteger(value: unknown): value is number {
+  return isInteger(value) && value >= 0;
+}
+
 function isOptionalInteger(value: unknown): value is number | undefined {
   return value === undefined || isInteger(value);
+}
+
+function isOptionalString(value: unknown): value is string | undefined {
+  return value === undefined || typeof value === "string";
 }

@@ -159,12 +159,35 @@ test("parseCompileStateDataAcceptsJsonStringAndRejectsInvalidShape", () => {
   assert.equal(parseCompileStateData(JSON.stringify({ projectRoot: state.projectRoot })), null);
 });
 
+test("parseCompileStateDataPreservesRecentCompileReportIdWhenPresent", () => {
+  const state = compileState({
+    hasRecentCompileReport: true,
+    recentCompileReportId: "compile-report-123",
+  });
+
+  assert.deepEqual(parseCompileStateData(JSON.stringify(state)), state);
+});
+
+test("parseCompileStateDataRejectsNegativeInvalidationToken", () => {
+  const state = compileState({ invalidationToken: -1 });
+
+  assert.equal(parseCompileStateData(JSON.stringify(state)), null);
+});
+
 test("parseCompileRequestDataAcceptsJsonStringAndRejectsInvalidShape", () => {
   const request = compileRequest();
 
   assert.deepEqual(parseCompileRequestData(JSON.stringify(request)), request);
   assert.equal(parseCompileRequestData("not-json"), null);
   assert.equal(parseCompileRequestData(JSON.stringify({ requested: true })), null);
+});
+
+test("parseCompileRequestDataRejectsNegativeInvalidationTokens", () => {
+  const beforeRequestNegative = compileRequest({ invalidationTokenBeforeRequest: -1 });
+  const afterRequestNegative = compileRequest({ invalidationTokenAfterRequest: -1 });
+
+  assert.equal(parseCompileRequestData(JSON.stringify(beforeRequestNegative)), null);
+  assert.equal(parseCompileRequestData(JSON.stringify(afterRequestNegative)), null);
 });
 
 test("isCompileIdleUsesCompilingAndUpdatingOnly", () => {
