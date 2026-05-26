@@ -805,6 +805,8 @@ function compileReportJudgmentResult(
     data,
     diagnostics,
     evidence: {
+      completion: "compile_proof_incomplete",
+      proof: input.usedRecentCompileReport ? "recent_complete_report" : "current_cycle_report",
       verifiedCompileSuccess: false,
     },
   });

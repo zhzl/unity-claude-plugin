@@ -366,7 +366,11 @@ test("judgeCompileReportReturnsUncertainForTokenMismatch", () => {
 
   assert.equal(result.status, "uncertain");
   assert.equal(result.code, "compile.recent_report_invalidated");
-  assert.equal(result.evidence?.["verifiedCompileSuccess"], false);
+  assert.deepEqual(result.evidence, {
+    completion: "compile_proof_incomplete",
+    proof: "recent_complete_report",
+    verifiedCompileSuccess: false,
+  });
 });
 
 test("judgeCompileReportReturnsUncertainForIncompleteLifecycle", () => {
@@ -384,6 +388,11 @@ test("judgeCompileReportReturnsUncertainForIncompleteLifecycle", () => {
 
   assert.equal(result.status, "uncertain");
   assert.equal(result.code, "compile.lifecycle_incomplete");
+  assert.deepEqual(result.evidence, {
+    completion: "compile_proof_incomplete",
+    proof: "recent_complete_report",
+    verifiedCompileSuccess: false,
+  });
 });
 
 test("getCompileStateMapsTrustedHostEnvelopeToUnityCompileAction", async () => {
@@ -707,7 +716,11 @@ test("compileAndCheckReturnsUncertainWhenIdleSettlesWithoutCompileReport", async
 
   assert.equal(result.status, "uncertain");
   assert.equal(result.code, "compile.report_missing");
-  assert.equal(result.evidence?.["verifiedCompileSuccess"], false);
+  assert.deepEqual(result.evidence, {
+    completion: "compile_proof_incomplete",
+    proof: "current_cycle_report",
+    verifiedCompileSuccess: false,
+  });
   registry.assertConsumed();
   transport.assertConsumed();
 });
@@ -743,29 +756,25 @@ test("compileAndCheckReturnsUncertainOnReportHostMismatch", () => {
   assert.equal(result.code, "host.continuity_lost");
 });
 
-test("compileAndCheckReturnsUncertainWhenCurrentCycleContinuityChangesBeforeReport", async () => {
+test("compileAndCheckReturnsUncertainWhenCurrentCycleIdleHostChanges", async () => {
   const first = sampleHostRecord({ hostId: "host-before", hostEpoch: 7, port: 49300 });
   const rebound = sampleHostRecord({ hostId: "host-after", hostEpoch: 8, port: 49301 });
   const initial = compileState({ invalidationToken: 3, hasRecentCompileReport: false });
   const request = compileRequest({ invalidationTokenBeforeRequest: 3, invalidationTokenAfterRequest: 4 });
   const settled = compileState({ invalidationToken: 4, hasRecentCompileReport: true, recentCompileReportId: "compile-report-4" });
-  const report = compileReport({ hostId: rebound.hostId, hostEpoch: rebound.hostEpoch, reportId: "compile-report-4", invalidationTokenAtCompletion: 4 });
   const registry = registrySequence([
     { ok: true, record: first }, { ok: true, record: first },
     { ok: true, record: first }, { ok: true, record: first },
-    { ok: true, record: rebound }, { ok: true, record: rebound },
     { ok: true, record: rebound }, { ok: true, record: rebound },
   ]);
   const transport = transportWithProbesAndInvokes([
     { port: first.port, result: { ok: true, statusCode: 200, body: first } },
     { port: first.port, result: { ok: true, statusCode: 200, body: first } },
     { port: rebound.port, result: { ok: true, statusCode: 200, body: rebound } },
-    { port: rebound.port, result: { ok: true, statusCode: 200, body: rebound } },
   ], [
     { port: first.port, operation: compileStateOperation, requestId: "req-continuity-state-1", result: { ok: true, statusCode: 200, body: succeededEnvelope(first, compileStateOperation, initial, "req-continuity-state-1") } },
     { port: first.port, operation: compileRequestOperation, requestId: "req-continuity-request", result: { ok: true, statusCode: 200, body: succeededEnvelope(first, compileRequestOperation, request, "req-continuity-request") } },
     { port: rebound.port, operation: compileStateOperation, requestId: "req-continuity-idle-1", result: { ok: true, statusCode: 200, body: succeededEnvelope(rebound, compileStateOperation, settled, "req-continuity-idle-1") } },
-    { port: rebound.port, operation: compileReportGetOperation, requestId: "req-continuity-report", inputJson: JSON.stringify({ reportId: "compile-report-4" }), result: { ok: true, statusCode: 200, body: succeededEnvelope(rebound, compileReportGetOperation, report, "req-continuity-report") } },
   ]);
 
   const result = await compileAndCheck({ registryPath: "ignored", projectRoot: first.projectRoot, readRegistry: registry.readRegistry, transport: transport.transport }, {
@@ -777,7 +786,11 @@ test("compileAndCheckReturnsUncertainWhenCurrentCycleContinuityChangesBeforeRepo
 
   assert.equal(result.status, "uncertain");
   assert.equal(result.code, "host.continuity_lost");
-  assert.equal(result.evidence?.["verifiedCompileSuccess"], false);
+  assert.deepEqual(result.evidence, {
+    completion: "compile_proof_incomplete",
+    proof: "current_cycle_report",
+    verifiedCompileSuccess: false,
+  });
   registry.assertConsumed();
   transport.assertConsumed();
 });

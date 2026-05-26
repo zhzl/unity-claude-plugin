@@ -225,12 +225,12 @@ export async function compileAndCheck(
   const requestResult = await requestCompile(workflow, { requestId: `${requestId}-request`, reason: "compile_and_check" });
   if (requestResult.status !== "succeeded") {
     return requestResult.status === "lost"
-      ? hostContinuityLostResult(requestId, expectedHost, requestResult)
+      ? hostContinuityLostResult(requestId, expectedHost, requestResult, "current_cycle_report")
       : remapCompileAction(requestResult, "compile_and_check");
   }
 
   if (!sameWorkflowHost(expectedHost, requestResult)) {
-    return hostContinuityLostResult(requestId, expectedHost, requestResult);
+    return hostContinuityLostResult(requestId, expectedHost, requestResult, "current_cycle_report");
   }
 
   const remainingAfterRequest = remainingTimeoutMs(startedAt, timeoutMs, now);
@@ -251,8 +251,12 @@ export async function compileAndCheck(
     }
 
     return idleResult.status === "lost"
-      ? hostContinuityLostResult(requestId, expectedHost, idleResult)
+      ? hostContinuityLostResult(requestId, expectedHost, idleResult, "current_cycle_report")
       : remapCompileAction(idleResult, "compile_and_check");
+  }
+
+  if (!sameWorkflowHost(expectedHost, idleResult)) {
+    return hostContinuityLostResult(requestId, expectedHost, idleResult, "current_cycle_report");
   }
 
   const settledState = parseCompileStateData(idleResult.data);
@@ -367,13 +371,20 @@ async function readReportAndJudge(options: ReadReportAndJudgeOptions): Promise<U
       action: "compile_and_check",
       summary: reportResult.summary || "Compile report proof is missing.",
       evidence: {
+        completion: "compile_proof_incomplete",
+        proof: options.usedRecentCompileReport ? "recent_complete_report" : "current_cycle_report",
         verifiedCompileSuccess: false,
       },
     });
   }
 
   if (options.expectedHost !== undefined && !sameWorkflowHost(options.expectedHost, reportResult)) {
-    return hostContinuityLostResult(options.baseRequestId, options.expectedHost, reportResult);
+    return hostContinuityLostResult(
+      options.baseRequestId,
+      options.expectedHost,
+      reportResult,
+      options.usedRecentCompileReport ? "recent_complete_report" : "current_cycle_report",
+    );
   }
 
   return judgeCompileReport({
@@ -411,21 +422,24 @@ function hostContinuityLostResult(
   requestId: string,
   expected: { hostId?: string; hostEpoch?: number },
   actual: Pick<UnityAgentKitPublicResult, "hostId" | "hostEpoch">,
+  proof: "recent_complete_report" | "current_cycle_report",
 ): UnityAgentKitPublicResult {
+  const proofLabel = proof === "recent_complete_report" ? "recent compile report" : "current-cycle compile";
+
   return definePublicResult({
     status: "uncertain",
     tool: "unity_compile",
     action: "compile_and_check",
     requestId,
-    summary: "Host continuity changed during current-cycle compile_and_check proof.",
+    summary: `Host continuity changed during ${proofLabel} proof.`,
     code: "host.continuity_lost",
-    message: "Host continuity changed during current-cycle compile_and_check proof.",
+    message: `Host continuity changed during ${proofLabel} proof.`,
     diagnostics: [
       {
         source: "host",
         severity: "error",
         code: "host.continuity_lost",
-        message: "Host continuity changed during current-cycle compile_and_check proof.",
+        message: `Host continuity changed during ${proofLabel} proof.`,
         details: {
           expected,
           actual: {
@@ -440,11 +454,13 @@ function hostContinuityLostResult(
       },
     ],
     evidence: {
+      completion: "compile_proof_incomplete",
+      proof,
       verifiedCompileSuccess: false,
     },
     nextStep: {
       kind: "inspect_diagnostics",
-      reason: "Current-cycle compile proof cannot cross host continuity changes.",
+      reason: `${proofLabel} proof cannot cross host continuity changes.`,
     },
   });
 }
