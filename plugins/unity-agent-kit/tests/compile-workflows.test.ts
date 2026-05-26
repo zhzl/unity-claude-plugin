@@ -2,17 +2,23 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import {
+  compileAndCheck,
+  getCompileReport,
   getCompileState,
   requestCompile,
   waitForCompileIdle,
   type CompileWorkflowOptions,
 } from "../src/workflows/compile.ts";
 import {
+  compileReportGetOperation,
   compileRequestOperation,
   compileStateOperation,
   isCompileIdle,
+  judgeCompileReport,
+  parseCompileReportData,
   parseCompileRequestData,
   parseCompileStateData,
+  type CompileReportSnapshot,
   type CompileRequestSnapshot,
   type CompileStateSnapshot,
 } from "../src/diagnostics/compile.ts";
@@ -69,6 +75,53 @@ function compileRequest(overrides: Partial<CompileRequestSnapshot> = {}): Compil
     capturedMainThreadId: 1,
     executionThreadId: 1,
     ...overrides,
+  };
+}
+
+function compileReport(overrides: Partial<CompileReportSnapshot> = {}): CompileReportSnapshot {
+  return {
+    reportId: "compile-report-3",
+    compileCycleId: "compile-cycle-3",
+    hostId: "host-compile",
+    hostEpoch: 7,
+    projectRoot: "D:/ai/unity-claude-plugin/unity",
+    unityVersion: "2022.3.61f1",
+    completedAt: "2026-05-25T10:00:05.000Z",
+    invalidationTokenAtCompletion: 3,
+    compilerErrorCount: 0,
+    compilerWarningCount: 0,
+    compilerMessagesSummary: "0 errors, 0 warnings",
+    compilerMessages: [],
+    assemblyCompilationFinishedSeen: true,
+    compilationFinishedSeen: true,
+    editorIdleAfterCompilation: true,
+    ...overrides,
+  };
+}
+
+function uncertainEnvelope(record: UnityAgentKitHostRecord, operation: string, requestId: string, code: string, message: string): Record<string, unknown> {
+  return {
+    status: "uncertain",
+    operation,
+    requestId,
+    hostId: record.hostId,
+    hostEpoch: record.hostEpoch,
+    summary: message,
+    data: "",
+    diagnostics: [
+      {
+        source: "unity-host",
+        severity: "error",
+        code,
+        message,
+        attribution: { operation, requestId },
+      },
+    ],
+    startedAt: "2026-05-25T10:00:00.000Z",
+    completedAt: "2026-05-25T10:00:00.010Z",
+    durationMs: 10,
+    code,
+    message,
   };
 }
 
@@ -202,6 +255,135 @@ test("isCompileIdleUsesCompilingAndUpdatingOnly", () => {
   assert.equal(isCompileIdle(compileState({ isCompiling: false, isUpdating: false, isIdle: false })), true);
   assert.equal(isCompileIdle(compileState({ isCompiling: true, isUpdating: false, isIdle: true })), false);
   assert.equal(isCompileIdle(compileState({ isCompiling: false, isUpdating: true, isIdle: true })), false);
+});
+
+test("parseCompileReportDataAcceptsCompleteReportAndRejectsInvalidShape", () => {
+  const report = compileReport();
+
+  assert.deepEqual(parseCompileReportData(JSON.stringify(report)), report);
+  assert.equal(parseCompileReportData("not-json"), null);
+  assert.equal(parseCompileReportData(JSON.stringify({ reportId: report.reportId })), null);
+});
+
+test("parseCompileReportDataPreservesCompilerMessages", () => {
+  const report = compileReport({
+    compilerErrorCount: 1,
+    compilerWarningCount: 1,
+    compilerMessagesSummary: "1 error, 1 warning",
+    compilerMessages: [
+      {
+        assemblyPath: "Library/ScriptAssemblies/Assembly-CSharp.dll",
+        file: "Assets/Broken.cs",
+        line: 12,
+        column: 7,
+        type: "error",
+        message: "CS1002: ; expected",
+      },
+      {
+        assemblyPath: "Library/ScriptAssemblies/Assembly-CSharp.dll",
+        file: "Assets/Warning.cs",
+        line: 3,
+        column: 1,
+        type: "warning",
+        message: "CS0168: variable is declared but never used",
+      },
+    ],
+  });
+
+  assert.deepEqual(parseCompileReportData(JSON.stringify(report)), report);
+});
+
+test("judgeCompileReportSucceedsOnlyFromCompleteMatchingReport", () => {
+  const state = compileState({ hasRecentCompileReport: true, recentCompileReportId: "compile-report-3" });
+  const report = compileReport();
+
+  const result = judgeCompileReport({
+    report,
+    state,
+    hostId: "host-compile",
+    hostEpoch: 7,
+    requestId: "req-judge-success",
+    usedRecentCompileReport: true,
+  });
+
+  assert.equal(result.status, "succeeded");
+  assert.equal(result.action, "compile_and_check");
+  assert.equal(result.data?.["compilerMessagesAttributed"], true);
+  assert.equal(result.data?.["compilerErrorCount"], 0);
+  assert.equal(result.data?.["usedRecentCompileReport"], true);
+  assert.deepEqual(result.evidence, {
+    completion: "compile_verified",
+    proof: "recent_complete_report",
+    verifiedCompileSuccess: true,
+  });
+});
+
+test("judgeCompileReportFailsOnCompilerErrors", () => {
+  const state = compileState({ hasRecentCompileReport: true, recentCompileReportId: "compile-report-3" });
+  const report = compileReport({
+    compilerErrorCount: 1,
+    compilerMessagesSummary: "1 error, 0 warnings",
+    compilerMessages: [
+      {
+        assemblyPath: "Library/ScriptAssemblies/Assembly-CSharp.dll",
+        file: "Assets/Broken.cs",
+        line: 12,
+        column: 7,
+        type: "error",
+        message: "CS1002: ; expected",
+      },
+    ],
+  });
+
+  const result = judgeCompileReport({
+    report,
+    state,
+    hostId: "host-compile",
+    hostEpoch: 7,
+    requestId: "req-judge-errors",
+    usedRecentCompileReport: false,
+    requestedInvalidationToken: 3,
+  });
+
+  assert.equal(result.status, "failed");
+  assert.equal(result.code, "compile.compiler_error");
+  assert.equal(result.data?.["compilerErrorCount"], 1);
+  assert.equal(result.evidence?.["verifiedCompileSuccess"], false);
+});
+
+test("judgeCompileReportReturnsUncertainForTokenMismatch", () => {
+  const state = compileState({ invalidationToken: 4, hasRecentCompileReport: true, recentCompileReportId: "compile-report-3" });
+  const report = compileReport({ invalidationTokenAtCompletion: 3 });
+
+  const result = judgeCompileReport({
+    report,
+    state,
+    hostId: "host-compile",
+    hostEpoch: 7,
+    requestId: "req-judge-token",
+    usedRecentCompileReport: true,
+  });
+
+  assert.equal(result.status, "uncertain");
+  assert.equal(result.code, "compile.recent_report_invalidated");
+  assert.equal(result.evidence?.["verifiedCompileSuccess"], false);
+});
+
+test("judgeCompileReportReturnsUncertainForIncompleteLifecycle", () => {
+  const state = compileState({ hasRecentCompileReport: true, recentCompileReportId: "compile-report-3" });
+  const report = compileReport({ compilationFinishedSeen: false });
+
+  const result = judgeCompileReport({
+    report,
+    state,
+    hostId: "host-compile",
+    hostEpoch: 7,
+    requestId: "req-judge-incomplete",
+    usedRecentCompileReport: true,
+  });
+
+  assert.equal(result.status, "uncertain");
+  assert.equal(result.code, "compile.lifecycle_incomplete");
 });
 
 test("getCompileStateMapsTrustedHostEnvelopeToUnityCompileAction", async () => {
@@ -395,6 +577,207 @@ test("waitForCompileIdleReturnsReadStateTimeoutWithoutClaimingCompileFailure", a
   assert.equal(result.safeToRetry, true);
   assert.equal(result.mayStillBeRunning, false);
   assert.deepEqual(sleeps, []);
+  registry.assertConsumed();
+  transport.assertConsumed();
+});
+
+test("getCompileReportMapsTrustedHostEnvelopeAsInternalHelper", async () => {
+  const record = sampleHostRecord();
+  const report = compileReport();
+  const registry = registrySequence([{ ok: true, record }, { ok: true, record }]);
+  const transport = transportWithProbesAndInvokes([
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+  ], [
+    { port: record.port, operation: compileReportGetOperation, requestId: "req-report", inputJson: JSON.stringify({ reportId: "compile-report-3" }), result: { ok: true, statusCode: 200, body: succeededEnvelope(record, compileReportGetOperation, report, "req-report") } },
+  ]);
+
+  const result = await getCompileReport(options(record, transport.transport, registry.readRegistry), { requestId: "req-report", reportId: "compile-report-3" });
+
+  assert.equal(result.status, "succeeded");
+  assert.equal(result.tool, "unity_compile_internal");
+  assert.equal(result.action, "read_compile_report");
+  assert.equal(result.operation, compileReportGetOperation);
+  assert.equal(result.metadata?.["publicAction"], false);
+  assert.deepEqual(result.data, report);
+  registry.assertConsumed();
+  transport.assertConsumed();
+});
+
+test("compileAndCheckUsesValidRecentCompleteReportWithoutRequestingCompilationOrLongWait", async () => {
+  const record = sampleHostRecord();
+  const state = compileState({ hasRecentCompileReport: true, recentCompileReportId: "compile-report-3" });
+  const report = compileReport();
+  const sleeps: number[] = [];
+  const registry = registrySequence([{ ok: true, record }, { ok: true, record }, { ok: true, record }, { ok: true, record }]);
+  const transport = transportWithProbesAndInvokes([
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+  ], [
+    { port: record.port, operation: compileStateOperation, requestId: "req-check-state-1", result: { ok: true, statusCode: 200, body: succeededEnvelope(record, compileStateOperation, state, "req-check-state-1") } },
+    { port: record.port, operation: compileReportGetOperation, requestId: "req-check-report", inputJson: JSON.stringify({ reportId: "compile-report-3" }), result: { ok: true, statusCode: 200, body: succeededEnvelope(record, compileReportGetOperation, report, "req-check-report") } },
+  ]);
+
+  const result = await compileAndCheck(options(record, transport.transport, registry.readRegistry), {
+    requestId: "req-check",
+    timeoutMs: 120_000,
+    sleep: async (ms) => { sleeps.push(ms); },
+  });
+
+  assert.equal(result.status, "succeeded");
+  assert.equal(result.action, "compile_and_check");
+  assert.equal(result.data?.["usedRecentCompileReport"], true);
+  assert.equal(result.data?.["compilerMessagesAttributed"], true);
+  assert.deepEqual(sleeps, []);
+  registry.assertConsumed();
+  transport.assertConsumed();
+});
+
+test("compileAndCheckRequestsWaitsAndChecksCurrentCycleReport", async () => {
+  const record = sampleHostRecord();
+  const initial = compileState({ invalidationToken: 3, hasRecentCompileReport: false });
+  const request = compileRequest({ invalidationTokenBeforeRequest: 3, invalidationTokenAfterRequest: 4 });
+  const settled = compileState({ invalidationToken: 4, hasRecentCompileReport: true, recentCompileReportId: "compile-report-4" });
+  const report = compileReport({
+    reportId: "compile-report-4",
+    compileCycleId: "compile-cycle-4",
+    invalidationTokenAtCompletion: 4,
+  });
+  const registry = registrySequence([
+    { ok: true, record }, { ok: true, record },
+    { ok: true, record }, { ok: true, record },
+    { ok: true, record }, { ok: true, record },
+    { ok: true, record }, { ok: true, record },
+  ]);
+  const transport = transportWithProbesAndInvokes([
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+  ], [
+    { port: record.port, operation: compileStateOperation, requestId: "req-cycle-state-1", result: { ok: true, statusCode: 200, body: succeededEnvelope(record, compileStateOperation, initial, "req-cycle-state-1") } },
+    { port: record.port, operation: compileRequestOperation, requestId: "req-cycle-request", result: { ok: true, statusCode: 200, body: succeededEnvelope(record, compileRequestOperation, request, "req-cycle-request") } },
+    { port: record.port, operation: compileStateOperation, requestId: "req-cycle-idle-1", result: { ok: true, statusCode: 200, body: succeededEnvelope(record, compileStateOperation, settled, "req-cycle-idle-1") } },
+    { port: record.port, operation: compileReportGetOperation, requestId: "req-cycle-report", inputJson: JSON.stringify({ reportId: "compile-report-4" }), result: { ok: true, statusCode: 200, body: succeededEnvelope(record, compileReportGetOperation, report, "req-cycle-report") } },
+  ]);
+
+  const result = await compileAndCheck(options(record, transport.transport, registry.readRegistry), {
+    requestId: "req-cycle",
+    timeoutMs: 1_000,
+    pollIntervalMs: 25,
+    sleep: async () => {},
+  });
+
+  assert.equal(result.status, "succeeded");
+  assert.equal(result.data?.["usedRecentCompileReport"], false);
+  assert.equal(result.data?.["invalidationTokenAtCheck"], 4);
+  assert.equal(result.evidence?.["proof"], "current_cycle_report");
+  registry.assertConsumed();
+  transport.assertConsumed();
+});
+
+test("compileAndCheckReturnsUncertainWhenIdleSettlesWithoutCompileReport", async () => {
+  const record = sampleHostRecord();
+  const initial = compileState({ invalidationToken: 3, hasRecentCompileReport: false });
+  const request = compileRequest({ invalidationTokenBeforeRequest: 3, invalidationTokenAfterRequest: 4 });
+  const settled = compileState({ invalidationToken: 4, hasRecentCompileReport: false });
+  const registry = registrySequence([
+    { ok: true, record }, { ok: true, record },
+    { ok: true, record }, { ok: true, record },
+    { ok: true, record }, { ok: true, record },
+    { ok: true, record }, { ok: true, record },
+  ]);
+  const transport = transportWithProbesAndInvokes([
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+  ], [
+    { port: record.port, operation: compileStateOperation, requestId: "req-missing-state-1", result: { ok: true, statusCode: 200, body: succeededEnvelope(record, compileStateOperation, initial, "req-missing-state-1") } },
+    { port: record.port, operation: compileRequestOperation, requestId: "req-missing-request", result: { ok: true, statusCode: 200, body: succeededEnvelope(record, compileRequestOperation, request, "req-missing-request") } },
+    { port: record.port, operation: compileStateOperation, requestId: "req-missing-idle-1", result: { ok: true, statusCode: 200, body: succeededEnvelope(record, compileStateOperation, settled, "req-missing-idle-1") } },
+    { port: record.port, operation: compileReportGetOperation, requestId: "req-missing-report", result: { ok: true, statusCode: 200, body: uncertainEnvelope(record, compileReportGetOperation, "req-missing-report", "compile.report_missing", "No complete compile report is available.") } },
+  ]);
+
+  const result = await compileAndCheck(options(record, transport.transport, registry.readRegistry), {
+    requestId: "req-missing",
+    timeoutMs: 1_000,
+    pollIntervalMs: 25,
+    sleep: async () => {},
+  });
+
+  assert.equal(result.status, "uncertain");
+  assert.equal(result.code, "compile.report_missing");
+  assert.equal(result.evidence?.["verifiedCompileSuccess"], false);
+  registry.assertConsumed();
+  transport.assertConsumed();
+});
+
+test("compileAndCheckRejectsLongTimeoutWithoutExplicitIntent", async () => {
+  const record = sampleHostRecord();
+  const transport = transportWithProbesAndInvokes([], []);
+
+  const result = await compileAndCheck(options(record, transport.transport), {
+    requestId: "req-long-timeout",
+    timeoutMs: 120_001,
+  });
+
+  assert.equal(result.status, "rejected");
+  assert.equal(result.code, "compile.long_wait_requires_intent");
+  transport.assertConsumed();
+});
+
+test("compileAndCheckReturnsUncertainOnReportHostMismatch", () => {
+  const state = compileState({ hasRecentCompileReport: true, recentCompileReportId: "compile-report-3" });
+  const report = compileReport({ hostId: "other-host" });
+
+  const result = judgeCompileReport({
+    report,
+    state,
+    hostId: "host-compile",
+    hostEpoch: 7,
+    requestId: "req-host-mismatch",
+    usedRecentCompileReport: true,
+  });
+
+  assert.equal(result.status, "uncertain");
+  assert.equal(result.code, "host.continuity_lost");
+});
+
+test("compileAndCheckReturnsUncertainWhenCurrentCycleContinuityChangesBeforeReport", async () => {
+  const first = sampleHostRecord({ hostId: "host-before", hostEpoch: 7, port: 49300 });
+  const rebound = sampleHostRecord({ hostId: "host-after", hostEpoch: 8, port: 49301 });
+  const initial = compileState({ invalidationToken: 3, hasRecentCompileReport: false });
+  const request = compileRequest({ invalidationTokenBeforeRequest: 3, invalidationTokenAfterRequest: 4 });
+  const settled = compileState({ invalidationToken: 4, hasRecentCompileReport: true, recentCompileReportId: "compile-report-4" });
+  const report = compileReport({ hostId: rebound.hostId, hostEpoch: rebound.hostEpoch, reportId: "compile-report-4", invalidationTokenAtCompletion: 4 });
+  const registry = registrySequence([
+    { ok: true, record: first }, { ok: true, record: first },
+    { ok: true, record: first }, { ok: true, record: first },
+    { ok: true, record: rebound }, { ok: true, record: rebound },
+    { ok: true, record: rebound }, { ok: true, record: rebound },
+  ]);
+  const transport = transportWithProbesAndInvokes([
+    { port: first.port, result: { ok: true, statusCode: 200, body: first } },
+    { port: first.port, result: { ok: true, statusCode: 200, body: first } },
+    { port: rebound.port, result: { ok: true, statusCode: 200, body: rebound } },
+    { port: rebound.port, result: { ok: true, statusCode: 200, body: rebound } },
+  ], [
+    { port: first.port, operation: compileStateOperation, requestId: "req-continuity-state-1", result: { ok: true, statusCode: 200, body: succeededEnvelope(first, compileStateOperation, initial, "req-continuity-state-1") } },
+    { port: first.port, operation: compileRequestOperation, requestId: "req-continuity-request", result: { ok: true, statusCode: 200, body: succeededEnvelope(first, compileRequestOperation, request, "req-continuity-request") } },
+    { port: rebound.port, operation: compileStateOperation, requestId: "req-continuity-idle-1", result: { ok: true, statusCode: 200, body: succeededEnvelope(rebound, compileStateOperation, settled, "req-continuity-idle-1") } },
+    { port: rebound.port, operation: compileReportGetOperation, requestId: "req-continuity-report", inputJson: JSON.stringify({ reportId: "compile-report-4" }), result: { ok: true, statusCode: 200, body: succeededEnvelope(rebound, compileReportGetOperation, report, "req-continuity-report") } },
+  ]);
+
+  const result = await compileAndCheck({ registryPath: "ignored", projectRoot: first.projectRoot, readRegistry: registry.readRegistry, transport: transport.transport }, {
+    requestId: "req-continuity",
+    timeoutMs: 1_000,
+    pollIntervalMs: 25,
+    sleep: async () => {},
+  });
+
+  assert.equal(result.status, "uncertain");
+  assert.equal(result.code, "host.continuity_lost");
+  assert.equal(result.evidence?.["verifiedCompileSuccess"], false);
   registry.assertConsumed();
   transport.assertConsumed();
 });
