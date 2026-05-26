@@ -4,12 +4,17 @@ import {
   type UnityAgentKitPublicResult,
 } from "../contracts/result.ts";
 import {
+  compileReportGetOperation,
   compileRequestOperation,
   compileRequestResultFromHostResult,
   compileStateOperation,
   compileStateResultFromHostResult,
+  internalCompileReportResultFromHostResult,
   isCompileIdle,
+  judgeCompileReport,
+  parseCompileRequestData,
   parseCompileStateData,
+  type CompileStateSnapshot,
 } from "../diagnostics/compile.ts";
 import type { RegistryReader } from "../host/rebind.ts";
 import type { HostTransport } from "../host/transport.ts";
@@ -31,9 +36,21 @@ export interface CompileRequestOptions extends CompileActionOptions {
   reason?: string;
 }
 
+export interface CompileReportOptions extends CompileActionOptions {
+  reportId?: string;
+}
+
 export interface WaitForCompileIdleOptions extends CompileActionOptions {
   timeoutMs?: number;
   pollIntervalMs?: number;
+  sleep?: (ms: number) => Promise<void>;
+  now?: () => number;
+}
+
+export interface CompileAndCheckOptions extends CompileActionOptions {
+  timeoutMs?: number;
+  pollIntervalMs?: number;
+  allowLongWait?: boolean;
   sleep?: (ms: number) => Promise<void>;
   now?: () => number;
 }
@@ -75,6 +92,26 @@ export async function requestCompile(
   });
 
   return compileRequestResultFromHostResult(hostResult.result, workflow.projectRoot);
+}
+
+export async function getCompileReport(
+  workflow: CompileWorkflowOptions,
+  options: CompileReportOptions = {},
+): Promise<UnityAgentKitPublicResult> {
+  const requestId = options.requestId ?? `compile-report-${Date.now()}`;
+  const hostResult = await executeWithRebindAwareness({
+    registryPath: workflow.registryPath,
+    projectRoot: workflow.projectRoot,
+    readRegistry: workflow.readRegistry,
+    transport: workflow.transport,
+    request: {
+      operation: compileReportGetOperation,
+      requestId,
+      ...(options.reportId === undefined ? {} : { inputJson: JSON.stringify({ reportId: options.reportId }) }),
+    },
+  });
+
+  return internalCompileReportResultFromHostResult(hostResult.result, workflow.projectRoot);
 }
 
 export async function waitForCompileIdle(
@@ -134,15 +171,115 @@ export async function waitForCompileIdle(
   }
 }
 
+const compileAndCheckDefaultTimeoutMs = 120_000;
+
+export async function compileAndCheck(
+  workflow: CompileWorkflowOptions,
+  options: CompileAndCheckOptions = {},
+): Promise<UnityAgentKitPublicResult> {
+  const requestId = options.requestId ?? `compile-and-check-${Date.now()}`;
+  const timeoutValidation = validateCompileAndCheckTimeout(requestId, options.timeoutMs, options.allowLongWait === true);
+  if (timeoutValidation.status === "rejected") {
+    return timeoutValidation;
+  }
+
+  const timeoutMs = timeoutValidation.timeoutMs;
+  const pollIntervalMs = options.pollIntervalMs ?? 500;
+  const sleep = options.sleep ?? defaultSleep;
+  const now = options.now ?? Date.now;
+  const startedAt = now();
+
+  const initialStateResult = await getCompileState(workflow, { requestId: `${requestId}-state-1` });
+  if (initialStateResult.status !== "succeeded") {
+    return remapCompileAction(initialStateResult, "compile_and_check");
+  }
+
+  const initialState = parseCompileStateData(initialStateResult.data);
+  if (initialState === null) {
+    return remapCompileAction(initialStateResult, "compile_and_check");
+  }
+
+  const initialHost = {
+    hostId: initialStateResult.hostId,
+    hostEpoch: initialStateResult.hostEpoch,
+  };
+
+  if (isCompileIdle(initialState) && initialState.hasRecentCompileReport) {
+    const recentReportResult = await readReportAndJudge({
+      workflow,
+      baseRequestId: requestId,
+      reportRequestId: `${requestId}-report`,
+      state: initialState,
+      usedRecentCompileReport: true,
+      requestResult: undefined,
+      expectedHost: initialHost,
+    });
+
+    if (!(recentReportResult.status === "uncertain" && recentReportResult.code === "compile.report_missing")) {
+      return recentReportResult;
+    }
+  }
+
+  const expectedHost = initialHost;
+
+  const requestResult = await requestCompile(workflow, { requestId: `${requestId}-request`, reason: "compile_and_check" });
+  if (requestResult.status !== "succeeded") {
+    return requestResult.status === "lost"
+      ? hostContinuityLostResult(requestId, expectedHost, requestResult)
+      : remapCompileAction(requestResult, "compile_and_check");
+  }
+
+  if (!sameWorkflowHost(expectedHost, requestResult)) {
+    return hostContinuityLostResult(requestId, expectedHost, requestResult);
+  }
+
+  const remainingAfterRequest = remainingTimeoutMs(startedAt, timeoutMs, now);
+  if (remainingAfterRequest <= 0) {
+    return compileAndCheckTimeoutResult(requestId);
+  }
+
+  const idleResult = await waitForCompileIdle(workflow, {
+    requestId: `${requestId}-idle`,
+    timeoutMs: remainingAfterRequest,
+    pollIntervalMs,
+    sleep,
+    now,
+  });
+  if (idleResult.status !== "succeeded") {
+    if (idleResult.status === "timeout") {
+      return compileAndCheckTimeoutResult(requestId);
+    }
+
+    return idleResult.status === "lost"
+      ? hostContinuityLostResult(requestId, expectedHost, idleResult)
+      : remapCompileAction(idleResult, "compile_and_check");
+  }
+
+  const settledState = parseCompileStateData(idleResult.data);
+  if (settledState === null) {
+    return remapCompileAction(idleResult, "compile_and_check");
+  }
+
+  return readReportAndJudge({
+    workflow,
+    baseRequestId: requestId,
+    reportRequestId: `${requestId}-report`,
+    state: settledState,
+    usedRecentCompileReport: false,
+    requestResult,
+    expectedHost,
+  });
+}
+
 function remapCompileAction(
   result: UnityAgentKitPublicResult,
-  action: "get_state" | "request" | "wait_for_idle",
+  action: "get_state" | "request" | "wait_for_idle" | "compile_and_check",
 ): UnityAgentKitPublicResult {
   return definePublicResult({
     ...result,
     tool: "unity_compile",
     action,
-    summary: result.summary || "Compile workflow could not establish the latest state.",
+    summary: result.summary || "Compile workflow could not establish trusted evidence.",
   });
 }
 
@@ -159,6 +296,176 @@ function createIdleWaitTimeoutResult(requestId: string): UnityAgentKitPublicResu
       tool: "unity_compile",
       action: "get_state",
       reason: "Read the latest compile state before retrying idle wait.",
+    },
+  });
+}
+
+function validateCompileAndCheckTimeout(
+  requestId: string,
+  timeoutMs: number | undefined,
+  allowLongWait: boolean,
+): (UnityAgentKitPublicResult & { status: "rejected" }) | { status: "accepted"; timeoutMs: number } {
+  const resolvedTimeoutMs = timeoutMs ?? compileAndCheckDefaultTimeoutMs;
+  if (resolvedTimeoutMs > compileAndCheckDefaultTimeoutMs && !allowLongWait) {
+    return definePublicResult({
+      status: "rejected",
+      tool: "unity_compile",
+      action: "compile_and_check",
+      requestId,
+      summary: "compile_and_check timeout beyond 120s requires explicit long-wait intent.",
+      code: "compile.long_wait_requires_intent",
+      message: "compile_and_check timeout beyond 120s requires explicit long-wait intent.",
+      diagnostics: [
+        {
+          source: "workflow",
+          severity: "error",
+          code: "compile.long_wait_requires_intent",
+          message: "compile_and_check timeout beyond 120s requires explicit long-wait intent.",
+          details: {
+            timeoutMs: resolvedTimeoutMs,
+            maxDefaultTimeoutMs: compileAndCheckDefaultTimeoutMs,
+          },
+          attribution: {
+            operation: "compile_and_check",
+            requestId,
+          },
+        },
+      ],
+      nextStep: {
+        kind: "rerun_with_confirmation",
+        reason: "Rerun with allowLongWait: true if the user explicitly wants to wait beyond 120s.",
+      },
+    }) as UnityAgentKitPublicResult & { status: "rejected" };
+  }
+
+  return {
+    status: "accepted",
+    timeoutMs: resolvedTimeoutMs,
+  };
+}
+
+interface ReadReportAndJudgeOptions {
+  workflow: CompileWorkflowOptions;
+  baseRequestId: string;
+  reportRequestId: string;
+  state: CompileStateSnapshot;
+  usedRecentCompileReport: boolean;
+  requestResult?: UnityAgentKitPublicResult;
+  expectedHost?: { hostId?: string; hostEpoch?: number };
+}
+
+async function readReportAndJudge(options: ReadReportAndJudgeOptions): Promise<UnityAgentKitPublicResult> {
+  const reportResult = await getCompileReport(options.workflow, {
+    requestId: options.reportRequestId,
+    ...(options.state.recentCompileReportId === undefined ? {} : { reportId: options.state.recentCompileReportId }),
+  });
+
+  if (reportResult.status !== "succeeded") {
+    return definePublicResult({
+      ...reportResult,
+      tool: "unity_compile",
+      action: "compile_and_check",
+      summary: reportResult.summary || "Compile report proof is missing.",
+      evidence: {
+        verifiedCompileSuccess: false,
+      },
+    });
+  }
+
+  if (options.expectedHost !== undefined && !sameWorkflowHost(options.expectedHost, reportResult)) {
+    return hostContinuityLostResult(options.baseRequestId, options.expectedHost, reportResult);
+  }
+
+  return judgeCompileReport({
+    report: reportResult.data as Parameters<typeof judgeCompileReport>[0]["report"],
+    state: options.state,
+    hostId: reportResult.hostId ?? "",
+    hostEpoch: reportResult.hostEpoch ?? 0,
+    requestId: options.baseRequestId,
+    usedRecentCompileReport: options.usedRecentCompileReport,
+    requestedInvalidationToken: requestedInvalidationToken(options.requestResult),
+  });
+}
+
+function requestedInvalidationToken(requestResult: UnityAgentKitPublicResult | undefined): number | undefined {
+  if (requestResult === undefined) {
+    return undefined;
+  }
+
+  const requestSnapshot = parseCompileRequestData(requestResult.data);
+  if (requestSnapshot === null || !requestSnapshot.requested) {
+    return undefined;
+  }
+
+  return requestSnapshot.invalidationTokenAfterRequest;
+}
+
+function sameWorkflowHost(
+  expected: { hostId?: string; hostEpoch?: number },
+  result: Pick<UnityAgentKitPublicResult, "hostId" | "hostEpoch">,
+): boolean {
+  return expected.hostId === result.hostId && expected.hostEpoch === result.hostEpoch;
+}
+
+function hostContinuityLostResult(
+  requestId: string,
+  expected: { hostId?: string; hostEpoch?: number },
+  actual: Pick<UnityAgentKitPublicResult, "hostId" | "hostEpoch">,
+): UnityAgentKitPublicResult {
+  return definePublicResult({
+    status: "uncertain",
+    tool: "unity_compile",
+    action: "compile_and_check",
+    requestId,
+    summary: "Host continuity changed during current-cycle compile_and_check proof.",
+    code: "host.continuity_lost",
+    message: "Host continuity changed during current-cycle compile_and_check proof.",
+    diagnostics: [
+      {
+        source: "host",
+        severity: "error",
+        code: "host.continuity_lost",
+        message: "Host continuity changed during current-cycle compile_and_check proof.",
+        details: {
+          expected,
+          actual: {
+            hostId: actual.hostId,
+            hostEpoch: actual.hostEpoch,
+          },
+        },
+        attribution: {
+          operation: "compile_and_check",
+          requestId,
+        },
+      },
+    ],
+    evidence: {
+      verifiedCompileSuccess: false,
+    },
+    nextStep: {
+      kind: "inspect_diagnostics",
+      reason: "Current-cycle compile proof cannot cross host continuity changes.",
+    },
+  });
+}
+
+function remainingTimeoutMs(startedAt: number, timeoutMs: number, now: () => number): number {
+  return Math.max(0, startedAt + timeoutMs - now());
+}
+
+function compileAndCheckTimeoutResult(requestId: string): UnityAgentKitPublicResult {
+  return timeoutContinuationResult({
+    tool: "unity_compile",
+    action: "compile_and_check",
+    requestId,
+    summary: "Timed out waiting for Unity compile_and_check proof.",
+    mayStillBeRunning: true,
+    safeToRetry: false,
+    nextStep: {
+      kind: "read_state",
+      tool: "unity_compile",
+      action: "get_state",
+      reason: "Read compile state and report diagnostics before retrying compile_and_check.",
     },
   });
 }
