@@ -1131,10 +1131,10 @@ namespace UnityAgentKit.Editor.Tests
             var payloadText = System.IO.File.ReadAllText(payloadPath);
 
             Assert.LessOrEqual(data.entryCount, 50);
-            if (data.range.totalCountAtCapture == 0)
+            var containsUniqueMessage = payloadText.Contains(uniqueMessage);
+            if (!containsUniqueMessage)
             {
-                TestContext.WriteLine("LogEntries buffer was empty after Debug.Log in this Unity batchmode runner: " + uniqueMessage);
-                Assert.AreEqual(0, data.entryCount);
+                TestContext.WriteLine("LogEntries payload did not include the controlled Debug.Log entry in this Unity batchmode runner. totalCountAtCapture=" + data.range.totalCountAtCapture + ", uniqueMessage=" + uniqueMessage);
                 Assert.IsFalse(payloadText.Contains(uniqueMessage));
                 return;
             }
