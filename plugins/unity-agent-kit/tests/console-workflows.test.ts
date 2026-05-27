@@ -275,6 +275,7 @@ async function writeConsoleSnapshotResource(
     createdAt: "2026-05-27T09:00:04.000Z",
     producerTool: "unity_console",
     producerAction: "snapshot",
+    validationStatus: "valid",
     sizeBytes: Buffer.byteLength(payload),
     diagnostics: [],
   }, null, 2), "utf8");
@@ -380,6 +381,8 @@ test("snapshotConsoleRequiresPhase5BResourceReadbackBeforeSuccess", async () => 
     assert.equal(result.status, "succeeded");
     assert.equal(result.resource?.uri, summary.uri);
     assert.equal(result.resource?.type, "console_snapshot");
+    assert.equal(result.resource?.artifactId, summary.artifactId);
+    assert.equal(result.resource?.validationStatus, "valid");
     assert.equal(result.evidence?.["completion"], "artifact_complete");
     assert.equal((await readFile(path.join(artifactRoot, "console-snapshots", "console-1.json"), "utf8")).length > 0, true);
     registry.assertConsumed();
