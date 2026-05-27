@@ -433,6 +433,21 @@ namespace UnityAgentKit.Editor.Tests
         }
 
         [Test]
+        public void CompileCollectorDoesNotCompleteReportWithoutAssemblyCompilerProof()
+        {
+            UnityAgentKitCompileDiagnostics.ResetForTests();
+            var record = TestHostRecord();
+
+            UnityAgentKitCompileDiagnostics.StartCompileCycleForTests(record, invalidationTokenAtStart: 5);
+            UnityAgentKitCompileDiagnostics.RecordCompilationFinishedForTests();
+            UnityAgentKitCompileDiagnostics.CompleteActiveCycleIfIdleForTests(isCompiling: false, isUpdating: false);
+
+            Assert.IsFalse(UnityAgentKitCompileDiagnostics.TryReadRecentReportForTests(record, out _, out var code, out var message));
+            Assert.AreEqual("compile.report_missing", code);
+            Assert.AreEqual("No complete compile report is available.", message);
+        }
+
+        [Test]
         public void CompileReportOperationReturnsUncertainWhenReportMissing()
         {
             UnityAgentKitCompileDiagnostics.ResetForTests();

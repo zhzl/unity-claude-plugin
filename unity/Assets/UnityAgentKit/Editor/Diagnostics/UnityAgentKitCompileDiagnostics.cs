@@ -319,7 +319,7 @@ namespace UnityAgentKit.Editor
                 return;
             }
 
-            if (!activeCompileCycle.compilationFinishedSeen || isCompiling || isUpdating)
+            if (!activeCompileCycle.assemblyCompilationFinishedSeen || !activeCompileCycle.compilationFinishedSeen || isCompiling || isUpdating)
             {
                 return;
             }
