@@ -95,9 +95,9 @@ export function parseConsoleCountData(data: unknown): ConsoleCountSnapshot | nul
   if (!(
     typeof value.projectRoot === "string" &&
     value.projectRoot.length > 0 &&
-    isOptionalString(value.unityVersion) &&
-    isOptionalString(value.hostId) &&
-    isOptionalNonNegativeInteger(value.hostEpoch) &&
+    isNonEmptyString(value.unityVersion) &&
+    isNonEmptyString(value.hostId) &&
+    isNonNegativeInteger(value.hostEpoch) &&
     isNonNegativeInteger(value.totalCount) &&
     isConsoleCounts(value.counts) &&
     isConsoleSeverityScan(value.severityScan) &&
@@ -112,9 +112,9 @@ export function parseConsoleCountData(data: unknown): ConsoleCountSnapshot | nul
 
   return {
     projectRoot: value.projectRoot,
-    ...(value.unityVersion === undefined ? {} : { unityVersion: value.unityVersion }),
-    ...(value.hostId === undefined ? {} : { hostId: value.hostId }),
-    ...(value.hostEpoch === undefined ? {} : { hostEpoch: value.hostEpoch }),
+    unityVersion: value.unityVersion,
+    hostId: value.hostId,
+    hostEpoch: value.hostEpoch,
     totalCount: value.totalCount,
     counts: cloneConsoleCounts(value.counts),
     severityScan: cloneConsoleSeverityScan(value.severityScan),
@@ -185,9 +185,9 @@ export function parseConsoleClearData(data: unknown): ConsoleClearSnapshot | nul
   if (!(
     typeof value.projectRoot === "string" &&
     value.projectRoot.length > 0 &&
-    isOptionalString(value.unityVersion) &&
-    isOptionalString(value.hostId) &&
-    isOptionalNonNegativeInteger(value.hostEpoch) &&
+    isNonEmptyString(value.unityVersion) &&
+    isNonEmptyString(value.hostId) &&
+    isNonNegativeInteger(value.hostEpoch) &&
     typeof value.explicitClear === "boolean" &&
     typeof value.cleared === "boolean" &&
     isNonNegativeInteger(value.countBeforeClear) &&
@@ -204,9 +204,9 @@ export function parseConsoleClearData(data: unknown): ConsoleClearSnapshot | nul
 
   return {
     projectRoot: value.projectRoot,
-    ...(value.unityVersion === undefined ? {} : { unityVersion: value.unityVersion }),
-    ...(value.hostId === undefined ? {} : { hostId: value.hostId }),
-    ...(value.hostEpoch === undefined ? {} : { hostEpoch: value.hostEpoch }),
+    unityVersion: value.unityVersion,
+    hostId: value.hostId,
+    hostEpoch: value.hostEpoch,
     explicitClear: value.explicitClear,
     cleared: value.cleared,
     countBeforeClear: value.countBeforeClear,
@@ -682,10 +682,6 @@ function isOptionalInteger(value: unknown): value is number | undefined {
 
 function isOptionalNonNegativeInteger(value: unknown): value is number | undefined {
   return value === undefined || isNonNegativeInteger(value);
-}
-
-function isOptionalString(value: unknown): value is string | undefined {
-  return value === undefined || typeof value === "string";
 }
 
 function isNonEmptyString(value: unknown): value is string {

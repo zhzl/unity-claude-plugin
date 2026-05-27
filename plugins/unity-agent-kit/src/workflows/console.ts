@@ -14,6 +14,7 @@ import {
   parseConsoleSnapshotData,
   validateConsoleCursor,
   type ConsoleCursor,
+  type ConsoleSnapshotSummary,
 } from "../diagnostics/console.ts";
 
 export interface ConsoleWorkflowOptions { registryPath: string; projectRoot: string; transport: HostTransport; readRegistry?: RegistryReader; }
@@ -108,12 +109,7 @@ export async function snapshotConsole(
     });
   }
 
-  const cursorValidation = validateConsoleCursor(summary.cursor, {
-    hostId: summary.hostId,
-    hostEpoch: summary.hostEpoch,
-    consoleGeneration: summary.cursor.consoleGeneration,
-    totalCount: summary.range.totalCountAtCapture,
-  });
+  const cursorValidation = validateSnapshotCursorProof(summary);
   if (!cursorValidation.ok) {
     return definePublicResult({
       status: "uncertain",
@@ -124,9 +120,8 @@ export async function snapshotConsole(
       hostId: mapped.hostId,
       hostEpoch: mapped.hostEpoch,
       summary: cursorValidation.diagnostic.message,
-      code: cursorValidation.diagnostic.code,
+      code: "console.cursor_invalid",
       message: cursorValidation.diagnostic.message,
-      data: summary,
       diagnostics: [...mapped.diagnostics, cursorValidation.diagnostic],
       evidence: mapped.evidence,
       startedAt: mapped.startedAt,
@@ -266,6 +261,87 @@ export async function clearConsole(
   }
 
   return consoleClearResultFromHostResult(hostResult.result, workflow.projectRoot);
+}
+
+function validateSnapshotCursorProof(
+  summary: ConsoleSnapshotSummary,
+): { ok: true } | { ok: false; diagnostic: UnityAgentKitDiagnostic } {
+  const cursorValidation = validateConsoleCursor(summary.cursor, {
+    hostId: summary.hostId,
+    hostEpoch: summary.hostEpoch,
+    consoleGeneration: summary.cursor.consoleGeneration,
+    totalCount: summary.range.totalCountAtCapture,
+  });
+  if (!cursorValidation.ok) {
+    return {
+      ok: false,
+      diagnostic: remapSnapshotCursorDiagnostic(cursorValidation.diagnostic),
+    };
+  }
+
+  if (summary.cursor.startIndex !== summary.range.endIndexExclusive) {
+    return {
+      ok: false,
+      diagnostic: {
+        source: "validation",
+        severity: "error",
+        code: "console.cursor_invalid",
+        message: "Console snapshot cursor startIndex does not match the end of the captured range.",
+        details: {
+          cursorStartIndex: summary.cursor.startIndex,
+          rangeEndIndexExclusive: summary.range.endIndexExclusive,
+        },
+      },
+    };
+  }
+
+  if (
+    summary.range.startIndex > summary.range.endIndexExclusive ||
+    summary.range.endIndexExclusive > summary.range.totalCountAtCapture
+  ) {
+    return {
+      ok: false,
+      diagnostic: {
+        source: "validation",
+        severity: "error",
+        code: "console.cursor_invalid",
+        message: "Console snapshot range is inconsistent with the total count captured.",
+        details: {
+          startIndex: summary.range.startIndex,
+          endIndexExclusive: summary.range.endIndexExclusive,
+          totalCountAtCapture: summary.range.totalCountAtCapture,
+        },
+      },
+    };
+  }
+
+  const expectedEntryCount = summary.range.endIndexExclusive - summary.range.startIndex;
+  if (summary.entryCount !== expectedEntryCount) {
+    return {
+      ok: false,
+      diagnostic: {
+        source: "validation",
+        severity: "error",
+        code: "console.cursor_invalid",
+        message: "Console snapshot entryCount does not match the captured range length.",
+        details: {
+          entryCount: summary.entryCount,
+          expectedEntryCount,
+          startIndex: summary.range.startIndex,
+          endIndexExclusive: summary.range.endIndexExclusive,
+        },
+      },
+    };
+  }
+
+  return { ok: true };
+}
+
+function remapSnapshotCursorDiagnostic(diagnostic: UnityAgentKitDiagnostic): UnityAgentKitDiagnostic {
+  return {
+    ...diagnostic,
+    code: "console.cursor_invalid",
+  };
 }
 
 export function boundedInteger(value: number | undefined, min: number, max: number, fallback: number): number {

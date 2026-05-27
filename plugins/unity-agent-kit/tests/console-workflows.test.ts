@@ -59,6 +59,9 @@ function cursor(overrides: Partial<ConsoleCursor> = {}): ConsoleCursor {
 function countSnapshot(overrides: Partial<ConsoleCountSnapshot> = {}): ConsoleCountSnapshot {
   return {
     projectRoot: "D:/ai/unity-claude-plugin/unity",
+    unityVersion: "6000.0.0f1",
+    hostId: "host-console",
+    hostEpoch: 12,
     totalCount: 1000,
     counts: {
       error: 1,
@@ -99,11 +102,11 @@ function snapshotSummary(overrides: Partial<ConsoleSnapshotSummary> = {}): Conso
       warning: 40,
       log: 148,
     },
-    cursor: cursor(),
+    cursor: cursor({ startIndex: 320 }),
     range: {
       startIndex: 120,
       endIndexExclusive: 320,
-      totalCountAtCapture: 250,
+      totalCountAtCapture: 320,
       limit: 200,
       truncated: true,
     },
@@ -117,6 +120,9 @@ function snapshotSummary(overrides: Partial<ConsoleSnapshotSummary> = {}): Conso
 function clearSnapshot(overrides: Partial<ConsoleClearSnapshot> = {}): ConsoleClearSnapshot {
   return {
     projectRoot: "D:/ai/unity-claude-plugin/unity",
+    unityVersion: "6000.0.0f1",
+    hostId: "host-console",
+    hostEpoch: 12,
     explicitClear: true,
     cleared: true,
     countBeforeClear: 12,
@@ -289,12 +295,15 @@ async function writeConsoleSnapshotResource(
   await writeFile(payloadPath, payload, "utf8");
 }
 
-test("parseConsoleCountDataAcceptsRealBoundedSnapshotAndRejectsInvalidShape", () => {
+test("parseConsoleCountDataRequiresHostIdentityFields", () => {
   const snapshot = countSnapshot();
 
   assert.deepEqual(parseConsoleCountData(JSON.stringify(snapshot)), snapshot);
   assert.equal(parseConsoleCountData("not-json"), null);
   assert.equal(parseConsoleCountData(JSON.stringify({ totalCount: 1 })), null);
+  assert.equal(parseConsoleCountData(JSON.stringify({ ...snapshot, unityVersion: "" })), null);
+  assert.equal(parseConsoleCountData(JSON.stringify({ ...snapshot, hostId: "" })), null);
+  assert.equal(parseConsoleCountData(JSON.stringify({ ...snapshot, hostEpoch: undefined })), null);
 });
 
 test("parseConsoleSnapshotDataPreservesCursorRangeAndResourceFields", () => {
@@ -308,16 +317,19 @@ test("parseConsoleSnapshotDataPreservesCursorRangeAndResourceFields", () => {
   assert.equal(parsed?.uri, "unity://console-snapshots/console-1");
 });
 
-test("parseConsoleClearDataRequiresGenerationAndCountEvidence", () => {
+test("parseConsoleClearDataRequiresHostIdentityGenerationAndCountEvidence", () => {
   const snapshot = clearSnapshot();
 
   assert.deepEqual(parseConsoleClearData(JSON.stringify(snapshot)), snapshot);
   assert.equal(parseConsoleClearData(JSON.stringify({ ...snapshot, consoleGenerationAfterClear: undefined })), null);
   assert.equal(parseConsoleClearData(JSON.stringify({ ...snapshot, countAfterClear: undefined })), null);
+  assert.equal(parseConsoleClearData(JSON.stringify({ ...snapshot, unityVersion: "" })), null);
+  assert.equal(parseConsoleClearData(JSON.stringify({ ...snapshot, hostId: "" })), null);
+  assert.equal(parseConsoleClearData(JSON.stringify({ ...snapshot, hostEpoch: undefined })), null);
 });
 
 test("validateConsoleCursorRequiresHostEpochGenerationStartIndexAndCreatedAt", () => {
-  const currentCountSnapshot = countSnapshot({ totalCount: 250, cursor: cursor(), consoleGeneration: 41 });
+  const currentCountSnapshot = countSnapshot({ totalCount: 250, cursor: cursor(), consoleGeneration: 41, hostId: "host-console", hostEpoch: 12 });
 
   assert.deepEqual(validateConsoleCursor(cursor(), currentCountSnapshot), { ok: true });
   assert.equal(validateConsoleCursor({ ...cursor(), hostId: "other-host" }, currentCountSnapshot).ok, false);
@@ -474,7 +486,57 @@ test("snapshotConsoleMapsInvalidCursorToUncertainWithoutReadingResource", async 
     });
 
     assert.equal(result.status, "uncertain");
+    assert.equal(result.code, "console.cursor_invalid");
     assert.equal(result.resource, undefined);
+    assert.equal(result.data, undefined);
+    assert.equal(result.nextStep?.kind, "inspect_diagnostics");
+    registry.assertConsumed();
+    transport.assertConsumed();
+  });
+});
+
+test("snapshotConsoleRejectsRangeAndEntryCountMismatchAsInvalidCursorProof", async () => {
+  await withArtifactProject(async (projectRoot, artifactRoot) => {
+    const record = sampleHostRecord({ projectRoot });
+    const summary = snapshotSummary({
+      projectRoot,
+      hostId: record.hostId,
+      hostEpoch: record.hostEpoch,
+      range: {
+        startIndex: 120,
+        endIndexExclusive: 320,
+        totalCountAtCapture: 400,
+        limit: 200,
+        truncated: true,
+      },
+      cursor: cursor({ startIndex: 300 }),
+      entryCount: 150,
+    });
+    await writeConsoleSnapshotResource(artifactRoot, summary.artifactId, "[{\"message\":\"should-not-be-read\"}]");
+    const registry = registrySequence([{ ok: true, record }, { ok: true, record }]);
+    const transport = transportWithProbesAndInvokes([
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    ], [
+      {
+        port: record.port,
+        requestId: "req-snapshot-range-invalid",
+        operation: consoleSnapshotOperation,
+        inputJson: JSON.stringify({ limit: 200, includeStackTrace: false }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, summary, "req-snapshot-range-invalid", consoleSnapshotOperation) },
+      },
+    ]);
+
+    const result = await snapshotConsole(options(record, transport.transport, {
+      projectRoot,
+      readRegistry: registry.readRegistry,
+    }), {
+      requestId: "req-snapshot-range-invalid",
+    });
+
+    assert.equal(result.status, "uncertain");
+    assert.equal(result.code, "console.cursor_invalid");
+    assert.equal(result.resource, undefined);
+    assert.equal(result.data, undefined);
     assert.equal(result.nextStep?.kind, "inspect_diagnostics");
     registry.assertConsumed();
     transport.assertConsumed();
@@ -566,6 +628,8 @@ test("countConsoleRecordsSuccessfulRebindDiagnostic", async () => {
   const rebound = sampleHostRecord({ hostId: "host-after", hostEpoch: 2, port: 49201 });
   const snapshot = countSnapshot({
     projectRoot: rebound.projectRoot,
+    hostId: rebound.hostId,
+    hostEpoch: rebound.hostEpoch,
     cursor: cursor({ hostId: rebound.hostId, hostEpoch: rebound.hostEpoch }),
   });
   const registry = registrySequence([
