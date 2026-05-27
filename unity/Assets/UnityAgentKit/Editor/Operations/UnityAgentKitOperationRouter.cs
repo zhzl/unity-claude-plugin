@@ -10,6 +10,7 @@ namespace UnityAgentKit.Editor
         internal const string EditorStatusGetOperation = "editor.status.get";
         internal const string CompileStateGetOperation = "compile.state.get";
         internal const string CompileRequestOperation = "compile.request";
+        internal const string CompileReportGetOperation = "compile.report.get";
         internal const string ThrowOperation = "host.throw";
         internal const string PendingDispatchTimeoutOperation = "host.pendingDispatchTimeout";
 
@@ -49,6 +50,7 @@ namespace UnityAgentKit.Editor
                 normalized == EditorStatusGetOperation ||
                 normalized == CompileStateGetOperation ||
                 normalized == CompileRequestOperation ||
+                normalized == CompileReportGetOperation ||
                 normalized == ThrowOperation ||
                 normalized == PendingDispatchTimeoutOperation;
         }
@@ -86,6 +88,16 @@ namespace UnityAgentKit.Editor
             {
                 var result = UnityAgentKitCompileDiagnostics.RequestCompile(request != null ? request.inputJson ?? string.Empty : string.Empty, capturedMainThreadId);
                 return Succeeded(operation, requestId, record, result.requested ? "Compile request accepted." : "Compile request skipped because Unity is already compiling or updating.", UnityEngine.JsonUtility.ToJson(result), startedAt);
+            }
+
+            if (operation == CompileReportGetOperation)
+            {
+                if (UnityAgentKitCompileDiagnostics.TryReadRecentReport(request != null ? record : null, request != null ? request.inputJson ?? string.Empty : string.Empty, out var report, out var code, out var message))
+                {
+                    return Succeeded(operation, requestId, record, "Compile report read.", UnityEngine.JsonUtility.ToJson(report), startedAt);
+                }
+
+                return Uncertain(operation, requestId, record, code, message, startedAt);
             }
 
             if (operation == ThrowOperation)
@@ -166,6 +178,11 @@ namespace UnityAgentKit.Editor
         private static UnityAgentKitOperationResponse Failed(string operation, string requestId, UnityAgentKitHostRecord record, string code, string message, string startedAt)
         {
             return Create("failed", operation, requestId, record, message, string.Empty, new[] { Diagnostic("error", code, message, operation, requestId) }, code, message, startedAt);
+        }
+
+        private static UnityAgentKitOperationResponse Uncertain(string operation, string requestId, UnityAgentKitHostRecord record, string code, string message, string startedAt)
+        {
+            return Create("uncertain", operation, requestId, record, message, string.Empty, new[] { Diagnostic("error", code, message, operation, requestId) }, code, message, startedAt);
         }
 
         private static UnityAgentKitOperationResponse Create(string status, string operation, string requestId, UnityAgentKitHostRecord record, string summary, string data, UnityAgentKitDiagnostic[] diagnostics, string code, string message, string startedAt)

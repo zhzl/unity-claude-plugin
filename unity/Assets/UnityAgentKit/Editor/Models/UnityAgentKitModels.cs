@@ -127,4 +127,41 @@ namespace UnityAgentKit.Editor
         public int capturedMainThreadId;
         public int executionThreadId;
     }
+
+    [Serializable]
+    public sealed class UnityAgentKitCompileReportRequestInput
+    {
+        public string reportId = string.Empty;
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitCompilerMessageRecord
+    {
+        public string assemblyPath = string.Empty;
+        public string file = string.Empty;
+        public int line;
+        public int column;
+        public string type = string.Empty;
+        public string message = string.Empty;
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitCompileReportResult
+    {
+        public string reportId = string.Empty;
+        public string compileCycleId = string.Empty;
+        public string hostId = string.Empty;
+        public int hostEpoch;
+        public string projectRoot = string.Empty;
+        public string unityVersion = string.Empty;
+        public string completedAt = string.Empty;
+        public int invalidationTokenAtCompletion;
+        public int compilerErrorCount;
+        public int compilerWarningCount;
+        public string compilerMessagesSummary = string.Empty;
+        public UnityAgentKitCompilerMessageRecord[] compilerMessages = Array.Empty<UnityAgentKitCompilerMessageRecord>();
+        public bool assemblyCompilationFinishedSeen;
+        public bool compilationFinishedSeen;
+        public bool editorIdleAfterCompilation;
+    }
 }
