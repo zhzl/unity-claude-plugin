@@ -680,6 +680,66 @@ test("clearConsoleReturnsFailedWhenUnityCannotVerifyCountAfterClear", async () =
   transport.assertConsumed();
 });
 
+test("clearConsoleMapsInconsistentCursorProofToUncertain", async () => {
+  const scenarios = [
+    {
+      name: "host mismatch",
+      snapshot: clearSnapshot({ cursor: cursor({ hostId: "other-host", consoleGeneration: 3, startIndex: 0, createdAt: "2026-05-27T09:00:05.000Z" }) }),
+      expectedCode: "console.cursor_invalid",
+    },
+    {
+      name: "epoch mismatch",
+      snapshot: clearSnapshot({ cursor: cursor({ hostEpoch: 99, consoleGeneration: 3, startIndex: 0, createdAt: "2026-05-27T09:00:05.000Z" }) }),
+      expectedCode: "console.cursor_invalid",
+    },
+    {
+      name: "generation mismatch",
+      snapshot: clearSnapshot({ cursor: cursor({ consoleGeneration: 999, startIndex: 0, createdAt: "2026-05-27T09:00:05.000Z" }) }),
+      expectedCode: "console.cursor_generation_mismatch",
+    },
+    {
+      name: "stale start index",
+      snapshot: clearSnapshot({ cursor: cursor({ consoleGeneration: 3, startIndex: 7, createdAt: "2026-05-27T09:00:05.000Z" }) }),
+      expectedCode: "console.cursor_invalid",
+    },
+  ] as const;
+
+  for (const scenario of scenarios) {
+    const record = sampleHostRecord();
+    const registry = registrySequence([{ ok: true, record }, { ok: true, record }]);
+    const transport = transportWithProbesAndInvokes([
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    ], [
+      {
+        port: record.port,
+        requestId: `req-clear-uncertain-${scenario.name}`,
+        operation: consoleClearOperation,
+        inputJson: JSON.stringify({ confirmClear: true }),
+        result: {
+          ok: true,
+          statusCode: 200,
+          body: succeededEnvelope(record, scenario.snapshot, `req-clear-uncertain-${scenario.name}`, consoleClearOperation),
+        },
+      },
+    ]);
+
+    const result = await clearConsole(options(record, transport.transport, { readRegistry: registry.readRegistry }), {
+      requestId: `req-clear-uncertain-${scenario.name}`,
+      confirmClear: true,
+    });
+
+    assert.equal(result.status, "uncertain", scenario.name);
+    assert.equal(result.action, "clear", scenario.name);
+    assert.equal(result.code, scenario.expectedCode, scenario.name);
+    assert.equal(result.evidence?.["completion"], "console_proof_incomplete", scenario.name);
+    assert.equal(result.evidence?.["countAfterClear"], 0, scenario.name);
+    assert.equal(result.evidence?.["consoleGenerationAfterClear"], 3, scenario.name);
+    assert.equal(result.nextStep?.kind, "inspect_diagnostics", scenario.name);
+    registry.assertConsumed();
+    transport.assertConsumed();
+  }
+});
+
 test("clearConsoleDoesNotSucceedAcrossHostRebind", async () => {
   const first = sampleHostRecord({ hostId: "host-before", hostEpoch: 1, port: 49200 });
   const rebound = sampleHostRecord({ hostId: "host-after", hostEpoch: 2, port: 49201 });

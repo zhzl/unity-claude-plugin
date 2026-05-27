@@ -556,6 +556,38 @@ export function consoleClearResultFromHostResult(
     });
   }
 
+  const cursorValidation = validateClearCursorProof(snapshot);
+  if (!cursorValidation.ok) {
+    return definePublicResult({
+      status: "uncertain",
+      tool: "unity_console",
+      action: "clear",
+      operation: consoleClearOperation,
+      requestId: hostResult.requestId,
+      hostId: hostResult.hostId,
+      hostEpoch: hostResult.hostEpoch,
+      summary: cursorValidation.diagnostic.message,
+      code: cursorValidation.diagnostic.code,
+      message: cursorValidation.diagnostic.message,
+      data: snapshot,
+      diagnostics: [...diagnostics, cursorValidation.diagnostic],
+      evidence: {
+        completion: "console_proof_incomplete",
+        countBeforeClear: snapshot.countBeforeClear,
+        countAfterClear: snapshot.countAfterClear,
+        consoleGenerationBeforeClear: snapshot.consoleGenerationBeforeClear,
+        consoleGenerationAfterClear: snapshot.consoleGenerationAfterClear,
+      },
+      startedAt: hostResult.startedAt,
+      completedAt: hostResult.completedAt,
+      durationMs: hostResult.durationMs,
+      nextStep: {
+        kind: "inspect_diagnostics",
+        reason: "Inspect diagnostics because console clear cursor proof could not be trusted.",
+      },
+    });
+  }
+
   return definePublicResult({
     status: "succeeded",
     tool: "unity_console",
@@ -578,6 +610,76 @@ export function consoleClearResultFromHostResult(
     completedAt: hostResult.completedAt,
     durationMs: hostResult.durationMs,
   });
+}
+
+function validateClearCursorProof(
+  snapshot: ConsoleClearSnapshot,
+): { ok: true } | { ok: false; diagnostic: UnityAgentKitDiagnostic } {
+  if (snapshot.cursor.hostId !== snapshot.hostId) {
+    return {
+      ok: false,
+      diagnostic: {
+        source: "validation",
+        severity: "error",
+        code: "console.cursor_invalid",
+        message: "Console clear cursor hostId does not match the cleared host identity.",
+        details: {
+          cursorHostId: snapshot.cursor.hostId,
+          clearHostId: snapshot.hostId,
+        },
+      },
+    };
+  }
+
+  if (snapshot.cursor.hostEpoch !== snapshot.hostEpoch) {
+    return {
+      ok: false,
+      diagnostic: {
+        source: "validation",
+        severity: "error",
+        code: "console.cursor_invalid",
+        message: "Console clear cursor hostEpoch does not match the cleared host identity.",
+        details: {
+          cursorHostEpoch: snapshot.cursor.hostEpoch,
+          clearHostEpoch: snapshot.hostEpoch,
+        },
+      },
+    };
+  }
+
+  if (snapshot.cursor.consoleGeneration !== snapshot.consoleGenerationAfterClear) {
+    return {
+      ok: false,
+      diagnostic: {
+        source: "validation",
+        severity: "error",
+        code: "console.cursor_generation_mismatch",
+        message: "Console clear cursor generation does not match the verified post-clear generation.",
+        details: {
+          cursorConsoleGeneration: snapshot.cursor.consoleGeneration,
+          consoleGenerationAfterClear: snapshot.consoleGenerationAfterClear,
+        },
+      },
+    };
+  }
+
+  if (snapshot.cursor.startIndex !== snapshot.countAfterClear) {
+    return {
+      ok: false,
+      diagnostic: {
+        source: "validation",
+        severity: "error",
+        code: "console.cursor_invalid",
+        message: "Console clear cursor startIndex does not match the verified post-clear count.",
+        details: {
+          cursorStartIndex: snapshot.cursor.startIndex,
+          countAfterClear: snapshot.countAfterClear,
+        },
+      },
+    };
+  }
+
+  return { ok: true };
 }
 
 function mapConsoleStateResult<T>(options: {
