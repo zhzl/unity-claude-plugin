@@ -71,6 +71,22 @@ namespace UnityAgentKit.Editor
             return metadata;
         }
 
+        internal static UnityAgentKitArtifactMetadataRecord WriteConsoleSnapshotArtifact(
+            string artifactRoot,
+            string artifactId,
+            string payload,
+            UnityAgentKitHostRecord hostRecord)
+        {
+            return WriteSyntheticArtifact(
+                artifactRoot,
+                artifactId,
+                "console_snapshot",
+                "console-snapshots/" + artifactId + ".json",
+                payload,
+                hostRecord,
+                "snapshot");
+        }
+
         internal static bool IsSafeRelativePath(string relativePath)
         {
             if (string.IsNullOrEmpty(relativePath) || relativePath.Contains("\\") || relativePath.Contains("\0"))

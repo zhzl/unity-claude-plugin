@@ -164,4 +164,146 @@ namespace UnityAgentKit.Editor
         public bool compilationFinishedSeen;
         public bool editorIdleAfterCompilation;
     }
+
+    [Serializable]
+    public sealed class UnityAgentKitConsoleCursor
+    {
+        public string hostId = string.Empty;
+        public int hostEpoch;
+        public int consoleGeneration;
+        public int startIndex;
+        public string createdAt = string.Empty;
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitConsoleCounts
+    {
+        public int error;
+        public int warning;
+        public int log;
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitConsoleSeverityScan
+    {
+        public int scannedCount;
+        public int startIndex;
+        public int endIndexExclusive;
+        public int limit;
+        public bool severityBreakdownComplete;
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitConsoleSnapshotRange
+    {
+        public int startIndex;
+        public int endIndexExclusive;
+        public int totalCountAtCapture;
+        public int limit;
+        public bool truncated;
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitConsoleEntryRecord
+    {
+        public int index;
+        public int entryId;
+        public string severity = string.Empty;
+        public string message = string.Empty;
+        public string stackTrace = string.Empty;
+        public string mode = string.Empty;
+        public string attribution = string.Empty;
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitConsoleCountInput
+    {
+        public int maxSeverityScan = 500;
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitConsoleSnapshotInput
+    {
+        public int limit = 200;
+        public bool includeStackTrace;
+        public UnityAgentKitConsoleCursor cursor = null;
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitConsoleClearInput
+    {
+        public bool confirmClear;
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitConsoleCountResult
+    {
+        public string projectRoot = string.Empty;
+        public string unityVersion = string.Empty;
+        public string hostId = string.Empty;
+        public int hostEpoch;
+        public int totalCount;
+        public UnityAgentKitConsoleCounts counts = new UnityAgentKitConsoleCounts();
+        public UnityAgentKitConsoleSeverityScan severityScan = new UnityAgentKitConsoleSeverityScan();
+        public UnityAgentKitConsoleCursor cursor = new UnityAgentKitConsoleCursor();
+        public int consoleGeneration;
+        public int capturedMainThreadId;
+        public int executionThreadId;
+        public UnityAgentKitDiagnostic[] diagnostics = Array.Empty<UnityAgentKitDiagnostic>();
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitConsoleSnapshotPayload
+    {
+        public int schemaVersion;
+        public string artifactId = string.Empty;
+        public string createdAt = string.Empty;
+        public string hostId = string.Empty;
+        public int hostEpoch;
+        public string projectRoot = string.Empty;
+        public string unityVersion = string.Empty;
+        public UnityAgentKitConsoleCursor cursor = new UnityAgentKitConsoleCursor();
+        public UnityAgentKitConsoleSnapshotRange range = new UnityAgentKitConsoleSnapshotRange();
+        public UnityAgentKitConsoleCounts counts = new UnityAgentKitConsoleCounts();
+        public UnityAgentKitConsoleEntryRecord[] entries = Array.Empty<UnityAgentKitConsoleEntryRecord>();
+        public UnityAgentKitDiagnostic[] diagnostics = Array.Empty<UnityAgentKitDiagnostic>();
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitConsoleSnapshotResult
+    {
+        public string projectRoot = string.Empty;
+        public string unityVersion = string.Empty;
+        public string hostId = string.Empty;
+        public int hostEpoch;
+        public string artifactId = string.Empty;
+        public string uri = string.Empty;
+        public UnityAgentKitConsoleCounts counts = new UnityAgentKitConsoleCounts();
+        public UnityAgentKitConsoleCursor cursor = new UnityAgentKitConsoleCursor();
+        public UnityAgentKitConsoleSnapshotRange range = new UnityAgentKitConsoleSnapshotRange();
+        public int entryCount;
+        public bool includeStackTrace;
+        public int capturedMainThreadId;
+        public int executionThreadId;
+        public UnityAgentKitDiagnostic[] diagnostics = Array.Empty<UnityAgentKitDiagnostic>();
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitConsoleClearResult
+    {
+        public string projectRoot = string.Empty;
+        public string unityVersion = string.Empty;
+        public string hostId = string.Empty;
+        public int hostEpoch;
+        public bool explicitClear;
+        public bool cleared;
+        public int countBeforeClear;
+        public int countAfterClear;
+        public int consoleGenerationBeforeClear;
+        public int consoleGenerationAfterClear;
+        public UnityAgentKitConsoleCursor cursor = new UnityAgentKitConsoleCursor();
+        public int capturedMainThreadId;
+        public int executionThreadId;
+        public UnityAgentKitDiagnostic[] diagnostics = Array.Empty<UnityAgentKitDiagnostic>();
+    }
 }

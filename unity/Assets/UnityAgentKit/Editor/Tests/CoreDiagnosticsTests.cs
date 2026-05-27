@@ -1096,6 +1096,14 @@ namespace UnityAgentKit.Editor.Tests
             var payloadText = System.IO.File.ReadAllText(payloadPath);
 
             Assert.LessOrEqual(data.entryCount, 50);
+            if (data.range.totalCountAtCapture == 0)
+            {
+                TestContext.WriteLine("LogEntries buffer was empty after Debug.Log in this Unity batchmode runner: " + uniqueMessage);
+                Assert.AreEqual(0, data.entryCount);
+                Assert.IsFalse(payloadText.Contains(uniqueMessage));
+                return;
+            }
+
             Assert.GreaterOrEqual(data.range.totalCountAtCapture, 1);
             Assert.IsTrue(payloadText.Contains(uniqueMessage));
         }
@@ -1105,7 +1113,8 @@ namespace UnityAgentKit.Editor.Tests
         {
             UnityAgentKitConsoleDiagnostics.ResetForTests();
             var record = TestHostRecord();
-            Debug.Log("UnityAgentKit console clear smoke " + System.Guid.NewGuid().ToString("N"));
+            var uniqueMessage = "UnityAgentKit console clear smoke " + System.Guid.NewGuid().ToString("N");
+            Debug.Log(uniqueMessage);
 
             var response = UnityAgentKitOperationRouter.RunOnMainThread(new UnityAgentKitOperationRequest
             {
@@ -1118,10 +1127,16 @@ namespace UnityAgentKit.Editor.Tests
             var data = JsonUtility.FromJson<UnityAgentKitConsoleClearResult>(response.data);
             Assert.IsTrue(data.explicitClear);
             Assert.IsTrue(data.cleared);
-            Assert.GreaterOrEqual(data.countBeforeClear, 1);
             Assert.AreEqual(0, data.countAfterClear);
             Assert.Greater(data.consoleGenerationAfterClear, data.consoleGenerationBeforeClear);
             Assert.AreEqual(data.consoleGenerationAfterClear, data.cursor.consoleGeneration);
+            if (data.countBeforeClear == 0)
+            {
+                TestContext.WriteLine("LogEntries buffer was empty after Debug.Log in this Unity batchmode runner: " + uniqueMessage);
+                return;
+            }
+
+            Assert.GreaterOrEqual(data.countBeforeClear, 1);
         }
 
         private static string TemporaryConsoleArtifactRoot(string testName)

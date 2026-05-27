@@ -12,6 +12,9 @@ namespace UnityAgentKit.Editor
         internal const string CompileStateGetOperation = "compile.state.get";
         internal const string CompileRequestOperation = "compile.request";
         internal const string CompileReportGetOperation = "compile.report.get";
+        internal const string ConsoleCountOperation = "console.count";
+        internal const string ConsoleSnapshotOperation = "console.snapshot";
+        internal const string ConsoleClearOperation = "console.clear";
         internal const string ThrowOperation = "host.throw";
         internal const string PendingDispatchTimeoutOperation = "host.pendingDispatchTimeout";
 
@@ -52,6 +55,9 @@ namespace UnityAgentKit.Editor
                 normalized == CompileStateGetOperation ||
                 normalized == CompileRequestOperation ||
                 normalized == CompileReportGetOperation ||
+                normalized == ConsoleCountOperation ||
+                normalized == ConsoleSnapshotOperation ||
+                normalized == ConsoleClearOperation ||
                 normalized == ThrowOperation ||
                 normalized == PendingDispatchTimeoutOperation;
         }
@@ -99,6 +105,53 @@ namespace UnityAgentKit.Editor
                 }
 
                 return Uncertain(operation, requestId, record, code, message, startedAt);
+            }
+
+            if (operation == ConsoleCountOperation)
+            {
+                try
+                {
+                    var result = UnityAgentKitConsoleDiagnostics.Count(record, capturedMainThreadId, request != null ? request.inputJson ?? string.Empty : string.Empty);
+                    return Succeeded(operation, requestId, record, "Console count read.", JsonUtility.ToJson(result), startedAt);
+                }
+                catch (ConsoleReflectionUnavailableException exception)
+                {
+                    return Failed(operation, requestId, record, "console.reflection_unavailable", exception.Message, startedAt);
+                }
+            }
+
+            if (operation == ConsoleSnapshotOperation)
+            {
+                try
+                {
+                    var result = UnityAgentKitConsoleDiagnostics.Snapshot(record, capturedMainThreadId, request != null ? request.inputJson ?? string.Empty : string.Empty, UnityAgentKitArtifactContracts.GetArtifactRoot());
+                    return Succeeded(operation, requestId, record, "Console snapshot artifact written.", JsonUtility.ToJson(result), startedAt);
+                }
+                catch (ConsoleCursorInvalidException exception)
+                {
+                    return Uncertain(operation, requestId, record, "console.cursor_invalid", exception.Message, startedAt);
+                }
+                catch (ConsoleReflectionUnavailableException exception)
+                {
+                    return Failed(operation, requestId, record, "console.reflection_unavailable", exception.Message, startedAt);
+                }
+            }
+
+            if (operation == ConsoleClearOperation)
+            {
+                try
+                {
+                    var result = UnityAgentKitConsoleDiagnostics.Clear(record, capturedMainThreadId, request != null ? request.inputJson ?? string.Empty : string.Empty);
+                    return Succeeded(operation, requestId, record, result.cleared ? "Console clear verified." : "Console clear verification failed.", JsonUtility.ToJson(result), startedAt);
+                }
+                catch (ConsoleClearNotExplicitException exception)
+                {
+                    return Rejected(operation, requestId, record, "console.clear_requires_explicit_confirmation", exception.Message, startedAt);
+                }
+                catch (ConsoleReflectionUnavailableException exception)
+                {
+                    return Failed(operation, requestId, record, "console.reflection_unavailable", exception.Message, startedAt);
+                }
             }
 
             if (operation == ThrowOperation)
