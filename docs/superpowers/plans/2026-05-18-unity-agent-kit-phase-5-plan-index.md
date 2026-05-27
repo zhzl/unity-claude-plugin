@@ -67,13 +67,13 @@ Phase 5 completed only after all subplans + final E2E evidence pass.
 
 ## Phase 5A Completion Evidence
 
-Phase 5A completed after 5A-01, 5A-02, 5A-03, 5A-05, 5A-06, 5A-07, and 5A-08 completed; 5A-04 folded into 5A-03; final evidence passed. Phase 5 remains incomplete because Phase 5C-5E and final daily loop E2E remain pending.
+Phase 5A completed after 5A-01, 5A-02, 5A-03, 5A-05, 5A-06, 5A-07, and 5A-08 completed; 5A-04 folded into 5A-03; final evidence passed. Phase 5 remains incomplete because Phase 5D, Phase 5E, and final daily loop E2E remain pending.
 
 ## Phase 5A Host Runtime Hardening Evidence
 
 Phase 5A remains completed. Phase 5A Host Runtime hardening was applied after completion and before Phase 5B to close review-found runtime gaps without implementing Phase 5B. Evidence covers TS envelope trust boundary, Unity dispatch timeout claim race, `/operations` body read bounds, optional result field preservation, and documentation cleanup.
 
-Phase 5 remains incomplete because Phase 5C-5E and final daily loop E2E remain pending.
+Phase 5 remains incomplete because Phase 5D, Phase 5E, and final daily loop E2E remain pending.
 
 Canonical handoff commands:
 
