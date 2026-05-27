@@ -375,10 +375,24 @@ async function readReportAndJudge(options: ReadReportAndJudgeOptions): Promise<U
 
   if (reportResult.status !== "succeeded") {
     return definePublicResult({
-      ...reportResult,
+      status: reportResult.status,
       tool: "unity_compile",
       action: "compile_and_check",
+      operation: reportResult.operation,
+      requestId: reportResult.requestId,
+      hostId: reportResult.hostId,
+      hostEpoch: reportResult.hostEpoch,
       summary: reportResult.summary || "Compile report proof is missing.",
+      data: reportResult.data,
+      diagnostics: reportResult.diagnostics,
+      startedAt: reportResult.startedAt,
+      completedAt: reportResult.completedAt,
+      durationMs: reportResult.durationMs,
+      code: reportResult.code,
+      message: reportResult.message,
+      nextStep: reportResult.nextStep,
+      safeToRetry: reportResult.safeToRetry,
+      mayStillBeRunning: reportResult.mayStillBeRunning,
       evidence: {
         completion: "compile_proof_incomplete",
         proof: options.usedRecentCompileReport ? "recent_complete_report" : "current_cycle_report",

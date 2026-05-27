@@ -766,6 +766,7 @@ test("compileAndCheckReturnsUncertainWhenIdleSettlesWithoutCompileReport", async
 
   assert.equal(result.status, "uncertain");
   assert.equal(result.code, "compile.report_missing");
+  assert.equal(result.metadata?.["publicAction"], undefined);
   assert.deepEqual(result.evidence, {
     completion: "compile_proof_incomplete",
     proof: "current_cycle_report",
