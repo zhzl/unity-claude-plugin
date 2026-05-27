@@ -36,7 +36,7 @@ Manual `reviewing-specs` found no must-fix issues. The following concerns are ac
 |---|---|---|---|---|---|---|
 | 5C-01 | Editor status snapshot + `wait_ready` TS workflow | 5C-EDITOR-01, 5C-EDITOR-02, 5C-EDITOR-03, 5C-HOST-01, 5C-SCOPE-01 | 1 | Phase 5A, Phase 5B | `docs/superpowers/plans/2026-05-23-unity-agent-kit-phase-5c-01-editor-status-readiness.md` | completed |
 | 5C-02 | Compile state/request/wait idle | 5C-COMPILE-STATE-01, 5C-COMPILE-REQUEST-01, 5C-COMPILE-IDLE-01, 5C-HOST-01, 5C-SCOPE-01 | 2 | Phase 5A, Phase 5B | `docs/superpowers/plans/2026-05-24-unity-agent-kit-phase-5c-02-compile-state-request-idle.md` | completed |
-| 5C-03 | Compile report + `compile_and_check` attribution | 5C-COMPILE-REPORT-01, 5C-COMPILE-REPORT-02, 5C-COMPILE-CHECK-01, 5C-TIMEOUT-01, 5C-HOST-01 | 3 | 5C-02 | pending | plan-card |
+| 5C-03 | Compile report + `compile_and_check` attribution | 5C-COMPILE-REPORT-01, 5C-COMPILE-REPORT-02, 5C-COMPILE-CHECK-01, 5C-TIMEOUT-01, 5C-HOST-01 | 3 | 5C-02 | `docs/superpowers/plans/2026-05-25-unity-agent-kit-phase-5c-03-compile-report-compile-and-check.md` | completed |
 | 5C-04 | Console count/snapshot/clear + cursor/resource | 5C-CONSOLE-COUNT-01, 5C-CONSOLE-SNAPSHOT-01, 5C-CONSOLE-CURSOR-01, 5C-CONSOLE-CLEAR-01, 5C-RESOURCE-01, 5C-HOST-01, 5C-SCOPE-01 | 2 | Phase 5A, Phase 5B | pending | plan-card |
 
 ## Requirement Coverage
@@ -63,7 +63,7 @@ Manual `reviewing-specs` found no must-fix issues. The following concerns are ac
 
 ## Current Next Manual Action
 
-Create/review the `5C-03` expanded execution plan for compile report + `compile_and_check` attribution. Do not mark `5C-03` or `5C-04` completed from this index update, and do not execute this index or the Phase 5C technical contract.
+Create/review the `5C-04` expanded execution plan for console count/snapshot/clear + cursor/resource. Do not mark Phase 5C completed from this index update, and do not execute this index or the Phase 5C technical contract.
 
 ## Completion Rule
 
@@ -101,6 +101,20 @@ Phase 5C remains incomplete because 5C-03 and 5C-04 are not completed. Phase 5 r
 4. `git -c core.autocrlf=false diff --check` passed with no output.
 
 Phase 5C remains incomplete because 5C-03 and 5C-04 are not completed. Phase 5 remains incomplete because Phase 5C, Phase 5D, Phase 5E, and final daily loop E2E are not completed.
+
+## Phase 5C-03 Completion Evidence
+
+5C-03 Compile report + `compile_and_check` attribution completed with evidence:
+
+1. `cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/editor-workflows.test.ts tests/compile-workflows.test.ts tests/host-runtime.test.ts tests/artifact-resource-contract.test.ts tests/timeout-completion-contract.test.ts` passed with `tests 129`, `pass 129`, and `fail 0`.
+2. `"D:/Program Files/Unity 2022.3.61f1/Editor/Unity.exe" -batchmode -projectPath "D:/ai/unity-claude-plugin/unity" -runTests -testPlatform EditMode -testResults "D:/ai/unity-claude-plugin/.ai-debug/unity-agent-kit/test-results/phase5c-03-compile-report-compile-and-check.xml" -testFilter UnityAgentKit.Editor.Tests.CoreDiagnosticsTests` passed with `total="27"`, `passed="27"`, and `failed="0"`.
+3. `"D:/Program Files/Unity 2022.3.61f1/Editor/Unity.exe" -batchmode -projectPath "D:/ai/unity-claude-plugin/unity" -runTests -testPlatform EditMode -testResults "D:/ai/unity-claude-plugin/.ai-debug/unity-agent-kit/test-results/phase5c-03-host-runtime-regression.xml" -testFilter UnityAgentKit.Editor.Tests.HostRuntimeTests` passed with `total="82"`, `passed="82"`, and `failed="0"`.
+4. Scope guard passed: no public MCP tools / registration / action-dispatch surface, MCP Resource handlers, `/unity` skill, console diagnostics/workflows, Phase 5D test/playmode/screenshot workflows, or Phase 5E final daily loop E2E files were created by 5C-03.
+5. `git -c core.autocrlf=false diff --check` passed with no output.
+
+5C-03 success evidence proves compile success only from current-cycle compiler report proof or valid recent complete compile report. Compile request accepted, idle settled, Console clean, and internal compile.report.get read success are not recorded as compile success proof. compile.report.get remains internal-only and is not an approved unity_compile public action.
+
+Phase 5C remains incomplete because 5C-04 is not completed. Phase 5 remains incomplete because Phase 5C, Phase 5D, Phase 5E, and final daily loop E2E are not completed.
 
 ## Phase 5 plan index sync rule
 
