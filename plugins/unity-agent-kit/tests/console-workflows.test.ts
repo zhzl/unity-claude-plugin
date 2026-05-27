@@ -348,6 +348,19 @@ test("countConsoleMapsRealTotalAndBoundedPartialSeverityWithoutClaimingExactBrea
     totalCount: 1000,
     severityBreakdownComplete: false,
   });
+  assert.equal(result.data?.["totalCount"], 1000);
+  assert.deepEqual(result.data?.["counts"], {
+    error: 1,
+    warning: 2,
+    log: 497,
+  });
+  assert.deepEqual(result.data?.["severityScan"], {
+    scannedCount: 500,
+    startIndex: 500,
+    endIndexExclusive: 1000,
+    limit: 500,
+    severityBreakdownComplete: false,
+  });
   assert.equal(result.diagnostics.some((diagnostic) => diagnostic.code === "console.severity_breakdown_partial"), true);
   registry.assertConsumed();
   transport.assertConsumed();
@@ -424,9 +437,15 @@ test("snapshotConsoleFailsWhenResourceReadbackFails", async () => {
 });
 
 test("snapshotConsoleMapsInvalidCursorToUncertainWithoutReadingResource", async () => {
-  await withArtifactProject(async (projectRoot) => {
+  await withArtifactProject(async (projectRoot, artifactRoot) => {
     const record = sampleHostRecord({ projectRoot });
-    const summary = snapshotSummary({ projectRoot, cursor: cursor({ consoleGeneration: -1 }) });
+    const summary = snapshotSummary({
+      projectRoot,
+      hostId: record.hostId,
+      hostEpoch: record.hostEpoch,
+      cursor: cursor({ hostId: "other-host" }),
+    });
+    await writeConsoleSnapshotResource(artifactRoot, summary.artifactId, "[{\"message\":\"should-not-be-read\"}]");
     const registry = registrySequence([{ ok: true, record }, { ok: true, record }]);
     const transport = transportWithProbesAndInvokes([
       { port: record.port, result: { ok: true, statusCode: 200, body: record } },
@@ -436,7 +455,7 @@ test("snapshotConsoleMapsInvalidCursorToUncertainWithoutReadingResource", async 
         requestId: "req-snapshot-uncertain",
         operation: consoleSnapshotOperation,
         inputJson: JSON.stringify({ limit: 200, includeStackTrace: false }),
-        result: { ok: true, statusCode: 200, body: uncertainEnvelope(record, summary, "req-snapshot-uncertain", consoleSnapshotOperation) },
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, summary, "req-snapshot-uncertain", consoleSnapshotOperation) },
       },
     ]);
 
