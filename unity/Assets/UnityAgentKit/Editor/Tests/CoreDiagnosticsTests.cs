@@ -807,6 +807,330 @@ namespace UnityAgentKit.Editor.Tests
             Assert.AreEqual("No complete compile report is available.", message);
         }
 
+        [Test]
+        public void ConsoleCursorRoundTripsContinuityFields()
+        {
+            var cursor = new UnityAgentKitConsoleCursor
+            {
+                hostId = "host-console",
+                hostEpoch = 9,
+                consoleGeneration = 2,
+                startIndex = 12,
+                createdAt = "2026-05-27T10:00:00.0000000Z"
+            };
+
+            var roundTrip = JsonUtility.FromJson<UnityAgentKitConsoleCursor>(JsonUtility.ToJson(cursor));
+
+            Assert.AreEqual("host-console", roundTrip.hostId);
+            Assert.AreEqual(9, roundTrip.hostEpoch);
+            Assert.AreEqual(2, roundTrip.consoleGeneration);
+            Assert.AreEqual(12, roundTrip.startIndex);
+            Assert.IsNotEmpty(roundTrip.createdAt);
+        }
+
+        [Test]
+        public void ConsoleCountResultRoundTripsBoundedSeverityEvidence()
+        {
+            var result = new UnityAgentKitConsoleCountResult
+            {
+                projectRoot = "D:/repo/unity",
+                unityVersion = "2022.3.61f1",
+                hostId = "host-console",
+                hostEpoch = 9,
+                totalCount = 1000,
+                counts = new UnityAgentKitConsoleCounts { error = 1, warning = 2, log = 497 },
+                severityScan = new UnityAgentKitConsoleSeverityScan
+                {
+                    scannedCount = 500,
+                    startIndex = 500,
+                    endIndexExclusive = 1000,
+                    limit = 500,
+                    severityBreakdownComplete = false
+                },
+                cursor = new UnityAgentKitConsoleCursor { hostId = "host-console", hostEpoch = 9, consoleGeneration = 2, startIndex = 1000, createdAt = "2026-05-27T10:00:00.0000000Z" },
+                consoleGeneration = 2,
+                capturedMainThreadId = 7,
+                executionThreadId = 7,
+                diagnostics = new[] { new UnityAgentKitDiagnostic { source = "console", severity = "warning", code = "console.severity_breakdown_partial", message = "Severity breakdown scanned the bounded tail window only." } }
+            };
+
+            var roundTrip = JsonUtility.FromJson<UnityAgentKitConsoleCountResult>(JsonUtility.ToJson(result));
+
+            Assert.AreEqual(1000, roundTrip.totalCount);
+            Assert.AreEqual(1, roundTrip.counts.error);
+            Assert.AreEqual(500, roundTrip.severityScan.scannedCount);
+            Assert.IsFalse(roundTrip.severityScan.severityBreakdownComplete);
+            Assert.AreEqual(1000, roundTrip.cursor.startIndex);
+            Assert.AreEqual("console.severity_breakdown_partial", roundTrip.diagnostics[0].code);
+        }
+
+        [Test]
+        public void ConsoleSnapshotResultRoundTripsResourceAndRangeFields()
+        {
+            var result = new UnityAgentKitConsoleSnapshotResult
+            {
+                projectRoot = "D:/repo/unity",
+                unityVersion = "2022.3.61f1",
+                hostId = "host-console",
+                hostEpoch = 9,
+                artifactId = "console-20260527-100000",
+                uri = "unity://console-snapshots/console-20260527-100000",
+                counts = new UnityAgentKitConsoleCounts { error = 1, warning = 1, log = 1 },
+                cursor = new UnityAgentKitConsoleCursor { hostId = "host-console", hostEpoch = 9, consoleGeneration = 2, startIndex = 15, createdAt = "2026-05-27T10:00:00.0000000Z" },
+                range = new UnityAgentKitConsoleSnapshotRange { startIndex = 12, endIndexExclusive = 15, totalCountAtCapture = 15, limit = 200, truncated = false },
+                entryCount = 3,
+                includeStackTrace = false,
+                capturedMainThreadId = 7,
+                executionThreadId = 7,
+                diagnostics = new UnityAgentKitDiagnostic[0]
+            };
+
+            var roundTrip = JsonUtility.FromJson<UnityAgentKitConsoleSnapshotResult>(JsonUtility.ToJson(result));
+
+            Assert.AreEqual("console-20260527-100000", roundTrip.artifactId);
+            Assert.AreEqual("unity://console-snapshots/console-20260527-100000", roundTrip.uri);
+            Assert.AreEqual(12, roundTrip.range.startIndex);
+            Assert.AreEqual(15, roundTrip.range.endIndexExclusive);
+            Assert.AreEqual(3, roundTrip.entryCount);
+            Assert.IsFalse(roundTrip.includeStackTrace);
+        }
+
+        [Test]
+        public void ConsoleClearResultRoundTripsVerifiedCountAndGenerationEvidence()
+        {
+            var result = new UnityAgentKitConsoleClearResult
+            {
+                projectRoot = "D:/repo/unity",
+                unityVersion = "2022.3.61f1",
+                hostId = "host-console",
+                hostEpoch = 9,
+                explicitClear = true,
+                cleared = true,
+                countBeforeClear = 12,
+                countAfterClear = 0,
+                consoleGenerationBeforeClear = 2,
+                consoleGenerationAfterClear = 3,
+                cursor = new UnityAgentKitConsoleCursor { hostId = "host-console", hostEpoch = 9, consoleGeneration = 3, startIndex = 0, createdAt = "2026-05-27T10:00:00.0000000Z" },
+                capturedMainThreadId = 7,
+                executionThreadId = 7,
+                diagnostics = new UnityAgentKitDiagnostic[0]
+            };
+
+            var roundTrip = JsonUtility.FromJson<UnityAgentKitConsoleClearResult>(JsonUtility.ToJson(result));
+
+            Assert.IsTrue(roundTrip.explicitClear);
+            Assert.IsTrue(roundTrip.cleared);
+            Assert.AreEqual(12, roundTrip.countBeforeClear);
+            Assert.AreEqual(0, roundTrip.countAfterClear);
+            Assert.AreEqual(2, roundTrip.consoleGenerationBeforeClear);
+            Assert.AreEqual(3, roundTrip.consoleGenerationAfterClear);
+            Assert.AreEqual(3, roundTrip.cursor.consoleGeneration);
+        }
+
+        [Test]
+        public void ConsoleOperationsRequireMainThreadDispatch()
+        {
+            Assert.IsTrue(UnityAgentKitOperationRouter.RequiresMainThreadDispatch(" console.count "));
+            Assert.IsTrue(UnityAgentKitOperationRouter.RequiresMainThreadDispatch(" console.snapshot "));
+            Assert.IsTrue(UnityAgentKitOperationRouter.RequiresMainThreadDispatch(" console.clear "));
+
+            var countResponse = UnityAgentKitOperationRouter.Route(new UnityAgentKitOperationRequest { operation = "console.count", requestId = "req-console-count-direct" }, TestHostRecord());
+            var snapshotResponse = UnityAgentKitOperationRouter.Route(new UnityAgentKitOperationRequest { operation = "console.snapshot", requestId = "req-console-snapshot-direct" }, TestHostRecord());
+            var clearResponse = UnityAgentKitOperationRouter.Route(new UnityAgentKitOperationRequest { operation = "console.clear", requestId = "req-console-clear-direct" }, TestHostRecord());
+
+            Assert.AreEqual("rejected", countResponse.status);
+            Assert.AreEqual("host.dispatch_required", countResponse.code);
+            Assert.AreEqual("rejected", snapshotResponse.status);
+            Assert.AreEqual("host.dispatch_required", snapshotResponse.code);
+            Assert.AreEqual("rejected", clearResponse.status);
+            Assert.AreEqual("host.dispatch_required", clearResponse.code);
+        }
+
+        [Test]
+        public void ConsoleCountSeamUsesRealTotalAndBoundedSeverityScan()
+        {
+            UnityAgentKitConsoleDiagnostics.ResetForTests();
+            var entries = new[]
+            {
+                UnityAgentKitConsoleDiagnostics.CreateEntryForTests(0, "old error", string.Empty, "Error"),
+                UnityAgentKitConsoleDiagnostics.CreateEntryForTests(1, "new warning", string.Empty, "Warning"),
+                UnityAgentKitConsoleDiagnostics.CreateEntryForTests(2, "new log", string.Empty, "Log")
+            };
+
+            var result = UnityAgentKitConsoleDiagnostics.CountForTests(TestHostRecord(), 7, maxSeverityScan: 2, entries: entries);
+
+            Assert.AreEqual(3, result.totalCount);
+            Assert.AreEqual(0, result.counts.error);
+            Assert.AreEqual(1, result.counts.warning);
+            Assert.AreEqual(1, result.counts.log);
+            Assert.AreEqual(2, result.severityScan.scannedCount);
+            Assert.AreEqual(1, result.severityScan.startIndex);
+            Assert.AreEqual(3, result.severityScan.endIndexExclusive);
+            Assert.IsFalse(result.severityScan.severityBreakdownComplete);
+            Assert.AreEqual("console.severity_breakdown_partial", result.diagnostics[0].code);
+        }
+
+        [Test]
+        public void ConsoleSnapshotSeamWritesBoundedArtifactAndMetadata()
+        {
+            UnityAgentKitConsoleDiagnostics.ResetForTests();
+            var artifactRoot = TemporaryConsoleArtifactRoot("snapshot");
+            var record = TestHostRecord();
+            var entries = new[]
+            {
+                UnityAgentKitConsoleDiagnostics.CreateEntryForTests(0, "old error", "stack", "Error"),
+                UnityAgentKitConsoleDiagnostics.CreateEntryForTests(1, "new warning", "stack", "Warning"),
+                UnityAgentKitConsoleDiagnostics.CreateEntryForTests(2, "new log", "stack", "Log")
+            };
+
+            var result = UnityAgentKitConsoleDiagnostics.SnapshotForTests(record, 7, "{\"limit\":2,\"includeStackTrace\":false}", entries, artifactRoot);
+            var payloadPath = System.IO.Path.Combine(artifactRoot, "console-snapshots", result.artifactId + ".json");
+            var metadataPath = System.IO.Path.Combine(artifactRoot, "metadata", "console-snapshots", result.artifactId + ".json");
+            var payloadText = System.IO.File.ReadAllText(payloadPath);
+            var metadata = JsonUtility.FromJson<UnityAgentKitArtifactMetadataRecord>(System.IO.File.ReadAllText(metadataPath));
+
+            Assert.AreEqual(2, result.entryCount);
+            Assert.AreEqual(1, result.range.startIndex);
+            Assert.AreEqual(3, result.range.endIndexExclusive);
+            Assert.IsTrue(result.range.truncated);
+            Assert.IsTrue(System.IO.File.Exists(payloadPath));
+            Assert.IsTrue(payloadText.Contains("new warning"));
+            Assert.IsFalse(payloadText.Contains("old error"));
+            Assert.AreEqual("console_snapshot", metadata.type);
+            Assert.AreEqual("unity_console", metadata.producerTool);
+            Assert.AreEqual("snapshot", metadata.producerAction);
+            Assert.AreEqual("valid", metadata.validationStatus);
+        }
+
+        [Test]
+        public void ConsoleSnapshotInvalidCursorReturnsUncertainOperationResponse()
+        {
+            UnityAgentKitConsoleDiagnostics.ResetForTests();
+            var record = TestHostRecord();
+            var inputJson = "{\"limit\":10,\"cursor\":{\"hostId\":\"other\",\"hostEpoch\":7,\"consoleGeneration\":0,\"startIndex\":0,\"createdAt\":\"2026-05-27T10:00:00.0000000Z\"}}";
+
+            var response = UnityAgentKitOperationRouter.RunOnMainThread(new UnityAgentKitOperationRequest
+            {
+                operation = "console.snapshot",
+                requestId = "req-console-invalid-cursor",
+                inputJson = inputJson
+            }, record, System.Threading.Thread.CurrentThread.ManagedThreadId);
+
+            Assert.AreEqual("uncertain", response.status);
+            Assert.AreEqual("console.cursor_invalid", response.code);
+        }
+
+        [Test]
+        public void ConsoleClearRequiresExplicitInputAndDoesNotIncrementGeneration()
+        {
+            UnityAgentKitConsoleDiagnostics.ResetForTests();
+            var response = UnityAgentKitOperationRouter.RunOnMainThread(new UnityAgentKitOperationRequest
+            {
+                operation = "console.clear",
+                requestId = "req-console-clear-not-explicit",
+                inputJson = "{}"
+            }, TestHostRecord(), System.Threading.Thread.CurrentThread.ManagedThreadId);
+
+            Assert.AreEqual("rejected", response.status);
+            Assert.AreEqual("console.clear_requires_explicit_confirmation", response.code);
+        }
+
+        [Test]
+        public void ConsoleClearSeamVerifiesCountAndIncrementsGenerationOnlyAfterSuccess()
+        {
+            UnityAgentKitConsoleDiagnostics.ResetForTests();
+            var clearCalls = 0;
+            var result = UnityAgentKitConsoleDiagnostics.ClearForTests(
+                TestHostRecord(),
+                7,
+                "{\"confirmClear\":true}",
+                countBeforeClear: 3,
+                countAfterClear: 0,
+                clearConsole: () => clearCalls += 1);
+
+            Assert.IsTrue(result.explicitClear);
+            Assert.IsTrue(result.cleared);
+            Assert.AreEqual(3, result.countBeforeClear);
+            Assert.AreEqual(0, result.countAfterClear);
+            Assert.AreEqual(0, result.consoleGenerationBeforeClear);
+            Assert.AreEqual(1, result.consoleGenerationAfterClear);
+            Assert.AreEqual(1, clearCalls);
+        }
+
+        [Test]
+        public void ConsoleClearSeamDoesNotIncrementGenerationWhenVerificationFails()
+        {
+            UnityAgentKitConsoleDiagnostics.ResetForTests();
+            var result = UnityAgentKitConsoleDiagnostics.ClearForTests(
+                TestHostRecord(),
+                7,
+                "{\"confirmClear\":true}",
+                countBeforeClear: 3,
+                countAfterClear: 2,
+                clearConsole: () => { });
+
+            Assert.IsFalse(result.cleared);
+            Assert.AreEqual(0, result.consoleGenerationBeforeClear);
+            Assert.AreEqual(0, result.consoleGenerationAfterClear);
+            Assert.AreEqual(2, result.countAfterClear);
+        }
+
+        [Test]
+        public void ConsoleLogEntriesReflectionSmokeReadsControlledLogEntry()
+        {
+            UnityAgentKitConsoleDiagnostics.ResetForTests();
+            var record = TestHostRecord();
+            var uniqueMessage = "UnityAgentKit console reflection smoke " + System.Guid.NewGuid().ToString("N");
+            Debug.Log(uniqueMessage);
+
+            var response = UnityAgentKitOperationRouter.RunOnMainThread(new UnityAgentKitOperationRequest
+            {
+                operation = "console.snapshot",
+                requestId = "req-console-snapshot-smoke",
+                inputJson = "{\"limit\":50,\"includeStackTrace\":false}"
+            }, record, System.Threading.Thread.CurrentThread.ManagedThreadId);
+
+            AssertOperationEnvelopeMinimumFields(response, "succeeded", "console.snapshot", "req-console-snapshot-smoke", record);
+            var data = JsonUtility.FromJson<UnityAgentKitConsoleSnapshotResult>(response.data);
+            var payloadPath = System.IO.Path.Combine(UnityAgentKitArtifactContracts.GetArtifactRoot(), "console-snapshots", data.artifactId + ".json");
+            var payloadText = System.IO.File.ReadAllText(payloadPath);
+
+            Assert.LessOrEqual(data.entryCount, 50);
+            Assert.GreaterOrEqual(data.range.totalCountAtCapture, 1);
+            Assert.IsTrue(payloadText.Contains(uniqueMessage));
+        }
+
+        [Test]
+        public void ConsoleClearReflectionSmokeClearsControlledLogAndIncrementsGeneration()
+        {
+            UnityAgentKitConsoleDiagnostics.ResetForTests();
+            var record = TestHostRecord();
+            Debug.Log("UnityAgentKit console clear smoke " + System.Guid.NewGuid().ToString("N"));
+
+            var response = UnityAgentKitOperationRouter.RunOnMainThread(new UnityAgentKitOperationRequest
+            {
+                operation = "console.clear",
+                requestId = "req-console-clear-smoke",
+                inputJson = "{\"confirmClear\":true}"
+            }, record, System.Threading.Thread.CurrentThread.ManagedThreadId);
+
+            AssertOperationEnvelopeMinimumFields(response, "succeeded", "console.clear", "req-console-clear-smoke", record);
+            var data = JsonUtility.FromJson<UnityAgentKitConsoleClearResult>(response.data);
+            Assert.IsTrue(data.explicitClear);
+            Assert.IsTrue(data.cleared);
+            Assert.GreaterOrEqual(data.countBeforeClear, 1);
+            Assert.AreEqual(0, data.countAfterClear);
+            Assert.Greater(data.consoleGenerationAfterClear, data.consoleGenerationBeforeClear);
+            Assert.AreEqual(data.consoleGenerationAfterClear, data.cursor.consoleGeneration);
+        }
+
+        private static string TemporaryConsoleArtifactRoot(string testName)
+        {
+            var directory = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "UnityAgentKitConsoleTests", testName, System.Guid.NewGuid().ToString("N"), "artifacts");
+            System.IO.Directory.CreateDirectory(directory);
+            return directory;
+        }
+
         private static UnityAgentKitHostRecord TestHostRecord()
         {
             return new UnityAgentKitHostRecord
