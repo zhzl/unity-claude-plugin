@@ -1003,6 +1003,41 @@ namespace UnityAgentKit.Editor.Tests
         }
 
         [Test]
+        public void ConsoleSnapshotSeamUsesDistinctArtifactIdsForConsecutiveSnapshots()
+        {
+            UnityAgentKitConsoleDiagnostics.ResetForTests();
+            var artifactRoot = TemporaryConsoleArtifactRoot("snapshot-distinct-artifacts");
+            var record = TestHostRecord();
+            var firstEntries = new[]
+            {
+                UnityAgentKitConsoleDiagnostics.CreateEntryForTests(0, "first warning", string.Empty, "Warning")
+            };
+            var secondEntries = new[]
+            {
+                UnityAgentKitConsoleDiagnostics.CreateEntryForTests(0, "second error", string.Empty, "Error")
+            };
+
+            var first = UnityAgentKitConsoleDiagnostics.SnapshotForTests(record, 7, "{\"limit\":10,\"includeStackTrace\":false}", firstEntries, artifactRoot);
+            var second = UnityAgentKitConsoleDiagnostics.SnapshotForTests(record, 7, "{\"limit\":10,\"includeStackTrace\":false}", secondEntries, artifactRoot);
+            var firstPayloadPath = System.IO.Path.Combine(artifactRoot, "console-snapshots", first.artifactId + ".json");
+            var secondPayloadPath = System.IO.Path.Combine(artifactRoot, "console-snapshots", second.artifactId + ".json");
+            var firstPayloadText = System.IO.File.ReadAllText(firstPayloadPath);
+            var secondPayloadText = System.IO.File.ReadAllText(secondPayloadPath);
+
+            Assert.That(first.artifactId, Does.StartWith("console-"));
+            Assert.That(second.artifactId, Does.StartWith("console-"));
+            Assert.AreNotEqual(first.artifactId, second.artifactId);
+            Assert.AreNotEqual(first.uri, second.uri);
+            Assert.AreNotEqual(firstPayloadPath, secondPayloadPath);
+            Assert.IsTrue(System.IO.File.Exists(firstPayloadPath));
+            Assert.IsTrue(System.IO.File.Exists(secondPayloadPath));
+            Assert.IsTrue(firstPayloadText.Contains("first warning"));
+            Assert.IsFalse(firstPayloadText.Contains("second error"));
+            Assert.IsTrue(secondPayloadText.Contains("second error"));
+            Assert.IsFalse(secondPayloadText.Contains("first warning"));
+        }
+
+        [Test]
         public void ConsoleSnapshotInvalidCursorReturnsUncertainOperationResponse()
         {
             UnityAgentKitConsoleDiagnostics.ResetForTests();

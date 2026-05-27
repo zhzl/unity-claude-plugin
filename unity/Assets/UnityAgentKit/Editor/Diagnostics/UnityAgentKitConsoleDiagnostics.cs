@@ -189,7 +189,7 @@ namespace UnityAgentKit.Editor
 
         private static UnityAgentKitConsoleSnapshotResult SnapshotFromBoundedEntries(UnityAgentKitHostRecord record, int capturedMainThreadId, bool includeStackTrace, int limit, int totalCount, int startIndex, int endIndexExclusive, bool truncated, UnityAgentKitConsoleEntryRecord[] selected, string artifactRoot)
         {
-            var artifactId = "console-" + DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmssfff");
+            var artifactId = "console-" + DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmssfff") + "-" + Guid.NewGuid().ToString("N");
             var createdAt = DateTimeOffset.UtcNow.ToString("O");
             var cursor = CreateCursor(record, totalCount);
             var counts = CountRange(selected, 0, selected.Length);
