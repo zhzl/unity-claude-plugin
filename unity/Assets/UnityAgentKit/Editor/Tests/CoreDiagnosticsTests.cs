@@ -285,6 +285,233 @@ namespace UnityAgentKit.Editor.Tests
             Assert.AreEqual(7, result.capturedMainThreadId);
         }
 
+        [Test]
+        public void CompileReportResultRoundTripsCompilerMessagesAndCompleteness()
+        {
+            var report = new UnityAgentKitCompileReportResult
+            {
+                reportId = "compile-report-1",
+                compileCycleId = "compile-cycle-1",
+                hostId = "host-editor-tests",
+                hostEpoch = 7,
+                projectRoot = "D:/repo/unity",
+                unityVersion = "2022.3.61f1",
+                completedAt = "2026-05-25T10:00:00.0000000Z",
+                invalidationTokenAtCompletion = 5,
+                compilerErrorCount = 1,
+                compilerWarningCount = 1,
+                compilerMessagesSummary = "1 error, 1 warning",
+                compilerMessages = new[]
+                {
+                    new UnityAgentKitCompilerMessageRecord
+                    {
+                        assemblyPath = "Library/ScriptAssemblies/Assembly-CSharp.dll",
+                        file = "Assets/Broken.cs",
+                        line = 12,
+                        column = 7,
+                        type = "error",
+                        message = "CS1002: ; expected"
+                    },
+                    new UnityAgentKitCompilerMessageRecord
+                    {
+                        assemblyPath = "Library/ScriptAssemblies/Assembly-CSharp.dll",
+                        file = "Assets/Warning.cs",
+                        line = 3,
+                        column = 1,
+                        type = "warning",
+                        message = "CS0168: variable is declared but never used"
+                    }
+                },
+                assemblyCompilationFinishedSeen = true,
+                compilationFinishedSeen = true,
+                editorIdleAfterCompilation = true
+            };
+
+            var roundTrip = JsonUtility.FromJson<UnityAgentKitCompileReportResult>(JsonUtility.ToJson(report));
+
+            Assert.AreEqual("compile-report-1", roundTrip.reportId);
+            Assert.AreEqual("compile-cycle-1", roundTrip.compileCycleId);
+            Assert.AreEqual("host-editor-tests", roundTrip.hostId);
+            Assert.AreEqual(7, roundTrip.hostEpoch);
+            Assert.AreEqual(5, roundTrip.invalidationTokenAtCompletion);
+            Assert.AreEqual(1, roundTrip.compilerErrorCount);
+            Assert.AreEqual(1, roundTrip.compilerWarningCount);
+            Assert.AreEqual(2, roundTrip.compilerMessages.Length);
+            Assert.IsTrue(roundTrip.assemblyCompilationFinishedSeen);
+            Assert.IsTrue(roundTrip.compilationFinishedSeen);
+            Assert.IsTrue(roundTrip.editorIdleAfterCompilation);
+        }
+
+        [Test]
+        public void CompileReportOperationRequiresMainThreadDispatch()
+        {
+            Assert.IsTrue(UnityAgentKitOperationRouter.RequiresMainThreadDispatch(" compile.report.get "));
+
+            var response = UnityAgentKitOperationRouter.Route(new UnityAgentKitOperationRequest
+            {
+                operation = "compile.report.get",
+                requestId = "req-report-direct"
+            }, TestHostRecord());
+
+            Assert.AreEqual("rejected", response.status);
+            Assert.AreEqual("host.dispatch_required", response.code);
+        }
+
+        [Test]
+        public void CompileCollectorRecordsCompletedReportWithCompilerMessages()
+        {
+            UnityAgentKitCompileDiagnostics.ResetForTests();
+            var record = TestHostRecord();
+            var messages = new[]
+            {
+                UnityAgentKitCompileDiagnostics.CreateCompilerMessageForTests(
+                    "Assets/Broken.cs",
+                    12,
+                    7,
+                    UnityEditor.Compilation.CompilerMessageType.Error,
+                    "CS1002: ; expected"),
+                UnityAgentKitCompileDiagnostics.CreateCompilerMessageForTests(
+                    "Assets/Warning.cs",
+                    3,
+                    1,
+                    UnityEditor.Compilation.CompilerMessageType.Warning,
+                    "CS0168: variable is declared but never used")
+            };
+
+            UnityAgentKitCompileDiagnostics.StartCompileCycleForTests(record, invalidationTokenAtStart: 5);
+            UnityAgentKitCompileDiagnostics.RecordAssemblyCompilationFinishedForTests("Library/ScriptAssemblies/Assembly-CSharp.dll", messages);
+            UnityAgentKitCompileDiagnostics.RecordCompilationFinishedForTests();
+            UnityAgentKitCompileDiagnostics.CompleteActiveCycleIfIdleForTests(isCompiling: false, isUpdating: false);
+
+            Assert.IsTrue(UnityAgentKitCompileDiagnostics.TryReadRecentReportForTests(record, out var report, out var code, out var message));
+            Assert.AreEqual(string.Empty, code);
+            Assert.AreEqual(string.Empty, message);
+            Assert.AreEqual(record.hostId, report.hostId);
+            Assert.AreEqual(record.hostEpoch, report.hostEpoch);
+            Assert.AreEqual(5, report.invalidationTokenAtCompletion);
+            Assert.AreEqual(1, report.compilerErrorCount);
+            Assert.AreEqual(1, report.compilerWarningCount);
+            Assert.AreEqual("1 error, 1 warning", report.compilerMessagesSummary);
+            Assert.AreEqual(2, report.compilerMessages.Length);
+            Assert.IsTrue(report.assemblyCompilationFinishedSeen);
+            Assert.IsTrue(report.compilationFinishedSeen);
+            Assert.IsTrue(report.editorIdleAfterCompilation);
+        }
+
+        [Test]
+        public void CompileCollectorDoesNotCompleteReportBeforeEditorIdle()
+        {
+            UnityAgentKitCompileDiagnostics.ResetForTests();
+            var record = TestHostRecord();
+
+            UnityAgentKitCompileDiagnostics.StartCompileCycleForTests(record, invalidationTokenAtStart: 5);
+            UnityAgentKitCompileDiagnostics.RecordAssemblyCompilationFinishedForTests("Library/ScriptAssemblies/Assembly-CSharp.dll", new UnityEditor.Compilation.CompilerMessage[0]);
+            UnityAgentKitCompileDiagnostics.RecordCompilationFinishedForTests();
+            UnityAgentKitCompileDiagnostics.CompleteActiveCycleIfIdleForTests(isCompiling: true, isUpdating: false);
+
+            Assert.IsFalse(UnityAgentKitCompileDiagnostics.TryReadRecentReportForTests(record, out _, out var code, out var message));
+            Assert.AreEqual("compile.report_missing", code);
+            Assert.AreEqual("No complete compile report is available.", message);
+        }
+
+        [Test]
+        public void CompileReportOperationReturnsUncertainWhenReportMissing()
+        {
+            UnityAgentKitCompileDiagnostics.ResetForTests();
+            var record = TestHostRecord();
+
+            var response = UnityAgentKitOperationRouter.RunOnMainThread(new UnityAgentKitOperationRequest
+            {
+                operation = "compile.report.get",
+                requestId = "req-report-missing"
+            }, record, System.Threading.Thread.CurrentThread.ManagedThreadId);
+
+            Assert.AreEqual("uncertain", response.status);
+            Assert.AreEqual("compile.report.get", response.operation);
+            Assert.AreEqual("compile.report_missing", response.code);
+            Assert.AreEqual(1, response.diagnostics.Length);
+            Assert.AreEqual("compile.report_missing", response.diagnostics[0].code);
+        }
+
+        [Test]
+        public void CompileReportOperationReturnsRecentCompletedReport()
+        {
+            UnityAgentKitCompileDiagnostics.ResetForTests();
+            var record = TestHostRecord();
+            UnityAgentKitCompileDiagnostics.StartCompileCycleForTests(record, invalidationTokenAtStart: 5);
+            UnityAgentKitCompileDiagnostics.RecordAssemblyCompilationFinishedForTests("Library/ScriptAssemblies/Assembly-CSharp.dll", new UnityEditor.Compilation.CompilerMessage[0]);
+            UnityAgentKitCompileDiagnostics.RecordCompilationFinishedForTests();
+            UnityAgentKitCompileDiagnostics.CompleteActiveCycleIfIdleForTests(isCompiling: false, isUpdating: false);
+
+            var response = UnityAgentKitOperationRouter.RunOnMainThread(new UnityAgentKitOperationRequest
+            {
+                operation = "compile.report.get",
+                requestId = "req-report-read"
+            }, record, System.Threading.Thread.CurrentThread.ManagedThreadId);
+
+            AssertOperationEnvelopeMinimumFields(response, "succeeded", "compile.report.get", "req-report-read", record);
+            var report = JsonUtility.FromJson<UnityAgentKitCompileReportResult>(response.data);
+            Assert.AreEqual(record.hostId, report.hostId);
+            Assert.AreEqual(record.hostEpoch, report.hostEpoch);
+            Assert.AreEqual(5, report.invalidationTokenAtCompletion);
+            Assert.AreEqual(0, report.compilerErrorCount);
+            Assert.AreEqual(0, report.compilerWarningCount);
+            Assert.IsTrue(report.assemblyCompilationFinishedSeen);
+            Assert.IsTrue(report.compilationFinishedSeen);
+            Assert.IsTrue(report.editorIdleAfterCompilation);
+        }
+
+        [Test]
+        public void CompileCallbackSubscriptionSmokeCanAttachAndDetach()
+        {
+            UnityAgentKitCompileDiagnostics.ResetForTests();
+
+            UnityAgentKitCompileDiagnostics.EnsureCompilerCallbacksSubscribedForTests();
+            Assert.IsTrue(UnityAgentKitCompileDiagnostics.HasCompilerCallbackSubscriptionsForTests());
+
+            UnityAgentKitCompileDiagnostics.DetachCompilerCallbacksForTests();
+            Assert.IsFalse(UnityAgentKitCompileDiagnostics.HasCompilerCallbackSubscriptionsForTests());
+
+            UnityAgentKitCompileDiagnostics.EnsureCompilerCallbacksSubscribedForTests();
+            Assert.IsTrue(UnityAgentKitCompileDiagnostics.HasCompilerCallbackSubscriptionsForTests());
+        }
+
+        [Test]
+        public void CompileCollectorResetClearsRecentReportProof()
+        {
+            UnityAgentKitCompileDiagnostics.ResetForTests();
+            var record = TestHostRecord();
+            UnityAgentKitCompileDiagnostics.StartCompileCycleForTests(record, invalidationTokenAtStart: 5);
+            UnityAgentKitCompileDiagnostics.RecordAssemblyCompilationFinishedForTests("Library/ScriptAssemblies/Assembly-CSharp.dll", new UnityEditor.Compilation.CompilerMessage[0]);
+            UnityAgentKitCompileDiagnostics.RecordCompilationFinishedForTests();
+            UnityAgentKitCompileDiagnostics.CompleteActiveCycleIfIdleForTests(isCompiling: false, isUpdating: false);
+            Assert.IsTrue(UnityAgentKitCompileDiagnostics.TryReadRecentReportForTests(record, out _, out _, out _));
+
+            UnityAgentKitCompileDiagnostics.ResetForTests();
+
+            Assert.IsFalse(UnityAgentKitCompileDiagnostics.TryReadRecentReportForTests(record, out _, out var code, out var message));
+            Assert.AreEqual("compile.report_missing", code);
+            Assert.AreEqual("No complete compile report is available.", message);
+        }
+
+        [Test]
+        public void CompileCollectorSubscriptionLossClearsRecentReportProof()
+        {
+            UnityAgentKitCompileDiagnostics.ResetForTests();
+            var record = TestHostRecord();
+            UnityAgentKitCompileDiagnostics.StartCompileCycleForTests(record, invalidationTokenAtStart: 5);
+            UnityAgentKitCompileDiagnostics.RecordAssemblyCompilationFinishedForTests("Library/ScriptAssemblies/Assembly-CSharp.dll", new UnityEditor.Compilation.CompilerMessage[0]);
+            UnityAgentKitCompileDiagnostics.RecordCompilationFinishedForTests();
+            UnityAgentKitCompileDiagnostics.CompleteActiveCycleIfIdleForTests(isCompiling: false, isUpdating: false);
+            Assert.IsTrue(UnityAgentKitCompileDiagnostics.TryReadRecentReportForTests(record, out _, out _, out _));
+
+            UnityAgentKitCompileDiagnostics.DetachCompilerCallbacksForTests();
+
+            Assert.IsFalse(UnityAgentKitCompileDiagnostics.TryReadRecentReportForTests(record, out _, out var code, out var message));
+            Assert.AreEqual("compile.report_missing", code);
+            Assert.AreEqual("No complete compile report is available.", message);
+        }
+
         private static UnityAgentKitHostRecord TestHostRecord()
         {
             return new UnityAgentKitHostRecord
