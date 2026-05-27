@@ -189,7 +189,7 @@ export async function snapshotConsole(
     resource: readback.resource,
     metadata: {
       resourceFilePath: readback.filePath,
-      resourceContentBytes: readback.contentBytes.byteLength,
+      resourceContentBytes: readback.contentBytes,
     },
     startedAt: mapped.startedAt,
     completedAt: mapped.completedAt,

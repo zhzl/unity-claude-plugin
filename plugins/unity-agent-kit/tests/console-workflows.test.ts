@@ -446,7 +446,8 @@ test("snapshotConsoleRequiresPhase5BResourceReadbackBeforeSuccess", async () => 
   await withArtifactProject(async (projectRoot, artifactRoot) => {
     const record = sampleHostRecord({ projectRoot });
     const summary = snapshotSummary({ projectRoot });
-    await writeConsoleSnapshotResource(artifactRoot, summary.artifactId, "[{\"message\":\"example\"}]");
+    const payload = "[{\"message\":\"example\"}]";
+    await writeConsoleSnapshotResource(artifactRoot, summary.artifactId, payload);
     const registry = registrySequence([{ ok: true, record }, { ok: true, record }]);
     const transport = transportWithProbesAndInvokes([
       { port: record.port, result: { ok: true, statusCode: 200, body: record } },
@@ -473,6 +474,7 @@ test("snapshotConsoleRequiresPhase5BResourceReadbackBeforeSuccess", async () => 
     assert.equal(result.resource?.artifactId, summary.artifactId);
     assert.equal(result.resource?.validationStatus, "valid");
     assert.equal(result.evidence?.["completion"], "artifact_complete");
+    assert.equal(Buffer.from(result.metadata?.["resourceContentBytes"] as Uint8Array).toString("utf8"), payload);
     assert.equal((await readFile(path.join(artifactRoot, "console-snapshots", "console-1.json"), "utf8")).length > 0, true);
     registry.assertConsumed();
     transport.assertConsumed();
