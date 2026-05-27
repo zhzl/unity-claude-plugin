@@ -49,7 +49,7 @@ function cursor(overrides: Partial<ConsoleCursor> = {}): ConsoleCursor {
   return {
     hostId: "host-console",
     hostEpoch: 12,
-    generation: 41,
+    consoleGeneration: 41,
     startIndex: 120,
     createdAt: "2026-05-27T09:00:02.000Z",
     ...overrides,
@@ -59,17 +59,22 @@ function cursor(overrides: Partial<ConsoleCursor> = {}): ConsoleCursor {
 function countSnapshot(overrides: Partial<ConsoleCountSnapshot> = {}): ConsoleCountSnapshot {
   return {
     projectRoot: "D:/ai/unity-claude-plugin/unity",
-    totalCount: 250,
-    boundedCount: 200,
-    truncated: true,
-    severityBreakdown: {
+    totalCount: 1000,
+    counts: {
       error: 12,
       warning: 40,
       log: 148,
-      partial: true,
+    },
+    severityScan: {
+      scannedCount: 500,
+      startIndex: 500,
+      endIndexExclusive: 1000,
+      limit: 500,
+      severityBreakdownComplete: false,
     },
     cursor: cursor(),
-    capturedAt: "2026-05-27T09:00:03.000Z",
+    consoleGeneration: 41,
+    diagnostics: [],
     ...overrides,
   };
 }
@@ -77,14 +82,27 @@ function countSnapshot(overrides: Partial<ConsoleCountSnapshot> = {}): ConsoleCo
 function snapshotSummary(overrides: Partial<ConsoleSnapshotSummary> = {}): ConsoleSnapshotSummary {
   return {
     projectRoot: "D:/ai/unity-claude-plugin/unity",
+    unityVersion: "6000.0.0f1",
+    hostId: "host-console",
+    hostEpoch: 12,
     artifactId: "console-1",
     uri: "unity://console-snapshots/console-1",
-    validationStatus: "valid",
-    totalCount: 250,
-    boundedCount: 200,
-    truncated: true,
+    counts: {
+      error: 12,
+      warning: 40,
+      log: 148,
+    },
     cursor: cursor(),
-    capturedAt: "2026-05-27T09:00:04.000Z",
+    range: {
+      startIndex: 120,
+      endIndexExclusive: 320,
+      totalCountAtCapture: 250,
+      limit: 200,
+      truncated: true,
+    },
+    entryCount: 200,
+    includeStackTrace: false,
+    diagnostics: [],
     ...overrides,
   };
 }
@@ -92,14 +110,18 @@ function snapshotSummary(overrides: Partial<ConsoleSnapshotSummary> = {}): Conso
 function clearSnapshot(overrides: Partial<ConsoleClearSnapshot> = {}): ConsoleClearSnapshot {
   return {
     projectRoot: "D:/ai/unity-claude-plugin/unity",
+    explicitClear: true,
     cleared: true,
-    generationBefore: 41,
-    generationAfter: 42,
-    countBefore: 17,
-    countAfter: 0,
-    cursorBefore: cursor(),
-    cursorAfter: cursor({ generation: 42, startIndex: 0, createdAt: "2026-05-27T09:00:05.000Z" }),
-    clearedAt: "2026-05-27T09:00:05.000Z",
+    countBeforeClear: 12,
+    countAfterClear: 0,
+    consoleGenerationBeforeClear: 2,
+    consoleGenerationAfterClear: 3,
+    cursor: cursor({
+      consoleGeneration: 3,
+      startIndex: 0,
+      createdAt: "2026-05-27T09:00:05.000Z",
+    }),
+    diagnostics: [],
     ...overrides,
   };
 }
@@ -169,6 +191,7 @@ type InvokeExpectation = {
   port: number;
   requestId: string;
   operation: string;
+  inputJson?: string;
   result: HostTransportResult;
 };
 
@@ -194,6 +217,9 @@ function transportWithProbesAndInvokes(probes: ProbeExpectation[], invokes: Invo
         assert.equal(port, next.port);
         assert.equal(request.requestId, next.requestId);
         assert.equal(request.operation, next.operation);
+        if (next.inputJson !== undefined) {
+          assert.equal(request.inputJson, next.inputJson);
+        }
         return next.result;
       },
     },
@@ -232,27 +258,24 @@ async function withArtifactProject(
 
 async function writeConsoleSnapshotResource(
   artifactRoot: string,
-  summary: ConsoleSnapshotSummary,
-  payload = "[{\"message\":\"example\"}]",
+  artifactId: string,
+  payload: string,
 ): Promise<void> {
-  const metadataPath = path.join(artifactRoot, "metadata", "console-snapshots", `${summary.artifactId}.json`);
-  const payloadPath = path.join(artifactRoot, "console-snapshots", `${summary.artifactId}.json`);
+  const metadataPath = path.join(artifactRoot, "metadata", "console-snapshots", `${artifactId}.json`);
+  const payloadPath = path.join(artifactRoot, "console-snapshots", `${artifactId}.json`);
   const { mkdir } = await import("node:fs/promises");
   await mkdir(path.dirname(metadataPath), { recursive: true });
   await mkdir(path.dirname(payloadPath), { recursive: true });
   await writeFile(metadataPath, JSON.stringify({
     schemaVersion: 1,
-    id: summary.artifactId,
+    id: artifactId,
     type: "console_snapshot",
-    uri: summary.uri,
-    relativePath: `console-snapshots/${summary.artifactId}.json`,
-    createdAt: summary.capturedAt,
-    validationStatus: summary.validationStatus,
-    hostId: summary.cursor.hostId,
-    hostEpoch: summary.cursor.hostEpoch,
+    uri: `unity://console-snapshots/${artifactId}`,
+    relativePath: `console-snapshots/${artifactId}.json`,
+    createdAt: "2026-05-27T09:00:04.000Z",
     producerTool: "unity_console",
     producerAction: "snapshot",
-    sizeBytes: payload.length,
+    sizeBytes: Buffer.byteLength(payload),
     diagnostics: [],
   }, null, 2), "utf8");
   await writeFile(payloadPath, payload, "utf8");
@@ -272,6 +295,7 @@ test("parseConsoleSnapshotDataPreservesCursorRangeAndResourceFields", () => {
 
   assert.deepEqual(parsed, summary);
   assert.equal(parsed?.cursor.startIndex, summary.cursor.startIndex);
+  assert.deepEqual(parsed?.range, summary.range);
   assert.equal(parsed?.artifactId, "console-1");
   assert.equal(parsed?.uri, "unity://console-snapshots/console-1");
 });
@@ -280,16 +304,19 @@ test("parseConsoleClearDataRequiresGenerationAndCountEvidence", () => {
   const snapshot = clearSnapshot();
 
   assert.deepEqual(parseConsoleClearData(JSON.stringify(snapshot)), snapshot);
-  assert.equal(parseConsoleClearData(JSON.stringify({ ...snapshot, generationAfter: undefined })), null);
-  assert.equal(parseConsoleClearData(JSON.stringify({ ...snapshot, countAfter: undefined })), null);
+  assert.equal(parseConsoleClearData(JSON.stringify({ ...snapshot, consoleGenerationAfterClear: undefined })), null);
+  assert.equal(parseConsoleClearData(JSON.stringify({ ...snapshot, countAfterClear: undefined })), null);
 });
 
 test("validateConsoleCursorRequiresHostEpochGenerationStartIndexAndCreatedAt", () => {
-  assert.equal(validateConsoleCursor(cursor()), true);
-  assert.equal(validateConsoleCursor({ ...cursor(), hostEpoch: -1 }), false);
-  assert.equal(validateConsoleCursor({ ...cursor(), generation: -1 }), false);
-  assert.equal(validateConsoleCursor({ ...cursor(), startIndex: -1 }), false);
-  assert.equal(validateConsoleCursor({ ...cursor(), createdAt: "" }), false);
+  const currentCountSnapshot = countSnapshot({ totalCount: 250, cursor: cursor(), consoleGeneration: 41 });
+
+  assert.deepEqual(validateConsoleCursor(cursor(), currentCountSnapshot), { ok: true });
+  assert.equal(validateConsoleCursor({ ...cursor(), hostId: "other-host" }, currentCountSnapshot).ok, false);
+  assert.equal(validateConsoleCursor({ ...cursor(), hostEpoch: -1 }, currentCountSnapshot).ok, false);
+  assert.equal(validateConsoleCursor({ ...cursor(), consoleGeneration: -1 }, currentCountSnapshot).ok, false);
+  assert.equal(validateConsoleCursor({ ...cursor(), startIndex: 251 }, currentCountSnapshot).ok, false);
+  assert.equal(validateConsoleCursor({ ...cursor(), createdAt: "" }, currentCountSnapshot).ok, false);
 });
 
 test("countConsoleMapsRealTotalAndBoundedPartialSeverityWithoutClaimingExactBreakdown", async () => {
@@ -303,6 +330,7 @@ test("countConsoleMapsRealTotalAndBoundedPartialSeverityWithoutClaimingExactBrea
       port: record.port,
       requestId: "req-count",
       operation: consoleCountOperation,
+      inputJson: JSON.stringify({ maxSeverityScan: 500 }),
       result: { ok: true, statusCode: 200, body: succeededEnvelope(record, snapshot, "req-count", consoleCountOperation) },
     },
   ]);
@@ -314,9 +342,12 @@ test("countConsoleMapsRealTotalAndBoundedPartialSeverityWithoutClaimingExactBrea
   assert.equal(result.status, "succeeded");
   assert.equal(result.tool, "unity_console");
   assert.equal(result.action, "count");
-  assert.equal(result.evidence?.["totalCount"], snapshot.totalCount);
-  assert.equal(result.evidence?.["boundedCount"], snapshot.boundedCount);
-  assert.equal(result.evidence?.["severityBreakdownExact"], false);
+  assert.deepEqual(result.evidence, {
+    completion: "state_snapshot",
+    totalCount: 1000,
+    severityBreakdownComplete: false,
+  });
+  assert.equal(result.diagnostics.some((diagnostic) => diagnostic.code === "console.severity_breakdown_partial"), true);
   registry.assertConsumed();
   transport.assertConsumed();
 });
@@ -325,7 +356,7 @@ test("snapshotConsoleRequiresPhase5BResourceReadbackBeforeSuccess", async () => 
   await withArtifactProject(async (projectRoot, artifactRoot) => {
     const record = sampleHostRecord({ projectRoot });
     const summary = snapshotSummary({ projectRoot });
-    await writeConsoleSnapshotResource(artifactRoot, summary);
+    await writeConsoleSnapshotResource(artifactRoot, summary.artifactId, "[{\"message\":\"example\"}]");
     const registry = registrySequence([{ ok: true, record }, { ok: true, record }]);
     const transport = transportWithProbesAndInvokes([
       { port: record.port, result: { ok: true, statusCode: 200, body: record } },
@@ -334,6 +365,7 @@ test("snapshotConsoleRequiresPhase5BResourceReadbackBeforeSuccess", async () => 
         port: record.port,
         requestId: "req-snapshot",
         operation: consoleSnapshotOperation,
+        inputJson: JSON.stringify({ limit: 200, includeStackTrace: false }),
         result: { ok: true, statusCode: 200, body: succeededEnvelope(record, summary, "req-snapshot", consoleSnapshotOperation) },
       },
     ]);
@@ -348,7 +380,7 @@ test("snapshotConsoleRequiresPhase5BResourceReadbackBeforeSuccess", async () => 
     assert.equal(result.status, "succeeded");
     assert.equal(result.resource?.uri, summary.uri);
     assert.equal(result.resource?.type, "console_snapshot");
-    assert.equal(result.evidence?.["resourceReadback"], "verified");
+    assert.equal(result.evidence?.["completion"], "artifact_complete");
     assert.equal((await readFile(path.join(artifactRoot, "console-snapshots", "console-1.json"), "utf8")).length > 0, true);
     registry.assertConsumed();
     transport.assertConsumed();
@@ -367,6 +399,7 @@ test("snapshotConsoleFailsWhenResourceReadbackFails", async () => {
         port: record.port,
         requestId: "req-snapshot-missing",
         operation: consoleSnapshotOperation,
+        inputJson: JSON.stringify({ limit: 200, includeStackTrace: false }),
         result: { ok: true, statusCode: 200, body: succeededEnvelope(record, summary, "req-snapshot-missing", consoleSnapshotOperation) },
       },
     ]);
@@ -379,8 +412,9 @@ test("snapshotConsoleFailsWhenResourceReadbackFails", async () => {
     });
 
     assert.equal(result.status, "failed");
+    assert.equal(result.code, "console.snapshot_resource_failed");
     assert.equal(result.resource, undefined);
-    assert.equal(result.diagnostics.some((diagnostic) => diagnostic.code === "resource.metadata_missing" || diagnostic.code === "resource.file_missing"), true);
+    assert.equal(result.nextStep?.kind, "inspect_diagnostics");
     registry.assertConsumed();
     transport.assertConsumed();
   });
@@ -389,7 +423,7 @@ test("snapshotConsoleFailsWhenResourceReadbackFails", async () => {
 test("snapshotConsoleMapsInvalidCursorToUncertainWithoutReadingResource", async () => {
   await withArtifactProject(async (projectRoot) => {
     const record = sampleHostRecord({ projectRoot });
-    const summary = snapshotSummary({ projectRoot, cursor: cursor({ generation: -1 }) });
+    const summary = snapshotSummary({ projectRoot, cursor: cursor({ consoleGeneration: -1 }) });
     const registry = registrySequence([{ ok: true, record }, { ok: true, record }]);
     const transport = transportWithProbesAndInvokes([
       { port: record.port, result: { ok: true, statusCode: 200, body: record } },
@@ -398,6 +432,7 @@ test("snapshotConsoleMapsInvalidCursorToUncertainWithoutReadingResource", async 
         port: record.port,
         requestId: "req-snapshot-uncertain",
         operation: consoleSnapshotOperation,
+        inputJson: JSON.stringify({ limit: 200, includeStackTrace: false }),
         result: { ok: true, statusCode: 200, body: uncertainEnvelope(record, summary, "req-snapshot-uncertain", consoleSnapshotOperation) },
       },
     ]);
@@ -442,25 +477,36 @@ test("clearConsoleMapsVerifiedClearGenerationAndCountEvidence", async () => {
       port: record.port,
       requestId: "req-clear",
       operation: consoleClearOperation,
+      inputJson: JSON.stringify({ confirmClear: true }),
       result: { ok: true, statusCode: 200, body: succeededEnvelope(record, snapshot, "req-clear", consoleClearOperation) },
     },
   ]);
 
   const result = await clearConsole(options(record, transport.transport, { readRegistry: registry.readRegistry }), {
     requestId: "req-clear",
-    confirm: true,
+    confirmClear: true,
   });
 
   assert.equal(result.status, "succeeded");
-  assert.equal(result.evidence?.["generationAdvanced"], true);
-  assert.equal(result.evidence?.["countAfter"], 0);
+  assert.deepEqual(result.evidence, {
+    completion: "effect_verified",
+    countBeforeClear: 12,
+    countAfterClear: 0,
+    consoleGenerationBeforeClear: 2,
+    consoleGenerationAfterClear: 3,
+  });
   registry.assertConsumed();
   transport.assertConsumed();
 });
 
 test("clearConsoleReturnsFailedWhenUnityCannotVerifyCountAfterClear", async () => {
   const record = sampleHostRecord();
-  const snapshot = clearSnapshot({ countAfter: 3, cleared: false });
+  const snapshot = clearSnapshot({
+    cleared: false,
+    countAfterClear: 3,
+    consoleGenerationAfterClear: 2,
+    cursor: cursor({ consoleGeneration: 2, startIndex: 0, createdAt: "2026-05-27T09:00:05.000Z" }),
+  });
   const registry = registrySequence([{ ok: true, record }, { ok: true, record }]);
   const transport = transportWithProbesAndInvokes([
     { port: record.port, result: { ok: true, statusCode: 200, body: record } },
@@ -469,18 +515,19 @@ test("clearConsoleReturnsFailedWhenUnityCannotVerifyCountAfterClear", async () =
       port: record.port,
       requestId: "req-clear-failed",
       operation: consoleClearOperation,
+      inputJson: JSON.stringify({ confirmClear: true }),
       result: { ok: true, statusCode: 200, body: succeededEnvelope(record, snapshot, "req-clear-failed", consoleClearOperation) },
     },
   ]);
 
   const result = await clearConsole(options(record, transport.transport, { readRegistry: registry.readRegistry }), {
     requestId: "req-clear-failed",
-    confirm: true,
+    confirmClear: true,
   });
 
   assert.equal(result.status, "failed");
-  assert.equal(result.evidence?.["verifiedClear"], false);
-  assert.equal(result.diagnostics.some((diagnostic) => diagnostic.code === "console.clear_verification_failed"), true);
+  assert.equal(result.code, "console.clear_verification_failed");
+  assert.equal(result.evidence?.["consoleGenerationAfterClear"], 2);
   registry.assertConsumed();
   transport.assertConsumed();
 });
@@ -488,7 +535,10 @@ test("clearConsoleReturnsFailedWhenUnityCannotVerifyCountAfterClear", async () =
 test("countConsoleRecordsSuccessfulRebindDiagnostic", async () => {
   const first = sampleHostRecord({ hostId: "host-before", hostEpoch: 1, port: 49200 });
   const rebound = sampleHostRecord({ hostId: "host-after", hostEpoch: 2, port: 49201 });
-  const snapshot = countSnapshot();
+  const snapshot = countSnapshot({
+    projectRoot: rebound.projectRoot,
+    cursor: cursor({ hostId: rebound.hostId, hostEpoch: rebound.hostEpoch }),
+  });
   const registry = registrySequence([
     { ok: true, record: first },
     { ok: true, record: rebound },
@@ -502,6 +552,7 @@ test("countConsoleRecordsSuccessfulRebindDiagnostic", async () => {
       port: rebound.port,
       requestId: "req-count-rebound",
       operation: consoleCountOperation,
+      inputJson: JSON.stringify({ maxSeverityScan: 500 }),
       result: { ok: true, statusCode: 200, body: succeededEnvelope(rebound, snapshot, "req-count-rebound", consoleCountOperation) },
     },
   ]);
