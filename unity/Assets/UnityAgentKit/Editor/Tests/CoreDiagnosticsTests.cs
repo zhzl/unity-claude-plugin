@@ -568,6 +568,134 @@ namespace UnityAgentKit.Editor.Tests
         }
 
         [Test]
+        public void CompileCollectorStartsFreshCycleAtCompilationStartedBoundary()
+        {
+            UnityAgentKitCompileDiagnostics.ResetForTests();
+            try
+            {
+                var record = TestHostRecord();
+                var firstCycleMessages = new[]
+                {
+                    UnityAgentKitCompileDiagnostics.CreateCompilerMessageForTests(
+                        "Assets/FirstWarning.cs",
+                        3,
+                        1,
+                        UnityEditor.Compilation.CompilerMessageType.Warning,
+                        "CS0168: first warning")
+                };
+                var secondCycleMessages = new[]
+                {
+                    UnityAgentKitCompileDiagnostics.CreateCompilerMessageForTests(
+                        "Assets/SecondError.cs",
+                        8,
+                        2,
+                        UnityEditor.Compilation.CompilerMessageType.Error,
+                        "CS1002: second error")
+                };
+
+                UnityAgentKitCompileDiagnostics.StartCompileCycleForTests(record, invalidationTokenAtStart: 5);
+                UnityAgentKitCompileDiagnostics.RecordAssemblyCompilationFinishedForTests("Library/ScriptAssemblies/Assembly-CSharp.dll", firstCycleMessages);
+                UnityAgentKitCompileDiagnostics.RecordCompilationFinishedForTests();
+                UnityAgentKitCompileDiagnostics.RecordCompilationStartedForTests();
+                UnityAgentKitCompileDiagnostics.RecordAssemblyCompilationFinishedForTests("Library/ScriptAssemblies/Assembly-CSharp.dll", secondCycleMessages);
+                UnityAgentKitCompileDiagnostics.RecordCompilationFinishedForTests();
+                UnityAgentKitCompileDiagnostics.CompleteActiveCycleIfIdleForTests(isCompiling: false, isUpdating: false);
+
+                Assert.IsTrue(UnityAgentKitCompileDiagnostics.TryReadRecentReportForTests(record, out var report, out var code, out var message));
+                Assert.AreEqual(string.Empty, code);
+                Assert.AreEqual(string.Empty, message);
+                Assert.AreEqual(1, report.compilerErrorCount);
+                Assert.AreEqual(0, report.compilerWarningCount);
+                Assert.AreEqual("1 error, 0 warnings", report.compilerMessagesSummary);
+                Assert.AreEqual(1, report.compilerMessages.Length);
+                AssertCompilerMessageEquals(
+                    report.compilerMessages[0],
+                    "Library/ScriptAssemblies/Assembly-CSharp.dll",
+                    "Assets/SecondError.cs",
+                    8,
+                    2,
+                    "error",
+                    "CS1002: second error");
+            }
+            finally
+            {
+                UnityAgentKitCompileDiagnostics.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void CompileStateOperationHidesRecentReportWhenCurrentHostDoesNotMatchProofHost()
+        {
+            UnityAgentKitCompileDiagnostics.ResetForTests();
+            try
+            {
+                var oldRecord = TestHostRecord();
+                var newRecord = CopyHostRecord(oldRecord);
+                newRecord.hostId = "host-editor-tests-restarted";
+                newRecord.hostEpoch = oldRecord.hostEpoch + 1;
+
+                UnityAgentKitCompileDiagnostics.StartCompileCycleForTests(oldRecord, invalidationTokenAtStart: 5);
+                UnityAgentKitCompileDiagnostics.RecordAssemblyCompilationFinishedForTests("Library/ScriptAssemblies/Assembly-CSharp.dll", new UnityEditor.Compilation.CompilerMessage[0]);
+                UnityAgentKitCompileDiagnostics.RecordCompilationFinishedForTests();
+                UnityAgentKitCompileDiagnostics.CompleteActiveCycleIfIdleForTests(isCompiling: false, isUpdating: false);
+
+                var response = UnityAgentKitOperationRouter.RunOnMainThread(new UnityAgentKitOperationRequest
+                {
+                    operation = "compile.state.get",
+                    requestId = "req-state-host-mismatch"
+                }, newRecord, System.Threading.Thread.CurrentThread.ManagedThreadId);
+
+                AssertOperationEnvelopeMinimumFields(response, "succeeded", "compile.state.get", "req-state-host-mismatch", newRecord);
+                var state = JsonUtility.FromJson<UnityAgentKitCompileStateResult>(response.data);
+                Assert.IsFalse(state.hasRecentCompileReport);
+                Assert.AreEqual(string.Empty, state.recentCompileReportId);
+            }
+            finally
+            {
+                UnityAgentKitCompileDiagnostics.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void CompileRequestCapturesCycleBeforeReentrantCallbacksRun()
+        {
+            UnityAgentKitCompileDiagnostics.ResetForTests();
+            try
+            {
+                var record = TestHostRecord();
+                var result = UnityAgentKitCompileDiagnostics.RequestCompileForTests(
+                    string.Empty,
+                    record,
+                    7,
+                    isCompiling: false,
+                    isUpdating: false,
+                    refreshAssetDatabase: () =>
+                    {
+                        UnityAgentKitCompileDiagnostics.RecordAssemblyCompilationFinishedForTests("Library/ScriptAssemblies/Assembly-CSharp.dll", new UnityEditor.Compilation.CompilerMessage[0]);
+                    },
+                    requestScriptCompilation: () =>
+                    {
+                        UnityAgentKitCompileDiagnostics.RecordCompilationFinishedForTests();
+                    });
+
+                Assert.IsTrue(result.requested);
+
+                UnityAgentKitCompileDiagnostics.CompleteActiveCycleIfIdleForTests(isCompiling: false, isUpdating: false);
+
+                Assert.IsTrue(UnityAgentKitCompileDiagnostics.TryReadRecentReportForTests(record, out var report, out var code, out var message));
+                Assert.AreEqual(string.Empty, code);
+                Assert.AreEqual(string.Empty, message);
+                Assert.AreEqual(result.invalidationTokenAfterRequest, report.invalidationTokenAtCompletion);
+                Assert.AreEqual(record.hostId, report.hostId);
+                Assert.AreEqual(record.hostEpoch, report.hostEpoch);
+            }
+            finally
+            {
+                UnityAgentKitCompileDiagnostics.ResetForTests();
+            }
+        }
+
+        [Test]
         public void CompileReportReadFailsWhenCurrentHostDoesNotMatchCompletedReportHost()
         {
             UnityAgentKitCompileDiagnostics.ResetForTests();

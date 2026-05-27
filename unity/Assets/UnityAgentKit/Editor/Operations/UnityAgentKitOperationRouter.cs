@@ -81,7 +81,7 @@ namespace UnityAgentKit.Editor
 
             if (operation == CompileStateGetOperation)
             {
-                var result = UnityAgentKitCompileDiagnostics.ReadState(capturedMainThreadId);
+                var result = UnityAgentKitCompileDiagnostics.ReadState(record, capturedMainThreadId);
                 return Succeeded(operation, requestId, record, "Compile state read.", UnityEngine.JsonUtility.ToJson(result), startedAt);
             }
 

@@ -33,11 +33,11 @@ namespace UnityAgentKit.Editor
             EnsureCompilerCallbacksSubscribed();
         }
 
-        internal static UnityAgentKitCompileStateResult ReadState(int capturedMainThreadId)
+        internal static UnityAgentKitCompileStateResult ReadState(UnityAgentKitHostRecord record, int capturedMainThreadId)
         {
             EnsureCompilerCallbacksSubscribed();
             CompleteActiveCycleIfIdle(EditorApplication.isCompiling, EditorApplication.isUpdating);
-            return CreateState(capturedMainThreadId, EditorApplication.isCompiling, EditorApplication.isUpdating);
+            return CreateState(record, capturedMainThreadId, EditorApplication.isCompiling, EditorApplication.isUpdating);
         }
 
         internal static UnityAgentKitCompileRequestResult RequestCompile(string inputJson, UnityAgentKitHostRecord record, int capturedMainThreadId)
@@ -110,6 +110,11 @@ namespace UnityAgentKit.Editor
             RecordCompilationFinished(new object[0]);
         }
 
+        internal static void RecordCompilationStartedForTests()
+        {
+            RecordCompilationStarted(new object[0]);
+        }
+
         internal static void CompleteActiveCycleIfIdleForTests(bool isCompiling, bool isUpdating)
         {
             CompleteActiveCycleIfIdle(isCompiling, isUpdating);
@@ -156,15 +161,31 @@ namespace UnityAgentKit.Editor
             }
             else
             {
-                refreshAssetDatabase();
-                usedAssetDatabaseRefresh = true;
-                requestScriptCompilation();
-                usedCompilationPipeline = true;
-                compileInvalidationToken += 1;
+                var previousHostRecord = currentHostRecord;
+                var previousActiveCompileCycle = activeCompileCycle;
+                var previousRecentCompletedReport = recentCompletedReport;
+                var nextToken = compileInvalidationToken + 1;
                 currentHostRecord = CloneHostRecord(record);
-                activeCompileCycle = CreateActiveCompileCycle(compileInvalidationToken);
+                compileInvalidationToken = nextToken;
+                activeCompileCycle = CreateActiveCompileCycle(nextToken);
                 recentCompletedReport = null;
-                requested = true;
+
+                try
+                {
+                    refreshAssetDatabase();
+                    usedAssetDatabaseRefresh = true;
+                    requestScriptCompilation();
+                    usedCompilationPipeline = true;
+                    requested = true;
+                }
+                catch
+                {
+                    currentHostRecord = previousHostRecord;
+                    compileInvalidationToken = tokenBefore;
+                    activeCompileCycle = previousActiveCompileCycle;
+                    recentCompletedReport = previousRecentCompletedReport;
+                    throw;
+                }
             }
 
             return new UnityAgentKitCompileRequestResult
@@ -184,8 +205,9 @@ namespace UnityAgentKit.Editor
             };
         }
 
-        private static UnityAgentKitCompileStateResult CreateState(int capturedMainThreadId, bool isCompiling, bool isUpdating)
+        private static UnityAgentKitCompileStateResult CreateState(UnityAgentKitHostRecord record, int capturedMainThreadId, bool isCompiling, bool isUpdating)
         {
+            var hasRecentCompileReport = recentCompletedReport != null && DoesRecordMatchReport(record, recentCompletedReport);
             return new UnityAgentKitCompileStateResult
             {
                 projectRoot = UnityAgentKitHostRegistry.GetProjectRoot(),
@@ -194,8 +216,8 @@ namespace UnityAgentKit.Editor
                 isUpdating = isUpdating,
                 isIdle = !isCompiling && !isUpdating,
                 invalidationToken = compileInvalidationToken,
-                hasRecentCompileReport = recentCompletedReport != null,
-                recentCompileReportId = recentCompletedReport != null ? recentCompletedReport.reportId : string.Empty,
+                hasRecentCompileReport = hasRecentCompileReport,
+                recentCompileReportId = hasRecentCompileReport ? recentCompletedReport.reportId : string.Empty,
                 capturedMainThreadId = capturedMainThreadId,
                 executionThreadId = Thread.CurrentThread.ManagedThreadId
             };
@@ -269,6 +291,7 @@ namespace UnityAgentKit.Editor
                 return;
             }
 
+            CompilationPipeline.compilationStarted += RecordCompilationStarted;
             CompilationPipeline.assemblyCompilationFinished += RecordAssemblyCompilationFinished;
             CompilationPipeline.compilationFinished += RecordCompilationFinished;
             compilerCallbacksSubscribed = true;
@@ -283,6 +306,7 @@ namespace UnityAgentKit.Editor
                 return;
             }
 
+            CompilationPipeline.compilationStarted -= RecordCompilationStarted;
             CompilationPipeline.assemblyCompilationFinished -= RecordAssemblyCompilationFinished;
             CompilationPipeline.compilationFinished -= RecordCompilationFinished;
             compilerCallbacksSubscribed = false;
@@ -308,6 +332,12 @@ namespace UnityAgentKit.Editor
             }
 
             return activeCompileCycle;
+        }
+
+        private static void RecordCompilationStarted(object context)
+        {
+            activeCompileCycle = CreateActiveCompileCycle(compileInvalidationToken);
+            recentCompletedReport = null;
         }
 
         private static void RecordAssemblyCompilationFinished(string assemblyPath, CompilerMessage[] messages)
