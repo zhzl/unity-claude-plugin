@@ -1628,7 +1628,7 @@ EOF
 - 修改：`unity/Assets/UnityAgentKit/Editor/Operations/UnityAgentKitOperationRouter.cs`
 - 测试：`unity/Assets/UnityAgentKit/Editor/Tests/CoreDiagnosticsTests.cs`
 
-- [ ] **步骤 1：添加 Unity console DTOs**
+- [x] **步骤 1：添加 Unity console DTOs**
 
 在 `unity/Assets/UnityAgentKit/Editor/Models/UnityAgentKitModels.cs` 的 `UnityAgentKitCompileReportResult` 后追加：
 
@@ -1778,7 +1778,7 @@ EOF
 
 保留文件顶部已有 `using System;`。
 
-- [ ] **步骤 2：增加 console snapshot artifact writer wrapper**
+- [x] **步骤 2：增加 console snapshot artifact writer wrapper**
 
 在 `unity/Assets/UnityAgentKit/Editor/Artifacts/UnityAgentKitArtifactContracts.cs` 的 `WriteSyntheticReport` 后追加：
 
@@ -1802,7 +1802,7 @@ EOF
 
 该 wrapper 复用 Phase 5B metadata layout，并保持 `producerTool = "unity_console"`、`producerAction = "snapshot"`。不要创建 MCP Resource handler。
 
-- [ ] **步骤 3：实现 Unity console diagnostics short operations**
+- [x] **步骤 3：实现 Unity console diagnostics short operations**
 
 创建 `unity/Assets/UnityAgentKit/Editor/Diagnostics/UnityAgentKitConsoleDiagnostics.cs`：
 
@@ -2361,7 +2361,7 @@ namespace UnityAgentKit.Editor
 }
 ```
 
-- [ ] **步骤 4：Route console operations through main-thread dispatch**
+- [x] **步骤 4：Route console operations through main-thread dispatch**
 
 在 `unity/Assets/UnityAgentKit/Editor/Operations/UnityAgentKitOperationRouter.cs` 中添加 operation constants：
 
@@ -2439,7 +2439,7 @@ namespace UnityAgentKit.Editor
 
 Do not route these operations in `Route`; direct route must keep returning `host.dispatch_required` through the generic main-thread guard.
 
-- [ ] **步骤 5：运行 Unity CoreDiagnostics tests 验证通过**
+- [x] **步骤 5：运行 Unity CoreDiagnostics tests 验证通过**
 
 运行：
 
@@ -2451,7 +2451,7 @@ Do not route these operations in `Route`; direct route must keep returning `host
 
 证明：该检查证明 Unity C# 能通过 deterministic seam 验证 bounded count/snapshot/cursor/clear generation，并通过真实 Unity EditMode runner 进行 `LogEntries` reflection smoke；Unity C# 没有执行长等待或 workflow polling。
 
-- [ ] **步骤 6：运行 HostRuntime dispatch regression tests**
+- [x] **步骤 6：运行 HostRuntime dispatch regression tests**
 
 运行：
 
@@ -2463,7 +2463,7 @@ Do not route these operations in `Route`; direct route must keep returning `host
 
 证明：该检查证明新增 console operations 没有破坏 existing `/operations` envelope、main-thread dispatch、host timeout、stop/reload behavior。
 
-- [ ] **步骤 7：Commit**
+- [x] **步骤 7：Commit**
 
 仅在用户授权 commit 时运行：
 
