@@ -2075,7 +2075,7 @@ EOF
 - 检查：Phase 5D test/playmode/screenshot workflows forbidden surface
 - 检查：Phase 5E final daily loop E2E forbidden surface
 
-- [ ] **步骤 1：运行 TS focused verification**
+- [x] **步骤 1：运行 TS focused verification**
 
 运行：
 
@@ -2087,7 +2087,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/edito
 
 证明：该检查证明 5C-03 TS workflow 与 5C-01、5C-02、Phase 5A、Phase 5B TS contracts 同时成立。
 
-- [ ] **步骤 2：运行 Unity focused verification**
+- [x] **步骤 2：运行 Unity focused verification**
 
 运行：
 
@@ -2099,7 +2099,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/edito
 
 证明：该检查证明 Unity compile collector/report operation 在真实 Unity EditMode runner 中执行，并覆盖 deterministic seam + callback subscription smoke。
 
-- [ ] **步骤 3：运行 HostRuntime regression verification**
+- [x] **步骤 3：运行 HostRuntime regression verification**
 
 运行：
 
@@ -2111,7 +2111,7 @@ cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/edito
 
 证明：该检查证明新增 compile report operation 没有破坏 host runtime routing、dispatch timeout、operation envelope 或 lifecycle cleanup。
 
-- [ ] **步骤 4：运行 scope guard**
+- [x] **步骤 4：运行 scope guard**
 
 运行：
 
@@ -2123,7 +2123,7 @@ test ! -e plugins/unity-agent-kit/src/tools && test ! -e plugins/unity-agent-kit
 
 证明：该检查证明 5C-03 没有越界创建 public MCP tools / registration / action-dispatch surface、MCP Resource handlers、`/unity` skill、5C-04 console diagnostics/workflows、Phase 5D workflows 或 Phase 5E final daily loop E2E files。该 scope guard 是边界验证，不是 compile behavior 验收；behavior 验收由 TS/Unity tests 完成。
 
-- [ ] **步骤 5：运行 diff formatting check**
+- [x] **步骤 5：运行 diff formatting check**
 
 运行：
 
@@ -2135,7 +2135,7 @@ git -c core.autocrlf=false diff --check
 
 证明：该检查证明新增/修改文件没有 trailing whitespace 或 patch formatting 问题。
 
-- [ ] **步骤 6：Commit**
+- [x] **步骤 6：Commit**
 
 仅在用户授权 commit 时运行：
 
@@ -2156,7 +2156,7 @@ EOF
 - 修改：`docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md`
 - 修改：`docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md`
 
-- [ ] **步骤 1：更新 5C execution index 的 5C-03 row 和 evidence**
+- [x] **步骤 1：更新 5C execution index 的 5C-03 row 和 evidence**
 
 在 `docs/superpowers/plans/2026-05-23-unity-agent-kit-phase-5c-execution-index.md` 的 Candidate Plan Cards table 中，把 5C-03 row 的 `Expanded Plan` 改为：
 
@@ -2184,7 +2184,7 @@ Phase 5C remains incomplete because 5C-04 is not completed. Phase 5 remains inco
 
 Use the actual test counts from command output when filling evidence.
 
-- [ ] **步骤 2：同步 parent Phase 5 plan index 的 partial state**
+- [x] **步骤 2：同步 parent Phase 5 plan index 的 partial state**
 
 在 `docs/superpowers/plans/2026-05-18-unity-agent-kit-phase-5-plan-index.md` 中只更新 Phase 5C row evidence text：
 
@@ -2194,7 +2194,7 @@ Use the actual test counts from command output when filling evidence.
 
 保持 Phase 5C row `Status` 为 `execution-planned`，`Execution Status` 为 `plan-ready`，不要把 Phase 5C 或 Phase 5 标记为 `completed`。
 
-- [ ] **步骤 3：更新 roadmap partial evidence 和 Next Manual Action**
+- [x] **步骤 3：更新 roadmap partial evidence 和 Next Manual Action**
 
 在 `docs/superpowers/roadmaps/2026-05-16-unity-agent-kit/ROADMAP.md` 中仅记录 5C-03 partial completion evidence：
 
@@ -2204,7 +2204,7 @@ Use the actual test counts from command output when filling evidence.
 
 Next Manual Action 改为创建并审查 5C-04 console count/snapshot/clear + cursor/resource expanded execution plan。不要修改 roadmap Goal、Non-goals、Shared Constraints、Phase 5 scope 或 Phase 5 success criteria。
 
-- [ ] **步骤 4：运行 docs/state checks**
+- [x] **步骤 4：运行 docs/state checks**
 
 运行：
 
@@ -2216,7 +2216,7 @@ git diff -- docs/superpowers/plans/2026-05-23-unity-agent-kit-phase-5c-execution
 
 证明：该检查证明 documentation state 只记录 5C-03 完成事实，不把 Phase 5C 或 Phase 5 提前标记 completed。
 
-- [ ] **步骤 5：Commit**
+- [x] **步骤 5：Commit**
 
 仅在用户授权 commit 时运行：
 
