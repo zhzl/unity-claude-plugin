@@ -619,7 +619,7 @@ test("clearConsoleRejectsWithoutExplicitConfirmationBeforeCallingUnity", async (
 test("clearConsoleMapsVerifiedClearGenerationAndCountEvidence", async () => {
   const record = sampleHostRecord();
   const snapshot = clearSnapshot();
-  const registry = registrySequence([{ ok: true, record }]);
+  const registry = registrySequence([{ ok: true, record }, { ok: true, record }]);
   const transport = transportWithProbesAndInvokes([
     { port: record.port, result: { ok: true, statusCode: 200, body: record } },
   ], [
@@ -657,7 +657,7 @@ test("clearConsoleReturnsFailedWhenUnityCannotVerifyCountAfterClear", async () =
     consoleGenerationAfterClear: 2,
     cursor: cursor({ consoleGeneration: 2, startIndex: 0, createdAt: "2026-05-27T09:00:05.000Z" }),
   });
-  const registry = registrySequence([{ ok: true, record }]);
+  const registry = registrySequence([{ ok: true, record }, { ok: true, record }]);
   const transport = transportWithProbesAndInvokes([
     { port: record.port, result: { ok: true, statusCode: 200, body: record } },
   ], [
@@ -708,7 +708,7 @@ test("clearConsoleMapsInconsistentCursorProofToUncertain", async () => {
 
   for (const scenario of scenarios) {
     const record = sampleHostRecord();
-    const registry = registrySequence([{ ok: true, record }]);
+    const registry = registrySequence([{ ok: true, record }, { ok: true, record }]);
     const transport = transportWithProbesAndInvokes([
       { port: record.port, result: { ok: true, statusCode: 200, body: record } },
     ], [
@@ -744,7 +744,6 @@ test("clearConsoleMapsInconsistentCursorProofToUncertain", async () => {
 
 test("clearConsoleDoesNotSucceedAcrossHostRebind", async () => {
   const first = sampleHostRecord({ hostId: "host-before", hostEpoch: 1, port: 49200 });
-  const rebound = sampleHostRecord({ hostId: "host-after", hostEpoch: 2, port: 49201 });
   const registry = registrySequence([
     { ok: true, record: first },
   ]);
@@ -769,6 +768,89 @@ test("clearConsoleDoesNotSucceedAcrossHostRebind", async () => {
   assert.equal(result.safeToRetry, false);
   assert.equal(result.diagnostics.some((diagnostic) => diagnostic.code === "host.not_ready"), true);
   assert.equal(result.diagnostics.some((diagnostic) => diagnostic.code === "host.rebound"), false);
+  registry.assertConsumed();
+  transport.assertConsumed();
+});
+
+test("clearConsoleRejectsVerifiedClearWhenPostRegistryHostChanges", async () => {
+  const before = sampleHostRecord({ hostId: "host-before", hostEpoch: 1, port: 49200 });
+  const after = sampleHostRecord({ hostId: "host-after", hostEpoch: 2, port: 49201 });
+  const snapshot = clearSnapshot({
+    hostId: before.hostId,
+    hostEpoch: before.hostEpoch,
+    cursor: cursor({ hostId: before.hostId, hostEpoch: before.hostEpoch, consoleGeneration: 3, startIndex: 0, createdAt: "2026-05-27T09:00:05.000Z" }),
+  });
+  const registry = registrySequence([
+    { ok: true, record: before },
+    { ok: true, record: after },
+  ]);
+  const transport = transportWithProbesAndInvokes([
+    { port: before.port, result: { ok: true, statusCode: 200, body: before } },
+  ], [
+    {
+      port: before.port,
+      requestId: "req-clear-post-change",
+      operation: consoleClearOperation,
+      inputJson: JSON.stringify({ confirmClear: true }),
+      result: { ok: true, statusCode: 200, body: succeededEnvelope(before, snapshot, "req-clear-post-change", consoleClearOperation) },
+    },
+  ]);
+
+  const result = await clearConsole(options(before, transport.transport, { readRegistry: registry.readRegistry }), {
+    requestId: "req-clear-post-change",
+    confirmClear: true,
+  });
+
+  assert.notEqual(result.status, "succeeded");
+  assert.equal(result.status, "uncertain");
+  assert.equal(result.code, "host.continuity_lost");
+  assert.equal(result.nextStep?.kind, "rerun_with_confirmation");
+  assert.equal(result.evidence, undefined);
+  assert.equal(result.summary.includes("cannot be trusted"), true);
+  registry.assertConsumed();
+  transport.assertConsumed();
+});
+
+test("clearConsoleRejectsVerifiedClearWhenPostRegistryMissingAfterSeen", async () => {
+  const record = sampleHostRecord();
+  const snapshot = clearSnapshot();
+  const registry = registrySequence([
+    { ok: true, record },
+    {
+      ok: false,
+      reason: "missing_after_seen",
+      diagnostic: {
+        source: "ts-host-client",
+        severity: "error",
+        code: "host.registry_missing",
+        message: "Host registry is missing at ignored.",
+        details: { classification: "missing_after_seen" },
+      },
+    },
+  ]);
+  const transport = transportWithProbesAndInvokes([
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+  ], [
+    {
+      port: record.port,
+      requestId: "req-clear-post-missing",
+      operation: consoleClearOperation,
+      inputJson: JSON.stringify({ confirmClear: true }),
+      result: { ok: true, statusCode: 200, body: succeededEnvelope(record, snapshot, "req-clear-post-missing", consoleClearOperation) },
+    },
+  ]);
+
+  const result = await clearConsole(options(record, transport.transport, { readRegistry: registry.readRegistry }), {
+    requestId: "req-clear-post-missing",
+    confirmClear: true,
+  });
+
+  assert.notEqual(result.status, "succeeded");
+  assert.equal(result.status, "uncertain");
+  assert.equal(result.code, "host.continuity_lost");
+  assert.equal(result.nextStep?.kind, "rerun_with_confirmation");
+  assert.equal(result.diagnostics.some((diagnostic) => diagnostic.code === "host.registry_missing"), true);
+  assert.equal(result.evidence, undefined);
   registry.assertConsumed();
   transport.assertConsumed();
 });

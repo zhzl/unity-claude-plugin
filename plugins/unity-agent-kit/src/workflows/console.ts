@@ -1,7 +1,7 @@
 import { readUnityResource } from "../resources/readback.ts";
 import { definePublicResult, type UnityAgentKitDiagnostic, type UnityAgentKitPublicResult } from "../contracts/result.ts";
 import { invokeOperationOnce, probeActiveHost } from "../host/http-client.ts";
-import { readHostRegistry, type HostRegistryReadResult } from "../host/registry.ts";
+import { readHostRegistry, type HostRegistryReadResult, type UnityAgentKitHostRecord } from "../host/registry.ts";
 import type { RegistryReader } from "../host/rebind.ts";
 import type { HostTransport } from "../host/transport.ts";
 import { executeWithRebindAwareness } from "./rebind.ts";
@@ -266,7 +266,90 @@ export async function clearConsole(
     });
   }
 
+  const continuityResult = await verifyClearConsoleContinuity({
+    registryPath: workflow.registryPath,
+    projectRoot: workflow.projectRoot,
+    readRegistry,
+    requestId,
+    invokedRecord: probeResult.record,
+    hostResult,
+  });
+  if (continuityResult !== null) {
+    return continuityResult;
+  }
+
   return consoleClearResultFromHostResult(hostResult, workflow.projectRoot);
+}
+
+async function verifyClearConsoleContinuity(options: {
+  registryPath: string;
+  projectRoot: string;
+  readRegistry: RegistryReader;
+  requestId: string;
+  invokedRecord: UnityAgentKitHostRecord;
+  hostResult: UnityAgentKitPublicResult;
+}): Promise<UnityAgentKitPublicResult | null> {
+  const postRegistry = await options.readRegistry(options.registryPath, {
+    projectRoot: options.projectRoot,
+    seenRegistry: true,
+  });
+
+  if (!postRegistry.ok) {
+    return clearConsoleResultFromPostContinuityFailure(options.hostResult, options.requestId, {
+      source: "ts-host-client",
+      severity: "error",
+      code: "host.continuity_lost",
+      message: "Console clear result cannot be trusted because Unity host continuity could not be verified after invoke.",
+      details: {
+        causeCode: postRegistry.diagnostic.code,
+        causeMessage: postRegistry.diagnostic.message,
+        causeReason: postRegistry.reason,
+      },
+      attribution: {
+        operation: consoleClearOperation,
+        requestId: options.requestId,
+        hostId: options.invokedRecord.hostId,
+        hostEpoch: options.invokedRecord.hostEpoch,
+      },
+    }, postRegistry.diagnostic);
+  }
+
+  if (!sameHostContinuity(postRegistry.record, options.invokedRecord)) {
+    return clearConsoleResultFromPostContinuityFailure(options.hostResult, options.requestId, {
+      source: "host",
+      severity: "error",
+      code: "host.continuity_lost",
+      message: "Console clear result cannot be trusted because Unity host continuity changed after invoke.",
+      details: {
+        expectedHostId: options.invokedRecord.hostId,
+        expectedHostEpoch: options.invokedRecord.hostEpoch,
+        expectedPort: options.invokedRecord.port,
+        expectedProjectRoot: options.invokedRecord.projectRoot,
+        actualHostId: postRegistry.record.hostId,
+        actualHostEpoch: postRegistry.record.hostEpoch,
+        actualPort: postRegistry.record.port,
+        actualProjectRoot: postRegistry.record.projectRoot,
+      },
+      attribution: {
+        operation: consoleClearOperation,
+        requestId: options.requestId,
+        hostId: options.invokedRecord.hostId,
+        hostEpoch: options.invokedRecord.hostEpoch,
+      },
+    });
+  }
+
+  return null;
+}
+
+function sameHostContinuity(
+  left: Pick<UnityAgentKitHostRecord, "hostId" | "hostEpoch" | "port" | "projectRoot">,
+  right: Pick<UnityAgentKitHostRecord, "hostId" | "hostEpoch" | "port" | "projectRoot">,
+): boolean {
+  return left.hostId === right.hostId &&
+    left.hostEpoch === right.hostEpoch &&
+    left.port === right.port &&
+    left.projectRoot === right.projectRoot;
 }
 
 function clearConsoleResultFromRegistryFailure(
@@ -298,6 +381,41 @@ function clearConsoleResultFromRegistryFailure(
     diagnostics: [registryResult.diagnostic],
     nextStep,
     ...(status === "uncertain" ? { safeToRetry: false } : {}),
+  });
+}
+
+function clearConsoleResultFromPostContinuityFailure(
+  hostResult: UnityAgentKitPublicResult,
+  requestId: string,
+  continuityDiagnostic: UnityAgentKitDiagnostic,
+  causeDiagnostic?: UnityAgentKitDiagnostic,
+): UnityAgentKitPublicResult {
+  return definePublicResult({
+    status: hostResult.status === "failed" ? "failed" : "uncertain",
+    tool: "unity_console",
+    action: "clear",
+    operation: consoleClearOperation,
+    requestId,
+    hostId: hostResult.hostId,
+    hostEpoch: hostResult.hostEpoch,
+    summary: continuityDiagnostic.message,
+    code: continuityDiagnostic.code,
+    message: continuityDiagnostic.message,
+    diagnostics: [
+      ...hostResult.diagnostics,
+      ...(causeDiagnostic === undefined ? [] : [causeDiagnostic]),
+      continuityDiagnostic,
+    ],
+    startedAt: hostResult.startedAt,
+    completedAt: hostResult.completedAt,
+    durationMs: hostResult.durationMs,
+    nextStep: {
+      kind: continuityDiagnostic.code === "host.continuity_lost" ? "rerun_with_confirmation" : "inspect_diagnostics",
+      reason: continuityDiagnostic.code === "host.continuity_lost"
+        ? "Rerun console clear only after explicitly confirming the currently registered Unity host should be cleared."
+        : "Inspect diagnostics before retrying the console clear workflow.",
+    },
+    safeToRetry: false,
   });
 }
 
