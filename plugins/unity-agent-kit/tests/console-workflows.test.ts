@@ -61,9 +61,9 @@ function countSnapshot(overrides: Partial<ConsoleCountSnapshot> = {}): ConsoleCo
     projectRoot: "D:/ai/unity-claude-plugin/unity",
     totalCount: 1000,
     counts: {
-      error: 12,
-      warning: 40,
-      log: 148,
+      error: 1,
+      warning: 2,
+      log: 497,
     },
     severityScan: {
       scannedCount: 500,
@@ -74,7 +74,14 @@ function countSnapshot(overrides: Partial<ConsoleCountSnapshot> = {}): ConsoleCo
     },
     cursor: cursor(),
     consoleGeneration: 41,
-    diagnostics: [],
+    diagnostics: [
+      {
+        source: "console",
+        severity: "warning",
+        code: "console.severity_breakdown_partial",
+        message: "Severity breakdown scanned the bounded tail window only.",
+      },
+    ],
     ...overrides,
   };
 }
