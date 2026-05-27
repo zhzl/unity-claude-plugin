@@ -259,6 +259,47 @@ export async function clearConsole(
     });
   }
 
+  const reboundDiagnostic = hostResult.result.diagnostics.find((diagnostic) => diagnostic.code === "host.rebound");
+  if (reboundDiagnostic !== undefined) {
+    const diagnostic: UnityAgentKitDiagnostic = {
+      source: "host",
+      severity: "error",
+      code: "host.continuity_lost",
+      message: "Console clear cannot be trusted across a host rebind and requires explicit rerun confirmation.",
+      details: {
+        reboundDiagnostic: reboundDiagnostic.message,
+      },
+      attribution: {
+        operation: consoleClearOperation,
+        requestId,
+        hostId: hostResult.result.hostId,
+        hostEpoch: hostResult.result.hostEpoch,
+      },
+    };
+
+    return definePublicResult({
+      status: "uncertain",
+      tool: "unity_console",
+      action: "clear",
+      operation: consoleClearOperation,
+      requestId,
+      hostId: hostResult.result.hostId,
+      hostEpoch: hostResult.result.hostEpoch,
+      summary: diagnostic.message,
+      code: diagnostic.code,
+      message: diagnostic.message,
+      diagnostics: [...hostResult.result.diagnostics, diagnostic],
+      startedAt: hostResult.result.startedAt,
+      completedAt: hostResult.result.completedAt,
+      durationMs: hostResult.result.durationMs,
+      nextStep: {
+        kind: "rerun_with_confirmation",
+        reason: "Rerun console clear only after explicitly confirming the new host should be cleared.",
+      },
+      safeToRetry: false,
+    });
+  }
+
   return consoleClearResultFromHostResult(hostResult.result, workflow.projectRoot);
 }
 

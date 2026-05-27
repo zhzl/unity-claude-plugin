@@ -347,6 +347,49 @@ export function consoleCountResultFromHostResult(
         });
       }
 
+      if (snapshot.cursor.startIndex !== snapshot.totalCount) {
+        const diagnostic: UnityAgentKitDiagnostic = {
+          source: "validation",
+          severity: "error",
+          code: "console.cursor_invalid",
+          message: "Console count cursor startIndex must equal totalCount for a trusted tail proof.",
+          details: {
+            startIndex: snapshot.cursor.startIndex,
+            totalCount: snapshot.totalCount,
+          },
+          attribution: {
+            operation: consoleCountOperation,
+            requestId: hostResult.requestId,
+          },
+        };
+
+        return definePublicResult({
+          status: "uncertain",
+          tool: "unity_console",
+          action: "count",
+          operation: consoleCountOperation,
+          requestId: hostResult.requestId,
+          hostId: hostResult.hostId,
+          hostEpoch: hostResult.hostEpoch,
+          summary: diagnostic.message,
+          code: diagnostic.code,
+          message: diagnostic.message,
+          diagnostics: [...diagnostics, diagnostic],
+          evidence: {
+            completion: "console_proof_incomplete",
+            totalCount: snapshot.totalCount,
+            severityBreakdownComplete: snapshot.severityScan.severityBreakdownComplete,
+          },
+          startedAt: hostResult.startedAt,
+          completedAt: hostResult.completedAt,
+          durationMs: hostResult.durationMs,
+          nextStep: {
+            kind: "inspect_diagnostics",
+            reason: "Inspect diagnostics because console count cursor proof could not be trusted.",
+          },
+        });
+      }
+
       return definePublicResult({
         status: "succeeded",
         tool: "unity_console",
