@@ -37,7 +37,7 @@ Manual `reviewing-specs` found no must-fix issues. The following concerns are ac
 | 5C-01 | Editor status snapshot + `wait_ready` TS workflow | 5C-EDITOR-01, 5C-EDITOR-02, 5C-EDITOR-03, 5C-HOST-01, 5C-SCOPE-01 | 1 | Phase 5A, Phase 5B | `docs/superpowers/plans/2026-05-23-unity-agent-kit-phase-5c-01-editor-status-readiness.md` | completed |
 | 5C-02 | Compile state/request/wait idle | 5C-COMPILE-STATE-01, 5C-COMPILE-REQUEST-01, 5C-COMPILE-IDLE-01, 5C-HOST-01, 5C-SCOPE-01 | 2 | Phase 5A, Phase 5B | `docs/superpowers/plans/2026-05-24-unity-agent-kit-phase-5c-02-compile-state-request-idle.md` | completed |
 | 5C-03 | Compile report + `compile_and_check` attribution | 5C-COMPILE-REPORT-01, 5C-COMPILE-REPORT-02, 5C-COMPILE-CHECK-01, 5C-TIMEOUT-01, 5C-HOST-01 | 3 | 5C-02 | `docs/superpowers/plans/2026-05-25-unity-agent-kit-phase-5c-03-compile-report-compile-and-check.md` | completed |
-| 5C-04 | Console count/snapshot/clear + cursor/resource | 5C-CONSOLE-COUNT-01, 5C-CONSOLE-SNAPSHOT-01, 5C-CONSOLE-CURSOR-01, 5C-CONSOLE-CLEAR-01, 5C-RESOURCE-01, 5C-HOST-01, 5C-SCOPE-01 | 2 | Phase 5A, Phase 5B | pending | plan-card |
+| 5C-04 | Console count/snapshot/clear + cursor/resource | 5C-CONSOLE-COUNT-01, 5C-CONSOLE-SNAPSHOT-01, 5C-CONSOLE-CURSOR-01, 5C-CONSOLE-CLEAR-01, 5C-RESOURCE-01, 5C-HOST-01, 5C-SCOPE-01 | 2 | Phase 5A, Phase 5B | `docs/superpowers/plans/2026-05-27-unity-agent-kit-phase-5c-04-console-count-snapshot-clear-cursor-resource.md` | completed |
 
 ## Requirement Coverage
 
@@ -63,7 +63,7 @@ Manual `reviewing-specs` found no must-fix issues. The following concerns are ac
 
 ## Current Next Manual Action
 
-Create/review the `5C-04` expanded execution plan for console count/snapshot/clear + cursor/resource. Do not mark Phase 5C completed from this index update, and do not execute this index or the Phase 5C technical contract.
+Create and review the Phase 5D Test / PlayMode / Screenshot Workflows spec/plan entry according to the Phase 5 plan index. Do not mark Phase 5 completed from this index update, and do not execute this index or the Phase 5 technical contract.
 
 ## Completion Rule
 
@@ -116,6 +116,24 @@ Phase 5C remains incomplete because 5C-03 and 5C-04 are not completed. Phase 5 r
 
 Phase 5C remains incomplete because 5C-04 is not completed. Phase 5 remains incomplete because Phase 5C, Phase 5D, Phase 5E, and final daily loop E2E are not completed.
 
+## Phase 5C-04 Completion Evidence
+
+5C-04 Console count/snapshot/clear + cursor/resource completed with evidence:
+
+1. `cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/editor-workflows.test.ts tests/compile-workflows.test.ts tests/console-workflows.test.ts tests/host-runtime.test.ts tests/artifact-resource-contract.test.ts tests/timeout-completion-contract.test.ts` passed with `tests 147`, `pass 147`, and `fail 0`.
+2. `"D:/Program Files/Unity 2022.3.61f1/Editor/Unity.exe" -batchmode -projectPath "D:/ai/unity-claude-plugin/unity" -runTests -testPlatform EditMode -testResults "D:/ai/unity-claude-plugin/.ai-debug/unity-agent-kit/test-results/phase5c-04-console-count-snapshot-clear.xml" -testFilter UnityAgentKit.Editor.Tests.CoreDiagnosticsTests` passed with `failed="0"`; latest total/passed was `41/41`.
+3. `"D:/Program Files/Unity 2022.3.61f1/Editor/Unity.exe" -batchmode -projectPath "D:/ai/unity-claude-plugin/unity" -runTests -testPlatform EditMode -testResults "D:/ai/unity-claude-plugin/.ai-debug/unity-agent-kit/test-results/phase5c-04-host-runtime-regression.xml" -testFilter UnityAgentKit.Editor.Tests.HostRuntimeTests` passed with `failed="0"`; latest total/passed was `82/82`. Non-blocking flake concern: the first HostRuntime run failed on `HttpPendingDispatchOnReloadReturnsStoppedEnvelope` with a JSON parse error at `HostRuntimeDispatchTests.cs:972`, then the exact rerun passed without code changes.
+4. Console snapshot Resource readback focused evidence passed: `cd plugins/unity-agent-kit && node --experimental-strip-types --test tests/console-workflows.test.ts --test-name-pattern "snapshotConsoleRequiresPhase5BResourceReadbackBeforeSuccess"` reported `tests 18`, `pass 18`, and `fail 0`, proving Phase 5B metadata + payload readback is required for `unity_console.snapshot` success.
+5. Scope guard passed: no public MCP tools / registration / action-dispatch surface, no MCP Resource handlers, no `/unity` skill, no Phase 5D test/playmode/screenshot workflows, and no Phase 5E final daily loop E2E files were created by 5C-04.
+6. Compile-success boundary textual check passed: console code does not claim `verifiedCompileSuccess`, `compile_verified`, or compile success from clean/empty Console evidence.
+7. `git -c core.autocrlf=false diff --check` passed with no output.
+
+5C-04 success evidence proves real bounded Console count/snapshot/clear behavior, cursor continuity fields, explicit clear verification, and Phase 5B-compatible Resource readback. It does not prove compile success; Console diagnostics remain supplemental.
+
+Phase 5C Core Diagnostics Workflows completed with evidence from 5C-01, 5C-02, 5C-03, and 5C-04. Combined evidence covers TS editor/compile/console workflow tests, Unity CoreDiagnosticsTests, Unity HostRuntimeTests regression for 5C-03 and 5C-04, targeted real Unity smoke for compile callback subscription and Console LogEntries readback, console snapshot Resource readback, scope boundary checks, and `git -c core.autocrlf=false diff --check`.
+
+Phase 5 remains incomplete because Phase 5D, Phase 5E, and final daily loop E2E are not completed.
+
 ## Phase 5 plan index sync rule
 
-While this index has plan-card rows, the parent Phase 5 plan index may move Phase 5C to `execution-planned` with `Execution Status` set to `plan-ready` after this index and the current active expanded execution plan have passed plan-set review. Phase 5C itself must remain incomplete until 5C-03 and 5C-04 complete with evidence.
+While this index has plan-card rows, the parent Phase 5 plan index may move Phase 5C to `completed` with `Execution Status` set to `completed` after this index records combined evidence from all active 5C cards. Phase 5 itself must remain incomplete because Phase 5D, Phase 5E, and final daily loop E2E are not completed.
