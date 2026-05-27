@@ -317,26 +317,57 @@ export function consoleCountResultFromHostResult(
     operation: consoleCountOperation,
     action: "count",
     parse: parseConsoleCountData,
-    success: (snapshot, diagnostics) => definePublicResult({
-      status: "succeeded",
-      tool: "unity_console",
-      action: "count",
-      operation: consoleCountOperation,
-      requestId: hostResult.requestId,
-      hostId: hostResult.hostId,
-      hostEpoch: hostResult.hostEpoch,
-      summary: "Console count snapshot captured.",
-      data: snapshot,
-      diagnostics,
-      evidence: {
-        completion: "state_snapshot",
-        totalCount: snapshot.totalCount,
-        severityBreakdownComplete: snapshot.severityScan.severityBreakdownComplete,
-      },
-      startedAt: hostResult.startedAt,
-      completedAt: hostResult.completedAt,
-      durationMs: hostResult.durationMs,
-    }),
+    success: (snapshot, diagnostics) => {
+      const cursorValidation = validateConsoleCursor(snapshot.cursor, snapshot);
+      if (!cursorValidation.ok) {
+        return definePublicResult({
+          status: "uncertain",
+          tool: "unity_console",
+          action: "count",
+          operation: consoleCountOperation,
+          requestId: hostResult.requestId,
+          hostId: hostResult.hostId,
+          hostEpoch: hostResult.hostEpoch,
+          summary: cursorValidation.diagnostic.message,
+          code: cursorValidation.diagnostic.code,
+          message: cursorValidation.diagnostic.message,
+          diagnostics: [...diagnostics, cursorValidation.diagnostic],
+          evidence: {
+            completion: "console_proof_incomplete",
+            totalCount: snapshot.totalCount,
+            severityBreakdownComplete: snapshot.severityScan.severityBreakdownComplete,
+          },
+          startedAt: hostResult.startedAt,
+          completedAt: hostResult.completedAt,
+          durationMs: hostResult.durationMs,
+          nextStep: {
+            kind: "inspect_diagnostics",
+            reason: "Inspect diagnostics because console count cursor proof could not be trusted.",
+          },
+        });
+      }
+
+      return definePublicResult({
+        status: "succeeded",
+        tool: "unity_console",
+        action: "count",
+        operation: consoleCountOperation,
+        requestId: hostResult.requestId,
+        hostId: hostResult.hostId,
+        hostEpoch: hostResult.hostEpoch,
+        summary: "Console count snapshot captured.",
+        data: snapshot,
+        diagnostics,
+        evidence: {
+          completion: "state_snapshot",
+          totalCount: snapshot.totalCount,
+          severityBreakdownComplete: snapshot.severityScan.severityBreakdownComplete,
+        },
+        startedAt: hostResult.startedAt,
+        completedAt: hostResult.completedAt,
+        durationMs: hostResult.durationMs,
+      });
+    },
   });
 }
 

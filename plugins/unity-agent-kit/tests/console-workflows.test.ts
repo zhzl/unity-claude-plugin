@@ -385,6 +385,58 @@ test("countConsoleMapsRealTotalAndBoundedPartialSeverityWithoutClaimingExactBrea
   transport.assertConsumed();
 });
 
+test("countConsoleMapsInconsistentCursorProofToUncertain", async () => {
+  const scenarios = [
+    {
+      name: "host mismatch",
+      snapshot: countSnapshot({ cursor: cursor({ hostId: "other-host" }) }),
+      expectedCode: "host.continuity_lost",
+    },
+    {
+      name: "generation mismatch",
+      snapshot: countSnapshot({ cursor: cursor({ consoleGeneration: 999 }) }),
+      expectedCode: "console.cursor_generation_mismatch",
+    },
+    {
+      name: "out of range",
+      snapshot: countSnapshot({ totalCount: 100, cursor: cursor({ startIndex: 101 }) }),
+      expectedCode: "console.cursor_invalid",
+    },
+  ] as const;
+
+  for (const scenario of scenarios) {
+    const record = sampleHostRecord();
+    const registry = registrySequence([{ ok: true, record }, { ok: true, record }]);
+    const transport = transportWithProbesAndInvokes([
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    ], [
+      {
+        port: record.port,
+        requestId: `req-count-uncertain-${scenario.name}`,
+        operation: consoleCountOperation,
+        inputJson: JSON.stringify({ maxSeverityScan: 500 }),
+        result: {
+          ok: true,
+          statusCode: 200,
+          body: succeededEnvelope(record, scenario.snapshot, `req-count-uncertain-${scenario.name}`, consoleCountOperation),
+        },
+      },
+    ]);
+
+    const result = await countConsole(options(record, transport.transport, { readRegistry: registry.readRegistry }), {
+      requestId: `req-count-uncertain-${scenario.name}`,
+    });
+
+    assert.equal(result.status, "uncertain", scenario.name);
+    assert.equal(result.action, "count", scenario.name);
+    assert.equal(result.code, scenario.expectedCode, scenario.name);
+    assert.equal(result.resource, undefined, scenario.name);
+    assert.equal(result.nextStep?.kind, "inspect_diagnostics", scenario.name);
+    registry.assertConsumed();
+    transport.assertConsumed();
+  }
+});
+
 test("snapshotConsoleRequiresPhase5BResourceReadbackBeforeSuccess", async () => {
   await withArtifactProject(async (projectRoot, artifactRoot) => {
     const record = sampleHostRecord({ projectRoot });
