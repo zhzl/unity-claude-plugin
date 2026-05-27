@@ -519,6 +519,67 @@ namespace UnityAgentKit.Editor.Tests
         }
 
         [Test]
+        public void CompileReportReadFailsWhenCurrentHostDoesNotMatchCompletedReportHost()
+        {
+            UnityAgentKitCompileDiagnostics.ResetForTests();
+            var oldRecord = TestHostRecord();
+            var newRecord = CopyHostRecord(oldRecord);
+            newRecord.hostId = "host-editor-tests-restarted";
+            newRecord.hostEpoch = oldRecord.hostEpoch + 1;
+
+            UnityAgentKitCompileDiagnostics.StartCompileCycleForTests(oldRecord, invalidationTokenAtStart: 5);
+            UnityAgentKitCompileDiagnostics.RecordAssemblyCompilationFinishedForTests("Library/ScriptAssemblies/Assembly-CSharp.dll", new UnityEditor.Compilation.CompilerMessage[0]);
+            UnityAgentKitCompileDiagnostics.RecordCompilationFinishedForTests();
+            UnityAgentKitCompileDiagnostics.CompleteActiveCycleIfIdleForTests(isCompiling: false, isUpdating: false);
+
+            Assert.IsFalse(UnityAgentKitCompileDiagnostics.TryReadRecentReportForTests(newRecord, out _, out var code, out var message));
+            Assert.AreEqual("compile.report_missing", code);
+            Assert.AreEqual("No complete compile report is available.", message);
+
+            var response = UnityAgentKitOperationRouter.RunOnMainThread(new UnityAgentKitOperationRequest
+            {
+                operation = "compile.report.get",
+                requestId = "req-report-host-mismatch"
+            }, newRecord, System.Threading.Thread.CurrentThread.ManagedThreadId);
+
+            AssertOperationEnvelopeMinimumFields(response, "uncertain", "compile.report.get", "req-report-host-mismatch", newRecord);
+            Assert.AreEqual("compile.report_missing", response.code);
+            Assert.AreEqual(string.Empty, response.data);
+            Assert.AreEqual(1, response.diagnostics.Length);
+            Assert.AreEqual("compile.report_missing", response.diagnostics[0].code);
+        }
+
+        [Test]
+        public void CompileReportOperationReturnsControlledErrorWhenInputJsonIsMalformed()
+        {
+            UnityAgentKitCompileDiagnostics.ResetForTests();
+            var record = TestHostRecord();
+            UnityAgentKitCompileDiagnostics.StartCompileCycleForTests(record, invalidationTokenAtStart: 5);
+            UnityAgentKitCompileDiagnostics.RecordAssemblyCompilationFinishedForTests("Library/ScriptAssemblies/Assembly-CSharp.dll", new UnityEditor.Compilation.CompilerMessage[0]);
+            UnityAgentKitCompileDiagnostics.RecordCompilationFinishedForTests();
+            UnityAgentKitCompileDiagnostics.CompleteActiveCycleIfIdleForTests(isCompiling: false, isUpdating: false);
+
+            Assert.IsFalse(UnityAgentKitCompileDiagnostics.TryReadRecentReport(record, "{bad json", out _, out var code, out var message));
+            Assert.AreEqual("compile.report_input_invalid", code);
+            Assert.AreEqual("Compile report request input JSON is malformed.", message);
+
+            var response = UnityAgentKitOperationRouter.RunOnMainThread(new UnityAgentKitOperationRequest
+            {
+                operation = "compile.report.get",
+                requestId = "req-report-bad-input",
+                inputJson = "{bad json"
+            }, record, System.Threading.Thread.CurrentThread.ManagedThreadId);
+
+            AssertOperationEnvelopeMinimumFields(response, "uncertain", "compile.report.get", "req-report-bad-input", record);
+            Assert.AreEqual("compile.report_input_invalid", response.code);
+            Assert.AreEqual("Compile report request input JSON is malformed.", response.message);
+            Assert.AreEqual(string.Empty, response.data);
+            Assert.AreEqual(1, response.diagnostics.Length);
+            Assert.AreEqual("compile.report_input_invalid", response.diagnostics[0].code);
+            Assert.AreEqual("Compile report request input JSON is malformed.", response.diagnostics[0].message);
+        }
+
+        [Test]
         public void CompileCallbackSubscriptionSmokeCanAttachAndDetach()
         {
             UnityAgentKitCompileDiagnostics.ResetForTests();
@@ -582,6 +643,22 @@ namespace UnityAgentKit.Editor.Tests
                 status = UnityAgentKitHostRegistry.ReadyStatus,
                 startedAt = "2026-05-23T10:00:00.0000000Z",
                 lastProbeAt = "2026-05-23T10:00:01.0000000Z"
+            };
+        }
+
+        private static UnityAgentKitHostRecord CopyHostRecord(UnityAgentKitHostRecord record)
+        {
+            return new UnityAgentKitHostRecord
+            {
+                hostName = record.hostName,
+                protocolVersion = record.protocolVersion,
+                projectRoot = record.projectRoot,
+                hostId = record.hostId,
+                hostEpoch = record.hostEpoch,
+                port = record.port,
+                status = record.status,
+                startedAt = record.startedAt,
+                lastProbeAt = record.lastProbeAt
             };
         }
 

@@ -203,7 +203,11 @@ namespace UnityAgentKit.Editor
             code = string.Empty;
             message = string.Empty;
 
-            var input = ParseReportRequestInput(inputJson);
+            if (!TryParseReportRequestInput(inputJson, out var input, out code, out message))
+            {
+                return false;
+            }
+
             if (recentCompletedReport == null)
             {
                 code = "compile.report_missing";
@@ -218,19 +222,40 @@ namespace UnityAgentKit.Editor
                 return false;
             }
 
-            report = CloneReportForRecord(recentCompletedReport, record);
+            if (!DoesRecordMatchReport(record, recentCompletedReport))
+            {
+                code = "compile.report_missing";
+                message = "No complete compile report is available.";
+                return false;
+            }
+
+            report = CloneReport(recentCompletedReport);
             return true;
         }
 
-        private static UnityAgentKitCompileReportRequestInput ParseReportRequestInput(string inputJson)
+        private static bool TryParseReportRequestInput(string inputJson, out UnityAgentKitCompileReportRequestInput input, out string code, out string message)
         {
+            code = string.Empty;
+            message = string.Empty;
+
             if (string.IsNullOrWhiteSpace(inputJson))
             {
-                return new UnityAgentKitCompileReportRequestInput();
+                input = new UnityAgentKitCompileReportRequestInput();
+                return true;
             }
 
-            var parsed = JsonUtility.FromJson<UnityAgentKitCompileReportRequestInput>(inputJson);
-            return parsed ?? new UnityAgentKitCompileReportRequestInput();
+            try
+            {
+                input = JsonUtility.FromJson<UnityAgentKitCompileReportRequestInput>(inputJson) ?? new UnityAgentKitCompileReportRequestInput();
+                return true;
+            }
+            catch (ArgumentException)
+            {
+                input = null;
+                code = "compile.report_input_invalid";
+                message = "Compile report request input JSON is malformed.";
+                return false;
+            }
         }
 
         private static void EnsureCompilerCallbacksSubscribed()
@@ -385,14 +410,25 @@ namespace UnityAgentKit.Editor
             return type.ToString().ToLowerInvariant();
         }
 
-        private static UnityAgentKitCompileReportResult CloneReportForRecord(UnityAgentKitCompileReportResult source, UnityAgentKitHostRecord record)
+        private static bool DoesRecordMatchReport(UnityAgentKitHostRecord record, UnityAgentKitCompileReportResult report)
+        {
+            if (record == null)
+            {
+                return string.IsNullOrEmpty(report.hostId) && report.hostEpoch == 0;
+            }
+
+            return string.Equals(record.hostId ?? string.Empty, report.hostId ?? string.Empty, StringComparison.Ordinal) &&
+                record.hostEpoch == report.hostEpoch;
+        }
+
+        private static UnityAgentKitCompileReportResult CloneReport(UnityAgentKitCompileReportResult source)
         {
             return new UnityAgentKitCompileReportResult
             {
                 reportId = source.reportId,
                 compileCycleId = source.compileCycleId,
-                hostId = record != null ? record.hostId ?? string.Empty : source.hostId,
-                hostEpoch = record != null ? record.hostEpoch : source.hostEpoch,
+                hostId = source.hostId,
+                hostEpoch = source.hostEpoch,
                 projectRoot = source.projectRoot,
                 unityVersion = source.unityVersion,
                 completedAt = source.completedAt,
