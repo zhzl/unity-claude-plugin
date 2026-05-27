@@ -318,7 +318,7 @@ export function consoleCountResultFromHostResult(
     action: "count",
     parse: parseConsoleCountData,
     success: (snapshot, diagnostics) => {
-      const cursorValidation = validateConsoleCursor(snapshot.cursor, snapshot);
+      const cursorValidation = validateCountTailCursorProof(snapshot);
       if (!cursorValidation.ok) {
         return definePublicResult({
           status: "uncertain",
@@ -331,50 +331,7 @@ export function consoleCountResultFromHostResult(
           summary: cursorValidation.diagnostic.message,
           code: cursorValidation.diagnostic.code,
           message: cursorValidation.diagnostic.message,
-          diagnostics: [...diagnostics, cursorValidation.diagnostic],
-          evidence: {
-            completion: "console_proof_incomplete",
-            totalCount: snapshot.totalCount,
-            severityBreakdownComplete: snapshot.severityScan.severityBreakdownComplete,
-          },
-          startedAt: hostResult.startedAt,
-          completedAt: hostResult.completedAt,
-          durationMs: hostResult.durationMs,
-          nextStep: {
-            kind: "inspect_diagnostics",
-            reason: "Inspect diagnostics because console count cursor proof could not be trusted.",
-          },
-        });
-      }
-
-      if (snapshot.cursor.startIndex !== snapshot.totalCount) {
-        const diagnostic: UnityAgentKitDiagnostic = {
-          source: "validation",
-          severity: "error",
-          code: "console.cursor_invalid",
-          message: "Console count cursor startIndex must equal totalCount for a trusted tail proof.",
-          details: {
-            startIndex: snapshot.cursor.startIndex,
-            totalCount: snapshot.totalCount,
-          },
-          attribution: {
-            operation: consoleCountOperation,
-            requestId: hostResult.requestId,
-          },
-        };
-
-        return definePublicResult({
-          status: "uncertain",
-          tool: "unity_console",
-          action: "count",
-          operation: consoleCountOperation,
-          requestId: hostResult.requestId,
-          hostId: hostResult.hostId,
-          hostEpoch: hostResult.hostEpoch,
-          summary: diagnostic.message,
-          code: diagnostic.code,
-          message: diagnostic.message,
-          diagnostics: [...diagnostics, diagnostic],
+          diagnostics: [...diagnostics, withAttribution(cursorValidation.diagnostic, consoleCountOperation, hostResult.requestId)],
           evidence: {
             completion: "console_proof_incomplete",
             totalCount: snapshot.totalCount,
@@ -556,7 +513,7 @@ export function consoleClearResultFromHostResult(
     });
   }
 
-  const cursorValidation = validateClearCursorProof(snapshot);
+  const cursorValidation = validateClearPostStateCursorProof(snapshot);
   if (!cursorValidation.ok) {
     return definePublicResult({
       status: "uncertain",
@@ -570,7 +527,7 @@ export function consoleClearResultFromHostResult(
       code: cursorValidation.diagnostic.code,
       message: cursorValidation.diagnostic.message,
       data: snapshot,
-      diagnostics: [...diagnostics, cursorValidation.diagnostic],
+      diagnostics: [...diagnostics, withAttribution(cursorValidation.diagnostic, consoleClearOperation, hostResult.requestId)],
       evidence: {
         completion: "console_proof_incomplete",
         countBeforeClear: snapshot.countBeforeClear,
@@ -612,7 +569,34 @@ export function consoleClearResultFromHostResult(
   });
 }
 
-function validateClearCursorProof(
+function validateCountTailCursorProof(
+  snapshot: ConsoleCountSnapshot,
+): { ok: true } | { ok: false; diagnostic: UnityAgentKitDiagnostic } {
+  const cursorValidation = validateConsoleCursor(snapshot.cursor, snapshot);
+  if (!cursorValidation.ok) {
+    return cursorValidation;
+  }
+
+  if (snapshot.cursor.startIndex !== snapshot.totalCount) {
+    return {
+      ok: false,
+      diagnostic: {
+        source: "validation",
+        severity: "error",
+        code: "console.cursor_invalid",
+        message: "Console count cursor must point at the current tail count.",
+        details: {
+          cursorStartIndex: snapshot.cursor.startIndex,
+          totalCount: snapshot.totalCount,
+        },
+      },
+    };
+  }
+
+  return { ok: true };
+}
+
+function validateClearPostStateCursorProof(
   snapshot: ConsoleClearSnapshot,
 ): { ok: true } | { ok: false; diagnostic: UnityAgentKitDiagnostic } {
   if (snapshot.cursor.hostId !== snapshot.hostId) {
@@ -622,7 +606,7 @@ function validateClearCursorProof(
         source: "validation",
         severity: "error",
         code: "console.cursor_invalid",
-        message: "Console clear cursor hostId does not match the cleared host identity.",
+        message: "Console clear cursor hostId does not match the clear snapshot.",
         details: {
           cursorHostId: snapshot.cursor.hostId,
           clearHostId: snapshot.hostId,
@@ -638,7 +622,7 @@ function validateClearCursorProof(
         source: "validation",
         severity: "error",
         code: "console.cursor_invalid",
-        message: "Console clear cursor hostEpoch does not match the cleared host identity.",
+        message: "Console clear cursor hostEpoch does not match the clear snapshot.",
         details: {
           cursorHostEpoch: snapshot.cursor.hostEpoch,
           clearHostEpoch: snapshot.hostEpoch,
@@ -670,7 +654,7 @@ function validateClearCursorProof(
         source: "validation",
         severity: "error",
         code: "console.cursor_invalid",
-        message: "Console clear cursor startIndex does not match the verified post-clear count.",
+        message: "Console clear cursor startIndex does not match the post-clear count.",
         details: {
           cursorStartIndex: snapshot.cursor.startIndex,
           countAfterClear: snapshot.countAfterClear,
@@ -680,6 +664,20 @@ function validateClearCursorProof(
   }
 
   return { ok: true };
+}
+
+function withAttribution(
+  diagnostic: UnityAgentKitDiagnostic,
+  operation: string,
+  requestId: string,
+): UnityAgentKitDiagnostic {
+  return {
+    ...diagnostic,
+    attribution: diagnostic.attribution ?? {
+      operation,
+      requestId,
+    },
+  };
 }
 
 function mapConsoleStateResult<T>(options: {
