@@ -1,0 +1,31 @@
+{
+  "name": "unity-agent-kit",
+  "version": "0.1.0",
+  "description": "Development-stage Unity Agent Kit for Codex workflows and Unity host integration.",
+  "author": {
+    "name": "Local developer"
+  },
+  "keywords": [
+    "unity",
+    "codex",
+    "mcp",
+    "agent-tools",
+    "game-development",
+    "workflow"
+  ],
+  "interface": {
+    "displayName": "Unity Agent Kit",
+    "shortDescription": "Development-stage Unity workflow integration kit.",
+    "longDescription": "Provides the local plugin manifest for an in-development Unity Agent Kit. The current package contains Unity host transport, workflow, diagnostic, artifact, and MCP result contract code; MCP server exposure can be added once the runtime entrypoint is implemented.",
+    "developerName": "Local developer",
+    "category": "Productivity",
+    "capabilities": [
+      "Development",
+      "Unity",
+      "Workflow"
+    ],
+    "defaultPrompt": [
+      "Help me continue developing Unity Agent Kit."
+    ]
+  }
+}

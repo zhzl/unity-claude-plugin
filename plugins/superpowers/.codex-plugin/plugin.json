@@ -1,0 +1,34 @@
+{
+  "name": "superpowers",
+  "version": "5.1.0",
+  "description": "Core development workflow skills for TDD, debugging, planning, reviews, and collaboration.",
+  "author": {
+    "name": "Jesse Vincent",
+    "email": "jesse@fsck.com"
+  },
+  "homepage": "https://github.com/obra/superpowers",
+  "repository": "https://github.com/obra/superpowers",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "tdd",
+    "debugging",
+    "collaboration",
+    "best-practices",
+    "workflows"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Superpowers",
+    "shortDescription": "Core skills for stronger development workflows.",
+    "longDescription": "Adds reusable skills for test-driven development, systematic debugging, planning, code review, branch finishing, and collaborative engineering workflows.",
+    "developerName": "Jesse Vincent",
+    "category": "Productivity",
+    "capabilities": [
+      "Skills"
+    ],
+    "defaultPrompt": [
+      "Use Superpowers for this development task."
+    ]
+  }
+}
