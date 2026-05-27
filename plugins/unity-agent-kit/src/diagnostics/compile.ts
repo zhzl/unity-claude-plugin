@@ -642,6 +642,37 @@ export function judgeCompileReport(input: CompileReportJudgmentInput): UnityAgen
     );
   }
 
+  const derivedCompilerErrorCount = input.report.compilerMessages.filter((message) => message.type === "error").length;
+  const derivedCompilerWarningCount = input.report.compilerMessages.filter((message) => message.type === "warning").length;
+  if (
+    input.report.compilerErrorCount !== derivedCompilerErrorCount ||
+    input.report.compilerWarningCount !== derivedCompilerWarningCount
+  ) {
+    return compileReportJudgmentResult(
+      "uncertain",
+      "compile.report_count_mismatch",
+      "Compile report declared compiler message counts that do not match the attached compiler messages.",
+      input,
+      data,
+      [{
+        source: "validation",
+        severity: "error",
+        code: "compile.report_count_mismatch",
+        message: "Compile report declared compiler message counts that do not match the attached compiler messages.",
+        details: {
+          declaredCompilerErrorCount: input.report.compilerErrorCount,
+          declaredCompilerWarningCount: input.report.compilerWarningCount,
+          derivedCompilerErrorCount,
+          derivedCompilerWarningCount,
+        },
+        attribution: {
+          operation: compileReportGetOperation,
+          requestId: input.requestId,
+        },
+      }],
+    );
+  }
+
   if (input.report.compilerErrorCount > 0) {
     return definePublicResult({
       status: "failed",
@@ -903,6 +934,7 @@ function isCompileCompilerMessageSnapshot(value: unknown): value is CompileCompi
     isNonNegativeInteger(message.line) &&
     isNonNegativeInteger(message.column) &&
     isCompileCompilerMessageType(message.type) &&
-    typeof message.message === "string"
+    typeof message.message === "string" &&
+    message.message.length > 0
   );
 }

@@ -364,6 +364,15 @@ async function readReportAndJudge(options: ReadReportAndJudgeOptions): Promise<U
     ...(options.state.recentCompileReportId === undefined ? {} : { reportId: options.state.recentCompileReportId }),
   });
 
+  if (options.expectedHost !== undefined && !sameWorkflowHost(options.expectedHost, reportResult)) {
+    return hostContinuityLostResult(
+      options.baseRequestId,
+      options.expectedHost,
+      reportResult,
+      options.usedRecentCompileReport ? "recent_complete_report" : "current_cycle_report",
+    );
+  }
+
   if (reportResult.status !== "succeeded") {
     return definePublicResult({
       ...reportResult,
@@ -376,15 +385,6 @@ async function readReportAndJudge(options: ReadReportAndJudgeOptions): Promise<U
         verifiedCompileSuccess: false,
       },
     });
-  }
-
-  if (options.expectedHost !== undefined && !sameWorkflowHost(options.expectedHost, reportResult)) {
-    return hostContinuityLostResult(
-      options.baseRequestId,
-      options.expectedHost,
-      reportResult,
-      options.usedRecentCompileReport ? "recent_complete_report" : "current_cycle_report",
-    );
   }
 
   return judgeCompileReport({

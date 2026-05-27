@@ -293,6 +293,25 @@ test("parseCompileReportDataPreservesCompilerMessages", () => {
   assert.deepEqual(parseCompileReportData(JSON.stringify(report)), report);
 });
 
+test("parseCompileReportDataRejectsEmptyCompilerMessage", () => {
+  const report = compileReport({
+    compilerErrorCount: 1,
+    compilerMessagesSummary: "1 error, 0 warnings",
+    compilerMessages: [
+      {
+        assemblyPath: "Library/ScriptAssemblies/Assembly-CSharp.dll",
+        file: "Assets/Broken.cs",
+        line: 12,
+        column: 7,
+        type: "error",
+        message: "",
+      },
+    ],
+  });
+
+  assert.equal(parseCompileReportData(JSON.stringify(report)), null);
+});
+
 test("judgeCompileReportSucceedsOnlyFromCompleteMatchingReport", () => {
   const state = compileState({ hasRecentCompileReport: true, recentCompileReportId: "compile-report-3" });
   const report = compileReport();
@@ -393,6 +412,37 @@ test("judgeCompileReportReturnsUncertainForIncompleteLifecycle", () => {
     proof: "recent_complete_report",
     verifiedCompileSuccess: false,
   });
+});
+
+test("judgeCompileReportReturnsUncertainForCompilerMessageCountMismatch", () => {
+  const state = compileState({ hasRecentCompileReport: true, recentCompileReportId: "compile-report-3" });
+  const report = compileReport({
+    compilerMessagesSummary: "0 errors, 0 warnings",
+    compilerMessages: [
+      {
+        assemblyPath: "Library/ScriptAssemblies/Assembly-CSharp.dll",
+        file: "Assets/Broken.cs",
+        line: 12,
+        column: 7,
+        type: "error",
+        message: "CS1002: ; expected",
+      },
+    ],
+  });
+
+  const result = judgeCompileReport({
+    report,
+    state,
+    hostId: "host-compile",
+    hostEpoch: 7,
+    requestId: "req-judge-count-mismatch",
+    usedRecentCompileReport: true,
+  });
+
+  assert.equal(result.status, "uncertain");
+  assert.equal(result.code, "compile.report_count_mismatch");
+  assert.equal(result.evidence?.["verifiedCompileSuccess"], false);
+  assert.equal(result.diagnostics[0]?.code, "compile.report_count_mismatch");
 });
 
 test("getCompileStateMapsTrustedHostEnvelopeToUnityCompileAction", async () => {
@@ -716,6 +766,48 @@ test("compileAndCheckReturnsUncertainWhenIdleSettlesWithoutCompileReport", async
 
   assert.equal(result.status, "uncertain");
   assert.equal(result.code, "compile.report_missing");
+  assert.deepEqual(result.evidence, {
+    completion: "compile_proof_incomplete",
+    proof: "current_cycle_report",
+    verifiedCompileSuccess: false,
+  });
+  registry.assertConsumed();
+  transport.assertConsumed();
+});
+
+test("compileAndCheckReturnsUncertainWhenCurrentCycleReportReadHostDrifts", async () => {
+  const stable = sampleHostRecord({ hostId: "host-stable", hostEpoch: 7, port: 49300 });
+  const rebound = sampleHostRecord({ hostId: "host-rebound", hostEpoch: 8, port: 49301 });
+  const initial = compileState({ invalidationToken: 3, hasRecentCompileReport: false });
+  const request = compileRequest({ invalidationTokenBeforeRequest: 3, invalidationTokenAfterRequest: 4 });
+  const settled = compileState({ invalidationToken: 4, hasRecentCompileReport: true, recentCompileReportId: "compile-report-4" });
+  const registry = registrySequence([
+    { ok: true, record: stable }, { ok: true, record: stable },
+    { ok: true, record: stable }, { ok: true, record: stable },
+    { ok: true, record: stable }, { ok: true, record: stable },
+    { ok: true, record: rebound }, { ok: true, record: rebound },
+  ]);
+  const transport = transportWithProbesAndInvokes([
+    { port: stable.port, result: { ok: true, statusCode: 200, body: stable } },
+    { port: stable.port, result: { ok: true, statusCode: 200, body: stable } },
+    { port: stable.port, result: { ok: true, statusCode: 200, body: stable } },
+    { port: rebound.port, result: { ok: true, statusCode: 200, body: rebound } },
+  ], [
+    { port: stable.port, operation: compileStateOperation, requestId: "req-report-drift-state-1", result: { ok: true, statusCode: 200, body: succeededEnvelope(stable, compileStateOperation, initial, "req-report-drift-state-1") } },
+    { port: stable.port, operation: compileRequestOperation, requestId: "req-report-drift-request", result: { ok: true, statusCode: 200, body: succeededEnvelope(stable, compileRequestOperation, request, "req-report-drift-request") } },
+    { port: stable.port, operation: compileStateOperation, requestId: "req-report-drift-idle-1", result: { ok: true, statusCode: 200, body: succeededEnvelope(stable, compileStateOperation, settled, "req-report-drift-idle-1") } },
+    { port: rebound.port, operation: compileReportGetOperation, requestId: "req-report-drift-report", inputJson: JSON.stringify({ reportId: "compile-report-4" }), result: { ok: true, statusCode: 200, body: uncertainEnvelope(rebound, compileReportGetOperation, "req-report-drift-report", "compile.report_missing", "No complete compile report is available.") } },
+  ]);
+
+  const result = await compileAndCheck({ registryPath: "ignored", projectRoot: stable.projectRoot, readRegistry: registry.readRegistry, transport: transport.transport }, {
+    requestId: "req-report-drift",
+    timeoutMs: 1_000,
+    pollIntervalMs: 25,
+    sleep: async () => {},
+  });
+
+  assert.equal(result.status, "uncertain");
+  assert.equal(result.code, "host.continuity_lost");
   assert.deepEqual(result.evidence, {
     completion: "compile_proof_incomplete",
     proof: "current_cycle_report",
