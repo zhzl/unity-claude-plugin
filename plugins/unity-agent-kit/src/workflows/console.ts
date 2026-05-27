@@ -1,5 +1,7 @@
 import { readUnityResource } from "../resources/readback.ts";
 import { definePublicResult, type UnityAgentKitDiagnostic, type UnityAgentKitPublicResult } from "../contracts/result.ts";
+import { invokeOperationOnce, probeActiveHost } from "../host/http-client.ts";
+import { readHostRegistry, type HostRegistryReadResult } from "../host/registry.ts";
 import type { RegistryReader } from "../host/rebind.ts";
 import type { HostTransport } from "../host/transport.ts";
 import { executeWithRebindAwareness } from "./rebind.ts";
@@ -230,25 +232,30 @@ export async function clearConsole(
     });
   }
 
-  const hostResult = await executeWithRebindAwareness({
-    registryPath: workflow.registryPath,
-    projectRoot: workflow.projectRoot,
-    readRegistry: workflow.readRegistry,
-    transport: workflow.transport,
-    request: {
-      operation: consoleClearOperation,
-      requestId,
-      inputJson: JSON.stringify({ confirmClear: true }),
-    },
+  const readRegistry = workflow.readRegistry ?? readHostRegistry;
+  const registryResult = await readRegistry(workflow.registryPath, { projectRoot: workflow.projectRoot });
+  if (!registryResult.ok) {
+    return clearConsoleResultFromRegistryFailure(registryResult, requestId);
+  }
+
+  const probeResult = await probeActiveHost(registryResult.record, workflow.transport);
+  if (!probeResult.ok) {
+    return clearConsoleResultFromContinuityFailure(probeResult.result, requestId);
+  }
+
+  const hostResult = await invokeOperationOnce(probeResult.record, workflow.transport, {
+    operation: consoleClearOperation,
+    requestId,
+    inputJson: JSON.stringify({ confirmClear: true }),
   });
 
-  if (hostResult.result.status === "timeout") {
+  if (hostResult.status === "timeout") {
     return timeoutContinuationResult({
       tool: "unity_console",
       action: "clear",
       requestId,
-      summary: hostResult.result.summary || "Timed out waiting for console clear verification.",
-      mayStillBeRunning: hostResult.result.mayStillBeRunning ?? true,
+      summary: hostResult.summary || "Timed out waiting for console clear verification.",
+      mayStillBeRunning: hostResult.mayStillBeRunning ?? true,
       safeToRetry: false,
       nextStep: {
         kind: "read_state",
@@ -259,48 +266,104 @@ export async function clearConsole(
     });
   }
 
-  const reboundDiagnostic = hostResult.result.diagnostics.find((diagnostic) => diagnostic.code === "host.rebound");
-  if (reboundDiagnostic !== undefined) {
-    const diagnostic: UnityAgentKitDiagnostic = {
-      source: "host",
-      severity: "error",
-      code: "host.continuity_lost",
-      message: "Console clear cannot be trusted across a host rebind and requires explicit rerun confirmation.",
-      details: {
-        reboundDiagnostic: reboundDiagnostic.message,
-      },
-      attribution: {
-        operation: consoleClearOperation,
-        requestId,
-        hostId: hostResult.result.hostId,
-        hostEpoch: hostResult.result.hostEpoch,
-      },
-    };
+  return consoleClearResultFromHostResult(hostResult, workflow.projectRoot);
+}
 
+function clearConsoleResultFromRegistryFailure(
+  registryResult: Extract<HostRegistryReadResult, { ok: false }>,
+  requestId: string,
+): UnityAgentKitPublicResult {
+  const status = registryResult.reason === "missing_before_seen" || registryResult.reason === "missing_after_seen"
+    ? "uncertain"
+    : "failed";
+  const nextStep = status === "uncertain"
+    ? {
+        kind: "rerun_with_confirmation" as const,
+        reason: "Rerun console clear with explicit confirmation after re-establishing Unity host continuity.",
+      }
+    : {
+        kind: "inspect_diagnostics" as const,
+        reason: "Inspect diagnostics before retrying the console clear workflow.",
+      };
+
+  return definePublicResult({
+    status,
+    tool: "unity_console",
+    action: "clear",
+    operation: consoleClearOperation,
+    requestId,
+    summary: registryResult.diagnostic.message,
+    code: registryResult.diagnostic.code,
+    message: registryResult.diagnostic.message,
+    diagnostics: [registryResult.diagnostic],
+    nextStep,
+    ...(status === "uncertain" ? { safeToRetry: false } : {}),
+  });
+}
+
+function clearConsoleResultFromContinuityFailure(
+  hostResult: UnityAgentKitPublicResult,
+  requestId: string,
+): UnityAgentKitPublicResult {
+  const continuityCode = firstDiagnosticCode(hostResult);
+  if (continuityCode === undefined || !clearContinuityFailureCodes.has(continuityCode)) {
     return definePublicResult({
-      status: "uncertain",
+      ...hostResult,
       tool: "unity_console",
       action: "clear",
-      operation: consoleClearOperation,
-      requestId,
-      hostId: hostResult.result.hostId,
-      hostEpoch: hostResult.result.hostEpoch,
-      summary: diagnostic.message,
-      code: diagnostic.code,
-      message: diagnostic.message,
-      diagnostics: [...hostResult.result.diagnostics, diagnostic],
-      startedAt: hostResult.result.startedAt,
-      completedAt: hostResult.result.completedAt,
-      durationMs: hostResult.result.durationMs,
-      nextStep: {
-        kind: "rerun_with_confirmation",
-        reason: "Rerun console clear only after explicitly confirming the new host should be cleared.",
-      },
-      safeToRetry: false,
+      summary: hostResult.summary || "Console clear could not be completed.",
     });
   }
 
-  return consoleClearResultFromHostResult(hostResult.result, workflow.projectRoot);
+  const diagnostic: UnityAgentKitDiagnostic = {
+    source: "host",
+    severity: "error",
+    code: "host.continuity_lost",
+    message: "Console clear requires explicit rerun confirmation after Unity host continuity changed or became unavailable.",
+    details: {
+      causeCode: continuityCode,
+      causeSummary: hostResult.summary,
+    },
+    attribution: {
+      operation: consoleClearOperation,
+      requestId,
+      hostId: hostResult.hostId,
+      hostEpoch: hostResult.hostEpoch,
+    },
+  };
+
+  return definePublicResult({
+    status: "uncertain",
+    tool: "unity_console",
+    action: "clear",
+    operation: consoleClearOperation,
+    requestId,
+    hostId: hostResult.hostId,
+    hostEpoch: hostResult.hostEpoch,
+    summary: diagnostic.message,
+    code: diagnostic.code,
+    message: diagnostic.message,
+    diagnostics: [...hostResult.diagnostics, diagnostic],
+    startedAt: hostResult.startedAt,
+    completedAt: hostResult.completedAt,
+    durationMs: hostResult.durationMs,
+    nextStep: {
+      kind: "rerun_with_confirmation",
+      reason: "Rerun console clear only after explicitly confirming the currently registered Unity host should be cleared.",
+    },
+    safeToRetry: false,
+  });
+}
+
+const clearContinuityFailureCodes = new Set([
+  "host.not_ready",
+  "host.identity_mismatch",
+  "host.transport_unavailable",
+  "host.protocol_mismatch",
+]);
+
+function firstDiagnosticCode(result: UnityAgentKitPublicResult): string | undefined {
+  return result.diagnostics[0]?.code ?? result.code;
 }
 
 function validateSnapshotCursorProof(

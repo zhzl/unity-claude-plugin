@@ -619,7 +619,7 @@ test("clearConsoleRejectsWithoutExplicitConfirmationBeforeCallingUnity", async (
 test("clearConsoleMapsVerifiedClearGenerationAndCountEvidence", async () => {
   const record = sampleHostRecord();
   const snapshot = clearSnapshot();
-  const registry = registrySequence([{ ok: true, record }, { ok: true, record }]);
+  const registry = registrySequence([{ ok: true, record }]);
   const transport = transportWithProbesAndInvokes([
     { port: record.port, result: { ok: true, statusCode: 200, body: record } },
   ], [
@@ -657,7 +657,7 @@ test("clearConsoleReturnsFailedWhenUnityCannotVerifyCountAfterClear", async () =
     consoleGenerationAfterClear: 2,
     cursor: cursor({ consoleGeneration: 2, startIndex: 0, createdAt: "2026-05-27T09:00:05.000Z" }),
   });
-  const registry = registrySequence([{ ok: true, record }, { ok: true, record }]);
+  const registry = registrySequence([{ ok: true, record }]);
   const transport = transportWithProbesAndInvokes([
     { port: record.port, result: { ok: true, statusCode: 200, body: record } },
   ], [
@@ -708,7 +708,7 @@ test("clearConsoleMapsInconsistentCursorProofToUncertain", async () => {
 
   for (const scenario of scenarios) {
     const record = sampleHostRecord();
-    const registry = registrySequence([{ ok: true, record }, { ok: true, record }]);
+    const registry = registrySequence([{ ok: true, record }]);
     const transport = transportWithProbesAndInvokes([
       { port: record.port, result: { ok: true, statusCode: 200, body: record } },
     ], [
@@ -745,35 +745,12 @@ test("clearConsoleMapsInconsistentCursorProofToUncertain", async () => {
 test("clearConsoleDoesNotSucceedAcrossHostRebind", async () => {
   const first = sampleHostRecord({ hostId: "host-before", hostEpoch: 1, port: 49200 });
   const rebound = sampleHostRecord({ hostId: "host-after", hostEpoch: 2, port: 49201 });
-  const snapshot = clearSnapshot({
-    projectRoot: rebound.projectRoot,
-    hostId: rebound.hostId,
-    hostEpoch: rebound.hostEpoch,
-    cursor: cursor({
-      hostId: rebound.hostId,
-      hostEpoch: rebound.hostEpoch,
-      consoleGeneration: 3,
-      startIndex: 0,
-      createdAt: "2026-05-27T09:00:05.000Z",
-    }),
-  });
   const registry = registrySequence([
     { ok: true, record: first },
-    { ok: true, record: rebound },
-    { ok: true, record: rebound },
   ]);
   const transport = transportWithProbesAndInvokes([
     { port: first.port, result: { ok: true, statusCode: 200, body: { ...first, status: "not_ready", code: "host.not_ready", message: "Console is rebinding." } } },
-    { port: rebound.port, result: { ok: true, statusCode: 200, body: rebound } },
-  ], [
-    {
-      port: rebound.port,
-      requestId: "req-clear-rebound",
-      operation: consoleClearOperation,
-      inputJson: JSON.stringify({ confirmClear: true }),
-      result: { ok: true, statusCode: 200, body: succeededEnvelope(rebound, snapshot, "req-clear-rebound", consoleClearOperation) },
-    },
-  ]);
+  ], []);
 
   const result = await clearConsole({
     registryPath: "ignored",
@@ -790,7 +767,8 @@ test("clearConsoleDoesNotSucceedAcrossHostRebind", async () => {
   assert.equal(result.action, "clear");
   assert.equal(result.nextStep?.kind, "rerun_with_confirmation");
   assert.equal(result.safeToRetry, false);
-  assert.equal(result.diagnostics.some((diagnostic) => diagnostic.code === "host.rebound"), true);
+  assert.equal(result.diagnostics.some((diagnostic) => diagnostic.code === "host.not_ready"), true);
+  assert.equal(result.diagnostics.some((diagnostic) => diagnostic.code === "host.rebound"), false);
   registry.assertConsumed();
   transport.assertConsumed();
 });
