@@ -40,11 +40,12 @@ namespace UnityAgentKit.Editor
             return CreateState(capturedMainThreadId, EditorApplication.isCompiling, EditorApplication.isUpdating);
         }
 
-        internal static UnityAgentKitCompileRequestResult RequestCompile(string inputJson, int capturedMainThreadId)
+        internal static UnityAgentKitCompileRequestResult RequestCompile(string inputJson, UnityAgentKitHostRecord record, int capturedMainThreadId)
         {
             EnsureCompilerCallbacksSubscribed();
             return RequestCompile(
                 inputJson,
+                record,
                 capturedMainThreadId,
                 EditorApplication.isCompiling,
                 EditorApplication.isUpdating,
@@ -54,13 +55,14 @@ namespace UnityAgentKit.Editor
 
         internal static UnityAgentKitCompileRequestResult RequestCompileForTests(
             string inputJson,
+            UnityAgentKitHostRecord record,
             int capturedMainThreadId,
             bool isCompiling,
             bool isUpdating,
             Action refreshAssetDatabase,
             Action requestScriptCompilation)
         {
-            return RequestCompile(inputJson, capturedMainThreadId, isCompiling, isUpdating, refreshAssetDatabase, requestScriptCompilation);
+            return RequestCompile(inputJson, record, capturedMainThreadId, isCompiling, isUpdating, refreshAssetDatabase, requestScriptCompilation);
         }
 
         internal static bool TryReadRecentReport(UnityAgentKitHostRecord record, string inputJson, out UnityAgentKitCompileReportResult report, out string code, out string message)
@@ -135,6 +137,7 @@ namespace UnityAgentKit.Editor
 
         private static UnityAgentKitCompileRequestResult RequestCompile(
             string inputJson,
+            UnityAgentKitHostRecord record,
             int capturedMainThreadId,
             bool isCompiling,
             bool isUpdating,
@@ -158,6 +161,7 @@ namespace UnityAgentKit.Editor
                 requestScriptCompilation();
                 usedCompilationPipeline = true;
                 compileInvalidationToken += 1;
+                currentHostRecord = CloneHostRecord(record);
                 activeCompileCycle = CreateActiveCompileCycle(compileInvalidationToken);
                 recentCompletedReport = null;
                 requested = true;

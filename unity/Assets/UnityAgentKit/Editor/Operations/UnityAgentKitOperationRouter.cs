@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace UnityAgentKit.Editor
 {
@@ -86,8 +87,8 @@ namespace UnityAgentKit.Editor
 
             if (operation == CompileRequestOperation)
             {
-                var result = UnityAgentKitCompileDiagnostics.RequestCompile(request != null ? request.inputJson ?? string.Empty : string.Empty, capturedMainThreadId);
-                return Succeeded(operation, requestId, record, result.requested ? "Compile request accepted." : "Compile request skipped because Unity is already compiling or updating.", UnityEngine.JsonUtility.ToJson(result), startedAt);
+                var result = UnityAgentKitCompileDiagnostics.RequestCompile(request != null ? request.inputJson ?? string.Empty : string.Empty, record, capturedMainThreadId);
+                return Succeeded(operation, requestId, record, result.requested ? "Compile request accepted." : "Compile request skipped because Unity is already compiling or updating.", JsonUtility.ToJson(result), startedAt);
             }
 
             if (operation == CompileReportGetOperation)
@@ -106,6 +107,29 @@ namespace UnityAgentKit.Editor
             }
 
             return Rejected(operation, requestId, record, "operation.unknown", "Unknown operation: " + operation, startedAt);
+        }
+
+        internal static UnityAgentKitOperationResponse RunCompileRequestForTests(
+            UnityAgentKitOperationRequest request,
+            UnityAgentKitHostRecord record,
+            int capturedMainThreadId,
+            bool isCompiling,
+            bool isUpdating,
+            Action refreshAssetDatabase,
+            Action requestScriptCompilation)
+        {
+            var startedAt = Now();
+            var operation = NormalizeOperation(request != null ? request.operation : string.Empty);
+            var requestId = request != null ? request.requestId ?? string.Empty : string.Empty;
+            var result = UnityAgentKitCompileDiagnostics.RequestCompileForTests(
+                request != null ? request.inputJson ?? string.Empty : string.Empty,
+                record,
+                capturedMainThreadId,
+                isCompiling,
+                isUpdating,
+                refreshAssetDatabase,
+                requestScriptCompilation);
+            return Succeeded(operation, requestId, record, result.requested ? "Compile request accepted." : "Compile request skipped because Unity is already compiling or updating.", JsonUtility.ToJson(result), startedAt);
         }
 
         internal static UnityAgentKitOperationResponse DispatchException(UnityAgentKitOperationRequest request, UnityAgentKitHostRecord record, Exception error)

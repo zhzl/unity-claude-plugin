@@ -242,6 +242,7 @@ namespace UnityAgentKit.Editor.Tests
             var requestCalls = 0;
             var result = UnityAgentKitCompileDiagnostics.RequestCompileForTests(
                 string.Empty,
+                TestHostRecord(),
                 7,
                 isCompiling: isCompiling,
                 isUpdating: isUpdating,
@@ -267,6 +268,7 @@ namespace UnityAgentKit.Editor.Tests
             var requestCalls = 0;
             var result = UnityAgentKitCompileDiagnostics.RequestCompileForTests(
                 "{\"reason\":\"unit-test\"}",
+                TestHostRecord(),
                 7,
                 isCompiling: false,
                 isUpdating: false,
@@ -516,6 +518,53 @@ namespace UnityAgentKit.Editor.Tests
             Assert.IsTrue(report.assemblyCompilationFinishedSeen);
             Assert.IsTrue(report.compilationFinishedSeen);
             Assert.IsTrue(report.editorIdleAfterCompilation);
+        }
+
+        [Test]
+        public void CompileRequestRouteCapturesHostIdentityForCompletedReport()
+        {
+            UnityAgentKitCompileDiagnostics.ResetForTests();
+            try
+            {
+                var record = TestHostRecord();
+                var currentThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+
+                var requestResponse = UnityAgentKitOperationRouter.RunCompileRequestForTests(
+                    new UnityAgentKitOperationRequest
+                    {
+                        operation = "compile.request",
+                        requestId = "req-compile-request-host-capture"
+                    },
+                    record,
+                    currentThreadId,
+                    isCompiling: false,
+                    isUpdating: false,
+                    refreshAssetDatabase: () => { },
+                    requestScriptCompilation: () => { });
+
+                AssertOperationEnvelopeMinimumFields(requestResponse, "succeeded", "compile.request", "req-compile-request-host-capture", record);
+                var requestResult = JsonUtility.FromJson<UnityAgentKitCompileRequestResult>(requestResponse.data);
+                Assert.IsTrue(requestResult.requested);
+
+                UnityAgentKitCompileDiagnostics.RecordAssemblyCompilationFinishedForTests("Library/ScriptAssemblies/Assembly-CSharp.dll", new UnityEditor.Compilation.CompilerMessage[0]);
+                UnityAgentKitCompileDiagnostics.RecordCompilationFinishedForTests();
+                UnityAgentKitCompileDiagnostics.CompleteActiveCycleIfIdleForTests(isCompiling: false, isUpdating: false);
+
+                var reportResponse = UnityAgentKitOperationRouter.RunOnMainThread(new UnityAgentKitOperationRequest
+                {
+                    operation = "compile.report.get",
+                    requestId = "req-report-read-host-capture"
+                }, record, currentThreadId);
+
+                AssertOperationEnvelopeMinimumFields(reportResponse, "succeeded", "compile.report.get", "req-report-read-host-capture", record);
+                var report = JsonUtility.FromJson<UnityAgentKitCompileReportResult>(reportResponse.data);
+                Assert.AreEqual(record.hostId, report.hostId);
+                Assert.AreEqual(record.hostEpoch, report.hostEpoch);
+            }
+            finally
+            {
+                UnityAgentKitCompileDiagnostics.ResetForTests();
+            }
         }
 
         [Test]
