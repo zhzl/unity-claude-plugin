@@ -333,10 +333,28 @@ namespace UnityAgentKit.Editor.Tests
             Assert.AreEqual("compile-cycle-1", roundTrip.compileCycleId);
             Assert.AreEqual("host-editor-tests", roundTrip.hostId);
             Assert.AreEqual(7, roundTrip.hostEpoch);
+            Assert.AreEqual("2026-05-25T10:00:00.0000000Z", roundTrip.completedAt);
             Assert.AreEqual(5, roundTrip.invalidationTokenAtCompletion);
             Assert.AreEqual(1, roundTrip.compilerErrorCount);
             Assert.AreEqual(1, roundTrip.compilerWarningCount);
+            Assert.AreEqual("1 error, 1 warning", roundTrip.compilerMessagesSummary);
             Assert.AreEqual(2, roundTrip.compilerMessages.Length);
+            AssertCompilerMessageEquals(
+                roundTrip.compilerMessages[0],
+                "Library/ScriptAssemblies/Assembly-CSharp.dll",
+                "Assets/Broken.cs",
+                12,
+                7,
+                "error",
+                "CS1002: ; expected");
+            AssertCompilerMessageEquals(
+                roundTrip.compilerMessages[1],
+                "Library/ScriptAssemblies/Assembly-CSharp.dll",
+                "Assets/Warning.cs",
+                3,
+                1,
+                "warning",
+                "CS0168: variable is declared but never used");
             Assert.IsTrue(roundTrip.assemblyCompilationFinishedSeen);
             Assert.IsTrue(roundTrip.compilationFinishedSeen);
             Assert.IsTrue(roundTrip.editorIdleAfterCompilation);
@@ -438,8 +456,18 @@ namespace UnityAgentKit.Editor.Tests
         {
             UnityAgentKitCompileDiagnostics.ResetForTests();
             var record = TestHostRecord();
+            var messages = new[]
+            {
+                UnityAgentKitCompileDiagnostics.CreateCompilerMessageForTests(
+                    "Assets/Warning.cs",
+                    3,
+                    1,
+                    UnityEditor.Compilation.CompilerMessageType.Warning,
+                    "CS0168: variable is declared but never used")
+            };
+
             UnityAgentKitCompileDiagnostics.StartCompileCycleForTests(record, invalidationTokenAtStart: 5);
-            UnityAgentKitCompileDiagnostics.RecordAssemblyCompilationFinishedForTests("Library/ScriptAssemblies/Assembly-CSharp.dll", new UnityEditor.Compilation.CompilerMessage[0]);
+            UnityAgentKitCompileDiagnostics.RecordAssemblyCompilationFinishedForTests("Library/ScriptAssemblies/Assembly-CSharp.dll", messages);
             UnityAgentKitCompileDiagnostics.RecordCompilationFinishedForTests();
             UnityAgentKitCompileDiagnostics.CompleteActiveCycleIfIdleForTests(isCompiling: false, isUpdating: false);
 
@@ -451,11 +479,25 @@ namespace UnityAgentKit.Editor.Tests
 
             AssertOperationEnvelopeMinimumFields(response, "succeeded", "compile.report.get", "req-report-read", record);
             var report = JsonUtility.FromJson<UnityAgentKitCompileReportResult>(response.data);
+            Assert.IsNotEmpty(report.reportId);
+            Assert.IsNotEmpty(report.compileCycleId);
             Assert.AreEqual(record.hostId, report.hostId);
             Assert.AreEqual(record.hostEpoch, report.hostEpoch);
+            Assert.IsNotEmpty(report.completedAt);
             Assert.AreEqual(5, report.invalidationTokenAtCompletion);
             Assert.AreEqual(0, report.compilerErrorCount);
-            Assert.AreEqual(0, report.compilerWarningCount);
+            Assert.AreEqual(1, report.compilerWarningCount);
+            Assert.AreEqual("0 errors, 1 warning", report.compilerMessagesSummary);
+            Assert.NotNull(report.compilerMessages);
+            Assert.AreEqual(1, report.compilerMessages.Length);
+            AssertCompilerMessageEquals(
+                report.compilerMessages[0],
+                "Library/ScriptAssemblies/Assembly-CSharp.dll",
+                "Assets/Warning.cs",
+                3,
+                1,
+                "warning",
+                "CS0168: variable is declared but never used");
             Assert.IsTrue(report.assemblyCompilationFinishedSeen);
             Assert.IsTrue(report.compilationFinishedSeen);
             Assert.IsTrue(report.editorIdleAfterCompilation);
@@ -540,6 +582,23 @@ namespace UnityAgentKit.Editor.Tests
             Assert.IsNotEmpty(response.startedAt);
             Assert.IsNotEmpty(response.completedAt);
             Assert.GreaterOrEqual(response.durationMs, 0);
+        }
+
+        private static void AssertCompilerMessageEquals(
+            UnityAgentKitCompilerMessageRecord message,
+            string assemblyPath,
+            string file,
+            int line,
+            int column,
+            string type,
+            string expectedMessage)
+        {
+            Assert.AreEqual(assemblyPath, message.assemblyPath);
+            Assert.AreEqual(file, message.file);
+            Assert.AreEqual(line, message.line);
+            Assert.AreEqual(column, message.column);
+            Assert.AreEqual(type, message.type);
+            Assert.AreEqual(expectedMessage, message.message);
         }
     }
 }
