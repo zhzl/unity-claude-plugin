@@ -15,6 +15,10 @@ namespace UnityAgentKit.Editor
         internal const string ConsoleCountOperation = "console.count";
         internal const string ConsoleSnapshotOperation = "console.snapshot";
         internal const string ConsoleClearOperation = "console.clear";
+        internal const string TestListOperation = "test.list";
+        internal const string TestStartOperation = "test.start";
+        internal const string TestStatusGetOperation = "test.status.get";
+        internal const string TestResultGetOperation = "test.result.get";
         internal const string ThrowOperation = "host.throw";
         internal const string PendingDispatchTimeoutOperation = "host.pendingDispatchTimeout";
 
@@ -58,6 +62,10 @@ namespace UnityAgentKit.Editor
                 normalized == ConsoleCountOperation ||
                 normalized == ConsoleSnapshotOperation ||
                 normalized == ConsoleClearOperation ||
+                normalized == TestListOperation ||
+                normalized == TestStartOperation ||
+                normalized == TestStatusGetOperation ||
+                normalized == TestResultGetOperation ||
                 normalized == ThrowOperation ||
                 normalized == PendingDispatchTimeoutOperation;
         }
@@ -152,6 +160,26 @@ namespace UnityAgentKit.Editor
                 {
                     return Failed(operation, requestId, record, "console.reflection_unavailable", exception.Message, startedAt);
                 }
+            }
+
+            if (operation == TestListOperation)
+            {
+                return UnityAgentKitTestDiagnostics.List(request != null ? request.inputJson ?? string.Empty : string.Empty, record, requestId);
+            }
+
+            if (operation == TestStartOperation)
+            {
+                return UnityAgentKitTestDiagnostics.Start(request != null ? request.inputJson ?? string.Empty : string.Empty, record, requestId);
+            }
+
+            if (operation == TestStatusGetOperation)
+            {
+                return UnityAgentKitTestDiagnostics.GetStatus(request != null ? request.inputJson ?? string.Empty : string.Empty, record, requestId);
+            }
+
+            if (operation == TestResultGetOperation)
+            {
+                return UnityAgentKitTestDiagnostics.GetResult(request != null ? request.inputJson ?? string.Empty : string.Empty, record, requestId);
             }
 
             if (operation == ThrowOperation)

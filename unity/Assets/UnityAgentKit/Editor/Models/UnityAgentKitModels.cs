@@ -306,4 +306,95 @@ namespace UnityAgentKit.Editor
         public int executionThreadId;
         public UnityAgentKitDiagnostic[] diagnostics = Array.Empty<UnityAgentKitDiagnostic>();
     }
+
+    [Serializable]
+    public sealed class UnityAgentKitTestSelectorInput
+    {
+        public string mode = "editmode";
+        public string assembly = string.Empty;
+        public string className = string.Empty;
+        public string methodName = string.Empty;
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitTestOperationInput
+    {
+        public UnityAgentKitTestSelectorInput selector = new UnityAgentKitTestSelectorInput();
+        public string jobId = string.Empty;
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitTestCaseRecord
+    {
+        public string id = string.Empty;
+        public string name = string.Empty;
+        public string fullName = string.Empty;
+        public string assembly = string.Empty;
+        public string className = string.Empty;
+        public string mode = string.Empty;
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitTestListResult
+    {
+        public string projectRoot = string.Empty;
+        public string unityVersion = string.Empty;
+        public string hostId = string.Empty;
+        public int hostEpoch;
+        public UnityAgentKitTestSelectorInput selector = new UnityAgentKitTestSelectorInput();
+        public UnityAgentKitTestCaseRecord[] tests = Array.Empty<UnityAgentKitTestCaseRecord>();
+        public int total;
+        public bool verifiedTestPass;
+        public UnityAgentKitDiagnostic[] diagnostics = Array.Empty<UnityAgentKitDiagnostic>();
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitTestJobResult
+    {
+        public string projectRoot = string.Empty;
+        public string unityVersion = string.Empty;
+        public string hostId = string.Empty;
+        public int hostEpoch;
+        public string jobId = string.Empty;
+        public string state = string.Empty;
+        public UnityAgentKitTestSelectorInput selector = new UnityAgentKitTestSelectorInput();
+        public string createdAt = string.Empty;
+        public string updatedAt = string.Empty;
+        public string reportId = string.Empty;
+        public UnityAgentKitDiagnostic[] diagnostics = Array.Empty<UnityAgentKitDiagnostic>();
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitTestFailureRecord
+    {
+        public string name = string.Empty;
+        public string fullName = string.Empty;
+        public string message = string.Empty;
+        public string stackTrace = string.Empty;
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitTestReportSummary
+    {
+        public int schemaVersion = 1;
+        public string projectRoot = string.Empty;
+        public string unityVersion = string.Empty;
+        public string hostId = string.Empty;
+        public int hostEpoch;
+        public string jobId = string.Empty;
+        public string reportId = string.Empty;
+        public string uri = string.Empty;
+        public string mode = string.Empty;
+        public UnityAgentKitTestSelectorInput selector = new UnityAgentKitTestSelectorInput();
+        public int total;
+        public int passed;
+        public int failed;
+        public int errors;
+        public int skipped;
+        public int inconclusive;
+        public bool verifiedTestPass;
+        public string terminalState = string.Empty;
+        public UnityAgentKitTestFailureRecord[] failures = Array.Empty<UnityAgentKitTestFailureRecord>();
+        public UnityAgentKitDiagnostic[] diagnostics = Array.Empty<UnityAgentKitDiagnostic>();
+    }
 }

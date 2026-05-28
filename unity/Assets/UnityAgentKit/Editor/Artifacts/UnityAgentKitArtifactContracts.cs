@@ -48,7 +48,8 @@ namespace UnityAgentKit.Editor
             string relativePath,
             string payload,
             UnityAgentKitHostRecord hostRecord,
-            string producerAction)
+            string producerAction,
+            string producerJobId = "")
         {
             if (!relativePath.StartsWith("test-reports/", StringComparison.Ordinal))
             {
@@ -60,6 +61,7 @@ namespace UnityAgentKit.Editor
             File.WriteAllText(payloadPath, payload ?? string.Empty);
 
             var metadata = CreateBaseMetadata(reportId, "test_report", hostRecord, "unity_test", producerAction, new FileInfo(payloadPath).Length);
+            metadata.producerJobId = producerJobId ?? string.Empty;
             metadata.uri = "unity://test-reports/" + reportId;
             metadata.relativePath = string.Empty;
             metadata.reportLocator = new UnityAgentKitReportLocatorRecord
@@ -85,6 +87,24 @@ namespace UnityAgentKit.Editor
                 payload,
                 hostRecord,
                 "snapshot");
+        }
+
+        internal static UnityAgentKitArtifactMetadataRecord WriteTestReportArtifact(
+            string artifactRoot,
+            string reportId,
+            string payload,
+            UnityAgentKitHostRecord hostRecord,
+            string producerAction,
+            string producerJobId = "")
+        {
+            return WriteSyntheticReport(
+                artifactRoot,
+                reportId,
+                "test-reports/" + reportId + ".json",
+                payload,
+                hostRecord,
+                producerAction,
+                producerJobId);
         }
 
         internal static bool IsSafeRelativePath(string relativePath)
