@@ -30,7 +30,8 @@ Phase 5D builds on completed Phase 5A runtime, Phase 5B artifact/resource/timeou
 
 2. **Test selector `mode: all`**
    - The selector schema keeps `mode: all` visible as a reserved value.
-   - Phase 5D returns `rejected` or `unsupported` for `mode: all`.
+   - Phase 5D returns `status: rejected` for `mode: all`.
+   - Unsupported selector mode is expressed as a diagnostic code/reason such as `unsupported_selector_mode`; no new public status is introduced.
    - Phase 5D stable support is limited to single-mode `editmode` and `playmode` test runs.
    - Phase 5D does not implement EditMode + PlayMode aggregation.
 
@@ -69,7 +70,7 @@ unity_screenshot.capture_game_view
 |---|---|---|
 | `5D-01` | Test workflow operations / reports / Resource readback | May split into `5D-01a` / `5D-01b` during `writing-plans` if the card becomes too large. |
 | `5D-02` | PlayMode enter / exit / verify workflows | Keeps helper actions internal only. |
-| `5D-03` | Screenshot capture / artifact validation / Resource readback | Requires TS PNG header/dimension validation. |
+| `5D-03` | Screenshot capture / artifact validation / Resource readback | Starts with capture-method feasibility check or adapter seam; requires TS PNG header/dimension validation. |
 | `5D-04` | Combined scope guard / Phase 5D evidence sync | Syncs only Phase 5D evidence; parent Phase 5 remains incomplete. |
 
 ## Out of Scope
@@ -195,7 +196,8 @@ methodName?
 Phase 5D behavior:
 
 - `editmode` and `playmode` are supported as single-mode runs.
-- `all` is reserved but unsupported in Phase 5D and returns `rejected` or `unsupported` with diagnostics.
+- `all` is reserved but unsupported in Phase 5D and returns `status: rejected` with an unsupported-selector diagnostic code/reason such as `unsupported_selector_mode`.
+- `unsupported` is not a public result status in Phase 5D.
 - Arbitrary Test Runner flags, free-form parameters, and unbounded selector bags are not allowed.
 
 ### Action Semantics
@@ -345,6 +347,8 @@ Generated `artifactId` and controlled artifact root are authoritative. User-prov
 
 ### Producer and Validation Requirements
 
+`5D-03` must begin with a capture-method feasibility check or adapter seam. The check must identify an acceptable current Game View capture method for Unity 2022.3.61f1 without using the forbidden `InternalEditorUtility.ReadScreenPixel + Texture2D.EncodeToPNG + File.WriteAllBytes` path. If no acceptable method is available in the target environment, record blocker or partial evidence and keep the screenshot card incomplete unless the user explicitly accepts a narrower evidence boundary.
+
 Unity C# producer:
 
 - Runs on the Unity main thread.
@@ -414,7 +418,7 @@ Phase 5D is complete only when all active plan cards have evidence and the combi
 
 1. Test workflows use real Unity Test Runner API.
 2. `run_and_collect` and `run_and_verify` have distinct semantics.
-3. `mode: all` is rejected or unsupported in Phase 5D and not silently treated as a partial run.
+3. `mode: all` returns `status: rejected` with an unsupported-selector diagnostic reason and is not silently treated as a partial run.
 4. PlayMode workflows use state snapshot and transition proof as the primary success criterion.
 5. Console diagnostics remain supplemental for Test, PlayMode, and Screenshot workflows.
 6. Screenshot returns a real PNG artifact with Resource readback and TS PNG header/dimension validation.
@@ -431,7 +435,7 @@ Phase 5D is complete only when all active plan cards have evidence and the combi
 
 Required TS coverage:
 
-- Test selector validation and `mode: all` unsupported/rejected behavior.
+- Test selector validation and `mode: all` `status: rejected` plus unsupported-selector diagnostic reason.
 - Test job status/result mapping.
 - `run_and_collect` succeeds for readable failed reports while setting `verifiedTestPass: false`.
 - `run_and_verify` fails for failed/errors counts.
@@ -451,6 +455,7 @@ Required Unity coverage:
 - TestRunner adapter discovery and selector resolution.
 - Test job lifecycle records and terminal report metadata.
 - PlayMode state snapshot DTOs and request-enter/request-exit operations.
+- Screenshot capture-method feasibility check or adapter seam.
 - Screenshot producer seams for safe labels, controlled paths, metadata, validation failure, and Game View availability diagnostics.
 - HostRuntime regression where appropriate.
 
@@ -504,7 +509,7 @@ The execution index should start from the four-card baseline:
 ```text
 5D-01 Test workflow operations / reports / Resource readback
 5D-02 PlayMode enter / exit / verify workflows
-5D-03 Screenshot capture / artifact validation / Resource readback
+5D-03 Screenshot capture-method feasibility / artifact validation / Resource readback
 5D-04 Combined scope guard / Phase 5D evidence sync
 ```
 
