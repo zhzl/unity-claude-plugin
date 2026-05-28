@@ -1,0 +1,35 @@
+{
+  "name": "plugin-dev",
+  "version": "0.4.0",
+  "description": "Development toolkit skills for working with Claude Code and Codex plugin structures.",
+  "author": {
+    "name": "Steve Nims",
+    "url": "https://github.com/sjnims"
+  },
+  "homepage": "https://github.com/sjnims/plugin-dev",
+  "repository": "https://github.com/sjnims/plugin-dev",
+  "license": "MIT",
+  "keywords": [
+    "ai-tools",
+    "claude",
+    "claude-code",
+    "codex",
+    "developer-tools",
+    "mcp",
+    "plugin-development"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Plugin Dev",
+    "shortDescription": "Plugin development guidance and reference skills.",
+    "longDescription": "Adds focused skills for plugin structure, commands, agents, hooks, MCP integration, LSP integration, settings, marketplaces, and plugin development workflows.",
+    "developerName": "Steve Nims",
+    "category": "Productivity",
+    "capabilities": [
+      "Skills"
+    ],
+    "defaultPrompt": [
+      "Help me design or validate a local plugin."
+    ]
+  }
+}
