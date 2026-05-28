@@ -7,6 +7,8 @@ import {
   getTestResult,
   getTestStatus,
   listTests,
+  runAndCollectTests,
+  runAndVerifyTests,
   startTestRun,
   type TestWorkflowOptions,
 } from "../src/workflows/test.ts";
@@ -657,6 +659,745 @@ test("result readback: passed report succeeds with matching host and payload sum
     assert.equal(result.resource?.uri, "unity://test-reports/test-report-pass");
     assert.equal(result.resource?.type, "test_report");
     assert.equal(result.metadata?.["resourceContentBytes"], Buffer.byteLength(JSON.stringify(expectedPayloadSummary, null, 2), "utf8"));
+    registry.assertConsumed();
+    transport.assertConsumed();
+  });
+});
+
+test("aggregate collect: starts, polls terminal, reads resource-backed passing report", async () => {
+  await withArtifactProject(async (projectRoot, artifactRoot) => {
+    const record = sampleHostRecord({ projectRoot });
+    const accepted = jobSnapshot({ projectRoot, jobId: "test-job-collect-pass", state: "accepted" });
+    const running = jobSnapshot({
+      projectRoot,
+      jobId: "test-job-collect-pass",
+      state: "running",
+      updatedAt: "2026-05-28T10:00:04.000Z",
+    });
+    const completed = jobSnapshot({
+      projectRoot,
+      jobId: "test-job-collect-pass",
+      state: "completed",
+      reportId: "test-report-collect-pass",
+      updatedAt: "2026-05-28T10:00:06.000Z",
+    });
+    const payload = reportPayload({
+      reportId: "test-report-collect-pass",
+      uri: "unity://test-reports/test-report-collect-pass",
+      total: 3,
+      passed: 3,
+      failed: 0,
+      errors: 0,
+      skipped: 0,
+      inconclusive: 0,
+    });
+    const report = reportSummary({
+      projectRoot,
+      jobId: "test-job-collect-pass",
+      reportId: "test-report-collect-pass",
+      uri: "unity://test-reports/test-report-collect-pass",
+      total: 3,
+      passed: 3,
+      failed: 0,
+      errors: 0,
+      skipped: 0,
+      inconclusive: 0,
+      terminalState: "completed",
+      verifiedTestPass: true,
+      failures: [],
+    });
+    await writeTestReportFixture(
+      artifactRoot,
+      "test-report-collect-pass",
+      {
+        hostId: record.hostId,
+        hostEpoch: record.hostEpoch,
+        producerJobId: "test-job-collect-pass",
+        sizeBytes: Buffer.byteLength(JSON.stringify(payload, null, 2), "utf8"),
+      },
+      payload,
+    );
+    const registry = registrySequence([
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+    ]);
+    const transport = transportWithProbesAndInvokes([
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    ], [
+      {
+        port: record.port,
+        requestId: "req-collect-pass-start",
+        operation: testStartOperation,
+        inputJson: JSON.stringify({ selector: selector() }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testStartOperation, accepted, "req-collect-pass-start") },
+      },
+      {
+        port: record.port,
+        requestId: "req-collect-pass-status-1",
+        operation: testStatusOperation,
+        inputJson: JSON.stringify({ jobId: "test-job-collect-pass" }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testStatusOperation, running, "req-collect-pass-status-1") },
+      },
+      {
+        port: record.port,
+        requestId: "req-collect-pass-status-2",
+        operation: testStatusOperation,
+        inputJson: JSON.stringify({ jobId: "test-job-collect-pass" }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testStatusOperation, completed, "req-collect-pass-status-2") },
+      },
+      {
+        port: record.port,
+        requestId: "req-collect-pass-result",
+        operation: testResultOperation,
+        inputJson: JSON.stringify({ jobId: "test-job-collect-pass" }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testResultOperation, report, "req-collect-pass-result") },
+      },
+    ]);
+
+    const result = await runAndCollectTests(options(record, transport.transport, {
+      projectRoot,
+      readRegistry: registry.readRegistry,
+    }), {
+      requestId: "req-collect-pass",
+      selector: selector(),
+    });
+
+    assert.equal(result.status, "succeeded");
+    assert.equal(result.action, "run_and_collect");
+    assert.equal(result.job?.state, "completed");
+    assert.equal(result.resource?.uri, "unity://test-reports/test-report-collect-pass");
+    assert.equal(result.data?.verifiedTestPass, true);
+    assert.deepEqual(result.evidence, {
+      completion: "test_report_collected",
+      reportId: "test-report-collect-pass",
+      verifiedTestPass: true,
+    });
+    registry.assertConsumed();
+    transport.assertConsumed();
+  });
+});
+
+test("aggregate collect: failed report still succeeds with verifiedTestPass false", async () => {
+  await withArtifactProject(async (projectRoot, artifactRoot) => {
+    const record = sampleHostRecord({ projectRoot });
+    const accepted = jobSnapshot({ projectRoot, jobId: "test-job-collect-failed", state: "accepted" });
+    const failed = jobSnapshot({
+      projectRoot,
+      jobId: "test-job-collect-failed",
+      state: "failed",
+      reportId: "test-report-collect-failed",
+      updatedAt: "2026-05-28T10:00:06.000Z",
+    });
+    const payload = reportPayload({
+      reportId: "test-report-collect-failed",
+      uri: "unity://test-reports/test-report-collect-failed",
+      total: 4,
+      passed: 1,
+      failed: 2,
+      errors: 1,
+      skipped: 0,
+      inconclusive: 0,
+    });
+    const report = reportSummary({
+      projectRoot,
+      jobId: "test-job-collect-failed",
+      reportId: "test-report-collect-failed",
+      uri: "unity://test-reports/test-report-collect-failed",
+      total: 4,
+      passed: 1,
+      failed: 2,
+      errors: 1,
+      skipped: 0,
+      inconclusive: 0,
+      terminalState: "failed",
+      verifiedTestPass: false,
+    });
+    await writeTestReportFixture(
+      artifactRoot,
+      "test-report-collect-failed",
+      {
+        hostId: record.hostId,
+        hostEpoch: record.hostEpoch,
+        producerJobId: "test-job-collect-failed",
+        sizeBytes: Buffer.byteLength(JSON.stringify(payload, null, 2), "utf8"),
+      },
+      payload,
+    );
+    const registry = registrySequence([
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+    ]);
+    const transport = transportWithProbesAndInvokes([
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    ], [
+      {
+        port: record.port,
+        requestId: "req-collect-failed-start",
+        operation: testStartOperation,
+        inputJson: JSON.stringify({ selector: selector() }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testStartOperation, accepted, "req-collect-failed-start") },
+      },
+      {
+        port: record.port,
+        requestId: "req-collect-failed-status-1",
+        operation: testStatusOperation,
+        inputJson: JSON.stringify({ jobId: "test-job-collect-failed" }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testStatusOperation, failed, "req-collect-failed-status-1") },
+      },
+      {
+        port: record.port,
+        requestId: "req-collect-failed-result",
+        operation: testResultOperation,
+        inputJson: JSON.stringify({ jobId: "test-job-collect-failed" }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testResultOperation, report, "req-collect-failed-result") },
+      },
+    ]);
+
+    const result = await runAndCollectTests(options(record, transport.transport, {
+      projectRoot,
+      readRegistry: registry.readRegistry,
+    }), {
+      requestId: "req-collect-failed",
+      selector: selector(),
+    });
+
+    assert.equal(result.status, "succeeded");
+    assert.equal(result.action, "run_and_collect");
+    assert.equal(result.data?.failed, 2);
+    assert.equal(result.data?.errors, 1);
+    assert.equal(result.data?.verifiedTestPass, false);
+    registry.assertConsumed();
+    transport.assertConsumed();
+  });
+});
+
+test("aggregate collect: rejects mode all before calling Unity transport", async () => {
+  const record = sampleHostRecord();
+  const transport = transportWithProbesAndInvokes([], []);
+
+  const result = await runAndCollectTests(options(record, transport.transport), {
+    requestId: "req-collect-rejected",
+    selector: { ...selector(), mode: "all" },
+  });
+
+  assert.equal(result.status, "rejected");
+  assert.equal(result.action, "run_and_collect");
+  assert.equal(result.code, "unsupported_selector_mode");
+  assert.equal(result.diagnostics[0]?.code, "unsupported_selector_mode");
+  transport.assertConsumed();
+});
+
+test("aggregate collect: invalid poll interval falls back to positive sleep and still times out", async () => {
+  const record = sampleHostRecord();
+  const accepted = jobSnapshot({ jobId: "test-job-timeout", state: "accepted" });
+  const running = jobSnapshot({
+    jobId: "test-job-timeout",
+    state: "running",
+    updatedAt: "2026-05-28T10:00:04.000Z",
+  });
+  const registry = registrySequence([
+    { ok: true, record },
+    { ok: true, record },
+    { ok: true, record },
+    { ok: true, record },
+  ]);
+  const transport = transportWithProbesAndInvokes([
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+  ], [
+    {
+      port: record.port,
+      requestId: "req-collect-timeout-start",
+      operation: testStartOperation,
+      inputJson: JSON.stringify({ selector: selector() }),
+      result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testStartOperation, accepted, "req-collect-timeout-start") },
+    },
+    {
+      port: record.port,
+      requestId: "req-collect-timeout-status-1",
+      operation: testStatusOperation,
+      inputJson: JSON.stringify({ jobId: "test-job-timeout" }),
+      result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testStatusOperation, running, "req-collect-timeout-status-1") },
+    },
+  ]);
+  const sleepCalls: number[] = [];
+  const nowValues = [1000, 1000, 1010];
+
+  const result = await runAndCollectTests(options(record, transport.transport, {
+    readRegistry: registry.readRegistry,
+  }), {
+    requestId: "req-collect-timeout",
+    selector: selector(),
+    timeoutMs: 10,
+    pollIntervalMs: 0,
+    now: () => nowValues.shift() ?? 1010,
+    sleep: async (ms) => {
+      sleepCalls.push(ms);
+    },
+  });
+
+  assert.equal(result.status, "timeout");
+  assert.equal(result.action, "run_and_collect");
+  assert.equal(result.job?.jobId, "test-job-timeout");
+  assert.equal(result.mayStillBeRunning, true);
+  assert.equal(result.safeToRetry, false);
+  assert.equal(result.nextStep?.kind, "check_job_status");
+  assert.equal(result.nextStep?.jobId, "test-job-timeout");
+  assert.ok(result.diagnostics.some((diagnostic) => diagnostic.code === "workflow.timeout"));
+  assert.deepEqual(sleepCalls, [10]);
+  registry.assertConsumed();
+  transport.assertConsumed();
+});
+
+test("aggregate collect: status job id mismatch remaps failure without succeeding", async () => {
+  const record = sampleHostRecord();
+  const accepted = jobSnapshot({ jobId: "test-job-1", state: "accepted" });
+  const mismatched = jobSnapshot({
+    jobId: "other-job",
+    state: "completed",
+    reportId: "test-report-other-job",
+    updatedAt: "2026-05-28T10:00:06.000Z",
+  });
+  const registry = registrySequence([
+    { ok: true, record },
+    { ok: true, record },
+    { ok: true, record },
+    { ok: true, record },
+  ]);
+  const transport = transportWithProbesAndInvokes([
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+  ], [
+    {
+      port: record.port,
+      requestId: "req-collect-job-mismatch-start",
+      operation: testStartOperation,
+      inputJson: JSON.stringify({ selector: selector() }),
+      result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testStartOperation, accepted, "req-collect-job-mismatch-start") },
+    },
+    {
+      port: record.port,
+      requestId: "req-collect-job-mismatch-status-1",
+      operation: testStatusOperation,
+      inputJson: JSON.stringify({ jobId: "test-job-1" }),
+      result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testStatusOperation, mismatched, "req-collect-job-mismatch-status-1") },
+    },
+  ]);
+
+  const result = await runAndCollectTests(options(record, transport.transport, {
+    readRegistry: registry.readRegistry,
+  }), {
+    requestId: "req-collect-job-mismatch",
+    selector: selector(),
+  });
+
+  assert.equal(result.status, "failed");
+  assert.equal(result.action, "run_and_collect");
+  assert.equal(result.code, "test.job_id_mismatch");
+  assert.ok(result.diagnostics.some((diagnostic) => diagnostic.code === "test.job_id_mismatch"));
+  transport.assertConsumed();
+  registry.assertConsumed();
+});
+
+test("aggregate collect: report Resource failure propagates without success", async () => {
+  await withArtifactProject(async (projectRoot) => {
+    const record = sampleHostRecord({ projectRoot });
+    const accepted = jobSnapshot({ projectRoot, jobId: "test-job-resource-fail", state: "accepted" });
+    const completed = jobSnapshot({
+      projectRoot,
+      jobId: "test-job-resource-fail",
+      state: "completed",
+      reportId: "missing-report",
+      updatedAt: "2026-05-28T10:00:06.000Z",
+    });
+    const report = reportSummary({
+      projectRoot,
+      jobId: "test-job-resource-fail",
+      reportId: "missing-report",
+      uri: "unity://test-reports/missing-report",
+      total: 1,
+      passed: 1,
+      failed: 0,
+      errors: 0,
+      skipped: 0,
+      inconclusive: 0,
+      terminalState: "completed",
+      verifiedTestPass: true,
+      failures: [],
+    });
+    const registry = registrySequence([
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+    ]);
+    const transport = transportWithProbesAndInvokes([
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    ], [
+      {
+        port: record.port,
+        requestId: "req-collect-resource-fail-start",
+        operation: testStartOperation,
+        inputJson: JSON.stringify({ selector: selector() }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testStartOperation, accepted, "req-collect-resource-fail-start") },
+      },
+      {
+        port: record.port,
+        requestId: "req-collect-resource-fail-status-1",
+        operation: testStatusOperation,
+        inputJson: JSON.stringify({ jobId: "test-job-resource-fail" }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testStatusOperation, completed, "req-collect-resource-fail-status-1") },
+      },
+      {
+        port: record.port,
+        requestId: "req-collect-resource-fail-result",
+        operation: testResultOperation,
+        inputJson: JSON.stringify({ jobId: "test-job-resource-fail" }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testResultOperation, report, "req-collect-resource-fail-result") },
+      },
+    ]);
+
+    const result = await runAndCollectTests(options(record, transport.transport, {
+      projectRoot,
+      readRegistry: registry.readRegistry,
+    }), {
+      requestId: "req-collect-resource-fail",
+      selector: selector(),
+    });
+
+    assert.equal(result.status, "failed");
+    assert.equal(result.action, "run_and_collect");
+    assert.equal(result.code, "test.report_resource_failed");
+    assert.equal(result.resource, undefined);
+    assert.equal(result.evidence?.["completion"], "artifact_readback_failed");
+    assert.ok(result.diagnostics.some((diagnostic) => diagnostic.code === "test.report_resource_failed"));
+    registry.assertConsumed();
+    transport.assertConsumed();
+  });
+});
+
+test("aggregate verify: collected passing report succeeds", async () => {
+  await withArtifactProject(async (projectRoot, artifactRoot) => {
+    const record = sampleHostRecord({ projectRoot });
+    const accepted = jobSnapshot({ projectRoot, jobId: "test-job-verify-pass", state: "accepted" });
+    const completed = jobSnapshot({
+      projectRoot,
+      jobId: "test-job-verify-pass",
+      state: "completed",
+      reportId: "test-report-verify-pass",
+      updatedAt: "2026-05-28T10:00:06.000Z",
+    });
+    const payload = reportPayload({
+      reportId: "test-report-verify-pass",
+      uri: "unity://test-reports/test-report-verify-pass",
+      total: 2,
+      passed: 2,
+      failed: 0,
+      errors: 0,
+      skipped: 0,
+      inconclusive: 0,
+    });
+    const report = reportSummary({
+      projectRoot,
+      jobId: "test-job-verify-pass",
+      reportId: "test-report-verify-pass",
+      uri: "unity://test-reports/test-report-verify-pass",
+      total: 2,
+      passed: 2,
+      failed: 0,
+      errors: 0,
+      skipped: 0,
+      inconclusive: 0,
+      terminalState: "completed",
+      verifiedTestPass: true,
+      failures: [],
+    });
+    await writeTestReportFixture(
+      artifactRoot,
+      "test-report-verify-pass",
+      {
+        hostId: record.hostId,
+        hostEpoch: record.hostEpoch,
+        producerJobId: "test-job-verify-pass",
+        sizeBytes: Buffer.byteLength(JSON.stringify(payload, null, 2), "utf8"),
+      },
+      payload,
+    );
+    const registry = registrySequence([
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+    ]);
+    const transport = transportWithProbesAndInvokes([
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    ], [
+      {
+        port: record.port,
+        requestId: "req-verify-pass-start",
+        operation: testStartOperation,
+        inputJson: JSON.stringify({ selector: selector() }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testStartOperation, accepted, "req-verify-pass-start") },
+      },
+      {
+        port: record.port,
+        requestId: "req-verify-pass-status-1",
+        operation: testStatusOperation,
+        inputJson: JSON.stringify({ jobId: "test-job-verify-pass" }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testStatusOperation, completed, "req-verify-pass-status-1") },
+      },
+      {
+        port: record.port,
+        requestId: "req-verify-pass-result",
+        operation: testResultOperation,
+        inputJson: JSON.stringify({ jobId: "test-job-verify-pass" }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testResultOperation, report, "req-verify-pass-result") },
+      },
+    ]);
+
+    const result = await runAndVerifyTests(options(record, transport.transport, {
+      projectRoot,
+      readRegistry: registry.readRegistry,
+    }), {
+      requestId: "req-verify-pass",
+      selector: selector(),
+    });
+
+    assert.equal(result.status, "succeeded");
+    assert.equal(result.action, "run_and_verify");
+    assert.deepEqual(result.evidence, {
+      completion: "test_report_verified",
+      reportId: "test-report-verify-pass",
+      verifiedTestPass: true,
+    });
+    registry.assertConsumed();
+    transport.assertConsumed();
+  });
+});
+
+test("aggregate verify: collected failed report returns failed with report evidence", async () => {
+  await withArtifactProject(async (projectRoot, artifactRoot) => {
+    const record = sampleHostRecord({ projectRoot });
+    const accepted = jobSnapshot({ projectRoot, jobId: "test-job-verify-failed", state: "accepted" });
+    const failedJob = jobSnapshot({
+      projectRoot,
+      jobId: "test-job-verify-failed",
+      state: "failed",
+      reportId: "test-report-verify-failed",
+      updatedAt: "2026-05-28T10:00:06.000Z",
+    });
+    const payload = reportPayload({
+      reportId: "test-report-verify-failed",
+      uri: "unity://test-reports/test-report-verify-failed",
+      total: 2,
+      passed: 1,
+      failed: 1,
+      errors: 0,
+      skipped: 0,
+      inconclusive: 0,
+    });
+    const report = reportSummary({
+      projectRoot,
+      jobId: "test-job-verify-failed",
+      reportId: "test-report-verify-failed",
+      uri: "unity://test-reports/test-report-verify-failed",
+      total: 2,
+      passed: 1,
+      failed: 1,
+      errors: 0,
+      skipped: 0,
+      inconclusive: 0,
+      terminalState: "failed",
+      verifiedTestPass: false,
+    });
+    await writeTestReportFixture(
+      artifactRoot,
+      "test-report-verify-failed",
+      {
+        hostId: record.hostId,
+        hostEpoch: record.hostEpoch,
+        producerJobId: "test-job-verify-failed",
+        sizeBytes: Buffer.byteLength(JSON.stringify(payload, null, 2), "utf8"),
+      },
+      payload,
+    );
+    const registry = registrySequence([
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+    ]);
+    const transport = transportWithProbesAndInvokes([
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    ], [
+      {
+        port: record.port,
+        requestId: "req-verify-failed-start",
+        operation: testStartOperation,
+        inputJson: JSON.stringify({ selector: selector() }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testStartOperation, accepted, "req-verify-failed-start") },
+      },
+      {
+        port: record.port,
+        requestId: "req-verify-failed-status-1",
+        operation: testStatusOperation,
+        inputJson: JSON.stringify({ jobId: "test-job-verify-failed" }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testStatusOperation, failedJob, "req-verify-failed-status-1") },
+      },
+      {
+        port: record.port,
+        requestId: "req-verify-failed-result",
+        operation: testResultOperation,
+        inputJson: JSON.stringify({ jobId: "test-job-verify-failed" }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testResultOperation, report, "req-verify-failed-result") },
+      },
+    ]);
+
+    const result = await runAndVerifyTests(options(record, transport.transport, {
+      projectRoot,
+      readRegistry: registry.readRegistry,
+    }), {
+      requestId: "req-verify-failed",
+      selector: selector(),
+    });
+
+    assert.equal(result.status, "failed");
+    assert.equal(result.action, "run_and_verify");
+    assert.equal(result.code, "test.verification_failed");
+    assert.equal(result.data?.failed, 1);
+    assert.equal(result.resource?.uri, "unity://test-reports/test-report-verify-failed");
+    assert.deepEqual(result.evidence, {
+      completion: "test_report_collected_verification_failed",
+      reportId: "test-report-verify-failed",
+      verifiedTestPass: false,
+    });
+    assert.ok(result.diagnostics.some((diagnostic) => diagnostic.code === "test.verification_failed"));
+    registry.assertConsumed();
+    transport.assertConsumed();
+  });
+});
+
+test("aggregate verify: skipped and inconclusive without failures still succeed", async () => {
+  await withArtifactProject(async (projectRoot, artifactRoot) => {
+    const record = sampleHostRecord({ projectRoot });
+    const accepted = jobSnapshot({ projectRoot, jobId: "test-job-verify-skipped", state: "accepted" });
+    const completed = jobSnapshot({
+      projectRoot,
+      jobId: "test-job-verify-skipped",
+      state: "completed",
+      reportId: "test-report-verify-skipped",
+      updatedAt: "2026-05-28T10:00:06.000Z",
+    });
+    const payload = reportPayload({
+      reportId: "test-report-verify-skipped",
+      uri: "unity://test-reports/test-report-verify-skipped",
+      total: 3,
+      passed: 0,
+      failed: 0,
+      errors: 0,
+      skipped: 2,
+      inconclusive: 1,
+    });
+    const report = reportSummary({
+      projectRoot,
+      jobId: "test-job-verify-skipped",
+      reportId: "test-report-verify-skipped",
+      uri: "unity://test-reports/test-report-verify-skipped",
+      total: 3,
+      passed: 0,
+      failed: 0,
+      errors: 0,
+      skipped: 2,
+      inconclusive: 1,
+      terminalState: "completed",
+      verifiedTestPass: true,
+      failures: [],
+    });
+    await writeTestReportFixture(
+      artifactRoot,
+      "test-report-verify-skipped",
+      {
+        hostId: record.hostId,
+        hostEpoch: record.hostEpoch,
+        producerJobId: "test-job-verify-skipped",
+        sizeBytes: Buffer.byteLength(JSON.stringify(payload, null, 2), "utf8"),
+      },
+      payload,
+    );
+    const registry = registrySequence([
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+      { ok: true, record },
+    ]);
+    const transport = transportWithProbesAndInvokes([
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    ], [
+      {
+        port: record.port,
+        requestId: "req-verify-skipped-start",
+        operation: testStartOperation,
+        inputJson: JSON.stringify({ selector: selector() }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testStartOperation, accepted, "req-verify-skipped-start") },
+      },
+      {
+        port: record.port,
+        requestId: "req-verify-skipped-status-1",
+        operation: testStatusOperation,
+        inputJson: JSON.stringify({ jobId: "test-job-verify-skipped" }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testStatusOperation, completed, "req-verify-skipped-status-1") },
+      },
+      {
+        port: record.port,
+        requestId: "req-verify-skipped-result",
+        operation: testResultOperation,
+        inputJson: JSON.stringify({ jobId: "test-job-verify-skipped" }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, testResultOperation, report, "req-verify-skipped-result") },
+      },
+    ]);
+
+    const result = await runAndVerifyTests(options(record, transport.transport, {
+      projectRoot,
+      readRegistry: registry.readRegistry,
+    }), {
+      requestId: "req-verify-skipped",
+      selector: selector(),
+    });
+
+    assert.equal(result.status, "succeeded");
+    assert.equal(result.action, "run_and_verify");
+    assert.equal(result.data?.verifiedTestPass, true);
     registry.assertConsumed();
     transport.assertConsumed();
   });
