@@ -493,6 +493,43 @@ namespace UnityAgentKit.Editor.Tests
             }
         }
 
+        [Test]
+        public void StopDuringClaimedDispatchCompletesStoppedEnvelope()
+        {
+            UnityAgentKitMainThread.ResetForTests();
+            UnityAgentKitMainThread.RegisterDrain();
+            UnityAgentKitOperationResponse response = null;
+            var helperObservedClaimedDispatch = false;
+            var record = TestHostRecord(49246);
+
+            try
+            {
+                UnityAgentKitMainThread.BeforeRunClaimedDispatchForTests = requestId =>
+                {
+                    helperObservedClaimedDispatch = UnityAgentKitMainThread.IsCurrentClaimedDispatchForTests(requestId);
+                    UnityAgentKitMainThread.Stop("host.stopped");
+                };
+
+                UnityAgentKitMainThread.Enqueue(new UnityAgentKitOperationRequest
+                {
+                    operation = "host.threadCheck",
+                    requestId = "req-stop-claimed"
+                }, record, completed => response = completed);
+
+                UnityAgentKitMainThread.DrainForTests();
+
+                Assert.IsTrue(helperObservedClaimedDispatch, "Stop helper must observe the current claimed dispatch.");
+                AssertOperationEnvelopeMinimumFields(response, "failed", "host.threadCheck", "req-stop-claimed", record);
+                Assert.AreEqual("host.stopped", response.code);
+                Assert.AreEqual(0, UnityAgentKitMainThread.PendingDispatchCountForTests);
+            }
+            finally
+            {
+                UnityAgentKitMainThread.BeforeRunClaimedDispatchForTests = null;
+                UnityAgentKitMainThread.ResetForTests();
+            }
+        }
+
         [UnityTest]
         public IEnumerator HostStopReturnsStoppedEnvelopeBeforeClosingListener()
         {

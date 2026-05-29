@@ -1,7 +1,10 @@
 using System;
+using System.Collections;
 using System.IO;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace UnityAgentKit.Editor.Tests
 {
@@ -55,6 +58,37 @@ namespace UnityAgentKit.Editor.Tests
             Assert.IsFalse(adapter.UsedForbiddenPath);
         }
 
+        [UnityTest]
+        public IEnumerator CaptureGameViewForTestsCompletesAfterPayloadAppearsOnLaterEditorUpdate()
+        {
+            var artifactRoot = TemporaryArtifactRoot("deferred-payload");
+            var adapter = new DeferredPayloadScreenshotAdapter(width: 320, height: 180);
+            UnityAgentKitOperationResponse response = null;
+
+            UnityAgentKitScreenshotDiagnostics.CaptureGameViewAsyncForTests(
+                TestHostRecord(),
+                capturedMainThreadId: 7,
+                inputJson: "{\"label\":\"deferred\"}",
+                artifactRoot: artifactRoot,
+                adapter: adapter,
+                complete: completed => response = completed,
+                requestId: "req-shot-deferred");
+
+            Assert.IsNull(response, "Screenshot response should wait for the payload instead of synchronously returning file_not_ready.");
+            yield return null;
+            yield return null;
+
+            Assert.NotNull(response);
+            Assert.AreEqual("succeeded", response.status, response.code + ": " + response.message);
+            var result = JsonUtility.FromJson<UnityAgentKitScreenshotCaptureResult>(response.data);
+            var payloadPath = Path.Combine(artifactRoot, result.relativePath.Replace('/', Path.DirectorySeparatorChar));
+            var metadataPath = Path.Combine(artifactRoot, "metadata", "screenshots", result.artifactId + ".json");
+            Assert.IsTrue(File.Exists(payloadPath), payloadPath);
+            CollectionAssert.AreEqual(RecordingScreenshotAdapter.FixturePngBytesValue, File.ReadAllBytes(payloadPath));
+            Assert.IsTrue(File.Exists(metadataPath), metadataPath);
+            Assert.IsFalse(adapter.UsedForbiddenPath);
+        }
+
         [Test]
         public void CaptureGameViewForTestsFailsWhenGameViewUnavailable()
         {
@@ -70,17 +104,27 @@ namespace UnityAgentKit.Editor.Tests
             Assert.AreEqual("screenshot.game_view_unavailable", response.code);
         }
 
-        [Test]
-        public void CaptureGameViewForTestsFailsWhenCaptureDoesNotCreateReadyFile()
+        [UnityTest]
+        public IEnumerator CaptureGameViewForTestsFailsWhenCaptureDoesNotCreateReadyFile()
         {
-            var response = UnityAgentKitScreenshotDiagnostics.CaptureGameViewForTests(
+            UnityAgentKitOperationResponse response = null;
+            UnityAgentKitScreenshotDiagnostics.CaptureGameViewAsyncForTests(
                 TestHostRecord(),
                 capturedMainThreadId: 7,
                 inputJson: "{\"label\":\"smoke\"}",
                 artifactRoot: TemporaryArtifactRoot("not-ready"),
                 adapter: new RecordingScreenshotAdapter(width: 320, height: 180, writesPayload: false),
-                requestId: "req-shot-not-ready");
+                complete: completed => response = completed,
+                requestId: "req-shot-not-ready",
+                payloadReadyTimeoutMs: 1);
 
+            var deadline = DateTimeOffset.UtcNow.AddSeconds(1);
+            while (response == null && DateTimeOffset.UtcNow < deadline)
+            {
+                yield return null;
+            }
+
+            Assert.NotNull(response);
             Assert.AreEqual("failed", response.status);
             Assert.AreEqual("screenshot.file_not_ready", response.code);
         }
@@ -189,12 +233,21 @@ namespace UnityAgentKit.Editor.Tests
                 Assert.Ignore("Production Game View screenshot smoke requires an interactive Unity editor.");
             }
 
-            var response = UnityAgentKitOperationRouter.RunOnMainThread(new UnityAgentKitOperationRequest
+            UnityAgentKitOperationResponse response = null;
+            var started = UnityAgentKitOperationRouter.TryRunOnMainThreadAsync(new UnityAgentKitOperationRequest
             {
                 operation = "screenshot.capture",
                 requestId = "req-shot-production-smoke",
                 inputJson = "{\"label\":\"production-smoke\"}"
-            }, TestHostRecord(), System.Threading.Thread.CurrentThread.ManagedThreadId);
+            }, TestHostRecord(), System.Threading.Thread.CurrentThread.ManagedThreadId, completed => response = completed);
+
+            Assert.IsTrue(started);
+            for (var frame = 0; frame < 120 && response == null; frame++)
+            {
+                yield return null;
+            }
+
+            Assert.NotNull(response);
 
             if (response.status == "failed" && response.code == "screenshot.game_view_unavailable")
             {
@@ -329,6 +382,69 @@ namespace UnityAgentKit.Editor.Tests
                 using (var stream = File.Create(absolutePath))
                 {
                     var bytes = FixturePngBytes;
+                    stream.Write(bytes, 0, bytes.Length);
+                }
+            }
+
+        }
+
+        private sealed class DeferredPayloadScreenshotAdapter : UnityAgentKitScreenshotDiagnostics.IScreenshotCaptureAdapter
+        {
+            private readonly int width;
+            private readonly int height;
+            private string capturedAbsolutePath;
+            private bool payloadScheduled;
+
+            public DeferredPayloadScreenshotAdapter(int width, int height)
+            {
+                this.width = width;
+                this.height = height;
+            }
+
+            public bool UsedForbiddenPath { get; private set; }
+
+            public UnityAgentKitScreenshotCaptureMethodFeasibility Feasibility => new UnityAgentKitScreenshotCaptureMethodFeasibility
+            {
+                supported = true,
+                methodId = "screen_capture_capture_screenshot",
+                view = "current_game_view",
+                usesReadScreenPixel = false,
+                usesEncodeToPng = false,
+                usesPayloadFileWriteAllBytes = false,
+                diagnostics = Array.Empty<UnityAgentKitDiagnostic>()
+            };
+
+            public bool TryGetGameViewSize(out int gameViewWidth, out int gameViewHeight, out UnityAgentKitDiagnostic diagnostic)
+            {
+                gameViewWidth = width;
+                gameViewHeight = height;
+                diagnostic = null;
+                return width > 0 && height > 0;
+            }
+
+            public void FocusAndRepaintGameView()
+            {
+            }
+
+            public void CaptureGameViewPng(string absolutePath)
+            {
+                capturedAbsolutePath = absolutePath;
+                if (payloadScheduled)
+                {
+                    return;
+                }
+
+                payloadScheduled = true;
+                EditorApplication.update += WritePayloadOnUpdate;
+            }
+
+            private void WritePayloadOnUpdate()
+            {
+                EditorApplication.update -= WritePayloadOnUpdate;
+                Directory.CreateDirectory(Path.GetDirectoryName(capturedAbsolutePath));
+                using (var stream = File.Create(capturedAbsolutePath))
+                {
+                    var bytes = RecordingScreenshotAdapter.FixturePngBytesValue;
                     stream.Write(bytes, 0, bytes.Length);
                 }
             }

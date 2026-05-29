@@ -12,8 +12,7 @@ namespace UnityAgentKit.Editor
         private const string CaptureOperation = "screenshot.capture";
         private const string CaptureMethodId = "screen_capture_capture_screenshot";
         private const string CaptureView = "current_game_view";
-        private const int PayloadReadyTimeoutMs = 250;
-        private const int PayloadReadyPollIntervalMs = 5;
+        private const int PayloadReadyTimeoutMs = 1000;
         private static readonly IScreenshotCaptureAdapter productionAdapter = new UnityEditorScreenshotCaptureAdapter();
 
         internal interface IScreenshotCaptureAdapter
@@ -22,6 +21,30 @@ namespace UnityAgentKit.Editor
             bool TryGetGameViewSize(out int gameViewWidth, out int gameViewHeight, out UnityAgentKitDiagnostic diagnostic);
             void FocusAndRepaintGameView();
             void CaptureGameViewPng(string absolutePath);
+        }
+
+        private sealed class PendingScreenshotCapture
+        {
+            internal string absolutePath;
+            internal string artifactRoot;
+            internal string artifactId;
+            internal string relativePath;
+            internal UnityAgentKitHostRecord record;
+            internal int width;
+            internal int height;
+            internal int capturedMainThreadId;
+            internal string label;
+            internal string requestId;
+            internal string startedAt;
+            internal string captureMethod;
+            internal DateTimeOffset deadline;
+            internal Action<UnityAgentKitOperationResponse> complete;
+            internal bool completed;
+
+            internal void OnEditorUpdate()
+            {
+                TryCompletePendingCapture(this);
+            }
         }
 
         internal static UnityAgentKitScreenshotCaptureMethodFeasibility GetCaptureMethodFeasibilityForTests()
@@ -40,7 +63,26 @@ namespace UnityAgentKit.Editor
             string inputJson,
             string requestId = "")
         {
-            return CaptureGameViewForTests(record, capturedMainThreadId, inputJson, UnityAgentKitArtifactContracts.GetArtifactRoot(), productionAdapter, requestId);
+            UnityAgentKitOperationResponse response = null;
+            CaptureGameViewAsync(record, capturedMainThreadId, inputJson, completed => response = completed, requestId);
+            return response ?? Failed("screenshot.capture_pending", "Screenshot capture completion is pending.", record, Now(), requestId);
+        }
+
+        internal static void CaptureGameViewAsync(
+            UnityAgentKitHostRecord record,
+            int capturedMainThreadId,
+            string inputJson,
+            Action<UnityAgentKitOperationResponse> complete,
+            string requestId = "")
+        {
+            CaptureGameViewAsyncForTests(
+                record,
+                capturedMainThreadId,
+                inputJson,
+                UnityAgentKitArtifactContracts.GetArtifactRoot(),
+                productionAdapter,
+                complete,
+                requestId);
         }
 
         internal static UnityAgentKitOperationResponse CaptureGameViewForTests(
@@ -51,11 +93,27 @@ namespace UnityAgentKit.Editor
             IScreenshotCaptureAdapter adapter,
             string requestId = "")
         {
+            UnityAgentKitOperationResponse response = null;
+            CaptureGameViewAsyncForTests(record, capturedMainThreadId, inputJson, artifactRoot, adapter, completed => response = completed, requestId);
+            return response ?? Failed("screenshot.capture_pending", "Screenshot capture completion is pending.", record, Now(), requestId);
+        }
+
+        internal static void CaptureGameViewAsyncForTests(
+            UnityAgentKitHostRecord record,
+            int capturedMainThreadId,
+            string inputJson,
+            string artifactRoot,
+            IScreenshotCaptureAdapter adapter,
+            Action<UnityAgentKitOperationResponse> complete,
+            string requestId = "",
+            int payloadReadyTimeoutMs = PayloadReadyTimeoutMs)
+        {
             var startedAt = Now();
             var input = ParseInput(inputJson);
             if (!IsSafeLabel(input.label))
             {
-                return Rejected("screenshot.label_invalid", "Screenshot label must not contain path syntax.", record, startedAt, requestId);
+                Complete(complete, Rejected("screenshot.label_invalid", "Screenshot label must not contain path syntax.", record, startedAt, requestId));
+                return;
             }
 
             var feasibility = ValidateFeasibility(adapter);
@@ -64,7 +122,8 @@ namespace UnityAgentKit.Editor
                 var code = feasibility.diagnostics != null && feasibility.diagnostics.Length > 0 && !string.IsNullOrEmpty(feasibility.diagnostics[0].code)
                     ? feasibility.diagnostics[0].code
                     : "screenshot.capture_method_unavailable";
-                return Failed(code, "Screenshot capture method is unavailable.", record, startedAt, requestId, feasibility.diagnostics);
+                Complete(complete, Failed(code, "Screenshot capture method is unavailable.", record, startedAt, requestId, feasibility.diagnostics));
+                return;
             }
 
             UnityAgentKitDiagnostic gameViewDiagnostic = null;
@@ -75,7 +134,8 @@ namespace UnityAgentKit.Editor
                 var diagnostics = gameViewDiagnostic != null
                     ? new[] { gameViewDiagnostic }
                     : new[] { Diagnostic("error", "screenshot.game_view_unavailable", "Game View size is unavailable.", CaptureOperation, requestId) };
-                return Failed("screenshot.game_view_unavailable", "Game View size is unavailable.", record, startedAt, requestId, diagnostics);
+                Complete(complete, Failed("screenshot.game_view_unavailable", "Game View size is unavailable.", record, startedAt, requestId, diagnostics));
+                return;
             }
 
             var artifactId = CreateArtifactId(input.label);
@@ -91,47 +151,93 @@ namespace UnityAgentKit.Editor
             {
                 var diagnostic = Diagnostic("error", "screenshot.capture_failed", "Game View screenshot capture failed.", CaptureOperation, requestId);
                 diagnostic.details = "{\"exceptionType\":\"" + Escape(exception.GetType().Name) + "\"}";
-                return Failed("screenshot.capture_failed", exception.Message, record, startedAt, requestId, new[] { diagnostic });
+                Complete(complete, Failed("screenshot.capture_failed", exception.Message, record, startedAt, requestId, new[] { diagnostic }));
+                return;
             }
 
-            if (!WaitUntilPayloadReady(absolutePath, PayloadReadyTimeoutMs, PayloadReadyPollIntervalMs, out var sizeBytes))
+            var pending = new PendingScreenshotCapture
             {
-                return Failed("screenshot.file_not_ready", "Screenshot file was not created or is empty.", record, startedAt, requestId);
+                absolutePath = absolutePath,
+                artifactRoot = artifactRoot,
+                artifactId = artifactId,
+                relativePath = relativePath,
+                record = record,
+                width = width,
+                height = height,
+                capturedMainThreadId = capturedMainThreadId,
+                label = input.label ?? string.Empty,
+                requestId = requestId,
+                startedAt = startedAt,
+                captureMethod = feasibility.methodId,
+                deadline = DateTimeOffset.UtcNow.AddMilliseconds(Math.Max(0, payloadReadyTimeoutMs)),
+                complete = complete
+            };
+
+            if (TryCompletePendingCapture(pending))
+            {
+                return;
             }
 
+            EditorApplication.update += pending.OnEditorUpdate;
+        }
+
+        private static bool TryCompletePendingCapture(PendingScreenshotCapture pending)
+        {
+            if (pending == null || pending.completed)
+            {
+                return true;
+            }
+
+            if (TryGetPayloadSize(pending.absolutePath, out var sizeBytes))
+            {
+                CompletePending(pending, CreateSucceededCaptureResponse(pending, sizeBytes));
+                return true;
+            }
+
+            if (DateTimeOffset.UtcNow > pending.deadline)
+            {
+                CompletePending(pending, Failed("screenshot.file_not_ready", "Screenshot file was not created or is empty.", pending.record, pending.startedAt, pending.requestId));
+                return true;
+            }
+
+            return false;
+        }
+
+        private static UnityAgentKitOperationResponse CreateSucceededCaptureResponse(PendingScreenshotCapture pending, long sizeBytes)
+        {
             UnityAgentKitArtifactMetadataRecord metadata;
             try
             {
-                metadata = UnityAgentKitArtifactContracts.WriteScreenshotArtifactMetadata(artifactRoot, artifactId, relativePath, record, sizeBytes);
+                metadata = UnityAgentKitArtifactContracts.WriteScreenshotArtifactMetadata(pending.artifactRoot, pending.artifactId, pending.relativePath, pending.record, sizeBytes);
             }
             catch (Exception exception)
             {
-                var diagnostic = Diagnostic("error", "screenshot.metadata_write_failed", "Screenshot metadata write failed.", CaptureOperation, requestId);
+                var diagnostic = Diagnostic("error", "screenshot.metadata_write_failed", "Screenshot metadata write failed.", CaptureOperation, pending.requestId);
                 diagnostic.details = "{\"exceptionType\":\"" + Escape(exception.GetType().Name) + "\"}";
-                return Failed("screenshot.metadata_write_failed", exception.Message, record, startedAt, requestId, new[] { diagnostic });
+                return Failed("screenshot.metadata_write_failed", exception.Message, pending.record, pending.startedAt, pending.requestId, new[] { diagnostic });
             }
 
             var result = new UnityAgentKitScreenshotCaptureResult
             {
                 projectRoot = UnityAgentKitHostRegistry.GetProjectRoot(),
                 unityVersion = Application.unityVersion,
-                hostId = record != null ? record.hostId : string.Empty,
-                hostEpoch = record != null ? record.hostEpoch : 0,
-                artifactId = artifactId,
+                hostId = pending.record != null ? pending.record.hostId : string.Empty,
+                hostEpoch = pending.record != null ? pending.record.hostEpoch : 0,
+                artifactId = pending.artifactId,
                 uri = metadata.uri,
                 relativePath = metadata.relativePath,
-                width = width,
-                height = height,
+                width = pending.width,
+                height = pending.height,
                 sizeBytes = sizeBytes,
-                captureMethod = feasibility.methodId,
+                captureMethod = pending.captureMethod,
                 validationStatus = metadata.validationStatus,
-                label = input.label ?? string.Empty,
-                capturedMainThreadId = capturedMainThreadId,
+                label = pending.label,
+                capturedMainThreadId = pending.capturedMainThreadId,
                 executionThreadId = Thread.CurrentThread.ManagedThreadId,
                 diagnostics = Array.Empty<UnityAgentKitDiagnostic>()
             };
 
-            return Succeeded("Game View screenshot artifact written.", JsonUtility.ToJson(result), record, startedAt, requestId);
+            return Succeeded("Game View screenshot artifact written.", JsonUtility.ToJson(result), pending.record, pending.startedAt, pending.requestId);
         }
 
         private static UnityAgentKitScreenshotCaptureInput ParseInput(string inputJson)
@@ -186,26 +292,9 @@ namespace UnityAgentKit.Editor
             return id.Length <= 128 ? id : id.Substring(0, 128).TrimEnd('-', '_');
         }
 
-        private static bool WaitUntilPayloadReady(string absolutePath, int timeoutMs, int pollIntervalMs, out long sizeBytes)
+        private static bool TryGetPayloadSize(string absolutePath, out long sizeBytes)
         {
             sizeBytes = 0;
-            var deadline = DateTimeOffset.UtcNow.AddMilliseconds(Math.Max(0, timeoutMs));
-            var interval = Math.Max(1, pollIntervalMs);
-
-            while (DateTimeOffset.UtcNow <= deadline)
-            {
-                if (File.Exists(absolutePath))
-                {
-                    sizeBytes = new FileInfo(absolutePath).Length;
-                    if (sizeBytes > 0)
-                    {
-                        return true;
-                    }
-                }
-
-                Thread.Sleep(interval);
-            }
-
             if (File.Exists(absolutePath))
             {
                 sizeBytes = new FileInfo(absolutePath).Length;
@@ -308,6 +397,29 @@ namespace UnityAgentKit.Editor
                 message = message ?? string.Empty,
                 metadata = string.Empty
             };
+        }
+
+        private static void Complete(Action<UnityAgentKitOperationResponse> complete, UnityAgentKitOperationResponse response)
+        {
+            try
+            {
+                complete?.Invoke(response);
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        private static void CompletePending(PendingScreenshotCapture pending, UnityAgentKitOperationResponse response)
+        {
+            if (pending == null || pending.completed)
+            {
+                return;
+            }
+
+            pending.completed = true;
+            EditorApplication.update -= pending.OnEditorUpdate;
+            Complete(pending.complete, response);
         }
 
         private static UnityAgentKitDiagnostic Diagnostic(string severity, string code, string message, string operation, string requestId)

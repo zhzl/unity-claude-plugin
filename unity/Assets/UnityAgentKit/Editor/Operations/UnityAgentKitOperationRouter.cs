@@ -218,6 +218,28 @@ namespace UnityAgentKit.Editor
             return Rejected(operation, requestId, record, "operation.unknown", "Unknown operation: " + operation, startedAt);
         }
 
+        internal static bool TryRunOnMainThreadAsync(
+            UnityAgentKitOperationRequest request,
+            UnityAgentKitHostRecord record,
+            int capturedMainThreadId,
+            Action<UnityAgentKitOperationResponse> complete)
+        {
+            var operation = NormalizeOperation(request != null ? request.operation : string.Empty);
+            var requestId = request != null ? request.requestId ?? string.Empty : string.Empty;
+            if (operation != ScreenshotCaptureOperation)
+            {
+                return false;
+            }
+
+            UnityAgentKitScreenshotDiagnostics.CaptureGameViewAsync(
+                record,
+                capturedMainThreadId,
+                request != null ? request.inputJson ?? string.Empty : string.Empty,
+                complete,
+                requestId);
+            return true;
+        }
+
         internal static UnityAgentKitOperationResponse RunCompileRequestForTests(
             UnityAgentKitOperationRequest request,
             UnityAgentKitHostRecord record,

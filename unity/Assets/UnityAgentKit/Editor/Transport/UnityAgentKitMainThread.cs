@@ -261,6 +261,15 @@ namespace UnityAgentKit.Editor
 
                 try
                 {
+                    if (UnityAgentKitOperationRouter.TryRunOnMainThreadAsync(
+                        item.request,
+                        item.record,
+                        _capturedMainThreadId,
+                        response => TryComplete(item, response, ownsItem: true)))
+                    {
+                        continue;
+                    }
+
                     var response = UnityAgentKitOperationRouter.RunOnMainThread(item.request, item.record, _capturedMainThreadId);
                     TryComplete(item, response, ownsItem: true);
                 }
@@ -282,7 +291,7 @@ namespace UnityAgentKit.Editor
                 var count = 0;
                 for (var i = 0; i < PendingDispatches.Count; i += 1)
                 {
-                    if (!PendingDispatches[i].holdForTimeout)
+                    if (!PendingDispatches[i].holdForTimeout && !PendingDispatches[i].claimed)
                     {
                         count += 1;
                     }
@@ -304,7 +313,11 @@ namespace UnityAgentKit.Editor
                         continue;
                     }
 
-                    PendingDispatches.RemoveAt(i);
+                    if (item.claimed)
+                    {
+                        continue;
+                    }
+
                     item.claimed = true;
                     return item;
                 }
@@ -341,7 +354,11 @@ namespace UnityAgentKit.Editor
                     return false;
                 }
 
-                if (!ownsItem)
+                if (ownsItem)
+                {
+                    PendingDispatches.Remove(item);
+                }
+                else
                 {
                     if (item.claimed)
                     {
