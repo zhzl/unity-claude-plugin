@@ -402,6 +402,45 @@ test("enterPlayModeAndVerify timeout points nextStep to get_state", async () => 
   transport.assertConsumed();
 });
 
+test("enterPlayModeAndVerify times out without polling when deadline expires after request", async () => {
+  const record = sampleHostRecord();
+  const editmode = stateSnapshot();
+  const request = requestResult({ targetState: "playmode", requested: true, noOp: false, stateBeforeRequest: editmode });
+  const registry = registrySequence([
+    { ok: true, record }, { ok: true, record },
+    { ok: true, record }, { ok: true, record },
+  ]);
+  const transport = transportWithProbesAndInvokes([
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+  ], [
+    { port: record.port, requestId: "req-enter-boundary-state-1", operation: playModeStateOperation, result: { ok: true, statusCode: 200, body: succeededEnvelope(record, playModeStateOperation, editmode, "req-enter-boundary-state-1") } },
+    { port: record.port, requestId: "req-enter-boundary-request", operation: playModeEnterRequestOperation, result: { ok: true, statusCode: 200, body: succeededEnvelope(record, playModeEnterRequestOperation, request, "req-enter-boundary-request") } },
+  ]);
+  const nowValues = [1_000, 1_000, 1_005];
+
+  const result = await enterPlayModeAndVerify(options(record, transport.transport, { readRegistry: registry.readRegistry }), {
+    requestId: "req-enter-boundary",
+    timeoutMs: 5,
+    pollIntervalMs: 1,
+    sleep: async () => assert.fail("sleep should not be called after the deadline expires"),
+    now: () => nowValues.shift() ?? 1_005,
+  });
+
+  assert.equal(result.status, "timeout");
+  assert.equal(result.action, "enter_and_verify");
+  assert.equal(result.mayStillBeRunning, true);
+  assert.equal(result.safeToRetry, false);
+  assert.deepEqual(result.nextStep, {
+    kind: "read_state",
+    tool: "unity_playmode",
+    action: "get_state",
+    reason: "Read the current PlayMode state before deciding whether to retry.",
+  });
+  registry.assertConsumed();
+  transport.assertConsumed();
+});
+
 test("enterPlayModeAndVerify does not succeed when host continuity changes after request", async () => {
   const record = sampleHostRecord();
   const reboundRecord = sampleHostRecord({ hostId: "host-rebound", hostEpoch: 8 });

@@ -127,7 +127,12 @@ async function verifyPlayModeTarget(
       requestSent = true;
     }
 
-    await sleep(Math.min(pollIntervalMs, remainingTimeoutMs(startedAt, timeoutMs, now)));
+    const remainingMs = remainingTimeoutMs(startedAt, timeoutMs, now);
+    if (remainingMs <= 0) {
+      break;
+    }
+
+    await sleep(Math.min(pollIntervalMs, remainingMs));
 
     latestResult = await getPlayModeState(workflow, { requestId: `${requestId}-state-${pollIndex++}` });
     collectReboundDiagnostics(carriedDiagnostics, latestResult);
