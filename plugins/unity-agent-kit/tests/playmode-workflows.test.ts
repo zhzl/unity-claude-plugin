@@ -526,6 +526,103 @@ test("enterPlayModeAndVerify times out without polling when deadline expires dur
   transport.assertConsumed();
 });
 
+test("enterPlayModeAndVerify timeout after busy request is not mayStillBeRunning", async () => {
+  const record = sampleHostRecord();
+  const editmode = stateSnapshot();
+  const busyRequest = requestResult({
+    targetState: "playmode",
+    requested: false,
+    noOp: true,
+    noOpReason: "transition_or_busy",
+    stateBeforeRequest: editmode,
+  });
+  const transitioning = stateSnapshot({
+    state: "transitioning",
+    stable: false,
+    isPlaying: false,
+    isPlayingOrWillChangePlaymode: true,
+    isPlayModeChanging: true,
+  });
+  const registry = registrySequence([
+    { ok: true, record }, { ok: true, record },
+    { ok: true, record }, { ok: true, record },
+    { ok: true, record }, { ok: true, record },
+  ]);
+  const transport = transportWithProbesAndInvokes([
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+  ], [
+    { port: record.port, requestId: "req-enter-busy-timeout-state-1", operation: playModeStateOperation, result: { ok: true, statusCode: 200, body: succeededEnvelope(record, playModeStateOperation, editmode, "req-enter-busy-timeout-state-1") } },
+    { port: record.port, requestId: "req-enter-busy-timeout-request", operation: playModeEnterRequestOperation, result: { ok: true, statusCode: 200, body: succeededEnvelope(record, playModeEnterRequestOperation, busyRequest, "req-enter-busy-timeout-request") } },
+    { port: record.port, requestId: "req-enter-busy-timeout-state-2", operation: playModeStateOperation, result: { ok: true, statusCode: 200, body: succeededEnvelope(record, playModeStateOperation, transitioning, "req-enter-busy-timeout-state-2") } },
+  ]);
+  const nowValues = [1_000, 1_000, 1_004, 1_004, 1_006];
+
+  const result = await enterPlayModeAndVerify(options(record, transport.transport, { readRegistry: registry.readRegistry }), {
+    requestId: "req-enter-busy-timeout",
+    timeoutMs: 5,
+    pollIntervalMs: 1,
+    sleep: async () => {},
+    now: () => nowValues.shift() ?? 1_006,
+  });
+
+  assert.equal(result.status, "timeout");
+  assert.equal(result.mayStillBeRunning, false);
+  assert.equal(result.safeToRetry, false);
+  assert.equal(result.nextStep?.tool, "unity_playmode");
+  assert.equal(result.nextStep?.action, "get_state");
+  registry.assertConsumed();
+  transport.assertConsumed();
+});
+
+test("enterPlayModeAndVerify does not report accepted when busy request did not send", async () => {
+  const record = sampleHostRecord();
+  const editmode = stateSnapshot();
+  const busyRequest = requestResult({
+    targetState: "playmode",
+    requested: false,
+    noOp: true,
+    noOpReason: "transition_or_busy",
+    stateBeforeRequest: editmode,
+  });
+  const playmode = stateSnapshot({
+    state: "playmode",
+    stable: true,
+    isPlaying: true,
+    isPlayingOrWillChangePlaymode: true,
+  });
+  const registry = registrySequence([
+    { ok: true, record }, { ok: true, record },
+    { ok: true, record }, { ok: true, record },
+    { ok: true, record }, { ok: true, record },
+  ]);
+  const transport = transportWithProbesAndInvokes([
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+  ], [
+    { port: record.port, requestId: "req-enter-busy-observed-state-1", operation: playModeStateOperation, result: { ok: true, statusCode: 200, body: succeededEnvelope(record, playModeStateOperation, editmode, "req-enter-busy-observed-state-1") } },
+    { port: record.port, requestId: "req-enter-busy-observed-request", operation: playModeEnterRequestOperation, result: { ok: true, statusCode: 200, body: succeededEnvelope(record, playModeEnterRequestOperation, busyRequest, "req-enter-busy-observed-request") } },
+    { port: record.port, requestId: "req-enter-busy-observed-state-2", operation: playModeStateOperation, result: { ok: true, statusCode: 200, body: succeededEnvelope(record, playModeStateOperation, playmode, "req-enter-busy-observed-state-2") } },
+  ]);
+
+  const result = await enterPlayModeAndVerify(options(record, transport.transport, { readRegistry: registry.readRegistry }), {
+    requestId: "req-enter-busy-observed",
+    pollIntervalMs: 1,
+    sleep: async () => {},
+    now: (() => {
+      let current = 1_000;
+      return () => current++;
+    })(),
+  });
+
+  assert.equal(result.status, "succeeded");
+  assert.equal(result.evidence?.["request"], "observed_transition");
+  registry.assertConsumed();
+  transport.assertConsumed();
+});
+
 test("enterPlayModeAndVerify does not succeed when host continuity changes after request", async () => {
   const record = sampleHostRecord();
   const reboundRecord = sampleHostRecord({ hostId: "host-rebound", hostEpoch: 8 });

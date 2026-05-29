@@ -116,10 +116,12 @@ async function verifyPlayModeTarget(
   let latestState = initialState;
   let latestResult = initialResult;
   let requestSent = false;
+  let requestAttempted = false;
 
   while (remainingTimeoutMs(startedAt, timeoutMs, now) > 0) {
-    if (!requestSent && latestState.stable) {
+    if (!requestAttempted && latestState.stable) {
       const requestResult = await requestPlayModeTarget(workflow, `${requestId}-request`, target.action, target.operation);
+      requestAttempted = true;
       collectReboundDiagnostics(carriedDiagnostics, requestResult.raw);
       if (requestResult.result.status !== "succeeded") {
         return withCarriedDiagnostics(carriedDiagnostics, requestResult.result);
@@ -127,7 +129,7 @@ async function verifyPlayModeTarget(
       if (!sameWorkflowHost(initialState, requestResult.result)) {
         return withCarriedDiagnostics(carriedDiagnostics, hostContinuityLostResult(requestId, requestResult.result, target.action, target.operation, initialState));
       }
-      requestSent = true;
+      requestSent = playModeRequestWasSent(requestResult.result);
     }
 
     const remainingMs = remainingTimeoutMs(startedAt, timeoutMs, now);
@@ -214,6 +216,10 @@ function settledPlayModeResult(
 
 function remapPlayModeAction(result: UnityAgentKitPublicResult, action: PlayModeVerifyAction): UnityAgentKitPublicResult {
   return definePublicResult({ ...result, action });
+}
+
+function playModeRequestWasSent(result: UnityAgentKitPublicResult): boolean {
+  return result.data?.["requested"] === true;
 }
 
 function playModeTimeoutResult(action: PlayModeVerifyAction, requestId: string, requestSent: boolean): UnityAgentKitPublicResult {
