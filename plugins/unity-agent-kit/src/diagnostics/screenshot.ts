@@ -145,15 +145,12 @@ export function screenshotCaptureResultFromHostResult(
 }
 
 function remapNonSucceededHostResult(hostResult: UnityAgentKitPublicResult): UnityAgentKitPublicResult {
-  const status = hostResult.status === "lost" ? "lost" : hostResult.status === "failed" ? "failed" : "uncertain";
   return definePublicResult({
     ...hostResult,
-    status,
     tool: "unity_screenshot",
     action: "capture_game_view",
     operation: screenshotCaptureOperation,
     summary: hostResult.summary || "Screenshot capture could not be completed.",
-    ...(status === "uncertain" ? { safeToRetry: false } : {}),
   });
 }
 

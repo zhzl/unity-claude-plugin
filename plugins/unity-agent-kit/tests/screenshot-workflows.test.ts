@@ -7,8 +7,10 @@ import {
   parsePngHeaderDimensions,
   parseScreenshotCaptureData,
   screenshotCaptureOperation,
+  screenshotCaptureResultFromHostResult,
   type ScreenshotCaptureSummary,
 } from "../src/diagnostics/screenshot.ts";
+import type { UnityAgentKitPublicResult } from "../src/contracts/result.ts";
 import { captureGameViewScreenshot, type ScreenshotWorkflowOptions } from "../src/workflows/screenshot.ts";
 import {
   UNITY_AGENT_KIT_HOST_NAME,
@@ -254,6 +256,42 @@ test("PNG header parser validates signature, IHDR, and positive dimensions", () 
   assert.deepEqual(parsePngHeaderDimensions(pngBytes(2, 3).subarray(0, 20)), { ok: false, reason: "too_short" });
 });
 
+test("PNG header parser handles non-zero Uint8Array byteOffset views", () => {
+  const backing = new Uint8Array(43);
+  backing.set(pngBytes(4, 5), 7);
+
+  assert.deepEqual(parsePngHeaderDimensions(backing.subarray(7, 40)), { ok: true, width: 4, height: 5 });
+});
+
+test("screenshot host mapper preserves non-success public result statuses", () => {
+  const hostResult: UnityAgentKitPublicResult = {
+    status: "timeout",
+    tool: "unity_editor",
+    action: screenshotCaptureOperation,
+    operation: screenshotCaptureOperation,
+    requestId: "req-timeout",
+    hostId: "host-shot",
+    hostEpoch: 11,
+    summary: "Host request timed out.",
+    diagnostics: [
+      {
+        source: "ts-host-client",
+        severity: "error",
+        code: "host.request_timeout",
+        message: "Host request timed out.",
+      },
+    ],
+  };
+
+  const result = screenshotCaptureResultFromHostResult(hostResult, "D:/ai/unity-claude-plugin/unity");
+
+  assert.equal(result.status, "timeout");
+  assert.equal(result.tool, "unity_screenshot");
+  assert.equal(result.action, "capture_game_view");
+  assert.equal(result.operation, screenshotCaptureOperation);
+  assert.equal(result.summary, "Host request timed out.");
+});
+
 test("captureGameViewScreenshot succeeds only after screenshot Resource readback and PNG validation", async () => {
   await withArtifactProject(async (projectRoot, artifactRoot) => {
     const payload = pngBytes(2, 3);
@@ -308,6 +346,49 @@ test("captureGameViewScreenshot succeeds only after screenshot Resource readback
 
     assert.equal(transport.invocations[0]?.operation, "screenshot.capture");
     assert.equal(JSON.parse(transport.invocations[0]?.inputJson ?? "{}").label, "smoke");
+    registry.assertConsumed();
+    transport.assertConsumed();
+  });
+});
+
+test("captureGameViewScreenshot clamps zero poll interval while waiting for missing Resource readback", async () => {
+  await withArtifactProject(async (projectRoot) => {
+    const record = sampleHostRecord({ projectRoot });
+    const summary = screenshotSummary({ projectRoot, hostId: record.hostId, hostEpoch: record.hostEpoch });
+    const registry = registrySequence([{ ok: true, record }, { ok: true, record }]);
+    const transport = transportWithProbesAndInvokes([
+      { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    ], [
+      {
+        port: record.port,
+        requestId: "req-shot-missing",
+        operation: screenshotCaptureOperation,
+        inputJson: JSON.stringify({ label: "smoke" }),
+        result: { ok: true, statusCode: 200, body: succeededEnvelope(record, screenshotCaptureOperation, summary, "req-shot-missing") },
+      },
+    ]);
+    let fakeTime = 0;
+
+    const result = await captureGameViewScreenshot(options(record, transport.transport, {
+      projectRoot,
+      readRegistry: registry.readRegistry,
+      now: () => fakeTime,
+      sleep: async (ms) => {
+        assert.ok(ms > 0, "poll sleep must use a positive interval");
+        fakeTime += ms;
+      },
+    }), {
+      requestId: "req-shot-missing",
+      label: "smoke",
+      timeoutMs: 1,
+      pollIntervalMs: 0,
+    });
+
+    assert.equal(result.status, "timeout");
+    assert.equal(result.mayStillBeRunning, true);
+    assert.equal(result.safeToRetry, false);
+    assert.equal(result.nextStep?.kind, "read_resource");
+    assert.equal(result.nextStep?.resourceUri, summary.uri);
     registry.assertConsumed();
     transport.assertConsumed();
   });

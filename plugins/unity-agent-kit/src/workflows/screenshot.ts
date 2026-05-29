@@ -116,7 +116,7 @@ async function waitForScreenshotResourceReadback(
   mapped: UnityAgentKitPublicResult,
 ): Promise<ScreenshotReadbackWaitResult> {
   const timeoutMs = positiveFiniteOrDefault(options.timeoutMs, 10_000);
-  const pollIntervalMs = nonNegativeFiniteOrDefault(options.pollIntervalMs, 250);
+  const pollIntervalMs = positiveFiniteOrDefault(options.pollIntervalMs, 250);
   const now = workflow.now ?? Date.now;
   const sleep = workflow.sleep ?? defaultSleep;
   const startedAt = now();
@@ -270,10 +270,6 @@ function remainingTimeoutMs(startedAt: number, timeoutMs: number, now: () => num
 
 function positiveFiniteOrDefault(value: number | undefined, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
-}
-
-function nonNegativeFiniteOrDefault(value: number | undefined, fallback: number): number {
-  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : fallback;
 }
 
 async function defaultSleep(ms: number): Promise<void> {
