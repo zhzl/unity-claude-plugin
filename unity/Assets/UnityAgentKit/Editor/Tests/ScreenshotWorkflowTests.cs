@@ -58,6 +58,24 @@ namespace UnityAgentKit.Editor.Tests
             Assert.IsFalse(adapter.UsedForbiddenPath);
         }
 
+        [Test]
+        public void CaptureGameViewForTestsCreatesPendingDirectoryBeforeCapture()
+        {
+            var artifactRoot = TemporaryArtifactRoot("pending-directory");
+            var adapter = new DirectoryRequiredScreenshotAdapter(width: 320, height: 180);
+
+            var response = UnityAgentKitScreenshotDiagnostics.CaptureGameViewForTests(
+                TestHostRecord(),
+                capturedMainThreadId: 7,
+                inputJson: "{\"label\":\"directory\"}",
+                artifactRoot: artifactRoot,
+                adapter: adapter,
+                requestId: "req-shot-directory");
+
+            Assert.AreEqual("succeeded", response.status, response.code + ": " + response.message);
+            Assert.IsTrue(adapter.CaptureDirectoryExisted, adapter.CapturedDirectory);
+        }
+
         [UnityTest]
         public IEnumerator CaptureGameViewForTestsCompletesAfterPayloadAppearsOnLaterEditorUpdate()
         {
@@ -103,6 +121,33 @@ namespace UnityAgentKit.Editor.Tests
             Assert.AreEqual("host.dispatch_required", response.code);
             yield return null;
             yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator CaptureGameViewForTestsCancelsDeferredPendingCaptureBeforeReturning()
+        {
+            var artifactRoot = TemporaryArtifactRoot("sync-wrapper-cancel-pending");
+            var adapter = new DeferredPayloadScreenshotAdapter(width: 320, height: 180);
+
+            var response = UnityAgentKitScreenshotDiagnostics.CaptureGameViewForTests(
+                TestHostRecord(),
+                capturedMainThreadId: 7,
+                inputJson: "{\"label\":\"syncdeferred\"}",
+                artifactRoot: artifactRoot,
+                adapter: adapter,
+                requestId: "req-shot-sync-deferred");
+
+            Assert.AreEqual("rejected", response.status);
+            Assert.AreEqual("host.dispatch_required", response.code);
+
+            for (var frame = 0; frame < 4; frame++)
+            {
+                yield return null;
+            }
+
+            Assert.AreEqual(1, adapter.CaptureGameViewPngCallCount);
+            Assert.AreEqual(0, CountPngFiles(Path.Combine(artifactRoot, "screenshots")));
+            Assert.IsFalse(Directory.Exists(Path.Combine(artifactRoot, "metadata")));
         }
 
         [UnityTest]
@@ -444,6 +489,60 @@ namespace UnityAgentKit.Editor.Tests
                 }
             }
 
+        }
+
+        private sealed class DirectoryRequiredScreenshotAdapter : UnityAgentKitScreenshotDiagnostics.IScreenshotCaptureAdapter
+        {
+            private readonly int width;
+            private readonly int height;
+
+            public DirectoryRequiredScreenshotAdapter(int width, int height)
+            {
+                this.width = width;
+                this.height = height;
+            }
+
+            public bool CaptureDirectoryExisted { get; private set; }
+            public string CapturedDirectory { get; private set; }
+
+            public UnityAgentKitScreenshotCaptureMethodFeasibility Feasibility => new UnityAgentKitScreenshotCaptureMethodFeasibility
+            {
+                supported = true,
+                methodId = "screen_capture_capture_screenshot",
+                view = "current_game_view",
+                usesReadScreenPixel = false,
+                usesEncodeToPng = false,
+                usesPayloadFileWriteAllBytes = false,
+                diagnostics = Array.Empty<UnityAgentKitDiagnostic>()
+            };
+
+            public bool TryGetGameViewSize(out int gameViewWidth, out int gameViewHeight, out UnityAgentKitDiagnostic diagnostic)
+            {
+                gameViewWidth = width;
+                gameViewHeight = height;
+                diagnostic = null;
+                return width > 0 && height > 0;
+            }
+
+            public void FocusAndRepaintGameView()
+            {
+            }
+
+            public void CaptureGameViewPng(string absolutePath)
+            {
+                CapturedDirectory = Path.GetDirectoryName(absolutePath);
+                CaptureDirectoryExisted = Directory.Exists(CapturedDirectory);
+                if (!CaptureDirectoryExisted)
+                {
+                    return;
+                }
+
+                using (var stream = File.Create(absolutePath))
+                {
+                    var bytes = RecordingScreenshotAdapter.FixturePngBytesValue;
+                    stream.Write(bytes, 0, bytes.Length);
+                }
+            }
         }
 
         private sealed class DeferredPayloadScreenshotAdapter : UnityAgentKitScreenshotDiagnostics.IScreenshotCaptureAdapter

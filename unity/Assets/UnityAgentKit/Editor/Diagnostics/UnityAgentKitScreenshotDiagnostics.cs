@@ -97,11 +97,27 @@ namespace UnityAgentKit.Editor
             string requestId = "")
         {
             UnityAgentKitOperationResponse response = null;
-            CaptureGameViewAsyncForTests(record, capturedMainThreadId, inputJson, artifactRoot, adapter, completed => response = completed, requestId);
-            return response ?? Failed("screenshot.capture_pending", "Screenshot capture completion is pending.", record, Now(), requestId);
+            var cancelled = false;
+            CaptureGameViewAsyncForTests(
+                record,
+                capturedMainThreadId,
+                inputJson,
+                artifactRoot,
+                adapter,
+                completed => response = completed,
+                requestId,
+                PayloadReadyTimeoutMs,
+                () => cancelled);
+            if (response != null)
+            {
+                return response;
+            }
+
+            cancelled = true;
+            return Rejected("host.dispatch_required", "Screenshot capture requires asynchronous main-thread dispatch.", record, Now(), requestId);
         }
 
-        internal static void CaptureGameViewAsyncForTests(
+        internal static Action CaptureGameViewAsyncForTests(
             UnityAgentKitHostRecord record,
             int capturedMainThreadId,
             string inputJson,
@@ -117,7 +133,7 @@ namespace UnityAgentKit.Editor
             if (!IsSafeLabel(input.label))
             {
                 Complete(complete, Rejected("screenshot.label_invalid", "Screenshot label must not contain path syntax.", record, startedAt, requestId));
-                return;
+                return null;
             }
 
             var feasibility = ValidateFeasibility(adapter);
@@ -127,7 +143,7 @@ namespace UnityAgentKit.Editor
                     ? feasibility.diagnostics[0].code
                     : "screenshot.capture_method_unavailable";
                 Complete(complete, Failed(code, "Screenshot capture method is unavailable.", record, startedAt, requestId, feasibility.diagnostics));
-                return;
+                return null;
             }
 
             UnityAgentKitDiagnostic gameViewDiagnostic = null;
@@ -139,7 +155,7 @@ namespace UnityAgentKit.Editor
                     ? new[] { gameViewDiagnostic }
                     : new[] { Diagnostic("error", "screenshot.game_view_unavailable", "Game View size is unavailable.", CaptureOperation, requestId) };
                 Complete(complete, Failed("screenshot.game_view_unavailable", "Game View size is unavailable.", record, startedAt, requestId, diagnostics));
-                return;
+                return null;
             }
 
             var artifactId = CreateArtifactId(input.label);
@@ -150,6 +166,7 @@ namespace UnityAgentKit.Editor
             try
             {
                 adapter.FocusAndRepaintGameView();
+                Directory.CreateDirectory(Path.GetDirectoryName(capturePath));
                 adapter.CaptureGameViewPng(capturePath);
             }
             catch (Exception exception)
@@ -157,7 +174,7 @@ namespace UnityAgentKit.Editor
                 var diagnostic = Diagnostic("error", "screenshot.capture_failed", "Game View screenshot capture failed.", CaptureOperation, requestId);
                 diagnostic.details = "{\"exceptionType\":\"" + Escape(exception.GetType().Name) + "\"}";
                 Complete(complete, Failed("screenshot.capture_failed", exception.Message, record, startedAt, requestId, new[] { diagnostic }));
-                return;
+                return null;
             }
 
             var pending = new PendingScreenshotCapture
@@ -182,10 +199,11 @@ namespace UnityAgentKit.Editor
 
             if (TryCompletePendingCapture(pending))
             {
-                return;
+                return null;
             }
 
             EditorApplication.update += pending.OnEditorUpdate;
+            return () => CancelPending(pending);
         }
 
         private static bool TryCompletePendingCapture(PendingScreenshotCapture pending)
