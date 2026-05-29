@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {
@@ -286,14 +286,6 @@ test("captureGameViewScreenshot succeeds only after screenshot Resource readback
     assert.equal(result.status, "succeeded");
     assert.equal(result.tool, "unity_screenshot");
     assert.equal(result.action, "capture_game_view");
-    assert.equal(result.screenshot?.artifactId, "shot-20260529-smoke");
-    assert.equal(result.screenshot?.uri, "unity://screenshots/shot-20260529-smoke");
-    assert.equal(result.screenshot?.relativePath, "screenshots/shot-20260529-smoke.png");
-    assert.equal(result.screenshot?.width, 2);
-    assert.equal(result.screenshot?.height, 3);
-    assert.equal(result.screenshot?.sizeBytes, payload.byteLength);
-    assert.equal(result.screenshot?.captureMethod, "screen_capture_capture_screenshot");
-    assert.equal(result.screenshot?.validationStatus, "valid");
     assert.equal(result.resource?.uri, "unity://screenshots/shot-20260529-smoke");
     assert.equal(result.resource?.type, "screenshot");
     assert.equal(result.resource?.artifactId, "shot-20260529-smoke");
@@ -306,23 +298,13 @@ test("captureGameViewScreenshot succeeds only after screenshot Resource readback
       height: 3,
     });
 
-    const data = result.data as {
-      screenshot: ScreenshotCaptureSummary;
-      resourceReadback: {
-        uri: string;
-        relativePath: string;
-        sizeBytes: number;
-        bytesBase64: string;
-        png: { width: number; height: number };
-      };
-    };
-    assert.deepEqual(data.screenshot, summary);
-    assert.equal(data.resourceReadback.uri, summary.uri);
-    assert.equal(data.resourceReadback.relativePath, summary.relativePath);
-    assert.equal(data.resourceReadback.sizeBytes, payload.byteLength);
-    assert.deepEqual(data.resourceReadback.png, { width: 2, height: 3 });
-    assert.deepEqual(Buffer.from(data.resourceReadback.bytesBase64, "base64"), Buffer.from(await readFile(path.join(artifactRoot, summary.relativePath))));
-    assert.deepEqual(Buffer.from(data.resourceReadback.bytesBase64, "base64"), Buffer.from(payload));
+    assert.deepEqual(result.data, summary);
+    assert.deepEqual(result.metadata, {
+      resourceFilePath: path.join(artifactRoot, summary.relativePath),
+      resourceContentBytes: payload.byteLength,
+      pngWidth: 2,
+      pngHeight: 3,
+    });
 
     assert.equal(transport.invocations[0]?.operation, "screenshot.capture");
     assert.equal(JSON.parse(transport.invocations[0]?.inputJson ?? "{}").label, "smoke");
