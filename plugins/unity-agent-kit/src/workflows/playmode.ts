@@ -134,6 +134,10 @@ async function verifyPlayModeTarget(
 
     await sleep(Math.min(pollIntervalMs, remainingMs));
 
+    if (remainingTimeoutMs(startedAt, timeoutMs, now) <= 0) {
+      return withCarriedDiagnostics(carriedDiagnostics, playModeTimeoutResult(target.action, requestId, requestSent));
+    }
+
     latestResult = await getPlayModeState(workflow, { requestId: `${requestId}-state-${pollIndex++}` });
     collectReboundDiagnostics(carriedDiagnostics, latestResult);
     if (latestResult.status !== "succeeded") {
@@ -151,6 +155,9 @@ async function verifyPlayModeTarget(
     }
 
     if (isStablePlayModeTarget(latestState, target.targetState)) {
+      if (remainingTimeoutMs(startedAt, timeoutMs, now) <= 0) {
+        return withCarriedDiagnostics(carriedDiagnostics, playModeTimeoutResult(target.action, requestId, requestSent));
+      }
       return withCarriedDiagnostics(carriedDiagnostics, settledPlayModeResult(latestResult, target.action, target.targetState, requestSent ? "accepted" : "observed_transition", initialState.state, latestState));
     }
   }

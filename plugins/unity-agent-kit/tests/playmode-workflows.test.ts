@@ -381,7 +381,7 @@ test("enterPlayModeAndVerify timeout points nextStep to get_state", async () => 
     { port: record.port, requestId: "req-enter-timeout-request", operation: playModeEnterRequestOperation, result: { ok: true, statusCode: 200, body: succeededEnvelope(record, playModeEnterRequestOperation, request, "req-enter-timeout-request") } },
     { port: record.port, requestId: "req-enter-timeout-state-2", operation: playModeStateOperation, result: { ok: true, statusCode: 200, body: succeededEnvelope(record, playModeStateOperation, transitioning, "req-enter-timeout-state-2") } },
   ]);
-  const nowValues = [1_000, 1_000, 1_004, 1_006];
+  const nowValues = [1_000, 1_000, 1_004, 1_004, 1_006];
 
   const result = await enterPlayModeAndVerify(options(record, transport.transport, { readRegistry: registry.readRegistry }), {
     requestId: "req-enter-timeout",
@@ -425,6 +425,47 @@ test("enterPlayModeAndVerify times out without polling when deadline expires aft
     pollIntervalMs: 1,
     sleep: async () => assert.fail("sleep should not be called after the deadline expires"),
     now: () => nowValues.shift() ?? 1_005,
+  });
+
+  assert.equal(result.status, "timeout");
+  assert.equal(result.action, "enter_and_verify");
+  assert.equal(result.mayStillBeRunning, true);
+  assert.equal(result.safeToRetry, false);
+  assert.deepEqual(result.nextStep, {
+    kind: "read_state",
+    tool: "unity_playmode",
+    action: "get_state",
+    reason: "Read the current PlayMode state before deciding whether to retry.",
+  });
+  registry.assertConsumed();
+  transport.assertConsumed();
+});
+
+test("enterPlayModeAndVerify times out without polling when deadline expires during sleep", async () => {
+  const record = sampleHostRecord();
+  const editmode = stateSnapshot();
+  const request = requestResult({ targetState: "playmode", requested: true, noOp: false, stateBeforeRequest: editmode });
+  const registry = registrySequence([
+    { ok: true, record }, { ok: true, record },
+    { ok: true, record }, { ok: true, record },
+  ]);
+  const transport = transportWithProbesAndInvokes([
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+  ], [
+    { port: record.port, requestId: "req-enter-sleep-timeout-state-1", operation: playModeStateOperation, result: { ok: true, statusCode: 200, body: succeededEnvelope(record, playModeStateOperation, editmode, "req-enter-sleep-timeout-state-1") } },
+    { port: record.port, requestId: "req-enter-sleep-timeout-request", operation: playModeEnterRequestOperation, result: { ok: true, statusCode: 200, body: succeededEnvelope(record, playModeEnterRequestOperation, request, "req-enter-sleep-timeout-request") } },
+  ]);
+  let currentTime = 1_000;
+
+  const result = await enterPlayModeAndVerify(options(record, transport.transport, { readRegistry: registry.readRegistry }), {
+    requestId: "req-enter-sleep-timeout",
+    timeoutMs: 5,
+    pollIntervalMs: 3,
+    sleep: async () => {
+      currentTime = 1_006;
+    },
+    now: () => currentTime,
   });
 
   assert.equal(result.status, "timeout");
