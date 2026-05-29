@@ -10,7 +10,7 @@ import {
   screenshotCaptureResultFromHostResult,
   type ScreenshotCaptureSummary,
 } from "../src/diagnostics/screenshot.ts";
-import type { UnityAgentKitPublicResult } from "../src/contracts/result.ts";
+import { definePublicResult, type UnityAgentKitPublicResult } from "../src/contracts/result.ts";
 import { captureGameViewScreenshot, type ScreenshotWorkflowOptions } from "../src/workflows/screenshot.ts";
 import {
   UNITY_AGENT_KIT_HOST_NAME,
@@ -218,6 +218,77 @@ function succeededEnvelope(record: UnityAgentKitHostRecord, operation: string, d
   };
 }
 
+function defineHostSuccess(record: UnityAgentKitHostRecord, data: unknown, requestId: string): UnityAgentKitPublicResult {
+  return definePublicResult({
+    status: "succeeded",
+    tool: "unity_editor",
+    action: screenshotCaptureOperation,
+    operation: screenshotCaptureOperation,
+    requestId,
+    hostId: record.hostId,
+    hostEpoch: record.hostEpoch,
+    summary: `${screenshotCaptureOperation} completed.`,
+    data: JSON.stringify(data),
+    diagnostics: [],
+    startedAt: "2026-05-29T10:00:00.000Z",
+    completedAt: "2026-05-29T10:00:00.010Z",
+    durationMs: 10,
+  });
+}
+
+async function runScreenshotCaptureAgainstSummary(
+  record: UnityAgentKitHostRecord,
+  projectRoot: string,
+  summary: ScreenshotCaptureSummary,
+): Promise<UnityAgentKitPublicResult> {
+  const registry = registrySequence([{ ok: true, record }, { ok: true, record }]);
+  const transport = transportWithProbesAndInvokes([
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+  ], [
+    {
+      port: record.port,
+      requestId: "req-shot",
+      operation: screenshotCaptureOperation,
+      inputJson: JSON.stringify({ label: "smoke" }),
+      result: { ok: true, statusCode: 200, body: succeededEnvelope(record, screenshotCaptureOperation, summary, "req-shot") },
+    },
+  ]);
+
+  const result = await captureGameViewScreenshot(options(record, transport.transport, {
+    projectRoot,
+    readRegistry: registry.readRegistry,
+  }), {
+    requestId: "req-shot",
+    label: "smoke",
+    timeoutMs: 50,
+    pollIntervalMs: 0,
+  });
+
+  registry.assertConsumed();
+  transport.assertConsumed();
+  return result;
+}
+
+async function withValidHostAndResource(
+  payload: Uint8Array,
+  summaryOverrides: Partial<ScreenshotCaptureSummary>,
+  assertResult: (result: UnityAgentKitPublicResult) => Promise<void> | void,
+): Promise<void> {
+  await withArtifactProject(async (projectRoot, artifactRoot) => {
+    const record = sampleHostRecord({ projectRoot });
+    const summary = screenshotSummary({
+      projectRoot,
+      hostId: record.hostId,
+      hostEpoch: record.hostEpoch,
+      sizeBytes: payload.byteLength,
+      ...summaryOverrides,
+    });
+
+    await writeScreenshotResource(artifactRoot, summary, payload);
+    await assertResult(await runScreenshotCaptureAgainstSummary(record, projectRoot, summary));
+  });
+}
+
 test("screenshot parser accepts Game View artifact summary and rejects invalid shapes", () => {
   const summary = screenshotSummary();
 
@@ -292,6 +363,20 @@ test("screenshot host mapper preserves non-success public result statuses", () =
   assert.equal(result.summary, "Host request timed out.");
 });
 
+test("captureGameViewScreenshot rejects labels with path syntax before host invocation", async () => {
+  const record = sampleHostRecord();
+  const transport = transportWithProbesAndInvokes([], []);
+
+  const result = await captureGameViewScreenshot(options(record, transport.transport), {
+    requestId: "req-shot-bad-label",
+    label: "../escape",
+  });
+
+  assert.equal(result.status, "rejected");
+  assert.equal(result.code, "screenshot.label_invalid");
+  transport.assertConsumed();
+});
+
 test("captureGameViewScreenshot succeeds only after screenshot Resource readback and PNG validation", async () => {
   await withArtifactProject(async (projectRoot, artifactRoot) => {
     const payload = pngBytes(2, 3);
@@ -351,10 +436,18 @@ test("captureGameViewScreenshot succeeds only after screenshot Resource readback
   });
 });
 
-test("captureGameViewScreenshot clamps zero poll interval while waiting for missing Resource readback", async () => {
+test("captureGameViewScreenshot times out when screenshot Resource cannot be read back", async () => {
   await withArtifactProject(async (projectRoot) => {
     const record = sampleHostRecord({ projectRoot });
-    const summary = screenshotSummary({ projectRoot, hostId: record.hostId, hostEpoch: record.hostEpoch });
+    const summary = screenshotSummary({
+      projectRoot,
+      hostId: record.hostId,
+      hostEpoch: record.hostEpoch,
+      artifactId: "shot-missing",
+      uri: "unity://screenshots/shot-missing",
+      relativePath: "screenshots/shot-missing.png",
+      label: "missing",
+    });
     const registry = registrySequence([{ ok: true, record }, { ok: true, record }]);
     const transport = transportWithProbesAndInvokes([
       { port: record.port, result: { ok: true, statusCode: 200, body: record } },
@@ -363,7 +456,7 @@ test("captureGameViewScreenshot clamps zero poll interval while waiting for miss
         port: record.port,
         requestId: "req-shot-missing",
         operation: screenshotCaptureOperation,
-        inputJson: JSON.stringify({ label: "smoke" }),
+        inputJson: JSON.stringify({ label: "missing" }),
         result: { ok: true, statusCode: 200, body: succeededEnvelope(record, screenshotCaptureOperation, summary, "req-shot-missing") },
       },
     ]);
@@ -379,17 +472,80 @@ test("captureGameViewScreenshot clamps zero poll interval while waiting for miss
       },
     }), {
       requestId: "req-shot-missing",
-      label: "smoke",
+      label: "missing",
       timeoutMs: 1,
       pollIntervalMs: 0,
     });
 
     assert.equal(result.status, "timeout");
     assert.equal(result.mayStillBeRunning, true);
-    assert.equal(result.safeToRetry, false);
     assert.equal(result.nextStep?.kind, "read_resource");
-    assert.equal(result.nextStep?.resourceUri, summary.uri);
+    assert.equal(result.nextStep?.resourceUri, "unity://screenshots/shot-missing");
+    assert.equal(result.safeToRetry, false);
     registry.assertConsumed();
     transport.assertConsumed();
   });
+});
+
+test("captureGameViewScreenshot fails invalid PNG signature after Resource readback", async () => {
+  await withValidHostAndResource(Uint8Array.from([1, 2, 3, 4]), {}, async (result) => {
+    assert.equal(result.status, "failed");
+    assert.equal(result.code, "screenshot.png_invalid");
+  });
+});
+
+test("captureGameViewScreenshot fails when PNG dimensions differ from producer metadata", async () => {
+  await withValidHostAndResource(pngBytes(4, 3), { width: 2, height: 3 }, async (result) => {
+    assert.equal(result.status, "failed");
+    assert.equal(result.code, "screenshot.png_dimension_mismatch");
+  });
+});
+
+test("captureGameViewScreenshot fails when Resource metadata identity differs from producer summary", async () => {
+  await withArtifactProject(async (projectRoot, artifactRoot) => {
+    const record = sampleHostRecord({ projectRoot });
+    const summary = screenshotSummary({ projectRoot, hostId: record.hostId, hostEpoch: record.hostEpoch });
+    await writeScreenshotResource(artifactRoot, summary, pngBytes(2, 3), { hostId: "other-host" });
+
+    const result = await runScreenshotCaptureAgainstSummary(record, projectRoot, summary);
+
+    assert.equal(result.status, "failed");
+    assert.equal(result.code, "screenshot.resource_mismatch");
+  });
+});
+
+test("captureGameViewScreenshot does not succeed across host identity mismatch", async () => {
+  const record = sampleHostRecord();
+  const summary = screenshotSummary({ hostId: "other-host" });
+  const transport = transportWithProbesAndInvokes([
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+  ], [
+    {
+      port: record.port,
+      requestId: "req-shot-host-mismatch",
+      operation: screenshotCaptureOperation,
+      inputJson: JSON.stringify({ label: "smoke" }),
+      result: { ok: true, statusCode: 200, body: succeededEnvelope(record, screenshotCaptureOperation, summary, "req-shot-host-mismatch") },
+    },
+  ]);
+
+  const result = await captureGameViewScreenshot(options(record, transport.transport), {
+    requestId: "req-shot-host-mismatch",
+    label: "smoke",
+  });
+
+  assert.notEqual(result.status, "succeeded");
+  assert.equal(result.status, "lost");
+  assert.equal(result.code, "screenshot.host_identity_mismatch");
+  transport.assertConsumed();
+});
+
+test("screenshot host mapper rejects producer projectRoot mismatch", () => {
+  const record = sampleHostRecord();
+  const hostResult = defineHostSuccess(record, screenshotSummary({ projectRoot: "D:/other/unity" }), "req-project-mismatch");
+
+  const result = screenshotCaptureResultFromHostResult(hostResult, record.projectRoot);
+
+  assert.notEqual(result.status, "succeeded");
+  assert.equal(result.code, "screenshot.project_root_mismatch");
 });

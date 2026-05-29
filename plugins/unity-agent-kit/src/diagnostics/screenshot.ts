@@ -198,7 +198,7 @@ function continuityLostResult(hostResult: UnityAgentKitPublicResult, details: Re
   const diagnostic: UnityAgentKitDiagnostic = {
     source: "host",
     severity: "error",
-    code: "host.continuity_lost",
+    code: "screenshot.host_identity_mismatch",
     message: "Screenshot host continuity changed before the result could be trusted.",
     details,
     attribution: {

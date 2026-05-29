@@ -128,7 +128,7 @@ async function waitForScreenshotResourceReadback(
       if (!resourceMetadataMatchesSummary(readback.metadata, summary, readback.contentBytes.byteLength)) {
         return {
           status: "result",
-          result: screenshotFailure(mapped, "screenshot.resource_metadata_mismatch", "Screenshot resource metadata does not match Unity producer metadata.", {
+          result: screenshotFailure(mapped, "screenshot.resource_mismatch", "Screenshot resource metadata does not match Unity producer metadata.", {
             id: readback.metadata.id,
             uri: readback.metadata.uri,
             relativePath: readback.metadata.relativePath,
