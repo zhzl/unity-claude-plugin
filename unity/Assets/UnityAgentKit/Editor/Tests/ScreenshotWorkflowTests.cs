@@ -86,21 +86,22 @@ namespace UnityAgentKit.Editor.Tests
         }
 
         [Test]
-        public void CaptureGameViewForTestsRejectsUnsafeLabel()
+        public void CaptureGameViewForTestsRejectsUnsafeLabelBeforeWritingPayload()
         {
+            var artifactRoot = TemporaryArtifactRoot("unsafe-label");
             var adapter = new RecordingScreenshotAdapter(width: 320, height: 180, writesPayload: true);
 
             var response = UnityAgentKitScreenshotDiagnostics.CaptureGameViewForTests(
                 TestHostRecord(),
                 capturedMainThreadId: 7,
-                inputJson: "{\"label\":\"../smoke\"}",
-                artifactRoot: TemporaryArtifactRoot("unsafe-label"),
+                inputJson: "{\"label\":\"../escape\"}",
+                artifactRoot: artifactRoot,
                 adapter: adapter,
                 requestId: "req-shot-unsafe-label");
 
             Assert.AreEqual("rejected", response.status);
-            Assert.AreEqual("screenshot.label_unsafe", response.code);
-            Assert.AreEqual(0, adapter.CaptureGameViewPngCallCount);
+            Assert.AreEqual("screenshot.label_invalid", response.code);
+            Assert.IsFalse(Directory.Exists(Path.Combine(artifactRoot, "screenshots")));
         }
 
         [Test]
@@ -163,20 +164,56 @@ namespace UnityAgentKit.Editor.Tests
         }
 
         [Test]
-        public void ScreenshotCaptureRouteRequiresMainThreadDispatch()
+        public void ScreenshotCaptureOperationRequiresMainThreadDispatch()
         {
-            var request = new UnityAgentKitOperationRequest
+            Assert.IsTrue(UnityAgentKitOperationRouter.RequiresMainThreadDispatch(" screenshot.capture "));
+            var response = UnityAgentKitOperationRouter.Route(new UnityAgentKitOperationRequest
             {
                 operation = "screenshot.capture",
                 requestId = "req-shot-route",
                 inputJson = "{\"label\":\"smoke\"}"
-            };
-
-            Assert.IsTrue(UnityAgentKitOperationRouter.RequiresMainThreadDispatch("screenshot.capture"));
-            var response = UnityAgentKitOperationRouter.Route(request, TestHostRecord());
+            }, TestHostRecord());
 
             Assert.AreEqual("rejected", response.status);
             Assert.AreEqual("host.dispatch_required", response.code);
+        }
+
+        [UnityEngine.TestTools.UnityTest]
+        public System.Collections.IEnumerator RouterScreenshotCaptureProductionSmokeWritesRealGameViewPngWhenInteractive()
+        {
+            if (Application.isBatchMode)
+            {
+                Assert.Ignore("Production Game View screenshot smoke requires an interactive Unity editor.");
+            }
+
+            var response = UnityAgentKitOperationRouter.RunOnMainThread(new UnityAgentKitOperationRequest
+            {
+                operation = "screenshot.capture",
+                requestId = "req-shot-production-smoke",
+                inputJson = "{\"label\":\"production-smoke\"}"
+            }, TestHostRecord(), System.Threading.Thread.CurrentThread.ManagedThreadId);
+
+            if (response.status == "failed" && response.code == "screenshot.game_view_unavailable")
+            {
+                Assert.Ignore("Game View is unavailable in this editor environment.");
+            }
+
+            Assert.AreEqual("succeeded", response.status, response.code + ": " + response.message);
+            var result = JsonUtility.FromJson<UnityAgentKitScreenshotCaptureResult>(response.data);
+            var payloadPath = Path.Combine(UnityAgentKitArtifactContracts.GetArtifactRoot(), result.relativePath.Replace('/', Path.DirectorySeparatorChar));
+            var metadataPath = Path.Combine(UnityAgentKitArtifactContracts.GetArtifactRoot(), "metadata", "screenshots", result.artifactId + ".json");
+
+            for (var frame = 0; frame < 120 && (!File.Exists(payloadPath) || new FileInfo(payloadPath).Length <= 0); frame++)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(File.Exists(payloadPath), payloadPath);
+            Assert.Greater(new FileInfo(payloadPath).Length, 0);
+            Assert.IsTrue(File.Exists(metadataPath), metadataPath);
+            Assert.AreEqual("unity://screenshots/" + result.artifactId, result.uri);
+            Assert.Greater(result.width, 0);
+            Assert.Greater(result.height, 0);
         }
 
         private static UnityAgentKitHostRecord TestHostRecord()

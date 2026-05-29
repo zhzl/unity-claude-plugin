@@ -55,7 +55,7 @@ namespace UnityAgentKit.Editor
             var input = ParseInput(inputJson);
             if (!IsSafeLabel(input.label))
             {
-                return Rejected("screenshot.label_unsafe", "Screenshot label must not contain path syntax.", record, startedAt, requestId);
+                return Rejected("screenshot.label_invalid", "Screenshot label must not contain path syntax.", record, startedAt, requestId);
             }
 
             var feasibility = ValidateFeasibility(adapter);
