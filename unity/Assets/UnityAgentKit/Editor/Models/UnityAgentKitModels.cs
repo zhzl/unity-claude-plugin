@@ -344,6 +344,45 @@ namespace UnityAgentKit.Editor
     }
 
     [Serializable]
+    public sealed class UnityAgentKitScreenshotCaptureInput
+    {
+        public string label = string.Empty;
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitScreenshotCaptureMethodFeasibility
+    {
+        public bool supported;
+        public string methodId = string.Empty;
+        public string view = string.Empty;
+        public bool usesReadScreenPixel;
+        public bool usesEncodeToPng;
+        public bool usesPayloadFileWriteAllBytes;
+        public UnityAgentKitDiagnostic[] diagnostics = Array.Empty<UnityAgentKitDiagnostic>();
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitScreenshotCaptureResult
+    {
+        public string projectRoot = string.Empty;
+        public string unityVersion = string.Empty;
+        public string hostId = string.Empty;
+        public int hostEpoch;
+        public string artifactId = string.Empty;
+        public string uri = string.Empty;
+        public string relativePath = string.Empty;
+        public int width;
+        public int height;
+        public long sizeBytes;
+        public string captureMethod = string.Empty;
+        public string validationStatus = string.Empty;
+        public string label = string.Empty;
+        public int capturedMainThreadId;
+        public int executionThreadId;
+        public UnityAgentKitDiagnostic[] diagnostics = Array.Empty<UnityAgentKitDiagnostic>();
+    }
+
+    [Serializable]
     public sealed class UnityAgentKitTestSelectorInput
     {
         public string mode = "editmode";

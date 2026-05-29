@@ -89,6 +89,48 @@ namespace UnityAgentKit.Editor
                 "snapshot");
         }
 
+        internal static UnityAgentKitArtifactMetadataRecord WriteScreenshotArtifactMetadata(
+            string artifactRoot,
+            string artifactId,
+            string relativePath,
+            UnityAgentKitHostRecord hostRecord,
+            long sizeBytes)
+        {
+            if (string.IsNullOrEmpty(artifactId))
+            {
+                throw new InvalidOperationException("Screenshot artifact id is required.");
+            }
+
+            if (!IsSafeArtifactId(artifactId))
+            {
+                throw new InvalidOperationException("Screenshot artifact id is unsafe.");
+            }
+
+            var expectedRelativePath = "screenshots/" + artifactId + ".png";
+            if (relativePath != expectedRelativePath)
+            {
+                throw new InvalidOperationException("Screenshot artifact relative path must match its artifact id.");
+            }
+
+            var payloadPath = ResolveArtifactPath(artifactRoot, relativePath);
+            if (!File.Exists(payloadPath))
+            {
+                throw new InvalidOperationException("Screenshot payload must exist and be non-empty before metadata is written.");
+            }
+
+            var actualSizeBytes = new FileInfo(payloadPath).Length;
+            if (actualSizeBytes <= 0 || actualSizeBytes != sizeBytes)
+            {
+                throw new InvalidOperationException("Screenshot payload size must match the recorded size before metadata is written.");
+            }
+
+            var metadata = CreateBaseMetadata(artifactId, "screenshot", hostRecord, "unity_screenshot", "capture_game_view", actualSizeBytes);
+            metadata.uri = "unity://screenshots/" + artifactId;
+            metadata.relativePath = relativePath;
+            WriteMetadata(artifactRoot, metadata);
+            return metadata;
+        }
+
         internal static UnityAgentKitArtifactMetadataRecord WriteTestReportArtifact(
             string artifactRoot,
             string reportId,
@@ -168,6 +210,30 @@ namespace UnityAgentKit.Editor
         private static bool HasWindowsDrivePrefix(string value)
         {
             return value.Length >= 2 && char.IsLetter(value[0]) && value[1] == ':';
+        }
+
+        private static bool IsSafeArtifactId(string artifactId)
+        {
+            if (string.IsNullOrEmpty(artifactId) || artifactId.Length > 128 || !IsAsciiLetterOrDigit(artifactId[0]))
+            {
+                return false;
+            }
+
+            for (var i = 1; i < artifactId.Length; i++)
+            {
+                var c = artifactId[i];
+                if (!IsAsciiLetterOrDigit(c) && c != '_' && c != '-')
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool IsAsciiLetterOrDigit(char c)
+        {
+            return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
         }
 
         private static UnityAgentKitArtifactMetadataRecord CreateBaseMetadata(

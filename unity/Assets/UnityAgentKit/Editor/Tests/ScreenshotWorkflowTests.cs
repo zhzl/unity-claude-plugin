@@ -85,6 +85,100 @@ namespace UnityAgentKit.Editor.Tests
             Assert.AreEqual("screenshot.file_not_ready", response.code);
         }
 
+        [Test]
+        public void CaptureGameViewForTestsRejectsUnsafeLabel()
+        {
+            var adapter = new RecordingScreenshotAdapter(width: 320, height: 180, writesPayload: true);
+
+            var response = UnityAgentKitScreenshotDiagnostics.CaptureGameViewForTests(
+                TestHostRecord(),
+                capturedMainThreadId: 7,
+                inputJson: "{\"label\":\"../smoke\"}",
+                artifactRoot: TemporaryArtifactRoot("unsafe-label"),
+                adapter: adapter,
+                requestId: "req-shot-unsafe-label");
+
+            Assert.AreEqual("rejected", response.status);
+            Assert.AreEqual("screenshot.label_unsafe", response.code);
+            Assert.AreEqual(0, adapter.CaptureGameViewPngCallCount);
+        }
+
+        [Test]
+        public void CaptureGameViewForTestsFailsForbiddenAdapterWithoutCapturingPayload()
+        {
+            var adapter = new RecordingScreenshotAdapter(width: 320, height: 180, writesPayload: true, usesForbiddenPath: true);
+
+            var response = UnityAgentKitScreenshotDiagnostics.CaptureGameViewForTests(
+                TestHostRecord(),
+                capturedMainThreadId: 7,
+                inputJson: "{\"label\":\"smoke\"}",
+                artifactRoot: TemporaryArtifactRoot("forbidden-adapter"),
+                adapter: adapter,
+                requestId: "req-shot-forbidden");
+
+            Assert.AreEqual("failed", response.status);
+            Assert.AreEqual("screenshot.capture_method_forbidden", response.code);
+            Assert.AreEqual(0, adapter.CaptureGameViewPngCallCount);
+        }
+
+        [Test]
+        public void WriteScreenshotArtifactMetadataRejectsSizeMismatch()
+        {
+            var artifactRoot = TemporaryArtifactRoot("metadata-size-mismatch");
+            var artifactId = "shot-size-mismatch";
+            var relativePath = "screenshots/" + artifactId + ".png";
+            var payloadPath = Path.Combine(artifactRoot, "screenshots", artifactId + ".png");
+            WriteFixturePng(payloadPath);
+
+            Assert.Throws<InvalidOperationException>(() =>
+                UnityAgentKitArtifactContracts.WriteScreenshotArtifactMetadata(
+                    artifactRoot,
+                    artifactId,
+                    relativePath,
+                    TestHostRecord(),
+                    new FileInfo(payloadPath).Length + 1));
+
+            Assert.IsFalse(File.Exists(Path.Combine(artifactRoot, "metadata", "screenshots", artifactId + ".json")));
+        }
+
+        [Test]
+        public void WriteScreenshotArtifactMetadataRejectsArtifactIdRelativePathMismatch()
+        {
+            var artifactRoot = TemporaryArtifactRoot("metadata-path-mismatch");
+            var artifactId = "shot-path-mismatch";
+            var otherArtifactId = "shot-path-other";
+            var relativePath = "screenshots/" + otherArtifactId + ".png";
+            var payloadPath = Path.Combine(artifactRoot, "screenshots", otherArtifactId + ".png");
+            WriteFixturePng(payloadPath);
+
+            Assert.Throws<InvalidOperationException>(() =>
+                UnityAgentKitArtifactContracts.WriteScreenshotArtifactMetadata(
+                    artifactRoot,
+                    artifactId,
+                    relativePath,
+                    TestHostRecord(),
+                    new FileInfo(payloadPath).Length));
+
+            Assert.IsFalse(File.Exists(Path.Combine(artifactRoot, "metadata", "screenshots", artifactId + ".json")));
+        }
+
+        [Test]
+        public void ScreenshotCaptureRouteRequiresMainThreadDispatch()
+        {
+            var request = new UnityAgentKitOperationRequest
+            {
+                operation = "screenshot.capture",
+                requestId = "req-shot-route",
+                inputJson = "{\"label\":\"smoke\"}"
+            };
+
+            Assert.IsTrue(UnityAgentKitOperationRouter.RequiresMainThreadDispatch("screenshot.capture"));
+            var response = UnityAgentKitOperationRouter.Route(request, TestHostRecord());
+
+            Assert.AreEqual("rejected", response.status);
+            Assert.AreEqual("host.dispatch_required", response.code);
+        }
+
         private static UnityAgentKitHostRecord TestHostRecord()
         {
             return new UnityAgentKitHostRecord
@@ -108,17 +202,29 @@ namespace UnityAgentKit.Editor.Tests
             return directory;
         }
 
+        private static void WriteFixturePng(string absolutePath)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(absolutePath));
+            using (var stream = File.Create(absolutePath))
+            {
+                var bytes = RecordingScreenshotAdapter.FixturePngBytesValue;
+                stream.Write(bytes, 0, bytes.Length);
+            }
+        }
+
         private sealed class RecordingScreenshotAdapter : UnityAgentKitScreenshotDiagnostics.IScreenshotCaptureAdapter
         {
             private readonly int width;
             private readonly int height;
             private readonly bool writesPayload;
+            private readonly bool usesForbiddenPath;
 
-            public RecordingScreenshotAdapter(int width, int height, bool writesPayload)
+            public RecordingScreenshotAdapter(int width, int height, bool writesPayload, bool usesForbiddenPath = false)
             {
                 this.width = width;
                 this.height = height;
                 this.writesPayload = writesPayload;
+                this.usesForbiddenPath = usesForbiddenPath;
             }
 
             public bool UsedForbiddenPath { get; private set; }
@@ -126,7 +232,8 @@ namespace UnityAgentKit.Editor.Tests
             public int FocusAndRepaintGameViewCallCount { get; private set; }
             public int CaptureGameViewPngCallCount { get; private set; }
             public string CapturedAbsolutePath { get; private set; }
-            public byte[] FixturePngBytes => new byte[]
+            public byte[] FixturePngBytes => FixturePngBytesValue;
+            public static byte[] FixturePngBytesValue => new byte[]
             {
                 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
                 0x00, 0x00, 0x00, 0x0D,
@@ -149,7 +256,7 @@ namespace UnityAgentKit.Editor.Tests
                 supported = true,
                 methodId = "screen_capture_capture_screenshot",
                 view = "current_game_view",
-                usesReadScreenPixel = false,
+                usesReadScreenPixel = usesForbiddenPath,
                 usesEncodeToPng = false,
                 usesPayloadFileWriteAllBytes = false,
                 diagnostics = Array.Empty<UnityAgentKitDiagnostic>()

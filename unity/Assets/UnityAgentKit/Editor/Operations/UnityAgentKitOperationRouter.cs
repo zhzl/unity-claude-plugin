@@ -18,6 +18,7 @@ namespace UnityAgentKit.Editor
         internal const string ConsoleCountOperation = "console.count";
         internal const string ConsoleSnapshotOperation = "console.snapshot";
         internal const string ConsoleClearOperation = "console.clear";
+        internal const string ScreenshotCaptureOperation = "screenshot.capture";
         internal const string TestListOperation = "test.list";
         internal const string TestStartOperation = "test.start";
         internal const string TestStatusGetOperation = "test.status.get";
@@ -68,6 +69,7 @@ namespace UnityAgentKit.Editor
                 normalized == ConsoleCountOperation ||
                 normalized == ConsoleSnapshotOperation ||
                 normalized == ConsoleClearOperation ||
+                normalized == ScreenshotCaptureOperation ||
                 normalized == TestListOperation ||
                 normalized == TestStartOperation ||
                 normalized == TestStatusGetOperation ||
@@ -181,6 +183,11 @@ namespace UnityAgentKit.Editor
                 {
                     return Failed(operation, requestId, record, "console.reflection_unavailable", exception.Message, startedAt);
                 }
+            }
+
+            if (operation == ScreenshotCaptureOperation)
+            {
+                return UnityAgentKitScreenshotDiagnostics.CaptureGameView(record, capturedMainThreadId, request != null ? request.inputJson ?? string.Empty : string.Empty, requestId);
             }
 
             if (operation == TestListOperation)
