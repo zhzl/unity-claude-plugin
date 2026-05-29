@@ -9,6 +9,9 @@ namespace UnityAgentKit.Editor
         internal const string EchoOperation = "host.echo";
         internal const string ThreadCheckOperation = "host.threadCheck";
         internal const string EditorStatusGetOperation = "editor.status.get";
+        internal const string PlayModeStateGetOperation = "playmode.state.get";
+        internal const string PlayModeEnterRequestOperation = "playmode.enter.request";
+        internal const string PlayModeExitRequestOperation = "playmode.exit.request";
         internal const string CompileStateGetOperation = "compile.state.get";
         internal const string CompileRequestOperation = "compile.request";
         internal const string CompileReportGetOperation = "compile.report.get";
@@ -56,6 +59,9 @@ namespace UnityAgentKit.Editor
             var normalized = NormalizeOperation(operation);
             return normalized == ThreadCheckOperation ||
                 normalized == EditorStatusGetOperation ||
+                normalized == PlayModeStateGetOperation ||
+                normalized == PlayModeEnterRequestOperation ||
+                normalized == PlayModeExitRequestOperation ||
                 normalized == CompileStateGetOperation ||
                 normalized == CompileRequestOperation ||
                 normalized == CompileReportGetOperation ||
@@ -91,6 +97,21 @@ namespace UnityAgentKit.Editor
             {
                 var result = UnityAgentKitEditorDiagnostics.ReadStatus(capturedMainThreadId);
                 return Succeeded(operation, requestId, record, "Editor status read.", UnityEngine.JsonUtility.ToJson(result), startedAt);
+            }
+
+            if (operation == PlayModeStateGetOperation)
+            {
+                return UnityAgentKitPlayModeDiagnostics.ReadState(record, capturedMainThreadId, requestId);
+            }
+
+            if (operation == PlayModeEnterRequestOperation)
+            {
+                return UnityAgentKitPlayModeDiagnostics.RequestEnter(record, capturedMainThreadId, requestId);
+            }
+
+            if (operation == PlayModeExitRequestOperation)
+            {
+                return UnityAgentKitPlayModeDiagnostics.RequestExit(record, capturedMainThreadId, requestId);
             }
 
             if (operation == CompileStateGetOperation)

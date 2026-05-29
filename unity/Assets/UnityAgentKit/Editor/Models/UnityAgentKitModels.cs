@@ -91,6 +91,42 @@ namespace UnityAgentKit.Editor
     }
 
     [Serializable]
+    public sealed class UnityAgentKitPlayModeStateResult
+    {
+        public string projectRoot = string.Empty;
+        public string unityVersion = string.Empty;
+        public string hostId = string.Empty;
+        public int hostEpoch;
+        public string state = string.Empty;
+        public bool stable;
+        public bool isPlaying;
+        public bool isPlayingOrWillChangePlaymode;
+        public bool isPlayModeChanging;
+        public bool isCompiling;
+        public bool isUpdating;
+        public int capturedMainThreadId;
+        public int executionThreadId;
+        public UnityAgentKitDiagnostic[] diagnostics = Array.Empty<UnityAgentKitDiagnostic>();
+    }
+
+    [Serializable]
+    public sealed class UnityAgentKitPlayModeRequestResult
+    {
+        public string projectRoot = string.Empty;
+        public string unityVersion = string.Empty;
+        public string hostId = string.Empty;
+        public int hostEpoch;
+        public string targetState = string.Empty;
+        public bool requested;
+        public bool noOp;
+        public string noOpReason = string.Empty;
+        public UnityAgentKitPlayModeStateResult stateBeforeRequest = new UnityAgentKitPlayModeStateResult();
+        public int capturedMainThreadId;
+        public int executionThreadId;
+        public UnityAgentKitDiagnostic[] diagnostics = Array.Empty<UnityAgentKitDiagnostic>();
+    }
+
+    [Serializable]
     public sealed class UnityAgentKitCompileStateResult
     {
         public string projectRoot = string.Empty;
