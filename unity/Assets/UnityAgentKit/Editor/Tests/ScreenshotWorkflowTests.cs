@@ -472,13 +472,13 @@ namespace UnityAgentKit.Editor.Tests
                 FocusAndRepaintGameViewCallCount++;
             }
 
-            public void CaptureGameViewPng(string absolutePath)
+            public Action CaptureGameViewPng(string absolutePath)
             {
                 CaptureGameViewPngCallCount++;
                 CapturedAbsolutePath = absolutePath;
                 if (!writesPayload)
                 {
-                    return;
+                    return null;
                 }
 
                 Directory.CreateDirectory(Path.GetDirectoryName(absolutePath));
@@ -487,6 +487,8 @@ namespace UnityAgentKit.Editor.Tests
                     var bytes = FixturePngBytes;
                     stream.Write(bytes, 0, bytes.Length);
                 }
+
+                return null;
             }
 
         }
@@ -528,13 +530,13 @@ namespace UnityAgentKit.Editor.Tests
             {
             }
 
-            public void CaptureGameViewPng(string absolutePath)
+            public Action CaptureGameViewPng(string absolutePath)
             {
                 CapturedDirectory = Path.GetDirectoryName(absolutePath);
                 CaptureDirectoryExisted = Directory.Exists(CapturedDirectory);
                 if (!CaptureDirectoryExisted)
                 {
-                    return;
+                    return null;
                 }
 
                 using (var stream = File.Create(absolutePath))
@@ -542,6 +544,8 @@ namespace UnityAgentKit.Editor.Tests
                     var bytes = RecordingScreenshotAdapter.FixturePngBytesValue;
                     stream.Write(bytes, 0, bytes.Length);
                 }
+
+                return null;
             }
         }
 
@@ -584,17 +588,18 @@ namespace UnityAgentKit.Editor.Tests
             {
             }
 
-            public void CaptureGameViewPng(string absolutePath)
+            public Action CaptureGameViewPng(string absolutePath)
             {
                 CaptureGameViewPngCallCount++;
                 capturedAbsolutePath = absolutePath;
                 if (payloadScheduled)
                 {
-                    return;
+                    return () => EditorApplication.update -= WritePayloadOnUpdate;
                 }
 
                 payloadScheduled = true;
                 EditorApplication.update += WritePayloadOnUpdate;
+                return () => EditorApplication.update -= WritePayloadOnUpdate;
             }
 
             private void WritePayloadOnUpdate()

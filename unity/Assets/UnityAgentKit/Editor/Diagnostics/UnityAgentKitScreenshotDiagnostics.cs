@@ -20,7 +20,7 @@ namespace UnityAgentKit.Editor
             UnityAgentKitScreenshotCaptureMethodFeasibility Feasibility { get; }
             bool TryGetGameViewSize(out int gameViewWidth, out int gameViewHeight, out UnityAgentKitDiagnostic diagnostic);
             void FocusAndRepaintGameView();
-            void CaptureGameViewPng(string absolutePath);
+            Action CaptureGameViewPng(string absolutePath);
         }
 
         private sealed class PendingScreenshotCapture
@@ -41,6 +41,7 @@ namespace UnityAgentKit.Editor
             internal DateTimeOffset deadline;
             internal Action<UnityAgentKitOperationResponse> complete;
             internal Func<bool> isCancelled;
+            internal Action cancelProducerCapture;
             internal bool completed;
 
             internal void OnEditorUpdate()
@@ -163,12 +164,13 @@ namespace UnityAgentKit.Editor
             var relativePath = "screenshots/" + artifactId + ".png";
             var absolutePath = Path.Combine(artifactRoot, "screenshots", artifactId + ".png");
             var capturePath = Path.Combine(artifactRoot, "screenshots", ".pending", artifactId + ".png");
+            Action cancelProducerCapture = null;
 
             try
             {
                 adapter.FocusAndRepaintGameView();
                 Directory.CreateDirectory(Path.GetDirectoryName(capturePath));
-                adapter.CaptureGameViewPng(capturePath);
+                cancelProducerCapture = adapter.CaptureGameViewPng(capturePath);
             }
             catch (Exception exception)
             {
@@ -195,7 +197,8 @@ namespace UnityAgentKit.Editor
                 captureMethod = feasibility.methodId,
                 deadline = DateTimeOffset.UtcNow.AddMilliseconds(Math.Max(0, payloadReadyTimeoutMs)),
                 complete = complete,
-                isCancelled = isCancelled
+                isCancelled = isCancelled,
+                cancelProducerCapture = cancelProducerCapture
             };
 
             if (TryCompletePendingCapture(pending))
@@ -469,8 +472,21 @@ namespace UnityAgentKit.Editor
             }
 
             pending.completed = true;
+            InvokeCancel(pending.cancelProducerCapture);
             EditorApplication.update -= pending.OnEditorUpdate;
             DeleteCapturePath(pending.capturePath);
+            DeleteEmptyDirectory(Path.GetDirectoryName(pending.capturePath));
+        }
+
+        private static void InvokeCancel(Action cancel)
+        {
+            try
+            {
+                cancel?.Invoke();
+            }
+            catch (Exception)
+            {
+            }
         }
 
         private static void DeleteCapturePath(string capturePath)
@@ -483,6 +499,25 @@ namespace UnityAgentKit.Editor
             try
             {
                 File.Delete(capturePath);
+            }
+            catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+        }
+
+        private static void DeleteEmptyDirectory(string directory)
+        {
+            if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
+            {
+                return;
+            }
+
+            try
+            {
+                Directory.Delete(directory, false);
             }
             catch (IOException)
             {
@@ -574,10 +609,15 @@ namespace UnityAgentKit.Editor
                 gameView.Repaint();
             }
 
-            public void CaptureGameViewPng(string absolutePath)
+            public Action CaptureGameViewPng(string absolutePath)
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(absolutePath));
                 ScreenCapture.CaptureScreenshot(absolutePath);
+                return () =>
+                {
+                    DeleteCapturePath(absolutePath);
+                    DeleteEmptyDirectory(Path.GetDirectoryName(absolutePath));
+                };
             }
 
             private static EditorWindow GetMainGameView()
