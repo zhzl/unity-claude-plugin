@@ -37,7 +37,7 @@ This split stays within the approved Phase 5D scope and does not create a new ro
 | 5D-01a | Test selector, TestRunner bridge foundation, job/report readback, `list` / `start` / `get_status` / `get_result` internal workflows | 5D-TEST-SELECTOR-01, 5D-TEST-LIST-01, 5D-TEST-JOB-01, 5D-TEST-RESULT-01, 5D-RESOURCE-TEST-01, 5D-HOST-01, 5D-SCOPE-01 | 1 | Phase 5A, Phase 5B, Phase 5C | `docs/superpowers/plans/2026-05-28-unity-agent-kit-phase-5d-01a-test-runner-foundation.md` | completed |
 | 5D-01b | `run_and_collect` / `run_and_verify`, test workflow timeout/continuity, failed-report vs verified-pass split, live EditMode evidence | 5D-TEST-COLLECT-01, 5D-TEST-VERIFY-01, 5D-TIMEOUT-01, 5D-HOST-01, 5D-SCOPE-01 | 2 | 5D-01a | `docs/superpowers/plans/2026-05-28-unity-agent-kit-phase-5d-01b-test-aggregate-workflows.md` | completed |
 | 5D-02 | PlayMode state snapshot, no-op evidence, enter/exit verify workflows, transition timeout/continuity | 5D-PLAYMODE-STATE-01, 5D-PLAYMODE-ENTER-01, 5D-PLAYMODE-EXIT-01, 5D-TIMEOUT-01, 5D-HOST-01, 5D-SCOPE-01 | 2 | Phase 5A, Phase 5B, Phase 5C | `docs/superpowers/plans/2026-05-29-unity-agent-kit-phase-5d-02-playmode-workflows.md` | completed |
-| 5D-03 | Screenshot capture-method feasibility, Game View producer, screenshot artifact metadata, Resource readback, TS PNG header/dimension validation | 5D-SCREENSHOT-FEASIBILITY-01, 5D-SCREENSHOT-CAPTURE-01, 5D-SCREENSHOT-RESOURCE-01, 5D-SCREENSHOT-PNG-01, 5D-HOST-01, 5D-SCOPE-01 | 3 | Phase 5A, Phase 5B, Phase 5C | pending | pending |
+| 5D-03 | Screenshot capture-method feasibility, Game View producer, screenshot artifact metadata, Resource readback, TS PNG header/dimension validation | 5D-SCREENSHOT-FEASIBILITY-01, 5D-SCREENSHOT-CAPTURE-01, 5D-SCREENSHOT-RESOURCE-01, 5D-SCREENSHOT-PNG-01, 5D-HOST-01, 5D-SCOPE-01 | 3 | Phase 5A, Phase 5B, Phase 5C | `docs/superpowers/plans/2026-05-29-unity-agent-kit-phase-5d-03-screenshot-artifact-resource.md` | plan-ready |
 | 5D-04 | Combined scope guard, Phase 5D evidence sync, parent Phase 5 plan index update | 5D-EVIDENCE-01, 5D-SCOPE-01, 5D-INDEX-SYNC-01 | 4 | 5D-01a, 5D-01b, 5D-02, 5D-03 | pending | pending |
 
 ## Requirement Coverage
@@ -66,7 +66,7 @@ This split stays within the approved Phase 5D scope and does not create a new ro
 
 ## Current Next Manual Action
 
-Review the next pending Phase 5D card and prepare expanded plan work for `5D-03`. Do not execute this index or re-execute completed `5D-01a` / `5D-01b` / `5D-02`; proceed to the next pending card only after its expanded plan is ready and approved.
+Unblock `5D-03` production Game View smoke evidence by investigating `screenshot.file_not_ready` from `D:/ai/unity-claude-plugin/.ai-debug/unity-agent-kit/test-results/phase5d-03-screenshot-production-smoke.xml`, then rerun the focused production smoke gate in an interactive Unity Editor with Game View available. Do not mark `5D-03` completed or proceed to `5D-04` unless the production smoke gate passes or the user explicitly accepts a narrower evidence boundary; do not re-execute completed `5D-01a` / `5D-01b` / `5D-02`.
 
 ## Completion Rule
 
@@ -116,6 +116,17 @@ Phase 5D completes only after:
 - TS coverage for 5D-02 includes PlayMode state parser/mapping, `getPlayModeState`, `enterPlayModeAndVerify` no-op, `exitPlayModeAndVerify` no-op, request + poll to stable PlayMode, transition timeout continuation with `unity_playmode.get_state` nextStep, host continuity loss guard, request-accepted vs busy/no-op evidence split, and timeout boundary regressions for post-request, post-sleep, no-op, and busy/no-request paths.
 - Unity coverage for 5D-02 includes PlayMode DTO roundtrip, main-thread dispatch requirement, state read no-mutation adapter evidence, enter no-op, enter request, and exit request short-operation evidence.
 - Corrected scope guard passed: `PASS Phase 5D-02 changed-file scope guard`; the guard scans 5D-02 implementation/test files and Unity `.meta` files while excluding Phase 5D planning docs that intentionally contain 5D-03 screenshot markers.
+- Whitespace check passed: `git -c core.autocrlf=false diff --check` produced no output.
+
+## Phase 5D-03 Partial Verification Evidence (Production Smoke Failing)
+
+5D-03 is not completed. The production Game View smoke gate failed, and the user has not accepted a narrower evidence boundary. 5D-03 remains `plan-ready`; Phase 5D and Phase 5 remain incomplete.
+
+- Focused TS verification passed via `node --experimental-strip-types --test "plugins/unity-agent-kit/tests/screenshot-workflows.test.ts" "plugins/unity-agent-kit/tests/artifact-resource-contract.test.ts" "plugins/unity-agent-kit/tests/host-runtime.test.ts" "plugins/unity-agent-kit/tests/timeout-completion-contract.test.ts"` with `tests 95`, `pass 95`, `fail 0`, `skipped 0`, and `todo 0`.
+- Unity Screenshot focused verification ran in `D:/ai/unity-claude-plugin/.ai-debug/unity-agent-kit/test-results/phase5d-03-screenshot-workflows.xml` with `result="Skipped:Ignored"`, `total="10"`, `passed="9"`, `failed="0"`, `inconclusive="0"`, and `skipped="1"`; the skipped test was `RouterScreenshotCaptureProductionSmokeWritesRealGameViewPngWhenInteractive`.
+- Production Game View screenshot smoke failed in `D:/ai/unity-claude-plugin/.ai-debug/unity-agent-kit/test-results/phase5d-03-screenshot-production-smoke.xml` with `result="Failed(Child)"`, `total="1"`, `passed="0"`, `failed="1"`, `inconclusive="0"`, and `skipped="0"`. The gate output was `FAIL production Game View smoke did not pass`; the failing diagnostic was `screenshot.file_not_ready: Screenshot file was not created or is empty.`
+- Unity HostRuntime regression passed in `D:/ai/unity-claude-plugin/.ai-debug/unity-agent-kit/test-results/phase5d-03-host-runtime-regression.xml` with `result="Passed"`, `total="82"`, `passed="82"`, `failed="0"`, `inconclusive="0"`, and `skipped="0"`.
+- Scope guard passed: `PASS Phase 5D-03 screenshot implementation scope guard`.
 - Whitespace check passed: `git -c core.autocrlf=false diff --check` produced no output.
 
 ## Parent Plan Index Sync Rule
