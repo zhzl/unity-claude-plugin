@@ -68,7 +68,7 @@ namespace UnityAgentKit.Editor
             return Rejected("host.dispatch_required", "Screenshot capture requires asynchronous main-thread dispatch.", record, Now(), requestId);
         }
 
-        internal static void CaptureGameViewAsync(
+        internal static Action CaptureGameViewAsync(
             UnityAgentKitHostRecord record,
             int capturedMainThreadId,
             string inputJson,
@@ -76,7 +76,7 @@ namespace UnityAgentKit.Editor
             string requestId = "",
             Func<bool> isCancelled = null)
         {
-            CaptureGameViewAsyncForTests(
+            return CaptureGameViewAsyncForTests(
                 record,
                 capturedMainThreadId,
                 inputJson,
@@ -98,7 +98,7 @@ namespace UnityAgentKit.Editor
         {
             UnityAgentKitOperationResponse response = null;
             var cancelled = false;
-            CaptureGameViewAsyncForTests(
+            var cancel = CaptureGameViewAsyncForTests(
                 record,
                 capturedMainThreadId,
                 inputJson,
@@ -114,6 +114,7 @@ namespace UnityAgentKit.Editor
             }
 
             cancelled = true;
+            cancel?.Invoke();
             return Rejected("host.dispatch_required", "Screenshot capture requires asynchronous main-thread dispatch.", record, Now(), requestId);
         }
 

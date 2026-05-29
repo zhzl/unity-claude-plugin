@@ -530,6 +530,58 @@ namespace UnityAgentKit.Editor.Tests
             }
         }
 
+        [TestCase("host.stopped")]
+        [TestCase("host.stopped_for_reload")]
+        [TestCase("host.editor_quitting")]
+        public void StopCancelsStartedAsyncScreenshotDispatchImmediately(string stopReason)
+        {
+            UnityAgentKitMainThread.ResetForTests();
+            UnityAgentKitMainThread.RegisterDrain();
+            UnityAgentKitOperationResponse response = null;
+            Func<bool> capturedIsCancelled = null;
+            var cancelCount = 0;
+            var started = false;
+            var record = TestHostRecord(49247);
+
+            try
+            {
+                UnityAgentKitOperationRouter.ScreenshotAsyncRunnerForTests = (request, hostRecord, capturedThreadId, complete, isCancelled) =>
+                {
+                    started = true;
+                    capturedIsCancelled = isCancelled;
+                    return () => cancelCount += 1;
+                };
+
+                UnityAgentKitMainThread.Enqueue(new UnityAgentKitOperationRequest
+                {
+                    operation = "screenshot.capture",
+                    requestId = "req-stop-screenshot",
+                    inputJson = "{\"label\":\"stop\"}"
+                }, record, completed => response = completed);
+
+                UnityAgentKitMainThread.DrainForTests();
+
+                Assert.IsTrue(started);
+                Assert.NotNull(capturedIsCancelled);
+                Assert.IsFalse(capturedIsCancelled());
+                Assert.IsNull(response);
+                Assert.AreEqual(1, UnityAgentKitMainThread.PendingDispatchCountForTests);
+
+                UnityAgentKitMainThread.Stop(stopReason);
+
+                Assert.AreEqual(1, cancelCount);
+                Assert.IsTrue(capturedIsCancelled());
+                AssertOperationEnvelopeMinimumFields(response, "failed", "screenshot.capture", "req-stop-screenshot", record);
+                Assert.AreEqual(stopReason, response.code);
+                Assert.AreEqual(0, UnityAgentKitMainThread.PendingDispatchCountForTests);
+            }
+            finally
+            {
+                UnityAgentKitOperationRouter.ScreenshotAsyncRunnerForTests = null;
+                UnityAgentKitMainThread.ResetForTests();
+            }
+        }
+
         [UnityTest]
         public IEnumerator HostStopReturnsStoppedEnvelopeBeforeClosingListener()
         {

@@ -26,6 +26,8 @@ namespace UnityAgentKit.Editor
         internal const string ThrowOperation = "host.throw";
         internal const string PendingDispatchTimeoutOperation = "host.pendingDispatchTimeout";
 
+        internal static Func<UnityAgentKitOperationRequest, UnityAgentKitHostRecord, int, Action<UnityAgentKitOperationResponse>, Func<bool>, Action> ScreenshotAsyncRunnerForTests;
+
         internal static string NormalizeOperation(string operation)
         {
             return (operation ?? string.Empty).Trim();
@@ -223,8 +225,10 @@ namespace UnityAgentKit.Editor
             UnityAgentKitHostRecord record,
             int capturedMainThreadId,
             Action<UnityAgentKitOperationResponse> complete,
+            out Action cancel,
             Func<bool> isCancelled = null)
         {
+            cancel = null;
             var operation = NormalizeOperation(request != null ? request.operation : string.Empty);
             var requestId = request != null ? request.requestId ?? string.Empty : string.Empty;
             if (operation != ScreenshotCaptureOperation)
@@ -232,13 +236,15 @@ namespace UnityAgentKit.Editor
                 return false;
             }
 
-            UnityAgentKitScreenshotDiagnostics.CaptureGameViewAsync(
-                record,
-                capturedMainThreadId,
-                request != null ? request.inputJson ?? string.Empty : string.Empty,
-                complete,
-                requestId,
-                isCancelled);
+            cancel = ScreenshotAsyncRunnerForTests != null
+                ? ScreenshotAsyncRunnerForTests(request, record, capturedMainThreadId, complete, isCancelled)
+                : UnityAgentKitScreenshotDiagnostics.CaptureGameViewAsync(
+                    record,
+                    capturedMainThreadId,
+                    request != null ? request.inputJson ?? string.Empty : string.Empty,
+                    complete,
+                    requestId,
+                    isCancelled);
             return true;
         }
 

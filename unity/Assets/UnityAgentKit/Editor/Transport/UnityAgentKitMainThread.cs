@@ -24,6 +24,7 @@ namespace UnityAgentKit.Editor
             internal bool cancelled;
             internal bool holdForTimeout;
             internal bool claimed;
+            internal Action cancelClaimedWork;
         }
 
         private static readonly object PendingLock = new object();
@@ -214,6 +215,11 @@ namespace UnityAgentKit.Editor
                 stopCode = _lastStopCode;
                 PendingLifecycleWork.Clear();
                 pendingDispatches = new List<PendingDispatch>(PendingDispatches);
+                if (_currentClaimedDispatchForTests != null && !ContainsReference(pendingDispatches, _currentClaimedDispatchForTests))
+                {
+                    pendingDispatches.Add(_currentClaimedDispatchForTests);
+                }
+
                 PendingDispatches.Clear();
                 _currentClaimedDispatchForTests = null;
                 foreach (var item in pendingDispatches)
@@ -224,7 +230,7 @@ namespace UnityAgentKit.Editor
 
             foreach (var item in pendingDispatches)
             {
-                TryComplete(item, UnityAgentKitOperationRouter.Stopped(item.request, item.record, stopCode), ownsItem: true);
+                TryComplete(item, UnityAgentKitOperationRouter.Stopped(item.request, item.record, stopCode), ownsItem: true, cancelClaimedWork: true);
             }
         }
 
@@ -271,8 +277,10 @@ namespace UnityAgentKit.Editor
                         item.record,
                         _capturedMainThreadId,
                         response => TryComplete(item, response, ownsItem: true),
+                        out var cancelClaimedWork,
                         () => IsDispatchCancelled(item)))
                     {
+                        SetCancelClaimedWork(item, cancelClaimedWork);
                         continue;
                     }
 
@@ -281,7 +289,7 @@ namespace UnityAgentKit.Editor
                 }
                 catch (Exception error)
                 {
-                    TryComplete(item, UnityAgentKitOperationRouter.DispatchException(item.request, item.record, error), ownsItem: true);
+                    TryComplete(item, UnityAgentKitOperationRouter.DispatchException(item.request, item.record, error), ownsItem: true, cancelClaimedWork: true);
                 }
                 finally
                 {
@@ -359,8 +367,71 @@ namespace UnityAgentKit.Editor
             }
         }
 
-        private static bool TryComplete(PendingDispatch item, UnityAgentKitOperationResponse response, bool ownsItem = false)
+        private static void SetCancelClaimedWork(PendingDispatch item, Action cancel)
         {
+            if (cancel == null)
+            {
+                return;
+            }
+
+            var cancelNow = false;
+            lock (PendingLock)
+            {
+                if (item == null || item.completed || item.cancelled || !_isAcceptingDispatches)
+                {
+                    cancelNow = true;
+                }
+                else
+                {
+                    item.cancelClaimedWork = cancel;
+                }
+            }
+
+            if (cancelNow)
+            {
+                InvokeCancel(cancel);
+            }
+        }
+
+        private static Action TakeCancelClaimedWork(PendingDispatch item)
+        {
+            if (item == null)
+            {
+                return null;
+            }
+
+            var cancel = item.cancelClaimedWork;
+            item.cancelClaimedWork = null;
+            return cancel;
+        }
+
+        private static void InvokeCancel(Action cancel)
+        {
+            try
+            {
+                cancel?.Invoke();
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        private static bool ContainsReference(List<PendingDispatch> items, PendingDispatch item)
+        {
+            for (var i = 0; i < items.Count; i += 1)
+            {
+                if (ReferenceEquals(items[i], item))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool TryComplete(PendingDispatch item, UnityAgentKitOperationResponse response, bool ownsItem = false, bool cancelClaimedWork = false)
+        {
+            Action cancel = null;
             lock (PendingLock)
             {
                 if (item.completed)
@@ -392,9 +463,15 @@ namespace UnityAgentKit.Editor
                 }
 
                 item.completed = true;
+                cancel = cancelClaimedWork ? TakeCancelClaimedWork(item) : null;
+                if (!cancelClaimedWork)
+                {
+                    item.cancelClaimedWork = null;
+                }
             }
 
             item.timeoutTimer?.Dispose();
+            InvokeCancel(cancel);
 
             try
             {

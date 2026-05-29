@@ -335,7 +335,7 @@ namespace UnityAgentKit.Editor.Tests
                 operation = "screenshot.capture",
                 requestId = "req-shot-production-smoke",
                 inputJson = "{\"label\":\"production-smoke\"}"
-            }, TestHostRecord(), System.Threading.Thread.CurrentThread.ManagedThreadId, completed => response = completed);
+            }, TestHostRecord(), System.Threading.Thread.CurrentThread.ManagedThreadId, completed => response = completed, out var cancel);
 
             Assert.IsTrue(started);
             for (var frame = 0; frame < 120 && response == null; frame++)
