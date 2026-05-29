@@ -102,6 +102,9 @@ namespace UnityAgentKit.Editor.Tests
             Assert.AreEqual("rejected", response.status);
             Assert.AreEqual("screenshot.label_invalid", response.code);
             Assert.IsFalse(Directory.Exists(Path.Combine(artifactRoot, "screenshots")));
+            Assert.AreEqual(0, adapter.TryGetGameViewSizeCallCount);
+            Assert.AreEqual(0, adapter.FocusAndRepaintGameViewCallCount);
+            Assert.AreEqual(0, adapter.CaptureGameViewPngCallCount);
         }
 
         [Test]
@@ -169,7 +172,7 @@ namespace UnityAgentKit.Editor.Tests
             Assert.IsTrue(UnityAgentKitOperationRouter.RequiresMainThreadDispatch(" screenshot.capture "));
             var response = UnityAgentKitOperationRouter.Route(new UnityAgentKitOperationRequest
             {
-                operation = "screenshot.capture",
+                operation = " screenshot.capture ",
                 requestId = "req-shot-route",
                 inputJson = "{\"label\":\"smoke\"}"
             }, TestHostRecord());
