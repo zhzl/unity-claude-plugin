@@ -225,6 +225,42 @@ namespace UnityAgentKit.Editor.Tests
             Assert.AreEqual("screenshot.file_not_ready", response.code);
         }
 
+        [UnityTest]
+        public IEnumerator CaptureGameViewForTestsCancelsDelayedProducerWhenFileIsNotReady()
+        {
+            var artifactRoot = TemporaryArtifactRoot("not-ready-cleanup");
+            var adapter = new DelayedPayloadScreenshotAdapter(width: 320, height: 180, framesBeforeWrite: 4);
+            UnityAgentKitOperationResponse response = null;
+
+            UnityAgentKitScreenshotDiagnostics.CaptureGameViewAsyncForTests(
+                TestHostRecord(),
+                capturedMainThreadId: 7,
+                inputJson: "{\"label\":\"notreadycleanup\"}",
+                artifactRoot: artifactRoot,
+                adapter: adapter,
+                complete: completed => response = completed,
+                requestId: "req-shot-not-ready-cleanup",
+                payloadReadyTimeoutMs: 1);
+
+            var deadline = DateTimeOffset.UtcNow.AddSeconds(1);
+            while (response == null && DateTimeOffset.UtcNow < deadline)
+            {
+                yield return null;
+            }
+
+            Assert.NotNull(response);
+            Assert.AreEqual("failed", response.status);
+            Assert.AreEqual("screenshot.file_not_ready", response.code);
+            Assert.AreEqual(1, adapter.CancelCaptureCallCount);
+            for (var frame = 0; frame < 6; frame++)
+            {
+                yield return null;
+            }
+
+            Assert.AreEqual(0, CountPngFiles(Path.Combine(artifactRoot, "screenshots")));
+            Assert.IsFalse(Directory.Exists(Path.Combine(artifactRoot, "metadata")));
+        }
+
         [Test]
         public void CaptureGameViewForTestsRejectsUnsafeLabelBeforeWritingPayload()
         {
@@ -303,6 +339,32 @@ namespace UnityAgentKit.Editor.Tests
                     TestHostRecord(),
                     new FileInfo(payloadPath).Length));
 
+            Assert.IsFalse(File.Exists(Path.Combine(artifactRoot, "metadata", "screenshots", artifactId + ".json")));
+        }
+
+        [Test]
+        public void CaptureGameViewForTestsDeletesFinalPayloadWhenMetadataWriteFails()
+        {
+            var artifactRoot = TemporaryArtifactRoot("metadata-write-failure-cleanup");
+            Directory.CreateDirectory(Path.Combine(artifactRoot, "metadata"));
+            using (File.Create(Path.Combine(artifactRoot, "metadata", "screenshots")))
+            {
+            }
+
+            var adapter = new RecordingScreenshotAdapter(width: 320, height: 180, writesPayload: true);
+            var response = UnityAgentKitScreenshotDiagnostics.CaptureGameViewForTests(
+                TestHostRecord(),
+                capturedMainThreadId: 7,
+                inputJson: "{\"label\":\"metadatafailure\"}",
+                artifactRoot: artifactRoot,
+                adapter: adapter,
+                requestId: "req-shot-metadata-failure");
+
+            Assert.AreEqual("failed", response.status);
+            Assert.AreEqual("screenshot.metadata_write_failed", response.code);
+            Assert.NotNull(adapter.CapturedAbsolutePath);
+            var artifactId = Path.GetFileNameWithoutExtension(adapter.CapturedAbsolutePath);
+            Assert.IsFalse(File.Exists(Path.Combine(artifactRoot, "screenshots", artifactId + ".png")));
             Assert.IsFalse(File.Exists(Path.Combine(artifactRoot, "metadata", "screenshots", artifactId + ".json")));
         }
 
@@ -546,6 +608,74 @@ namespace UnityAgentKit.Editor.Tests
                 }
 
                 return null;
+            }
+        }
+
+        private sealed class DelayedPayloadScreenshotAdapter : UnityAgentKitScreenshotDiagnostics.IScreenshotCaptureAdapter
+        {
+            private readonly int width;
+            private readonly int height;
+            private int framesBeforeWrite;
+            private string capturedAbsolutePath;
+
+            public DelayedPayloadScreenshotAdapter(int width, int height, int framesBeforeWrite)
+            {
+                this.width = width;
+                this.height = height;
+                this.framesBeforeWrite = framesBeforeWrite;
+            }
+
+            public int CancelCaptureCallCount { get; private set; }
+
+            public UnityAgentKitScreenshotCaptureMethodFeasibility Feasibility => new UnityAgentKitScreenshotCaptureMethodFeasibility
+            {
+                supported = true,
+                methodId = "screen_capture_capture_screenshot",
+                view = "current_game_view",
+                usesReadScreenPixel = false,
+                usesEncodeToPng = false,
+                usesPayloadFileWriteAllBytes = false,
+                diagnostics = Array.Empty<UnityAgentKitDiagnostic>()
+            };
+
+            public bool TryGetGameViewSize(out int gameViewWidth, out int gameViewHeight, out UnityAgentKitDiagnostic diagnostic)
+            {
+                gameViewWidth = width;
+                gameViewHeight = height;
+                diagnostic = null;
+                return width > 0 && height > 0;
+            }
+
+            public void FocusAndRepaintGameView()
+            {
+            }
+
+            public Action CaptureGameViewPng(string absolutePath)
+            {
+                capturedAbsolutePath = absolutePath;
+                EditorApplication.update += WritePayloadAfterDelay;
+                return () =>
+                {
+                    CancelCaptureCallCount += 1;
+                    EditorApplication.update -= WritePayloadAfterDelay;
+                };
+            }
+
+            private void WritePayloadAfterDelay()
+            {
+                if (framesBeforeWrite > 0)
+                {
+                    framesBeforeWrite -= 1;
+                    return;
+                }
+
+                EditorApplication.update -= WritePayloadAfterDelay;
+                Directory.CreateDirectory(Path.GetDirectoryName(capturedAbsolutePath));
+                using (var stream = File.Create(capturedAbsolutePath))
+                {
+                    var bytes = RecordingScreenshotAdapter.FixturePngBytesValue;
+                    stream.Write(bytes, 0, bytes.Length);
+                }
             }
         }
 

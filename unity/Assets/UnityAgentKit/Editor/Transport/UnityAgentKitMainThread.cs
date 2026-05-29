@@ -25,6 +25,7 @@ namespace UnityAgentKit.Editor
             internal bool holdForTimeout;
             internal bool claimed;
             internal Action cancelClaimedWork;
+            internal UnityAgentKitOperationResponse timeoutResponse;
         }
 
         private static readonly object PendingLock = new object();
@@ -132,7 +133,7 @@ namespace UnityAgentKit.Editor
                 {
                     item = new PendingDispatch(request, record, complete);
                     item.holdForTimeout = UnityAgentKitOperationRouter.NormalizeOperation(request != null ? request.operation : string.Empty) == UnityAgentKitOperationRouter.PendingDispatchTimeoutOperation;
-                    item.timeoutTimer = new Timer(_ => TryComplete(item, UnityAgentKitOperationRouter.DispatchTimeout(item.request, item.record)), null, Timeout.Infinite, Timeout.Infinite);
+                    item.timeoutTimer = new Timer(_ => TryCompleteDispatchTimeout(item), null, Timeout.Infinite, Timeout.Infinite);
                     PendingDispatches.Add(item);
                     EnqueuedRequestIdsForTests.Add(request != null ? request.requestId ?? string.Empty : string.Empty);
                 }
@@ -199,7 +200,7 @@ namespace UnityAgentKit.Editor
                 }
             }
 
-            return item != null && TryComplete(item, UnityAgentKitOperationRouter.DispatchTimeout(item.request, item.record));
+            return item != null && TryCompleteDispatchTimeout(item);
         }
 
         internal static void Stop(string reasonCode)
@@ -375,6 +376,7 @@ namespace UnityAgentKit.Editor
             }
 
             var cancelNow = false;
+            UnityAgentKitOperationResponse timeoutResponse = null;
             lock (PendingLock)
             {
                 if (item == null || item.completed || item.cancelled || !_isAcceptingDispatches)
@@ -384,12 +386,20 @@ namespace UnityAgentKit.Editor
                 else
                 {
                     item.cancelClaimedWork = cancel;
+                    timeoutResponse = item.timeoutResponse;
+                    item.timeoutResponse = null;
                 }
             }
 
             if (cancelNow)
             {
                 InvokeCancel(cancel);
+                return;
+            }
+
+            if (timeoutResponse != null)
+            {
+                TryComplete(item, timeoutResponse, cancelClaimedWork: true);
             }
         }
 
@@ -429,6 +439,26 @@ namespace UnityAgentKit.Editor
             return false;
         }
 
+        private static bool TryCompleteDispatchTimeout(PendingDispatch item)
+        {
+            if (item == null)
+            {
+                return false;
+            }
+
+            var response = UnityAgentKitOperationRouter.DispatchTimeout(item.request, item.record);
+            lock (PendingLock)
+            {
+                if (!item.completed && item.claimed && item.cancelClaimedWork == null)
+                {
+                    item.timeoutResponse = response;
+                    return false;
+                }
+            }
+
+            return TryComplete(item, response, cancelClaimedWork: true);
+        }
+
         private static bool TryComplete(PendingDispatch item, UnityAgentKitOperationResponse response, bool ownsItem = false, bool cancelClaimedWork = false)
         {
             Action cancel = null;
@@ -445,7 +475,7 @@ namespace UnityAgentKit.Editor
                 }
                 else
                 {
-                    if (item.claimed)
+                    if (item.claimed && !(cancelClaimedWork && item.cancelClaimedWork != null))
                     {
                         return false;
                     }
@@ -463,6 +493,7 @@ namespace UnityAgentKit.Editor
                 }
 
                 item.completed = true;
+                item.timeoutResponse = null;
                 cancel = cancelClaimedWork ? TakeCancelClaimedWork(item) : null;
                 if (!cancelClaimedWork)
                 {

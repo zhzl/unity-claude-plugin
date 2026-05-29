@@ -231,7 +231,7 @@ namespace UnityAgentKit.Editor
 
             if (DateTimeOffset.UtcNow > pending.deadline)
             {
-                CompletePending(pending, Failed("screenshot.file_not_ready", "Screenshot file was not created or is empty.", pending.record, pending.startedAt, pending.requestId));
+                FailPending(pending, Failed("screenshot.file_not_ready", "Screenshot file was not created or is empty.", pending.record, pending.startedAt, pending.requestId));
                 return true;
             }
 
@@ -254,6 +254,8 @@ namespace UnityAgentKit.Editor
             }
             catch (Exception exception)
             {
+                DeleteCapturePath(pending.absolutePath);
+                DeleteMetadataPath(pending.artifactRoot, pending.artifactId);
                 var diagnostic = Diagnostic("error", "screenshot.metadata_write_failed", "Screenshot metadata write failed.", CaptureOperation, pending.requestId);
                 diagnostic.details = "{\"exceptionType\":\"" + Escape(exception.GetType().Name) + "\"}";
                 return Failed("screenshot.metadata_write_failed", exception.Message, pending.record, pending.startedAt, pending.requestId, new[] { diagnostic });
@@ -464,6 +466,21 @@ namespace UnityAgentKit.Editor
             Complete(pending.complete, response);
         }
 
+        private static void FailPending(PendingScreenshotCapture pending, UnityAgentKitOperationResponse response)
+        {
+            if (pending == null || pending.completed)
+            {
+                return;
+            }
+
+            pending.completed = true;
+            InvokeCancel(pending.cancelProducerCapture);
+            EditorApplication.update -= pending.OnEditorUpdate;
+            DeleteCapturePath(pending.capturePath);
+            DeleteEmptyDirectory(Path.GetDirectoryName(pending.capturePath));
+            Complete(pending.complete, response);
+        }
+
         private static void CancelPending(PendingScreenshotCapture pending)
         {
             if (pending == null || pending.completed)
@@ -525,6 +542,16 @@ namespace UnityAgentKit.Editor
             catch (UnauthorizedAccessException)
             {
             }
+        }
+
+        private static void DeleteMetadataPath(string artifactRoot, string artifactId)
+        {
+            if (string.IsNullOrEmpty(artifactRoot) || string.IsNullOrEmpty(artifactId))
+            {
+                return;
+            }
+
+            DeleteCapturePath(Path.Combine(artifactRoot, "metadata", "screenshots", artifactId + ".json"));
         }
 
         private static UnityAgentKitDiagnostic Diagnostic(string severity, string code, string message, string operation, string requestId)
