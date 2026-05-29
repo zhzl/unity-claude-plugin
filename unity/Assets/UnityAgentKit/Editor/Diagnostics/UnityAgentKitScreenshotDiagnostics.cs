@@ -13,6 +13,8 @@ namespace UnityAgentKit.Editor
         private const string CaptureMethodId = "screen_capture_capture_screenshot";
         private const string CaptureView = "current_game_view";
         private const int PayloadReadyTimeoutMs = 1000;
+        private const int CapturePending = 0;
+        private const int CaptureCompleted = 1;
         private static readonly IScreenshotCaptureAdapter productionAdapter = new UnityEditorScreenshotCaptureAdapter();
 
         internal interface IScreenshotCaptureAdapter
@@ -42,7 +44,7 @@ namespace UnityAgentKit.Editor
             internal Action<UnityAgentKitOperationResponse> complete;
             internal Func<bool> isCancelled;
             internal Action cancelProducerCapture;
-            internal bool completed;
+            internal int terminalState;
 
             internal void OnEditorUpdate()
             {
@@ -212,7 +214,7 @@ namespace UnityAgentKit.Editor
 
         private static bool TryCompletePendingCapture(PendingScreenshotCapture pending)
         {
-            if (pending == null || pending.completed)
+            if (IsTerminal(pending))
             {
                 return true;
             }
@@ -225,7 +227,7 @@ namespace UnityAgentKit.Editor
 
             if (TryGetPayloadSize(pending.capturePath, out var sizeBytes))
             {
-                CompletePending(pending, CreateSucceededCaptureResponse(pending, sizeBytes));
+                CompleteSucceededPending(pending, sizeBytes);
                 return true;
             }
 
@@ -254,8 +256,7 @@ namespace UnityAgentKit.Editor
             }
             catch (Exception exception)
             {
-                DeleteCapturePath(pending.absolutePath);
-                DeleteMetadataPath(pending.artifactRoot, pending.artifactId);
+                CleanupPendingCapture(pending, cancelProducer: false, deleteFinalAndMetadata: true);
                 var diagnostic = Diagnostic("error", "screenshot.metadata_write_failed", "Screenshot metadata write failed.", CaptureOperation, pending.requestId);
                 diagnostic.details = "{\"exceptionType\":\"" + Escape(exception.GetType().Name) + "\"}";
                 return Failed("screenshot.metadata_write_failed", exception.Message, pending.record, pending.startedAt, pending.requestId, new[] { diagnostic });
@@ -454,45 +455,70 @@ namespace UnityAgentKit.Editor
             }
         }
 
-        private static void CompletePending(PendingScreenshotCapture pending, UnityAgentKitOperationResponse response)
+        private static void CompleteSucceededPending(PendingScreenshotCapture pending, long sizeBytes)
         {
-            if (pending == null || pending.completed)
+            if (!TryClaimTerminal(pending))
             {
                 return;
             }
 
-            pending.completed = true;
             EditorApplication.update -= pending.OnEditorUpdate;
+            var response = CreateSucceededCaptureResponse(pending, sizeBytes);
             Complete(pending.complete, response);
         }
 
         private static void FailPending(PendingScreenshotCapture pending, UnityAgentKitOperationResponse response)
         {
-            if (pending == null || pending.completed)
+            if (!TryClaimTerminal(pending))
             {
                 return;
             }
 
-            pending.completed = true;
-            InvokeCancel(pending.cancelProducerCapture);
-            EditorApplication.update -= pending.OnEditorUpdate;
-            DeleteCapturePath(pending.capturePath);
-            DeleteEmptyDirectory(Path.GetDirectoryName(pending.capturePath));
+            CleanupPendingCapture(pending, cancelProducer: true, deleteFinalAndMetadata: false);
             Complete(pending.complete, response);
         }
 
         private static void CancelPending(PendingScreenshotCapture pending)
         {
-            if (pending == null || pending.completed)
+            if (!TryClaimTerminal(pending))
             {
                 return;
             }
 
-            pending.completed = true;
-            InvokeCancel(pending.cancelProducerCapture);
+            CleanupPendingCapture(pending, cancelProducer: true, deleteFinalAndMetadata: false);
+        }
+
+        private static bool IsTerminal(PendingScreenshotCapture pending)
+        {
+            return pending == null || Volatile.Read(ref pending.terminalState) == CaptureCompleted;
+        }
+
+        private static bool TryClaimTerminal(PendingScreenshotCapture pending)
+        {
+            return pending != null && Interlocked.Exchange(ref pending.terminalState, CaptureCompleted) == CapturePending;
+        }
+
+        private static void CleanupPendingCapture(PendingScreenshotCapture pending, bool cancelProducer, bool deleteFinalAndMetadata)
+        {
+            if (pending == null)
+            {
+                return;
+            }
+
+            if (cancelProducer)
+            {
+                InvokeCancel(pending.cancelProducerCapture);
+            }
+
             EditorApplication.update -= pending.OnEditorUpdate;
             DeleteCapturePath(pending.capturePath);
             DeleteEmptyDirectory(Path.GetDirectoryName(pending.capturePath));
+
+            if (deleteFinalAndMetadata)
+            {
+                DeleteCapturePath(pending.absolutePath);
+                DeleteMetadataPath(pending.artifactRoot, pending.artifactId);
+            }
         }
 
         private static void InvokeCancel(Action cancel)

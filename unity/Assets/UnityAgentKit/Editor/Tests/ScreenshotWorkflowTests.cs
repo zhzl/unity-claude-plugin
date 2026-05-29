@@ -364,6 +364,7 @@ namespace UnityAgentKit.Editor.Tests
             Assert.AreEqual("screenshot.metadata_write_failed", response.code);
             Assert.NotNull(adapter.CapturedAbsolutePath);
             var artifactId = Path.GetFileNameWithoutExtension(adapter.CapturedAbsolutePath);
+            Assert.AreEqual(0, CountPngFiles(Path.Combine(artifactRoot, "screenshots")));
             Assert.IsFalse(File.Exists(Path.Combine(artifactRoot, "screenshots", artifactId + ".png")));
             Assert.IsFalse(File.Exists(Path.Combine(artifactRoot, "metadata", "screenshots", artifactId + ".json")));
         }
