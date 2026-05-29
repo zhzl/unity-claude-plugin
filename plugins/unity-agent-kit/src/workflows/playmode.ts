@@ -107,6 +107,9 @@ async function verifyPlayModeTarget(
   }
 
   if (isStablePlayModeTarget(initialState, target.targetState)) {
+    if (remainingTimeoutMs(startedAt, timeoutMs, now) <= 0) {
+      return withCarriedDiagnostics(carriedDiagnostics, playModeTimeoutResult(target.action, requestId, false));
+    }
     return withCarriedDiagnostics(carriedDiagnostics, settledPlayModeResult(initialResult, target.action, target.targetState, "noop", initialState.state, initialState));
   }
 

@@ -264,6 +264,50 @@ test("enterPlayModeAndVerify succeeds as no-op when already stable PlayMode", as
   transport.assertConsumed();
 });
 
+test("enterPlayModeAndVerify times out instead of no-op when initial state read exceeds deadline", async () => {
+  const record = sampleHostRecord();
+  const playmode = stateSnapshot({
+    state: "playmode",
+    stable: true,
+    isPlaying: true,
+    isPlayingOrWillChangePlaymode: true,
+  });
+  const registry = registrySequence([{ ok: true, record }, { ok: true, record }]);
+  const transport = transportWithProbesAndInvokes([
+    { port: record.port, result: { ok: true, statusCode: 200, body: record } },
+  ], [
+    {
+      port: record.port,
+      requestId: "req-enter-noop-timeout-state-1",
+      operation: playModeStateOperation,
+      result: { ok: true, statusCode: 200, body: succeededEnvelope(record, playModeStateOperation, playmode, "req-enter-noop-timeout-state-1") },
+    },
+  ]);
+  const nowValues = [1_000, 1_006];
+
+  const result = await enterPlayModeAndVerify(options(record, transport.transport, { readRegistry: registry.readRegistry }), {
+    requestId: "req-enter-noop-timeout",
+    timeoutMs: 5,
+    pollIntervalMs: 1,
+    sleep: async () => assert.fail("sleep should not be called for an initial no-op timeout"),
+    now: () => nowValues.shift() ?? 1_006,
+  });
+
+  assert.equal(result.status, "timeout");
+  assert.equal(result.action, "enter_and_verify");
+  assert.equal(result.mayStillBeRunning, false);
+  assert.equal(result.safeToRetry, false);
+  assert.deepEqual(result.nextStep, {
+    kind: "read_state",
+    tool: "unity_playmode",
+    action: "get_state",
+    reason: "Read the current PlayMode state before deciding whether to retry.",
+  });
+  assert.deepEqual(nowValues, []);
+  registry.assertConsumed();
+  transport.assertConsumed();
+});
+
 test("exitPlayModeAndVerify succeeds as no-op when already stable EditMode", async () => {
   const record = sampleHostRecord();
   const editmode = stateSnapshot();
