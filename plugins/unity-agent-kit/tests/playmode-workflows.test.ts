@@ -418,7 +418,7 @@ test("enterPlayModeAndVerify does not succeed when host continuity changes after
   const registry = registrySequence([
     { ok: true, record }, { ok: true, record },
     { ok: true, record }, { ok: true, record },
-    { ok: true, reboundRecord }, { ok: true, reboundRecord },
+    { ok: true, record: reboundRecord }, { ok: true, record: reboundRecord },
   ]);
   const transport = transportWithProbesAndInvokes([
     { port: record.port, result: { ok: true, statusCode: 200, body: record } },
