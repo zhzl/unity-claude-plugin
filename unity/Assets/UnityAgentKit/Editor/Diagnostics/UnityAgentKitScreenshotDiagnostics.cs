@@ -25,6 +25,7 @@ namespace UnityAgentKit.Editor
 
         private sealed class PendingScreenshotCapture
         {
+            internal string capturePath;
             internal string absolutePath;
             internal string artifactRoot;
             internal string artifactId;
@@ -39,6 +40,7 @@ namespace UnityAgentKit.Editor
             internal string captureMethod;
             internal DateTimeOffset deadline;
             internal Action<UnityAgentKitOperationResponse> complete;
+            internal Func<bool> isCancelled;
             internal bool completed;
 
             internal void OnEditorUpdate()
@@ -63,9 +65,7 @@ namespace UnityAgentKit.Editor
             string inputJson,
             string requestId = "")
         {
-            UnityAgentKitOperationResponse response = null;
-            CaptureGameViewAsync(record, capturedMainThreadId, inputJson, completed => response = completed, requestId);
-            return response ?? Failed("screenshot.capture_pending", "Screenshot capture completion is pending.", record, Now(), requestId);
+            return Rejected("host.dispatch_required", "Screenshot capture requires asynchronous main-thread dispatch.", record, Now(), requestId);
         }
 
         internal static void CaptureGameViewAsync(
@@ -73,7 +73,8 @@ namespace UnityAgentKit.Editor
             int capturedMainThreadId,
             string inputJson,
             Action<UnityAgentKitOperationResponse> complete,
-            string requestId = "")
+            string requestId = "",
+            Func<bool> isCancelled = null)
         {
             CaptureGameViewAsyncForTests(
                 record,
@@ -82,7 +83,9 @@ namespace UnityAgentKit.Editor
                 UnityAgentKitArtifactContracts.GetArtifactRoot(),
                 productionAdapter,
                 complete,
-                requestId);
+                requestId,
+                PayloadReadyTimeoutMs,
+                isCancelled);
         }
 
         internal static UnityAgentKitOperationResponse CaptureGameViewForTests(
@@ -106,7 +109,8 @@ namespace UnityAgentKit.Editor
             IScreenshotCaptureAdapter adapter,
             Action<UnityAgentKitOperationResponse> complete,
             string requestId = "",
-            int payloadReadyTimeoutMs = PayloadReadyTimeoutMs)
+            int payloadReadyTimeoutMs = PayloadReadyTimeoutMs,
+            Func<bool> isCancelled = null)
         {
             var startedAt = Now();
             var input = ParseInput(inputJson);
@@ -141,11 +145,12 @@ namespace UnityAgentKit.Editor
             var artifactId = CreateArtifactId(input.label);
             var relativePath = "screenshots/" + artifactId + ".png";
             var absolutePath = Path.Combine(artifactRoot, "screenshots", artifactId + ".png");
+            var capturePath = Path.Combine(artifactRoot, "screenshots", ".pending", artifactId + ".png");
 
             try
             {
                 adapter.FocusAndRepaintGameView();
-                adapter.CaptureGameViewPng(absolutePath);
+                adapter.CaptureGameViewPng(capturePath);
             }
             catch (Exception exception)
             {
@@ -157,6 +162,7 @@ namespace UnityAgentKit.Editor
 
             var pending = new PendingScreenshotCapture
             {
+                capturePath = capturePath,
                 absolutePath = absolutePath,
                 artifactRoot = artifactRoot,
                 artifactId = artifactId,
@@ -170,7 +176,8 @@ namespace UnityAgentKit.Editor
                 startedAt = startedAt,
                 captureMethod = feasibility.methodId,
                 deadline = DateTimeOffset.UtcNow.AddMilliseconds(Math.Max(0, payloadReadyTimeoutMs)),
-                complete = complete
+                complete = complete,
+                isCancelled = isCancelled
             };
 
             if (TryCompletePendingCapture(pending))
@@ -188,7 +195,13 @@ namespace UnityAgentKit.Editor
                 return true;
             }
 
-            if (TryGetPayloadSize(pending.absolutePath, out var sizeBytes))
+            if (pending.isCancelled != null && pending.isCancelled())
+            {
+                CancelPending(pending);
+                return true;
+            }
+
+            if (TryGetPayloadSize(pending.capturePath, out var sizeBytes))
             {
                 CompletePending(pending, CreateSucceededCaptureResponse(pending, sizeBytes));
                 return true;
@@ -208,6 +221,13 @@ namespace UnityAgentKit.Editor
             UnityAgentKitArtifactMetadataRecord metadata;
             try
             {
+                Directory.CreateDirectory(Path.GetDirectoryName(pending.absolutePath));
+                if (File.Exists(pending.absolutePath))
+                {
+                    File.Delete(pending.absolutePath);
+                }
+
+                File.Move(pending.capturePath, pending.absolutePath);
                 metadata = UnityAgentKitArtifactContracts.WriteScreenshotArtifactMetadata(pending.artifactRoot, pending.artifactId, pending.relativePath, pending.record, sizeBytes);
             }
             catch (Exception exception)
@@ -420,6 +440,37 @@ namespace UnityAgentKit.Editor
             pending.completed = true;
             EditorApplication.update -= pending.OnEditorUpdate;
             Complete(pending.complete, response);
+        }
+
+        private static void CancelPending(PendingScreenshotCapture pending)
+        {
+            if (pending == null || pending.completed)
+            {
+                return;
+            }
+
+            pending.completed = true;
+            EditorApplication.update -= pending.OnEditorUpdate;
+            DeleteCapturePath(pending.capturePath);
+        }
+
+        private static void DeleteCapturePath(string capturePath)
+        {
+            if (string.IsNullOrEmpty(capturePath) || !File.Exists(capturePath))
+            {
+                return;
+            }
+
+            try
+            {
+                File.Delete(capturePath);
+            }
+            catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
         }
 
         private static UnityAgentKitDiagnostic Diagnostic(string severity, string code, string message, string operation, string requestId)

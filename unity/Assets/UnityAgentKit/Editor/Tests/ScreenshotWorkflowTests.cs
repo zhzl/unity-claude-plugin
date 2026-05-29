@@ -51,7 +51,7 @@ namespace UnityAgentKit.Editor.Tests
             Assert.GreaterOrEqual(adapter.TryGetGameViewSizeCallCount, 1);
             Assert.GreaterOrEqual(adapter.FocusAndRepaintGameViewCallCount, 1);
             Assert.GreaterOrEqual(adapter.CaptureGameViewPngCallCount, 1);
-            Assert.AreEqual(expectedPngPath, adapter.CapturedAbsolutePath);
+            Assert.AreEqual(Path.Combine(artifactRoot, "screenshots", ".pending", result.artifactId + ".png"), adapter.CapturedAbsolutePath);
             Assert.IsTrue(File.Exists(expectedPngPath));
             CollectionAssert.AreEqual(adapter.FixturePngBytes, File.ReadAllBytes(expectedPngPath));
             Assert.IsTrue(File.Exists(Path.Combine(artifactRoot, "metadata", "screenshots", result.artifactId + ".json")));
@@ -87,6 +87,57 @@ namespace UnityAgentKit.Editor.Tests
             CollectionAssert.AreEqual(RecordingScreenshotAdapter.FixturePngBytesValue, File.ReadAllBytes(payloadPath));
             Assert.IsTrue(File.Exists(metadataPath), metadataPath);
             Assert.IsFalse(adapter.UsedForbiddenPath);
+        }
+
+        [UnityTest]
+        public IEnumerator RunOnMainThreadRejectsScreenshotCaptureWithoutStartingDeferredWork()
+        {
+            var response = UnityAgentKitOperationRouter.RunOnMainThread(new UnityAgentKitOperationRequest
+            {
+                operation = "screenshot.capture",
+                requestId = "req-shot-sync",
+                inputJson = "{\"label\":\"sync\"}"
+            }, TestHostRecord(), capturedMainThreadId: 7);
+
+            Assert.AreEqual("rejected", response.status);
+            Assert.AreEqual("host.dispatch_required", response.code);
+            yield return null;
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator CaptureGameViewAsyncForTestsCancelsPendingCaptureBeforeMetadataWrite()
+        {
+            var artifactRoot = TemporaryArtifactRoot("cancel-before-metadata");
+            var adapter = new DeferredPayloadScreenshotAdapter(width: 320, height: 180);
+            var cancelled = false;
+            var completionCount = 0;
+            UnityAgentKitOperationResponse response = null;
+
+            UnityAgentKitScreenshotDiagnostics.CaptureGameViewAsyncForTests(
+                TestHostRecord(),
+                capturedMainThreadId: 7,
+                inputJson: "{\"label\":\"cancelled\"}",
+                artifactRoot: artifactRoot,
+                adapter: adapter,
+                complete: completed =>
+                {
+                    completionCount += 1;
+                    response = completed;
+                },
+                requestId: "req-shot-cancel",
+                payloadReadyTimeoutMs: 1000,
+                isCancelled: () => cancelled);
+
+            cancelled = true;
+            yield return null;
+            yield return null;
+
+            Assert.AreEqual(0, completionCount);
+            Assert.IsNull(response);
+            Assert.AreEqual(1, adapter.CaptureGameViewPngCallCount);
+            Assert.IsFalse(Directory.Exists(Path.Combine(artifactRoot, "metadata")));
+            Assert.AreEqual(0, CountPngFiles(Path.Combine(artifactRoot, "screenshots")));
         }
 
         [Test]
@@ -305,6 +356,13 @@ namespace UnityAgentKit.Editor.Tests
             }
         }
 
+        private static int CountPngFiles(string directory)
+        {
+            return Directory.Exists(directory)
+                ? Directory.GetFiles(directory, "*.png", SearchOption.AllDirectories).Length
+                : 0;
+        }
+
         private sealed class RecordingScreenshotAdapter : UnityAgentKitScreenshotDiagnostics.IScreenshotCaptureAdapter
         {
             private readonly int width;
@@ -402,6 +460,7 @@ namespace UnityAgentKit.Editor.Tests
             }
 
             public bool UsedForbiddenPath { get; private set; }
+            public int CaptureGameViewPngCallCount { get; private set; }
 
             public UnityAgentKitScreenshotCaptureMethodFeasibility Feasibility => new UnityAgentKitScreenshotCaptureMethodFeasibility
             {
@@ -428,6 +487,7 @@ namespace UnityAgentKit.Editor.Tests
 
             public void CaptureGameViewPng(string absolutePath)
             {
+                CaptureGameViewPngCallCount++;
                 capturedAbsolutePath = absolutePath;
                 if (payloadScheduled)
                 {

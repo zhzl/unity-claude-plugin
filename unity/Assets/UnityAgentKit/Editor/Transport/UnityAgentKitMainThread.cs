@@ -258,6 +258,11 @@ namespace UnityAgentKit.Editor
 
                 SetCurrentClaimedDispatchForTests(item);
                 BeforeRunClaimedDispatchForTests?.Invoke(item.request != null ? item.request.requestId ?? string.Empty : string.Empty);
+                if (IsDispatchCancelled(item))
+                {
+                    ClearCurrentClaimedDispatchForTests(item);
+                    continue;
+                }
 
                 try
                 {
@@ -265,7 +270,8 @@ namespace UnityAgentKit.Editor
                         item.request,
                         item.record,
                         _capturedMainThreadId,
-                        response => TryComplete(item, response, ownsItem: true)))
+                        response => TryComplete(item, response, ownsItem: true),
+                        () => IsDispatchCancelled(item)))
                     {
                         continue;
                     }
@@ -281,6 +287,14 @@ namespace UnityAgentKit.Editor
                 {
                     ClearCurrentClaimedDispatchForTests(item);
                 }
+            }
+        }
+
+        private static bool IsDispatchCancelled(PendingDispatch item)
+        {
+            lock (PendingLock)
+            {
+                return item == null || item.cancelled || item.completed || !_isAcceptingDispatches;
             }
         }
 

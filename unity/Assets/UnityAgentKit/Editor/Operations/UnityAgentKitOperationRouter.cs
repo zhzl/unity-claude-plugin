@@ -187,7 +187,7 @@ namespace UnityAgentKit.Editor
 
             if (operation == ScreenshotCaptureOperation)
             {
-                return UnityAgentKitScreenshotDiagnostics.CaptureGameView(record, capturedMainThreadId, request != null ? request.inputJson ?? string.Empty : string.Empty, requestId);
+                return Rejected(operation, requestId, record, "host.dispatch_required", "Operation requires asynchronous main-thread dispatch.", startedAt);
             }
 
             if (operation == TestListOperation)
@@ -222,7 +222,8 @@ namespace UnityAgentKit.Editor
             UnityAgentKitOperationRequest request,
             UnityAgentKitHostRecord record,
             int capturedMainThreadId,
-            Action<UnityAgentKitOperationResponse> complete)
+            Action<UnityAgentKitOperationResponse> complete,
+            Func<bool> isCancelled = null)
         {
             var operation = NormalizeOperation(request != null ? request.operation : string.Empty);
             var requestId = request != null ? request.requestId ?? string.Empty : string.Empty;
@@ -236,7 +237,8 @@ namespace UnityAgentKit.Editor
                 capturedMainThreadId,
                 request != null ? request.inputJson ?? string.Empty : string.Empty,
                 complete,
-                requestId);
+                requestId,
+                isCancelled);
             return true;
         }
 
