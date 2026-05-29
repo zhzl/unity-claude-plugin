@@ -36,7 +36,7 @@ This split stays within the approved Phase 5D scope and does not create a new ro
 |---|---|---|---|---|---|---|
 | 5D-01a | Test selector, TestRunner bridge foundation, job/report readback, `list` / `start` / `get_status` / `get_result` internal workflows | 5D-TEST-SELECTOR-01, 5D-TEST-LIST-01, 5D-TEST-JOB-01, 5D-TEST-RESULT-01, 5D-RESOURCE-TEST-01, 5D-HOST-01, 5D-SCOPE-01 | 1 | Phase 5A, Phase 5B, Phase 5C | `docs/superpowers/plans/2026-05-28-unity-agent-kit-phase-5d-01a-test-runner-foundation.md` | completed |
 | 5D-01b | `run_and_collect` / `run_and_verify`, test workflow timeout/continuity, failed-report vs verified-pass split, live EditMode evidence | 5D-TEST-COLLECT-01, 5D-TEST-VERIFY-01, 5D-TIMEOUT-01, 5D-HOST-01, 5D-SCOPE-01 | 2 | 5D-01a | `docs/superpowers/plans/2026-05-28-unity-agent-kit-phase-5d-01b-test-aggregate-workflows.md` | completed |
-| 5D-02 | PlayMode state snapshot, no-op evidence, enter/exit verify workflows, transition timeout/continuity | 5D-PLAYMODE-STATE-01, 5D-PLAYMODE-ENTER-01, 5D-PLAYMODE-EXIT-01, 5D-TIMEOUT-01, 5D-HOST-01, 5D-SCOPE-01 | 2 | Phase 5A, Phase 5B, Phase 5C | pending | pending |
+| 5D-02 | PlayMode state snapshot, no-op evidence, enter/exit verify workflows, transition timeout/continuity | 5D-PLAYMODE-STATE-01, 5D-PLAYMODE-ENTER-01, 5D-PLAYMODE-EXIT-01, 5D-TIMEOUT-01, 5D-HOST-01, 5D-SCOPE-01 | 2 | Phase 5A, Phase 5B, Phase 5C | `docs/superpowers/plans/2026-05-29-unity-agent-kit-phase-5d-02-playmode-workflows.md` | completed |
 | 5D-03 | Screenshot capture-method feasibility, Game View producer, screenshot artifact metadata, Resource readback, TS PNG header/dimension validation | 5D-SCREENSHOT-FEASIBILITY-01, 5D-SCREENSHOT-CAPTURE-01, 5D-SCREENSHOT-RESOURCE-01, 5D-SCREENSHOT-PNG-01, 5D-HOST-01, 5D-SCOPE-01 | 3 | Phase 5A, Phase 5B, Phase 5C | pending | pending |
 | 5D-04 | Combined scope guard, Phase 5D evidence sync, parent Phase 5 plan index update | 5D-EVIDENCE-01, 5D-SCOPE-01, 5D-INDEX-SYNC-01 | 4 | 5D-01a, 5D-01b, 5D-02, 5D-03 | pending | pending |
 
@@ -66,7 +66,7 @@ This split stays within the approved Phase 5D scope and does not create a new ro
 
 ## Current Next Manual Action
 
-Review the next pending Phase 5D card and prepare expanded plan work for `5D-02`. Do not execute this index or re-execute completed `5D-01a` / `5D-01b`; proceed to the next pending card only after its expanded plan is ready and approved.
+Review the next pending Phase 5D card and prepare expanded plan work for `5D-03`. Do not execute this index or re-execute completed `5D-01a` / `5D-01b` / `5D-02`; proceed to the next pending card only after its expanded plan is ready and approved.
 
 ## Completion Rule
 
@@ -104,6 +104,18 @@ Phase 5D completes only after:
 - Final self-check verification passed via `node --experimental-strip-types --test "plugins/unity-agent-kit/tests/test-workflows.test.ts" "plugins/unity-agent-kit/tests/artifact-resource-contract.test.ts" "plugins/unity-agent-kit/tests/timeout-completion-contract.test.ts"` with `tests 57`, `pass 57`, `fail 0`, `skipped 0`, and `todo 0`.
 - Changed-file scope guard passed for the current 5D-01b implementation diff after constraining the check to the changed implementation/test files (`plugins/unity-agent-kit/src/workflows/test.ts`, `plugins/unity-agent-kit/tests/test-workflows.test.ts`) plus relevant untracked 5D-01b docs as documentation-only context.
 - The original full-repo scope guard failure was caused by pre-existing screenshot markers in Unity artifact files outside the current 5D-01b diff, so those markers were not introduced by 5D-01b.
+- Whitespace check passed: `git -c core.autocrlf=false diff --check` produced no output.
+
+## Phase 5D-02 Completion Evidence
+
+5D-02 is completed. This does not complete Phase 5D, and Phase 5 remains incomplete.
+
+- Focused TS verification passed via `node --experimental-strip-types --test "plugins/unity-agent-kit/tests/editor-workflows.test.ts" "plugins/unity-agent-kit/tests/compile-workflows.test.ts" "plugins/unity-agent-kit/tests/console-workflows.test.ts" "plugins/unity-agent-kit/tests/test-workflows.test.ts" "plugins/unity-agent-kit/tests/playmode-workflows.test.ts" "plugins/unity-agent-kit/tests/host-runtime.test.ts" "plugins/unity-agent-kit/tests/artifact-resource-contract.test.ts" "plugins/unity-agent-kit/tests/timeout-completion-contract.test.ts"` with `tests 197`, `pass 197`, `fail 0`, `skipped 0`, and `todo 0`.
+- Unity PlayMode focused verification passed in `D:/ai/unity-claude-plugin/.ai-debug/unity-agent-kit/test-results/phase5d-02-playmode-workflows.xml` with `result="Passed" total="6" passed="6" failed="0" inconclusive="0" skipped="0"`.
+- Unity HostRuntime regression passed in `D:/ai/unity-claude-plugin/.ai-debug/unity-agent-kit/test-results/phase5d-02-host-runtime-regression.xml` with `result="Passed" total="82" passed="82" failed="0" inconclusive="0" skipped="0"`.
+- TS coverage for 5D-02 includes PlayMode state parser/mapping, `getPlayModeState`, `enterPlayModeAndVerify` no-op, `exitPlayModeAndVerify` no-op, request + poll to stable PlayMode, transition timeout continuation with `unity_playmode.get_state` nextStep, host continuity loss guard, and timeout boundary regressions for post-request, post-sleep, and no-op paths.
+- Unity coverage for 5D-02 includes PlayMode DTO roundtrip, main-thread dispatch requirement, state read no-mutation adapter evidence, enter no-op, enter request, and exit request short-operation evidence.
+- Corrected scope guard passed: `PASS Phase 5D-02 changed-file scope guard`; the guard scans 5D-02 implementation/test files and Unity `.meta` files while excluding Phase 5D planning docs that intentionally contain 5D-03 screenshot markers.
 - Whitespace check passed: `git -c core.autocrlf=false diff --check` produced no output.
 
 ## Parent Plan Index Sync Rule
